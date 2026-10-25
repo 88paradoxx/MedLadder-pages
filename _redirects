@@ -1,16 +1,12 @@
-# Clean URLs (mirrors vercel.json rewrites + cleanUrls)
+# Clean URLs are real directories (privacy/index.html etc.), served by
+# directory index — no rewrite rules needed for them.
+# .html URLs redirect to the clean form; /download-apk redirects to the APK.
 /ini-cet    /inicet    301
 /index.html    /    301
-/privacy    /privacy.html    200
 /privacy.html    /privacy    301
-/terms    /terms.html    200
 /terms.html    /terms    301
-/mock-test    /mock-test.html    200
 /mock-test.html    /mock-test    301
-/admin-mock    /admin-mock.html    200
 /admin-mock.html    /admin-mock    301
-/neet-ss-books    /neet-ss-books.html    200
 /neet-ss-books.html    /neet-ss-books    301
-/landing    /landing.html    200
 /landing.html    /landing    301
-/download-apk    /MedLadder-latest.apk    200
+/download-apk    /MedLadder-latest.apk    302

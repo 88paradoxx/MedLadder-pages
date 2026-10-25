@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedLadder — Master MBBS, FMGE, NEET PG, INI-CET, USMLE, PLAB, MRCS &amp; MRCP</title>
+  <link rel="icon" href="/favicon.ico">
+  <meta name="description" content="Prepare for MBBS, FMGE, NEET PG, INI-CET, NEET SS, USMLE, MCAT, PLAB, MRCS, MRCP and State PG exams with MedLadder. Practice 37,076 topic-wise medical MCQs across 19 subjects, previous-year question papers, high-yield explanations and progress tracking. Start with 8 free modules in every subject.">
+  <meta property="og:title" content="MedLadder — Climb through NEET PG, FMGE, USMLE, PLAB, MRCS, MRCP &amp; More">
+  <meta property="og:description" content="37,076 MCQs across 19 subjects. Covers MBBS, NEET PG, FMGE, INI-CET, NEET SS, USMLE, MCAT, PLAB, MRCS, MRCP &amp; State PG. 8 free modules in every single subject.">
+  <meta property="og:image" content="https://medladder.top/og-image.png">
+  <meta property="og:url" content="https://medladder.top/landing">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MedLadder — Climb through NEET PG, FMGE, USMLE, PLAB, MRCS, MRCP &amp; More">
+  <meta name="twitter:description" content="37,076 MCQs across 19 subjects. Covers MBBS, NEET PG, FMGE, INI-CET, NEET SS, USMLE, MCAT, PLAB, MRCS, MRCP &amp; State PG. 8 free modules in every single subject.">
+  <meta name="twitter:image" content="https://medladder.top/og-image.png">
+  <link rel="canonical" href="https://medladder.top/landing">
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=optional">
+
+  <style>
+    :root {
+      --canvas: #0D0818;
+      --paper: rgba(20, 14, 38, 0.70);
+      --paper-raised: rgba(28, 20, 52, 0.85);
+      --paper-hover: rgba(38, 28, 70, 0.95);
+      --line: rgba(255, 255, 255, 0.12);
+      --line-strong: rgba(255, 255, 255, 0.22);
+      --ink: #F8FAFC;
+      --ink-soft: #A79BBF;
+      --ink-muted: #73638E;
+      --accent: #A78BFA;
+      --accent-deep: #8B5CF6;
+      --accent-soft: rgba(167, 139, 250, 0.16);
+      --cta-gradient: linear-gradient(135deg, #7B2FF7, #F107A3);
+      --green: #34D399;
+      --green-soft: rgba(52, 211, 153, 0.16);
+      --amber: #FBBF24;
+      --coral: #F87171;
+      --radius: 20px;
+      --radius-sm: 12px;
+      --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.75);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; background: var(--canvas); background-color: #0D0818; color-scheme: dark; }
+    body {
+      background: var(--canvas);
+      background-color: #0D0818;
+      color: var(--ink);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+
+
+
+    .wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header Nav */
+    header {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 8, 24, 0.78);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--cta-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 4px 14px rgba(123, 47, 247, 0.45);
+    }
+    .brand .dot {
+      background: var(--cta-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+    .nav-links a { transition: color .15s ease; }
+    .nav-links a:hover { color: var(--ink); }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13.5px;
+      background: rgba(52, 211, 153, 0.12);
+      border: 1.5px solid rgba(52, 211, 153, 0.4);
+      color: #34D399;
+      box-shadow: 0 4px 14px -2px rgba(52, 211, 153, 0.2);
+      transition: all .18s ease;
+      white-space: nowrap;
+      text-decoration: none;
+      user-select: none;
+    }
+    .nav-download-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(52, 211, 153, 0.22);
+      border-color: #34D399;
+      box-shadow: 0 8px 22px -2px rgba(52, 211, 153, 0.4);
+      color: #fff;
+    }
+    .nav-download-btn svg {
+      flex-shrink: 0;
+      transition: transform .2s ease;
+    }
+    .nav-download-btn:hover svg {
+      transform: translateY(1px);
+    }
+    .nav-cta {
+      background: var(--cta-gradient);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13.5px;
+      box-shadow: 0 8px 20px -4px rgba(123, 47, 247, 0.45);
+      transition: all .18s ease;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -4px rgba(241, 7, 163, 0.55); }
+
+    /* Hero Section */
+    .hero {
+      padding: 76px 0 80px;
+      text-align: center;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--paper-raised);
+      border: 1px solid var(--line-strong);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 28px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .pill .dot-live {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    .hero h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: clamp(38px, 5.2vw, 64px);
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .hl-grad {
+      background: linear-gradient(135deg, #C084FC, #F472B6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero p.sub {
+      margin: 22px auto 0;
+      max-width: 700px;
+      font-size: 17.5px;
+      color: var(--ink-soft);
+      line-height: 1.6;
+    }
+    .hero-cta-row {
+      margin-top: 36px;
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .btn-main {
+      background: var(--cta-gradient);
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15.5px;
+      font-weight: 700;
+      padding: 16px 34px;
+      border-radius: 12px;
+      box-shadow: 0 12px 32px -6px rgba(123, 47, 247, 0.55);
+      transition: all .2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 38px -6px rgba(241, 7, 163, 0.65);
+    }
+    .btn-secondary {
+      background: var(--paper);
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+      padding: 16px 26px;
+      border-radius: 12px;
+      transition: all .2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .btn-secondary:hover { background: var(--paper-hover); border-color: var(--accent); }
+
+    .hero-badges {
+      margin-top: 26px;
+      display: flex;
+      justify-content: center;
+      gap: 22px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      flex-wrap: wrap;
+    }
+    .hero-badges span { display: inline-flex; align-items: center; gap: 6px; }
+
+    /* Infinite Subject Ticker */
+    .ticker {
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: rgba(20, 14, 38, 0.4);
+      padding: 14px 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .ticker-track {
+      display: inline-flex;
+      animation: tickerScroll 34s linear infinite;
+    }
+    .ticker-track span {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14.5px;
+      font-weight: 700;
+      padding: 0 24px;
+      border-right: 1px solid var(--line);
+      color: var(--ink-soft);
+    }
+    @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* Bento Stats Grid */
+    .section { padding: 84px 0; }
+    .sec-head {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 48px;
+    }
+    .sec-badge {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .sec-head h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(28px, 3.6vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+    .sec-head p {
+      color: var(--ink-soft);
+      margin-top: 12px;
+      font-size: 16px;
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .bento-card {
+      background: var(--paper-raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: all .2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .bento-card:hover {
+      border-color: var(--line-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px -8px rgba(0, 0, 0, 0.7);
+    }
+    .bento-card .num {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: var(--cta-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      line-height: 1;
+    }
+    .bento-card .label {
+      font-weight: 700;
+      font-size: 16px;
+      margin-top: 12px;
+      color: var(--ink);
+    }
+    .bento-card .desc {
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* PYQ Section */
+    .pyq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+    .pyq-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px;
+      transition: all .2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pyq-card:hover {
+      background: var(--paper-raised);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .pyq-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pyq-icon { font-size: 26px; }
+    .pyq-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .pyq-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(167, 139, 250, 0.14);
+      color: var(--accent);
+      align-self: flex-start;
+    }
+    .pyq-cov {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.45;
+    }
+
+    /* Subjects Grid */
+    .subj-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .subj-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all .2s ease;
+    }
+    .subj-card:hover {
+      background: var(--paper-raised);
+      border-color: var(--line-strong);
+      transform: translateY(-2px);
+    }
+    .subj-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .subj-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16.5px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .subj-count { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; }
+    .dot-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .dot-row .d {
+      width: 9px;
+      height: 9px;
+      border-radius: 2.5px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .dot-row .d.free {
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+    }
+    .subj-foot {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .subj-foot a.all-btn { color: var(--accent); transition: color .15s; }
+    .subj-foot a.all-btn:hover { color: #fff; text-decoration: underline; }
+
+    /* Features Grid */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .feat-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .feat-icon {
+      font-size: 30px;
+      margin-bottom: 14px;
+    }
+    .feat-card h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .feat-card p {
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.55;
+    }
+
+    /* Testimonials Proof Grid */
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 32px;
+    }
+    .proof-card {
+      background: var(--paper-raised);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .proof-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .proof-exam {
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+    }
+    .proof-score {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--green);
+      background: var(--green-soft);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .proof-text {
+      font-size: 14px;
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    .proof-author {
+      font-size: 12px;
+      color: var(--ink-soft);
+      font-weight: 600;
+    }
+
+    /* Pricing Plans */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 36px;
+    }
+    .plan-card {
+      background: var(--paper-raised);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: all .2s ease;
+    }
+    .plan-card.popular {
+      border: 1.5px solid #BE185D;
+      box-shadow: 0 0 28px -6px rgba(190, 24, 93, 0.4);
+    }
+    .plan-badge {
+      position: absolute;
+      top: -11px;
+      right: 16px;
+      background: var(--cta-gradient);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+    .plan-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .plan-desc {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-top: 2px;
+    }
+    .plan-price-row {
+      margin: 18px 0 16px;
+    }
+    .plan-price-box {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .plan-price {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .plan-old-price {
+      font-size: 14px;
+      color: var(--ink-muted);
+      text-decoration: line-through;
+    }
+    .plan-per-mo {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-top: 4px;
+    }
+    .plan-btn {
+      margin-top: auto;
+      background: var(--paper);
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13.5px;
+      transition: all .18s ease;
+      display: block;
+    }
+    .plan-card.popular .plan-btn {
+      background: var(--cta-gradient);
+      border: none;
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(123, 47, 247, 0.4);
+    }
+    .plan-btn:hover { transform: translateY(-1px); }
+
+    .pricing-note {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* FAQ Section */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 36px;
+    }
+    .faq-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .faq-card h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .faq-card p {
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      line-height: 1.55;
+    }
+
+    /* Final CTA */
+    .cta-banner {
+      padding: 68px 32px;
+      background: linear-gradient(135deg, rgba(109, 40, 217, 0.28), rgba(190, 24, 93, 0.24));
+      border: 1px solid var(--line-strong);
+      border-radius: 24px;
+      text-align: center;
+      margin: 40px auto 70px;
+    }
+    .cta-banner h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .cta-banner p {
+      color: var(--ink-soft);
+      font-size: 16px;
+      margin: 12px auto 26px;
+      max-width: 600px;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 34px 0 42px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .footer-links a:hover { color: var(--ink); }
+    .footer-social-row { display: flex; align-items: center; gap: 10px; }
+    .footer-social-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--paper-raised); border: 1px solid var(--line);
+      color: var(--ink-soft); display: inline-flex; align-items: center; justify-content: center;
+      transition: all .2s ease; text-decoration: none;
+    }
+    .footer-social-btn:hover { transform: translateY(-2px); color: var(--ink); border-color: var(--accent); }
+    .footer-social-btn.fb:hover { color: #1877F2; }
+    .footer-social-btn.insta:hover { color: #E1306C; }
+    .footer-social-btn.x-tw:hover { color: var(--ink); }
+    .footer-social-btn.tg:hover { color: #229ED9; border-color: rgba(34,158,217,.45); }
+    .footer-apk-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 16px 7px 12px;
+      border-radius: 14px;
+      background: var(--paper-raised);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      text-decoration: none;
+      transition: all .2s ease;
+      user-select: none;
+    }
+    .footer-apk-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      border-color: var(--green);
+      box-shadow: 0 8px 24px -4px rgba(52,211,153,.35);
+      color: var(--ink);
+    }
+    .footer-apk-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: rgba(52,211,153,.15);
+      color: var(--green);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform .2s ease;
+    }
+    .footer-apk-btn:hover .footer-apk-icon { transform: scale(1.1) rotate(4deg); }
+    .footer-apk-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; text-align: left; }
+    .footer-apk-sub { font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); }
+    .footer-apk-title { font-size: 13px; font-weight: 800; color: var(--ink); letter-spacing: -.01em; }
+    .footer-apk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--line);
+      font-size: 10px;
+      font-weight: 800;
+      margin-left: 4px;
+    }
+    .footer-apk-btn:hover .footer-apk-badge { background: var(--green-soft); color: var(--green); border-color: rgba(52,211,153,.3); }
+
+    /* Responsive media queries */
+    @media (max-width: 960px) {
+      .bento-grid { grid-template-columns: repeat(2, 1fr); }
+      .subj-grid { grid-template-columns: 1fr; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .proof-grid { grid-template-columns: 1fr; }
+      .plans-grid { grid-template-columns: repeat(2, 1fr); }
+      .faq-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 600px) {
+      .bento-grid { grid-template-columns: 1fr; }
+      .plans-grid { grid-template-columns: 1fr; }
+      .hero { padding: 48px 0 60px; }
+      .hero-cta-row { flex-direction: column; align-items: stretch; }
+      .btn-main, .btn-secondary { text-align: center; justify-content: center; width: 100%; }
+      .cta-banner { padding: 44px 20px; }
+      .nav-actions { gap: 6px; }
+      .nav-cta, .nav-download-btn { padding: 8px 12px; font-size: 12px; }
+      .footer-inner { flex-direction: column; text-align: center; gap: 18px; }
+      .footer-links { justify-content: center; }
+    }
+    .landing-toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .landing-toast {
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: var(--paper-raised);
+      border: 1.5px solid var(--green);
+      color: var(--ink);
+      font-size: 13.5px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.65), 0 0 16px -2px rgba(52, 211, 153, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .landing-toast.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Landing page theme sync: use the same glass surfaces and violet-cyan spectrum as index. */
+    :root {
+      --canvas: #140e26;
+      --paper: rgba(20,14,38,.70);
+      --paper-raised: rgba(28,20,52,.82);
+      --paper-hover: rgba(38,28,70,.90);
+      --line: rgba(255,255,255,.12);
+      --line-strong: rgba(255,255,255,.20);
+      --accent: #A78BFA;
+      --accent-deep: #C4B5FD;
+      --accent-soft: rgba(167,139,250,.18);
+      --cta-gradient: linear-gradient(135deg,#A78BFA,#F472B6);
+    }
+    html, body { background: #140e26; }
+    body {
+      background:
+        radial-gradient(600px 320px at 50% 5%, rgba(124,58,237,.22), transparent 70%),
+        radial-gradient(520px 340px at 90% 38%, rgba(34,211,238,.08), transparent 72%),
+        linear-gradient(180deg,#140e26 0%,#100d18 76%,#0d0b14 100%);
+    }
+    header {
+      background: rgba(20,14,38,.76);
+      border-bottom-color: rgba(167,139,250,.20);
+      box-shadow: 0 12px 28px -22px rgba(0,0,0,.8);
+    }
+    .brand-icon { background: linear-gradient(135deg,#A78BFA,#F472B6); box-shadow: 0 6px 16px -5px rgba(167,139,250,.75); }
+    .brand .dot, .hl-grad { background-image: linear-gradient(135deg,#A78BFA,#F472B6); }
+    .pill, .bento-card, .subj-card, .feat-card, .proof-card, .faq-card, .pyq-card, .plan-card {
+      background: linear-gradient(145deg,rgba(124,58,237,.12),rgba(34,211,238,.045)), var(--paper-raised);
+      border-color: rgba(167,139,250,.23);
+      box-shadow: 0 14px 34px -24px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+    }
+    .bento-card:hover, .subj-card:hover, .feat-card:hover, .proof-card:hover, .faq-card:hover, .pyq-card:hover, .plan-card:hover {
+      border-color: #A78BFA;
+      box-shadow: 0 16px 32px -18px rgba(167,139,250,.65), 0 0 0 1px rgba(167,139,250,.28);
+    }
+    .btn-main, .nav-cta, .plan-btn { background: var(--cta-gradient); box-shadow: 0 10px 26px -8px rgba(244,114,182,.55); }
+    .btn-secondary { background: var(--paper-raised); border-color: rgba(167,139,250,.32); }
+    .nav-download-btn { background: rgba(52,211,153,.12); border-color: rgba(52,211,153,.42); }
+    .section h2, .cta-banner h2 { color: #F8FAFC; }
+    .section .sub, .proof-text, .plan-desc, .faq-card p { color: #A79BBF; }
+    .cta-banner { background: linear-gradient(110deg,rgba(124,58,237,.22),rgba(34,211,238,.08)), var(--paper-raised); border-color: rgba(167,139,250,.30); }
+    .footer-inner { border-top-color: rgba(167,139,250,.22); }
+    .footer-subcopy, .footer-links a { color: #C4B5FD; }
+    @media (max-width: 600px) {
+      .wrap { padding-left: 16px; padding-right: 16px; }
+      header { padding: 12px 0; }
+      .hero { padding-top: 54px; }
+      .hero h1 { font-size: clamp(34px, 10vw, 48px); }
+    }
+  </style>
+
+  <!-- Schema.org EducationalOrganization structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "MedLadder",
+    "url": "https://medladder.top",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "199",
+      "priceCurrency": "INR"
+    },
+    "description": "Medical exam question bank and simulator for MBBS, FMGE, NEET PG, INI-CET, NEET SS, USMLE, MCAT, PLAB, MRCS, MRCP and State PG exams with 37,076 MCQs across 19 subjects."
+  }
+  </script>
+</head>
+<body>
+
+
+  <header>
+    <div class="wrap nav-inner">
+      <a href="/" class="brand">
+        <span class="brand-icon">⚡</span>
+        <span>MedLadder<span class="dot">.</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="#stats">Overview</a>
+        <a href="#pyq">PYQ Banks</a>
+        <a href="#subjects">19 Subjects</a>
+        <a href="#features">Features</a>
+        <a href="#pricing">Plans</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="nav-actions">
+        <a href="/MedLadder-latest.apk" class="nav-download-btn" download="MedLadder-latest.apk" title="Download MedLadder Android APK">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download APK</span>
+        </a>
+        <a href="/" class="nav-cta">Launch App →</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO SECTION -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="pill">
+          <span class="dot-live"></span>
+          <span>First 8 modules in all 19 subjects 100% Free · No card needed</span>
+        </div>
+        <h1>Climb Your Medical Syllabus. <br><span class="hl-grad">Master Every Exam.</span></h1>
+        <p class="sub">
+          <strong>37,076 MCQs</strong> across 19 subjects — your all-in-one prep for <strong>MBBS, FMGE, NEET PG, INI-CET, NEET SS, USMLE, MCAT, PLAB, MRCS, MRCP &amp; State PG</strong>. Systematic topic-wise mastery with detailed clinical explanations.
+        </p>
+        <div class="hero-cta-row">
+          <a href="/" class="btn-main">⚡ Start Solving Free →</a>
+          <a href="#subjects" class="btn-secondary">Explore 19 Subjects</a>
+        </div>
+        <div class="hero-badges">
+          <span>✓ Instant answer pearls</span>
+          <span>✓ Timed mock exam mode</span>
+          <span>✓ Cloud progress sync</span>
+          <span>✓ Mobile &amp; tablet optimized</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- INFINITE SUBJECT TICKER -->
+    <div class="ticker">
+      <div class="ticker-track">
+        <span>🦴 Anatomy</span><span>⚡ Physiology</span><span>🧪 Biochemistry</span><span>🔬 Pathology</span><span>🦠 Microbiology</span><span>💊 Pharmacology</span><span>⚖️ Forensic Medicine</span><span>🌍 PSM</span><span>🩺 General Medicine</span><span>✂️ Surgery</span><span>👶 OB &amp; G</span><span>🧸 Pediatrics</span><span>🩹 Dermatology</span><span>🦴 Orthopaedics</span><span>👁️ Ophthalmology</span><span>👂 ENT</span><span>🧠 Psychiatry</span><span>💉 Anaesthesia</span><span>🩻 Radiology</span>
+        <span>🦴 Anatomy</span><span>⚡ Physiology</span><span>🧪 Biochemistry</span><span>🔬 Pathology</span><span>🦠 Microbiology</span><span>💊 Pharmacology</span><span>⚖️ Forensic Medicine</span><span>🌍 PSM</span><span>🩺 General Medicine</span><span>✂️ Surgery</span><span>👶 OB &amp; G</span><span>🧸 Pediatrics</span><span>🩹 Dermatology</span><span>🦴 Orthopaedics</span><span>👁️ Ophthalmology</span><span>👂 ENT</span><span>🧠 Psychiatry</span><span>💉 Anaesthesia</span><span>🩻 Radiology</span>
+      </div>
+    </div>
+
+    <!-- STATS BENTO SECTION -->
+    <section class="section" id="stats">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="sec-badge">Built For Medical Aspirants</div>
+          <h2>Engineered for High Retention</h2>
+          <p>Everything you need to systematically revise high-yield concepts and build test-day confidence.</p>
+        </div>
+        <div class="bento-grid">
+          <div class="bento-card">
+            <div class="num">37,076</div>
+            <div class="label">Total Verified MCQs</div>
+            <div class="desc">High-yield clinical vignettes, direct recalls, and image-based questions with comprehensive explanations.</div>
+          </div>
+          <div class="bento-card">
+            <div class="num">19</div>
+            <div class="label">Medical Subjects</div>
+            <div class="desc">Complete curriculum from 1st Year Anatomy &amp; Physiology to final-year Surgery, Medicine &amp; Super Specialties.</div>
+          </div>
+          <div class="bento-card">
+            <div class="num">739</div>
+            <div class="label">Topic Modules</div>
+            <div class="desc">Bite-sized, focused revision units designed to conquer a high-yield concept in under 20 minutes.</div>
+          </div>
+          <div class="bento-card">
+            <div class="num">5</div>
+            <div class="label">Authentic PYQ Banks</div>
+            <div class="desc">NEET PG (2018–25), INI-CET (2020–25), FMGE (2020–25), AIIMS recalls and NEET SS papers.</div>
+          </div>
+          <div class="bento-card">
+            <div class="num">8 Free</div>
+            <div class="label">Modules Per Subject</div>
+            <div class="desc">152 topic modules permanently unlocked for every student. Zero credit card or upfront commitment.</div>
+          </div>
+          <div class="bento-card">
+            <div class="num">100%</div>
+            <div class="label">Cloud Progress Sync</div>
+            <div class="desc">Test scores, answer status, and topic accuracy seamlessly synced to your account across all devices.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PYQ SECTION -->
+    <section class="section" id="pyq" style="background: rgba(20, 14, 38, 0.4); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="sec-badge">Authentic Exam Papers</div>
+          <h2>5 Dedicated Previous-Year Question Banks</h2>
+          <p>Practice with real exam questions tagged by year and session to identify high-yield repeating patterns.</p>
+        </div>
+        <div class="pyq-grid">
+          <div class="pyq-card">
+            <div class="pyq-top">
+              <span class="pyq-icon">🏥</span>
+              <div>
+                <div class="pyq-title">NEET PG</div>
+                <span class="pyq-badge">2018 – 2025</span>
+              </div>
+            </div>
+            <div class="pyq-cov">8 Years · 1,640+ Recalls across all subjects with clinical rationales and tables.</div>
+          </div>
+          <div class="pyq-card">
+            <div class="pyq-top">
+              <span class="pyq-icon">🔬</span>
+              <div>
+                <div class="pyq-title">INI-CET</div>
+                <span class="pyq-badge">2020 – 2025</span>
+              </div>
+            </div>
+            <div class="pyq-cov">10 Exam Sessions (May &amp; Nov) · 1,460+ MCQs matching AIIMS, JIPMER, PGI pattern.</div>
+          </div>
+          <div class="pyq-card">
+            <div class="pyq-top">
+              <span class="pyq-icon">🌐</span>
+              <div>
+                <div class="pyq-title">FMGE</div>
+                <span class="pyq-badge">2020 – 2025</span>
+              </div>
+            </div>
+            <div class="pyq-cov">10 Exam Sessions · 2,430+ Questions focused on essential screening pass marks.</div>
+          </div>
+          <div class="pyq-card">
+            <div class="pyq-top">
+              <span class="pyq-icon">🏛️</span>
+              <div>
+                <div class="pyq-title">AIIMS PG</div>
+                <span class="pyq-badge">2019 – 2020</span>
+              </div>
+            </div>
+            <div class="pyq-cov">Central Institute recall banks highlighting conceptual, multi-step problem solving.</div>
+          </div>
+          <div class="pyq-card">
+            <div class="pyq-top">
+              <span class="pyq-icon">⚕️</span>
+              <div>
+                <div class="pyq-title">NEET SS</div>
+                <span class="pyq-badge">2022 – 2024</span>
+              </div>
+            </div>
+            <div class="pyq-cov">Super Speciality exam questions covering major surgical, medical &amp; pediatric groups.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 19 SUBJECTS SECTION -->
+    <section class="section" id="subjects">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="sec-badge">19 Subject Syllabi</div>
+          <h2>Start Solving Free Right Now</h2>
+          <p>The first <strong>8 modules</strong> in every subject are permanently unlocked for free. The green dots indicate instant access.</p>
+        </div>
+        <div class="subj-grid">
+          <!-- 1. Anatomy -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🦴 Anatomy</span><span class="subj-count">1,710 MCQs · 58 topics</span></div>
+            <div class="dot-row">
+              <span class="d free" title="Free Module 1"></span><span class="d free" title="Free Module 2"></span><span class="d free" title="Free Module 3"></span><span class="d free" title="Free Module 4"></span><span class="d free" title="Free Module 5"></span><span class="d free" title="Free Module 6"></span><span class="d free" title="Free Module 7"></span><span class="d free" title="Free Module 8"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 2. Physiology -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">⚡ Physiology</span><span class="subj-count">1,655 MCQs · 40 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 3. Biochemistry -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🧪 Biochemistry</span><span class="subj-count">1,523 MCQs · 27 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 4. Pathology -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🔬 Pathology</span><span class="subj-count">1,880 MCQs · 64 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 5. Pharmacology -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">💊 Pharmacology</span><span class="subj-count">1,503 MCQs · 51 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 6. Microbiology -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🦠 Microbiology</span><span class="subj-count">1,637 MCQs · 31 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 7. Forensic Medicine -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">⚖️ Forensic Medicine</span><span class="subj-count">1,194 MCQs · 21 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 8. PSM / Community Medicine -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🌍 PSM (Community Med)</span><span class="subj-count">2,200 MCQs · 56 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 9. General Medicine -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🩺 General Medicine</span><span class="subj-count">2,855 MCQs · 69 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 10. General Surgery -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">✂️ General Surgery</span><span class="subj-count">2,197 MCQs · 51 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 11. Obstetrics & Gynaecology -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">👶 Obstetrics &amp; Gynaecology</span><span class="subj-count">2,030 MCQs · 44 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 12. Pediatrics -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🧸 Pediatrics</span><span class="subj-count">1,304 MCQs · 34 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 13. Orthopaedics -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🦴 Orthopaedics</span><span class="subj-count">1,362 MCQs · 30 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 14. Ophthalmology -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">👁️ Ophthalmology</span><span class="subj-count">1,693 MCQs · 26 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 15. ENT -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">👂 ENT</span><span class="subj-count">1,207 MCQs · 36 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 16. Dermatology -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🩹 Dermatology</span><span class="subj-count">962 MCQs · 24 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 17. Psychiatry -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">🧠 Psychiatry</span><span class="subj-count">936 MCQs · 33 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 18. Anaesthesia -->
+          <div class="subj-card">
+            <div class="subj-head"><span class="subj-name">💉 Anaesthesia</span><span class="subj-count">1,121 MCQs · 24 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+
+          <!-- 19. Radiology -->
+          <div class="subj-card" style="grid-column: 1 / -1;">
+            <div class="subj-head"><span class="subj-name">🩻 Radiology</span><span class="subj-count">1,245 MCQs · 20 topics</span></div>
+            <div class="dot-row">
+              <span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span><span class="d free"></span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+            </div>
+            <div class="subj-foot"><span>✓ 8 modules free to start</span><a href="/" class="all-btn">Solve now →</a></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SMART PRACTICE TOOLS SECTION -->
+    <section class="section" id="features" style="background: rgba(20, 14, 38, 0.4); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="sec-badge">Smart Practice Tools</div>
+          <h2>Everything You Need on One Screen</h2>
+          <p>Built by doctors and medical educators to optimize active recall and question-solving speed.</p>
+        </div>
+        <div class="feat-grid">
+          <div class="feat-card">
+            <div class="feat-icon">🎯</div>
+            <h3>Practice &amp; Exam Modes</h3>
+            <p>Choose instant answer feedback with detailed explanations, or take realistic timed mocks with customizable question counts and negative marking (-0.25).</p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon">📊</div>
+            <h3>Topic Accuracy &amp; Mastery</h3>
+            <p>Know exactly which topics need revision. Track your percentage score, completed questions, and last run accuracy per topic module.</p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon">☁️</div>
+            <h3>Cross-Device Cloud Sync</h3>
+            <p>Switch seamlessly from studying on your laptop to solving MCQs on your phone during clinical postings. Your progress is always saved.</p>
+          </div>
+        </div>
+
+        <!-- DOCTOR & ASPIRANT PROOF CARDS -->
+        <div class="proof-grid">
+          <div class="proof-card">
+            <div class="proof-top">
+              <span class="proof-exam">NEET SS Prep</span>
+              <span class="proof-score">+38% Recall</span>
+            </div>
+            <p class="proof-text">"Went through Pathology &amp; Surgery PYQs subject-wise instead of jumping between apps. My recall in grand mocks changed within three weeks."</p>
+            <div class="proof-author">Resident, Radiodiagnosis aspirant</div>
+          </div>
+          <div class="proof-card">
+            <div class="proof-top">
+              <span class="proof-exam">FMGE Screening</span>
+              <span class="proof-score">Cleared</span>
+            </div>
+            <p class="proof-text">"The PYQ bank alone was worth it — every year sorted, no duplicates, and exact exam pattern questions with high-yield rationale."</p>
+            <div class="proof-author">FMGE candidate, 2024 batch</div>
+          </div>
+          <div class="proof-card">
+            <div class="proof-top">
+              <span class="proof-exam">NEET PG</span>
+              <span class="proof-score">AIR 1,842</span>
+            </div>
+            <p class="proof-text">"Used the topic-wise Anatomy and Physiology sets as a daily fifty-question warm-up. Clean interface, no clutter, and instant explanation pearls."</p>
+            <div class="proof-author">NEET PG Aspirant</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section class="section" id="pricing">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="sec-badge">Simple, Transparent Pricing</div>
+          <h2>Unlock Full Medical QBank Pro</h2>
+          <p>Get unrestricted access to all 739 topics, 37,076 MCQs, full-subject mock exams, and previous-year exam papers.</p>
+        </div>
+        <div class="plans-grid">
+          <!-- 1 Month -->
+          <div class="plan-card">
+            <span class="plan-badge" style="background: rgba(167, 139, 250, 0.2); color: var(--accent); border: 1px solid var(--line);">QUICK PREP</span>
+            <div class="plan-name">1 Month</div>
+            <div class="plan-desc">30 days full QBank access</div>
+            <div class="plan-price-row">
+              <div class="plan-price-box">
+                <span class="plan-price">₹199</span>
+                <span class="plan-old-price">₹499</span>
+              </div>
+              <div class="plan-per-mo">₹199/month · Quick prep</div>
+            </div>
+            <a href="/?action=upgrade&plan=1_month" class="plan-btn">Choose 1 Month</a>
+          </div>
+
+          <!-- 3 Months -->
+          <div class="plan-card">
+            <span class="plan-badge" style="background: rgba(52, 211, 153, 0.2); color: var(--green); border: 1px solid rgba(52, 211, 153, 0.3);">POPULAR</span>
+            <div class="plan-name">3 Months</div>
+            <div class="plan-desc">90 days targeted revision</div>
+            <div class="plan-price-row">
+              <div class="plan-price-box">
+                <span class="plan-price">₹399</span>
+                <span class="plan-old-price">₹999</span>
+              </div>
+              <div class="plan-per-mo">₹133/month · Revision cycle</div>
+            </div>
+            <a href="/?action=upgrade&plan=3_months" class="plan-btn">Choose 3 Months</a>
+          </div>
+
+          <!-- 6 Months (Best Value) -->
+          <div class="plan-card popular">
+            <span class="plan-badge">BEST VALUE</span>
+            <div class="plan-name">6 Months</div>
+            <div class="plan-desc">180 days exam season prep</div>
+            <div class="plan-price-row">
+              <div class="plan-price-box">
+                <span class="plan-price">₹799</span>
+                <span class="plan-old-price">₹1,999</span>
+              </div>
+              <div class="plan-per-mo">₹133/month · Most chosen</div>
+            </div>
+            <a href="/?action=upgrade&plan=6_months" class="plan-btn">Choose 6 Months</a>
+          </div>
+
+          <!-- 1 Year (Max Savings) -->
+          <div class="plan-card">
+            <span class="plan-badge" style="background:#059669;">MAX SAVINGS</span>
+            <div class="plan-name">1 Year</div>
+            <div class="plan-desc">365 days full medical ladder</div>
+            <div class="plan-price-row">
+              <div class="plan-price-box">
+                <span class="plan-price">₹999</span>
+                <span class="plan-old-price">₹2,999</span>
+              </div>
+              <div class="plan-per-mo">Just ₹83/month · Complete access</div>
+            </div>
+            <a href="/?action=upgrade&plan=1_year" class="plan-btn">Choose 1 Year</a>
+          </div>
+        </div>
+
+        <div class="pricing-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>100% Secure Checkout via Razorpay · UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, NetBanking</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="section" id="faq" style="border-top: 1px solid var(--line);">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="sec-badge">Frequently Asked Questions</div>
+          <h2>Everything You Need to Know</h2>
+          <p>Common questions answered clearly about our question bank and subscriptions.</p>
+        </div>
+        <div class="faq-grid">
+          <div class="faq-card">
+            <h3>How many free modules do I get?</h3>
+            <p>You get the first <strong>8 topic modules completely free</strong> in every single one of the 19 subjects — that's 152 modules unlocked immediately with full question sets and explanations without entering any payment info.</p>
+          </div>
+          <div class="faq-card">
+            <h3>Which exams are covered in MedLadder?</h3>
+            <p>MedLadder covers a wide range of medical exams — <strong>MBBS, NEET PG, INI-CET, FMGE, AIIMS, NEET SS, USMLE (Steps 1–3), MCAT, PLAB (Parts 1 &amp; 2), MRCS, MRCP and Indian State PG entrance exams</strong>. All built on the same 739-topic, 37,076 MCQ foundation with dedicated previous-year question papers from 2018 through 2025.</p>
+          </div>
+          <div class="faq-card">
+            <h3>What is the difference between Practice and Exam modes?</h3>
+            <p><strong>Practice Mode</strong> reveals the correct answer immediately after you click an option along with clinical pearls and explanations. <strong>Exam Mode</strong> simulates a real test with a customizable countdown timer, answer review, and standard negative marking.</p>
+          </div>
+          <div class="faq-card">
+            <h3>Can I practice on my mobile or tablet?</h3>
+            <p>Yes. MedLadder is a fully responsive Progressive Web App. You can log into your account from your iPhone, Android phone, iPad, tablet, or desktop and your answered questions and scores will sync automatically.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CALL TO ACTION BANNER -->
+    <section class="wrap">
+      <div class="cta-banner">
+        <h2>Start Practicing in 30 Seconds.</h2>
+        <p>No credit card required. Solve 8 free modules in every single subject right now.</p>
+        <a href="/" class="btn-main" style="padding:18px 40px; font-size:16.5px;">⚡ Launch MedLadder Free →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <div>
+        <strong>MedLadder</strong> · MBBS · FMGE · NEET PG · INI-CET · NEET SS · USMLE · MCAT · PLAB · MRCS · MRCP · State PG
+      </div>
+      <a href="/MedLadder-latest.apk" class="footer-apk-btn" download="MedLadder-latest.apk" title="Download MedLadder Android APK">
+        <span class="footer-apk-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4116 13.8533 8.125 12 8.125s-3.5902.2866-5.1368.8247L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/></svg>
+        </span>
+        <span class="footer-apk-text">
+          <span class="footer-apk-sub">Android App</span>
+          <span class="footer-apk-title">Download APK</span>
+        </span>
+        <span class="footer-apk-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Latest</span>
+        </span>
+      </a>
+      <div class="footer-social-row">
+        <a href="https://www.facebook.com/profile.php?id=61568903965858" target="_blank" rel="noopener noreferrer" class="footer-social-btn fb" aria-label="Facebook" title="MedLadder on Facebook">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/medladder2026/" target="_blank" rel="noopener noreferrer" class="footer-social-btn insta" aria-label="Instagram" title="MedLadder on Instagram">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        </a>
+        <a href="https://x.com/medladder2026" target="_blank" rel="noopener noreferrer" class="footer-social-btn x-tw" aria-label="X (formerly Twitter)" title="MedLadder on X">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 23.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://t.me/+JdqZ1YlJ-NhlOThl" target="_blank" rel="noopener noreferrer" class="footer-social-btn tg" aria-label="Telegram" title="MedLadder on Telegram">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.329-.913.489-1.302.481-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.14.121.099.155.232.164.333-.008.068.002.193-.006.31z"/></svg>
+        </a>
+      </div>
+      <div class="footer-links">
+        <a href="/neet-pg">NEET PG PYQs</a>
+        <a href="/inicet">INI-CET PYQs</a>
+        <a href="/fmge">FMGE PYQs</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Google Analytics Tag -->
+  <script src="/gtag-init.js" defer></script>
+  <script src="/analytics-loader.js" defer></script>
+  <script>
+    var isDownloadingApk = false;
+
+    function downloadMedLadderApkInPage() {
+      if (isDownloadingApk) return;
+      isDownloadingApk = true;
+      var toast = showDownloadToast('📥 Preparing MedLadder APK (7.5 MB)...', true);
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/MedLadder-latest.apk', true);
+      xhr.responseType = 'blob';
+
+      xhr.onprogress = function(e) {
+        if (e.lengthComputable && e.total > 0) {
+          var pct = Math.min(100, Math.round((e.loaded / e.total) * 100));
+          if (toast) toast.textContent = '📥 Downloading MedLadder APK... ' + pct + '%';
+        }
+      };
+
+      xhr.onload = function() {
+        isDownloadingApk = false;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            var blob = xhr.response;
+            var blobUrl = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = blobUrl;
+            a.download = 'MedLadder-latest.apk';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+              if (a.parentNode) a.parentNode.removeChild(a);
+              window.URL.revokeObjectURL(blobUrl);
+            }, 60000);
+            if (toast) {
+              toast.textContent = '✅ Download complete! Saved to your device.';
+              setTimeout(function() {
+                toast.classList.remove('visible');
+                setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+              }, 4000);
+            }
+            return;
+          } catch (err) {}
+        }
+        if (toast) {
+          toast.textContent = '📥 Starting direct download...';
+          setTimeout(function() {
+            toast.classList.remove('visible');
+            setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+          }, 3000);
+        }
+        triggerFallbackDownload('/MedLadder-latest.apk');
+      };
+
+      xhr.onerror = function() {
+        isDownloadingApk = false;
+        triggerFallbackDownload('/MedLadder-latest.apk');
+      };
+
+      xhr.send();
+    }
+
+    function triggerFallbackDownload(url) {
+      var iframe = document.getElementById('medladderApkDownloader');
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'medladderApkDownloader';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+      iframe.src = url;
+    }
+
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.nav-download-btn, .footer-apk-btn');
+      if (btn) {
+        e.preventDefault();
+        downloadMedLadderApkInPage();
+      }
+    });
+
+    function showDownloadToast(msg, persistent) {
+      var container = document.getElementById('landingToastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'landingToastContainer';
+        container.className = 'landing-toast-container';
+        document.body.appendChild(container);
+      }
+      var toast = document.createElement('div');
+      toast.className = 'landing-toast';
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() { toast.classList.add('visible'); }, 10);
+      if (!persistent) {
+        setTimeout(function() {
+          toast.classList.remove('visible');
+          setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+        }, 3500);
+      }
+      return toast;
+    }
+  </script>
+</body>
+</html>

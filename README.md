@@ -12,13 +12,14 @@ standalone copy meant for Cloudflare Pages.
   manifest, icons and images, and the Android APK served at `/download-apk`.
 - `admin-mock.html` is included (as in production) but stays unlinked and out
   of the sitemap, exactly like the live site.
-- `_redirects` reproduces the Vercel routing: clean URLs (`/privacy`,
-  `/mock-test`, `/neet-ss-books`, `/landing`, …), the `/ini-cet` → `/inicet`
-  301, `.html` → clean-URL 301s, the `/download-apk` rewrite, and the SPA
+- `_redirects` handles the `/ini-cet` → `/inicet` 301, `.html` → clean-URL
+  301s, and the `/download-apk` → APK 302. Clean URLs (`/privacy`,
+  `/mock-test`, `/neet-ss-books`, `/landing`, …) are real directories
+  (`privacy/index.html`, …) served by directory index, so they work
+  with no rewrite rules at all — and the SPA
   fallback (via `not_found_handling: "single-page-application"` in
   `wrangler.jsonc` — a `/* /index.html 200` rule is rejected by
-  Workers static assets as an infinite loop). Static files and directory indexes (topic pages
-  are `subjects/<subject>/<topic>/index.html`) are served directly.
+  Workers static assets as an infinite loop).
 - `_headers` carries the production security headers (CSP, HSTS, nosniff,
   frame deny) plus the APK download headers.
 

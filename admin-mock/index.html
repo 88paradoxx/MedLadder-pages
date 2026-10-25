@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/theme-init.js"></script>
+  <title>Mock Test Admin | MedLadder</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/admin-mock.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" crossorigin="anonymous" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" defer></script>
+  <script src="/admin-mock.js" defer></script>
+  <script src="/gtag-init.js" defer></script>
+</head>
+
+<body>
+  <div id="app">
+    <header class="am-topbar">
+      <a class="am-brand" href="/">MedLadder</a>
+      <span class="am-title">👑 Mock Test Admin</span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">🌙</button>
+      <div id="authArea" class="am-auth"></div>
+    </header>
+
+    <main id="viewRoot">
+      <!-- access gate -->
+      <section id="gateView" class="am-view" hidden>
+        <div class="am-gate">
+          <h2>Restricted area</h2>
+          <p id="gateMsg">Checking access…</p>
+        </div>
+      </section>
+
+      <!-- tests list -->
+      <section id="testsView" class="am-view" hidden>
+        <div class="am-row">
+          <h1>Mock tests</h1>
+          <button id="newTestBtn" class="am-btn am-btn-primary">+ New test</button>
+        </div>
+        <div id="testList" class="am-list"></div>
+      </section>
+
+      <!-- editor -->
+      <section id="editorView" class="am-view" hidden>
+        <button id="backBtn" class="am-btn">← All tests</button>
+        <h1 id="editorTitle">New test</h1>
+
+        <form id="testForm" class="am-card am-form">
+          <label>Title <input id="fTitle" required maxlength="120"></label>
+          <label>Exam
+            <select id="fExam">
+              <option>NEET PG</option><option>INI-CET</option><option>FMGE</option>
+              <option>NEET SS</option><option>USMLE</option><option>PLAB</option>
+            </select>
+          </label>
+          <label class="am-wide">Description <input id="fDesc" maxlength="300"></label>
+          <label>Starts <input id="fStarts" type="datetime-local" required></label>
+          <label>Ends <input id="fEnds" type="datetime-local" required></label>
+          <label>Duration (min) <input id="fDur" type="number" value="180" min="5" max="600" required></label>
+          <label>Questions <input id="fTotal" type="number" value="200" min="1" max="500" required></label>
+          <label>+ marks <input id="fPos" type="number" step="0.5" value="4" required></label>
+          <label>− marks <input id="fNeg" type="number" step="0.5" value="1" required></label>
+          <label>Free <select id="fFree"><option value="true">Yes — free for all</option><option value="false">No — Pro only</option></select></label>
+          <label>Status
+            <select id="fStatus"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select>
+          </label>
+          <div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Save test</button></div>
+        </form>
+
+        <div id="qSection" hidden>
+          <div class="am-row">
+            <h2>Questions (<span id="qCount">0</span>)</h2>
+            <div class="am-actions">
+              <input id="fillCount" type="number" value="50" min="1" max="500" style="width:70px">
+              <button id="fillBtn" class="am-btn" title="Snapshot random questions from the bank">Fill from bank</button>
+            </div>
+          </div>
+
+          <div id="qList" class="am-list"></div>
+
+          <h3>Add a question</h3>
+          <form id="qForm" class="am-card am-form">
+            <label class="am-wide">Question <textarea id="qText" rows="3" required></textarea></label>
+            <label>A <input id="qA" required></label>
+            <label>B <input id="qB" required></label>
+            <label>C <input id="qC"></label>
+            <label>D <input id="qD"></label>
+            <label>E <input id="qE"></label>
+            <label>Answer
+              <select id="qAns"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option><option value="e">E</option></select>
+            </label>
+            <label>Subject <input id="qSubj" maxlength="60"></label>
+            <label class="am-wide">Explanation <textarea id="qExpl" rows="2"></textarea></label>
+            <div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Add question</button></div>
+          </form>
+
+          <h3>Bulk paste</h3>
+          <div class="am-card">
+            <p class="am-hint">One block per question, separated by <code>---</code>:
+<pre class="am-sample">Q: A 45-year-old man has…
+A: First option
+B: Second option
+C: Third option
+D: Fourth option
+Answer: B
+Explanation: Because…
+Subject: Cardiology
+---
+Q: Next question…</pre></p>
+            <textarea id="bulkText" rows="10" class="am-wide" placeholder="Paste questions here…"></textarea>
+            <div class="am-row" style="margin-top:10px">
+              <button id="bulkParseBtn" class="am-btn">Preview</button>
+              <button id="bulkImportBtn" class="am-btn am-btn-primary" disabled>Import</button>
+              <span id="bulkInfo" class="am-hint"></span>
+            </div>
+            <div id="bulkPreview" class="am-list" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </section>
+
+      <div id="toast" class="am-toast" hidden></div>
+    </main>
+  </div>
+  <script src="/analytics-loader.js" defer></script>
+</body>
+
+</html>
