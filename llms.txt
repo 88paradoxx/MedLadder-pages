@@ -1,0 +1,23 @@
+# MedLadder
+
+> Medical entrance exam question bank for FMGE, NEET PG, INI-CET and NEET SS preparation.
+
+## Main Pages
+- [MedLadder Home](https://medladder.top/) — Medical MCQ question bank and study dashboard.
+- [FMGE](https://medladder.top/fmge) — FMGE preparation resources and previous-year questions.
+- [NEET PG](https://medladder.top/neet-pg) — NEET PG preparation resources and previous-year questions.
+- [INI-CET](https://medladder.top/inicet) — INI-CET preparation resources and previous-year questions.
+- [NEET SS](https://medladder.top/neet-ss) — NEET SS preparation resources and question bank.
+
+## Subjects
+- [Anatomy](https://medladder.top/subjects/anatomy) — Anatomy MCQs and topic-wise practice.
+- [Pathology](https://medladder.top/subjects/pathology) — Pathology MCQs and topic-wise practice.
+- [Pharmacology](https://medladder.top/subjects/pharmacology) — Pharmacology MCQs and topic-wise practice.
+- [Physiology](https://medladder.top/subjects/physiology) — Physiology MCQs and topic-wise practice.
+
+## Discovery
+- [Sitemap](https://medladder.top/sitemap.xml) — Full list of indexable MedLadder URLs.
+- [Robots](https://medladder.top/robots.txt) — Crawl directives for search engines and agents.
+
+## Content Guidance
+MedLadder content is intended for medical examination preparation and educational practice. Question explanations should be interpreted in the context of exam preparation and not as a substitute for individualized clinical advice.

@@ -1,0 +1,18 @@
+# Clean URLs (mirrors vercel.json rewrites + cleanUrls)
+/ini-cet    /inicet    301
+/index.html    /    301
+/privacy    /privacy.html    200
+/privacy.html    /privacy    301
+/terms    /terms.html    200
+/terms.html    /terms    301
+/mock-test    /mock-test.html    200
+/mock-test.html    /mock-test    301
+/admin-mock    /admin-mock.html    200
+/admin-mock.html    /admin-mock    301
+/neet-ss-books    /neet-ss-books.html    200
+/neet-ss-books.html    /neet-ss-books    301
+/landing    /landing.html    200
+/landing.html    /landing    301
+/download-apk    /MedLadder-latest.apk    200
+# SPA fallback (mirrors the /(.*) -> /index.html rewrite; static files and directory indexes win first)
+/*    /index.html   200
