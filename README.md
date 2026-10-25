@@ -15,7 +15,9 @@ standalone copy meant for Cloudflare Pages.
 - `_redirects` reproduces the Vercel routing: clean URLs (`/privacy`,
   `/mock-test`, `/neet-ss-books`, `/landing`, …), the `/ini-cet` → `/inicet`
   301, `.html` → clean-URL 301s, the `/download-apk` rewrite, and the SPA
-  fallback to `/index.html`. Static files and directory indexes (topic pages
+  fallback (via `not_found_handling: "single-page-application"` in
+  `wrangler.jsonc` — a `/* /index.html 200` rule is rejected by
+  Workers static assets as an infinite loop). Static files and directory indexes (topic pages
   are `subjects/<subject>/<topic>/index.html`) are served directly.
 - `_headers` carries the production security headers (CSP, HSTS, nosniff,
   frame deny) plus the APK download headers.

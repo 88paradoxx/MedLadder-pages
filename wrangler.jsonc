@@ -1,7 +1,8 @@
 {
-  "name": "medladder",
+  "name": "medladder-pages",
   "compatibility_date": "2026-10-25",
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
   }
 }

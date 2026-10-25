@@ -14,5 +14,3 @@
 /landing    /landing.html    200
 /landing.html    /landing    301
 /download-apk    /MedLadder-latest.apk    200
-# SPA fallback (mirrors the /(.*) -> /index.html rewrite; static files and directory indexes win first)
-/*    /index.html   200
