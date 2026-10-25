@@ -1,0 +1,9 @@
+# Backup safeguard: these must never be uploaded as Worker assets,
+# even if the build command changes. dist-only upload already covers this.
+node_modules
+android
+supabase
+tools
+.github
+.git
+dist
