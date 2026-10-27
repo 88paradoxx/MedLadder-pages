@@ -336,6 +336,8 @@
     };
     $('bankBackBtn').onclick = loadTests;
     $('bankQForm').onsubmit = submitBankQuestion;
+    $('bankBulkParseBtn').onclick = previewBankBulk;
+    $('bankBulkImportBtn').onclick = importBankBulk;
     $('subjFillBtn').onclick = drawFromTopics;
     // Auto-fill the end time when a start time is picked (start + duration),
     // and always derive the duration from the start/end window.
@@ -410,6 +412,8 @@
     $('qForm').onsubmit = submitQuestion;
     $('bulkParseBtn').onclick = previewBulk;
     $('bulkImportBtn').onclick = importBulk;
+    if ($('bulkSubj')) $('bulkSubj').onchange = rebuildBulkTopics;
+    populateBulkDefaults();
   }
 
   /* ---------- questions ---------- */
@@ -491,16 +495,127 @@
     }
   }
 
-  /* ---------- bulk paste ---------- */
+  /* ---------- bulk paste ----------
+   * One block per question, separated by a line of ---. Labels (case
+   * insensitive): Q:, A:, B:, C:, D:, E:, Answer:, Explanation:,
+   * Subject:, Topic:. Q text and Explanation may span lines; other
+   * labels are single-line. A block is valid for the mock when it has
+   * Q + A + B + an answer.
+   * Batch defaults (the two selects above the box) fill blocks that
+   * omit Subject:/Topic:; a block's own labels always win. Topic names
+   * resolve against window.SYLLABUS_DATA: inside the block's subject
+   * when one is given, otherwise globally when the name is unique
+   * (19 topics share the name "Mixed / Miscellaneous Topics", so a
+   * bare topic name is ambiguous without its subject).
+   * Every valid question is saved to the mock. Questions with a
+   * resolved topic AND options C + D AND an explanation are ALSO
+   * written to the bank (live immediately, server-assigned global
+   * question number). One bad block never stops the batch: failures
+   * are collected, and failed blocks are put back in the box for
+   * fixing instead of being lost. */
+  var bulkSkipped = 0;
+  var bulkIndex = null;
+
+  function bulkBuildIndex() {
+    if (bulkIndex) return bulkIndex;
+    var idx = { subjects: [], byKey: {}, bySubject: {} };
+    var data = (window.SYLLABUS_DATA && window.SYLLABUS_DATA.length)
+      ? window.SYLLABUS_DATA : [];
+    data.forEach(function (subj) {
+      idx.subjects.push(subj);
+      idx.bySubject[subj.name.toLowerCase()] = subj;
+      subj.modules.forEach(function (mod) {
+        idx.byKey[subj.name.toLowerCase() + '\n' + mod.name.toLowerCase()] = {
+          id: mod.id, name: mod.name, subject: subj.name
+        };
+      });
+    });
+    bulkIndex = idx;
+    return idx;
+  }
+
+  function populateBulkDefaults() {
+    var subjSel = $('bulkSubj'), topicSel = $('bulkTopic');
+    if (!subjSel || !topicSel) return;
+    var idx = bulkBuildIndex();
+    if (!idx.subjects.length) {
+      subjSel.innerHTML = '<option value="">Subject list failed to load</option>';
+      subjSel.disabled = true; topicSel.disabled = true;
+      return;
+    }
+    subjSel.disabled = false;
+    var curSubj = subjSel.value, curTopic = topicSel.value;
+    subjSel.innerHTML = '<option value="">No default subject</option>';
+    idx.subjects.forEach(function (s) {
+      var o = document.createElement('option');
+      o.value = s.name; o.textContent = s.name;
+      subjSel.appendChild(o);
+    });
+    if (curSubj) subjSel.value = curSubj;
+    rebuildBulkTopics();
+    if (curTopic) topicSel.value = curTopic;
+  }
+
+  function rebuildBulkTopics() {
+    var subjSel = $('bulkSubj'), topicSel = $('bulkTopic');
+    if (!subjSel || !topicSel) return;
+    var idx = bulkBuildIndex();
+    var subj = idx.bySubject[(subjSel.value || '').toLowerCase()];
+    topicSel.innerHTML = '<option value="">No default topic</option>';
+    topicSel.disabled = !subj;
+    if (!subj) return;
+    subj.modules.forEach(function (m) {
+      var o = document.createElement('option');
+      o.value = m.name; o.textContent = m.name;
+      topicSel.appendChild(o);
+    });
+  }
+
+  function resolveBulkTopic(q, defSubj, defTopic) {
+    var subj = (q.subject || defSubj || '').trim();
+    var topic = (q.topic || defTopic || '').trim();
+    if (!topic) {
+      return { moduleId: null, subject: subj, topicName: '', status: 'no-topic', note: '' };
+    }
+    var idx = bulkBuildIndex();
+    if (subj) {
+      var hit = idx.byKey[subj.toLowerCase() + '\n' + topic.toLowerCase()];
+      if (hit) {
+        return { moduleId: hit.id, subject: hit.subject, topicName: hit.name, status: 'ok', note: '' };
+      }
+      return { moduleId: null, subject: subj, topicName: topic, status: 'unmatched',
+        note: 'no topic "' + topic + '" under ' + subj };
+    }
+    var matches = [];
+    idx.subjects.forEach(function (s) {
+      s.modules.forEach(function (mod) {
+        if (mod.name.toLowerCase() === topic.toLowerCase()) {
+          matches.push({ id: mod.id, name: mod.name, subject: s.name });
+        }
+      });
+    });
+    if (matches.length === 1) {
+      return { moduleId: matches[0].id, subject: matches[0].subject,
+        topicName: matches[0].name, status: 'ok', note: '' };
+    }
+    if (!matches.length) {
+      return { moduleId: null, subject: '', topicName: topic, status: 'unmatched',
+        note: 'no topic "' + topic + '" anywhere' };
+    }
+    return { moduleId: null, subject: '', topicName: topic, status: 'ambiguous',
+      note: '"' + topic + '" matches ' + matches.length + ' topics — add its Subject:' };
+  }
+
   function parseBulk(text) {
-    var out = [];
+    var out = [], skipped = 0;
     text.split(/^\s*---+\s*$/m).forEach(function (block) {
       block = block.trim();
       if (!block) return;
-      var q = { text: '', a: '', b: '', c: '', d: '', e: '', answer: '', explanation: '', subject: '' };
+      var q = { text: '', a: '', b: '', c: '', d: '', e: '', answer: '',
+        explanation: '', subject: '', topic: '', _raw: block };
       var cur = null;
       block.split('\n').forEach(function (line) {
-        var m = line.match(/^(Q|A|B|C|D|E|Answer|Explanation|Subject)\s*:\s*(.*)$/i);
+        var m = line.match(/^(Q|A|B|C|D|E|Answer|Explanation|Subject|Topic)\s*:\s*(.*)$/i);
         if (m) {
           var k = m[1].toLowerCase();
           cur = (k === 'q') ? 'text' : k;
@@ -510,24 +625,43 @@
         }
       });
       q.answer = q.answer.toLowerCase().replace(/[^a-e]/g, '').charAt(0);
-      if (q.text && q.a && q.b && q.answer) out.push(q);
+      if (q.text && q.a && q.b && q.answer) out.push(q); else skipped++;
     });
-    return out;
+    return { questions: out, skipped: skipped };
   }
 
   function previewBulk() {
-    bulkParsed = parseBulk($('bulkText').value);
+    if ($('bulkSubj') && !$('bulkSubj').options.length) populateBulkDefaults();
+    var parsed = parseBulk($('bulkText').value);
+    var defSubj = $('bulkSubj') ? $('bulkSubj').value : '';
+    var defTopic = $('bulkTopic') ? $('bulkTopic').value : '';
+    bulkParsed = parsed.questions;
+    bulkSkipped = parsed.skipped;
+    var bankCount = 0, mockOnly = 0;
+    bulkParsed.forEach(function (q) {
+      var r = resolveBulkTopic(q, defSubj, defTopic);
+      q._moduleId = r.moduleId; q._subject = r.subject; q._topicName = r.topicName;
+      q._topicStatus = r.status; q._note = r.note;
+      q._bankOk = r.status === 'ok' && !!q.c && !!q.d && !!q.explanation;
+      if (q._bankOk) bankCount++; else mockOnly++;
+    });
     var pv = $('bulkPreview');
-    $('bulkInfo').textContent = bulkParsed.length + ' valid question(s) found.';
+    $('bulkInfo').textContent = bulkParsed.length + ' valid question(s) · ' +
+      bankCount + ' to bank · ' + mockOnly + ' mock-only' +
+      (bulkSkipped ? ' · ' + bulkSkipped + ' block(s) skipped (need Q + A + B + answer).' : '');
     $('bulkImportBtn').disabled = !bulkParsed.length;
     pv.innerHTML = '';
     bulkParsed.slice(0, 5).forEach(function (q, i) {
       var div = document.createElement('div');
       div.className = 'am-q';
+      var loc = q._topicStatus === 'ok'
+        ? esc(q._subject) + ' / ' + esc(q._topicName)
+        : (q._subject ? esc(q._subject) + ' · ' : '') + esc(q._note || 'no topic');
+      var bank = q._bankOk ? ' + bank'
+        : ' · mock only' + (q._topicStatus === 'ok' ? ' (needs C + D + explanation for bank)' : '');
       div.innerHTML = '<div class="qhead"><span class="n">#' + (i + 1) + '</span></div>' +
         '<div class="qt">' + esc(q.text.slice(0, 160)) + (q.text.length > 160 ? '…' : '') + '</div>' +
-        '<div class="opts">Answer: <b>' + q.answer.toUpperCase() + '</b>' +
-        (q.subject ? ' · ' + esc(q.subject) : '') + '</div>';
+        '<div class="opts">Answer: <b>' + q.answer.toUpperCase() + '</b> · ' + loc + bank + '</div>';
       pv.appendChild(div);
     });
     if (bulkParsed.length > 5) {
@@ -539,23 +673,143 @@
     if (!bulkParsed.length) return;
     $('bulkImportBtn').disabled = true;
     $('bulkInfo').textContent = 'Importing…';
-    var i = 0;
-    function next() {
-      if (i >= bulkParsed.length) {
-        $('bulkInfo').textContent = 'Imported ' + bulkParsed.length + ' questions.';
-        $('bulkText').value = ''; bulkParsed = [];
-        loadQuestions();
-        return;
+    var i = 0, mockDone = 0, bankDone = 0, failures = [];
+    function finish() {
+      var msg = 'Imported ' + mockDone + ' to mock, ' + bankDone + ' to bank.';
+      if (failures.length) {
+        msg += ' Failed: ' + failures.map(function (f) {
+          return '#' + f.n + ' ' + f.stage + ' (' + f.reason + ')';
+        }).join('; ') + '. Failed blocks are back in the box — fix and re-preview.';
+        $('bulkText').value = failures.map(function (f) { return f.q._raw; }).join('\n---\n');
+      } else {
+        $('bulkText').value = '';
       }
+      bulkParsed = [];
+      $('bulkInfo').textContent = msg;
+      loadQuestions();
+    }
+    function next() {
+      if (i >= bulkParsed.length) { finish(); return; }
+      var n = i + 1;
       var q = bulkParsed[i++];
+      $('bulkInfo').textContent = 'Importing… ' + i + '/' + bulkParsed.length;
       sb.rpc('admin_add_question', {
         p_test_id: editingTestId,
         p_question_text: q.text, p_option_a: q.a, p_option_b: q.b,
         p_option_c: q.c, p_option_d: q.d, p_option_e: q.e,
-        p_answer: q.answer, p_explanation: q.explanation, p_subject: q.subject
+        p_answer: q.answer, p_explanation: q.explanation,
+        p_subject: q._subject || null, p_module_id: q._moduleId
       }).then(function (r) {
-        if (r.error) { toast('Import stopped: ' + rpcErr(r.error)); return; }
-        $('bulkInfo').textContent = 'Importing… ' + i + '/' + bulkParsed.length;
+        if (r.error) {
+          failures.push({ n: n, stage: 'mock', reason: rpcErr(r.error), q: q });
+          next(); return;
+        }
+        mockDone++;
+        if (!q._bankOk) { next(); return; }
+        sb.rpc('admin_add_bank_question', {
+          p_module_id: q._moduleId, p_subject: q._subject,
+          p_question_text: q.text, p_option_a: q.a, p_option_b: q.b,
+          p_option_c: q.c, p_option_d: q.d, p_option_e: q.e,
+          p_answer: q.answer, p_explanation: q.explanation
+        }).then(function (br) {
+          if (br.error) {
+            failures.push({ n: n, stage: 'bank', reason: rpcErr(br.error), q: q });
+          } else {
+            bankDone++;
+          }
+          next();
+        });
+      });
+    }
+    next();
+  }
+
+  /* ---------- bank-tab bulk paste ----------
+   * Same block format and topic resolution as the editor's bulk paste,
+   * but bank-only: no mock is involved. The topic picked in the menu
+   * above is the default for blocks that omit Subject:/Topic:; a
+   * block's own labels win. A block is importable only with a resolved
+   * topic AND options C + D AND an explanation (bank rules) — the rest
+   * are listed as skipped in preview, never imported silently.
+   * Failures are collected per question and failed blocks are put
+   * back in the box, exactly like the editor import. */
+  var bankBulkParsed = [];
+
+  function previewBankBulk() {
+    var parsed = parseBulk($('bankBulkText').value);
+    var defSubj = bankTopic ? bankTopic.subject : '';
+    var defTopic = bankTopic ? bankTopic.name : '';
+    bankBulkParsed = parsed.questions;
+    var willImport = 0;
+    bankBulkParsed.forEach(function (q) {
+      var r = resolveBulkTopic(q, defSubj, defTopic);
+      q._moduleId = r.moduleId; q._subject = r.subject; q._topicName = r.topicName;
+      q._topicStatus = r.status; q._note = r.note;
+      q._bankOk = r.status === 'ok' && !!q.c && !!q.d && !!q.explanation;
+      if (q._bankOk) willImport++;
+    });
+    var pv = $('bankBulkPreview');
+    $('bankBulkInfo').textContent = bankBulkParsed.length + ' valid question(s) · ' +
+      willImport + ' will import · ' + (bankBulkParsed.length - willImport) + ' skipped' +
+      (parsed.skipped ? ' · ' + parsed.skipped + ' block(s) dropped (need Q + A + B + answer).' : '') +
+      (!bankTopic ? ' Pick a topic above to use it as the default.' : '');
+    $('bankBulkImportBtn').disabled = !willImport;
+    pv.innerHTML = '';
+    bankBulkParsed.slice(0, 5).forEach(function (q, i) {
+      var div = document.createElement('div');
+      div.className = 'am-q';
+      var loc = q._topicStatus === 'ok'
+        ? esc(q._subject) + ' / ' + esc(q._topicName)
+        : (q._subject ? esc(q._subject) + ' · ' : '') + esc(q._note || 'no topic');
+      var verdict = q._bankOk ? 'will import'
+        : 'skipped' + (q._topicStatus === 'ok' ? ' (needs C + D + explanation)' : '');
+      div.innerHTML = '<div class="qhead"><span class="n">#' + (i + 1) + '</span></div>' +
+        '<div class="qt">' + esc(q.text.slice(0, 160)) + (q.text.length > 160 ? '…' : '') + '</div>' +
+        '<div class="opts">Answer: <b>' + q.answer.toUpperCase() + '</b> · ' + loc + ' · ' + verdict + '</div>';
+      pv.appendChild(div);
+    });
+    if (bankBulkParsed.length > 5) {
+      pv.innerHTML += '<p class="am-hint">…and ' + (bankBulkParsed.length - 5) + ' more.</p>';
+    }
+  }
+
+  function importBankBulk() {
+    var queue = [];
+    bankBulkParsed.forEach(function (q, k) {
+      if (q._bankOk) queue.push({ q: q, n: k + 1 });
+    });
+    if (!queue.length) return;
+    $('bankBulkImportBtn').disabled = true;
+    $('bankBulkInfo').textContent = 'Importing…';
+    var i = 0, done = 0, failures = [];
+    function finish() {
+      var msg = 'Imported ' + done + ' to bank.';
+      var skipped = bankBulkParsed.length - queue.length;
+      if (skipped) msg += ' ' + skipped + ' skipped (see preview).';
+      if (failures.length) {
+        msg += ' Failed: ' + failures.map(function (f) {
+          return '#' + f.n + ' (' + f.reason + ')';
+        }).join('; ') + '. Failed blocks are back in the box — fix and re-preview.';
+        $('bankBulkText').value = failures.map(function (f) { return f.q._raw; }).join('\n---\n');
+      } else {
+        $('bankBulkText').value = '';
+      }
+      bankBulkParsed = [];
+      $('bankBulkInfo').textContent = msg;
+    }
+    function next() {
+      if (i >= queue.length) { finish(); return; }
+      var item = queue[i++];
+      var q = item.q;
+      $('bankBulkInfo').textContent = 'Importing… ' + i + '/' + queue.length;
+      sb.rpc('admin_add_bank_question', {
+        p_module_id: q._moduleId, p_subject: q._subject,
+        p_question_text: q.text, p_option_a: q.a, p_option_b: q.b,
+        p_option_c: q.c, p_option_d: q.d, p_option_e: q.e,
+        p_answer: q.answer, p_explanation: q.explanation
+      }).then(function (br) {
+        if (br.error) failures.push({ n: item.n, reason: rpcErr(br.error), q: q });
+        else done++;
         next();
       });
     }
