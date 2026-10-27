@@ -2,7 +2,7 @@ window.SYLLABUS_DATA = [
   {
     "subjectId": 1000109,
     "name": "Anatomy",
-    "questionCount": 1631,
+    "questionCount": 1651,
     "moduleCount": 58,
     "modules": [
       {
@@ -395,7 +395,7 @@ window.SYLLABUS_DATA = [
         "moduleId": "m55",
         "name": "Cardiovascular, Lymphatic and Nervous Systems",
         "section": "General Anatomy",
-        "questionCount": 0
+        "questionCount": 10
       },
       {
         "id": 57,
@@ -409,7 +409,7 @@ window.SYLLABUS_DATA = [
         "moduleId": "m57",
         "name": "Mixed / Miscellaneous Topics",
         "section": "General Anatomy",
-        "questionCount": 0
+        "questionCount": 10
       }
     ]
   },
@@ -2959,7 +2959,7 @@ window.SYLLABUS_DATA = [
   {
     "subjectId": 1000119,
     "name": "Medicine",
-    "questionCount": 2590,
+    "questionCount": 2610,
     "moduleCount": 69,
     "modules": [
       {
@@ -2967,7 +2967,7 @@ window.SYLLABUS_DATA = [
         "moduleId": "m0",
         "name": "Clinical Hypotheses",
         "section": "General Medicine",
-        "questionCount": 0
+        "questionCount": 10
       },
       {
         "id": 412,
@@ -3023,7 +3023,7 @@ window.SYLLABUS_DATA = [
         "moduleId": "m8",
         "name": "Types of Assessment for Diagnosis",
         "section": "Endocrine System",
-        "questionCount": 0
+        "questionCount": 10
       },
       {
         "id": 420,
@@ -4947,7 +4947,7 @@ window.SYLLABUS_DATA = [
   {
     "subjectId": 1000161,
     "name": "Psychiatry",
-    "questionCount": 1036,
+    "questionCount": 1046,
     "moduleCount": 33,
     "modules": [
       {
@@ -4983,7 +4983,7 @@ window.SYLLABUS_DATA = [
         "moduleId": "m4",
         "name": "Neuropsychiatric Aspects of Systemic Disorders",
         "section": "Neuropsychiatry",
-        "questionCount": 0
+        "questionCount": 10
       },
       {
         "id": 692,
