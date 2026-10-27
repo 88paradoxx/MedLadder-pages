@@ -338,6 +338,8 @@
     $('bankQForm').onsubmit = submitBankQuestion;
     $('bankBulkParseBtn').onclick = previewBankBulk;
     $('bankBulkImportBtn').onclick = importBankBulk;
+    if ($('bankBulkSubj')) $('bankBulkSubj').onchange = rebuildBankBulkTopics;
+    populateBankBulkDefaults();
     $('subjFillBtn').onclick = drawFromTopics;
     // Auto-fill the end time when a start time is picked (start + duration),
     // and always derive the duration from the start/end window.
@@ -726,19 +728,58 @@
 
   /* ---------- bank-tab bulk paste ----------
    * Same block format and topic resolution as the editor's bulk paste,
-   * but bank-only: no mock is involved. The topic picked in the menu
-   * above is the default for blocks that omit Subject:/Topic:; a
-   * block's own labels win. A block is importable only with a resolved
-   * topic AND options C + D AND an explanation (bank rules) — the rest
-   * are listed as skipped in preview, never imported silently.
-   * Failures are collected per question and failed blocks are put
-   * back in the box, exactly like the editor import. */
+   * but bank-only: no mock is involved. Batch subject/topic defaults
+   * above the box (same as the editor) fill blocks that omit
+   * Subject:/Topic:; a block's own labels win. Nothing is inherited
+   * from the topic picked in the menu above. A block is importable
+   * only with a resolved topic AND options C + D AND an explanation
+   * (bank rules) — the rest are listed as skipped in preview, never
+   * imported silently. Failures are collected per question and failed
+   * blocks are put back in the box, exactly like the editor import. */
   var bankBulkParsed = [];
 
+  function populateBankBulkDefaults() {
+    var subjSel = $('bankBulkSubj'), topicSel = $('bankBulkTopic');
+    if (!subjSel || !topicSel) return;
+    var idx = bulkBuildIndex();
+    if (!idx.subjects.length) {
+      subjSel.innerHTML = '<option value="">Subject list failed to load</option>';
+      subjSel.disabled = true; topicSel.disabled = true;
+      return;
+    }
+    subjSel.disabled = false;
+    var curSubj = subjSel.value, curTopic = topicSel.value;
+    subjSel.innerHTML = '<option value="">No default subject</option>';
+    idx.subjects.forEach(function (s) {
+      var o = document.createElement('option');
+      o.value = s.name; o.textContent = s.name;
+      subjSel.appendChild(o);
+    });
+    if (curSubj) subjSel.value = curSubj;
+    rebuildBankBulkTopics();
+    if (curTopic) topicSel.value = curTopic;
+  }
+
+  function rebuildBankBulkTopics() {
+    var subjSel = $('bankBulkSubj'), topicSel = $('bankBulkTopic');
+    if (!subjSel || !topicSel) return;
+    var idx = bulkBuildIndex();
+    var subj = idx.bySubject[(subjSel.value || '').toLowerCase()];
+    topicSel.innerHTML = '<option value="">No default topic</option>';
+    topicSel.disabled = !subj;
+    if (!subj) return;
+    subj.modules.forEach(function (m) {
+      var o = document.createElement('option');
+      o.value = m.name; o.textContent = m.name;
+      topicSel.appendChild(o);
+    });
+  }
+
   function previewBankBulk() {
+    if ($('bankBulkSubj') && !$('bankBulkSubj').options.length) populateBankBulkDefaults();
     var parsed = parseBulk($('bankBulkText').value);
-    var defSubj = bankTopic ? bankTopic.subject : '';
-    var defTopic = bankTopic ? bankTopic.name : '';
+    var defSubj = $('bankBulkSubj') ? $('bankBulkSubj').value : '';
+    var defTopic = $('bankBulkTopic') ? $('bankBulkTopic').value : '';
     bankBulkParsed = parsed.questions;
     var willImport = 0;
     bankBulkParsed.forEach(function (q) {
@@ -751,8 +792,7 @@
     var pv = $('bankBulkPreview');
     $('bankBulkInfo').textContent = bankBulkParsed.length + ' valid question(s) · ' +
       willImport + ' will import · ' + (bankBulkParsed.length - willImport) + ' skipped' +
-      (parsed.skipped ? ' · ' + parsed.skipped + ' block(s) dropped (need Q + A + B + answer).' : '') +
-      (!bankTopic ? ' Pick a topic above to use it as the default.' : '');
+      (parsed.skipped ? ' · ' + parsed.skipped + ' block(s) dropped (need Q + A + B + answer).' : '');
     $('bankBulkImportBtn').disabled = !willImport;
     pv.innerHTML = '';
     bankBulkParsed.slice(0, 5).forEach(function (q, i) {

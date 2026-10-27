@@ -73,7 +73,7 @@
         <h3>Bulk paste</h3>
         <div class="am-card">
           <p class="am-hint">One block per question, separated by <code>---</code>.
-            Blocks without Subject:/Topic: use the topic picked above. A block's own
+            The defaults below fill blocks that omit Subject:/Topic:; a block's own
             labels always win. Only questions with a resolved topic, options C + D
             and an explanation can go to the bank — the preview lists the rest as
             skipped with the reason.
@@ -88,6 +88,10 @@ Subject: Anatomy
 Topic: Cardiovascular, Lymphatic and Nervous Systems
 ---
 Q: Next question…</pre></p>
+          <div class="am-row">
+            <label>Default subject <select id="bankBulkSubj"></select></label>
+            <label>Default topic <select id="bankBulkTopic"></select></label>
+          </div>
           <textarea id="bankBulkText" rows="10" class="am-wide" placeholder="Paste questions here…"></textarea>
           <div class="am-row" style="margin-top:10px">
             <button id="bankBulkParseBtn" class="am-btn">Preview</button>
