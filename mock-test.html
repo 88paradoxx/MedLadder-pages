@@ -143,6 +143,7 @@
       <section id="testView" class="mt-view" hidden>
         <div class="mt-test-header">
           <div class="mt-test-title" id="testTitle"></div>
+          <div id="practiceBadge" class="mt-practice-note" hidden>Practice mode — not ranked</div>
           <div class="mt-timer" id="timer">--:--:--</div>
           <button id="submitBtn" class="mt-btn mt-btn-primary">Submit Test</button>
         </div>
@@ -168,6 +169,7 @@
             <div class="mt-big-rank"><span id="resRank">#–</span></div>
             <div class="mt-score" id="resScore">–</div>
             <div class="mt-breakup" id="resBreakup"></div>
+            <div id="practiceNote" class="mt-practice-note" hidden>Practice mode — not ranked</div>
             <button id="reviewBtn" class="mt-btn">Review answers</button>
             <button id="shareRankBtn" class="mt-btn">🔗 Share my rank</button>
           </div>
@@ -188,6 +190,9 @@
           <h1 id="endedTitle"></h1>
           <p id="endedMeta"></p>
           <div><span class="mt-badge ended">ENDED</span></div>
+          <div style="margin-top:14px">
+            <button id="endedPracticeBtn" class="mt-btn mt-btn-primary">Practice this test — not ranked</button>
+          </div>
         </div>
         <div class="mt-board-card">
           <div class="mt-board-head">

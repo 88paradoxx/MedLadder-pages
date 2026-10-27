@@ -74,3 +74,21 @@ body { margin: 0; background: var(--bg); color: var(--text);
 /* image questions in the admin list */
 .am-qimg { max-width: 100%; height: auto; display: block; margin: 10px 0;
   border-radius: 10px; border: 1px solid var(--border); }
+
+/* subject/topic picker menu (bank authoring + subject-mock draw) */
+.am-list .am-card { margin-bottom: 0; }
+.am-subj-head { display: block; width: 100%; text-align: left; background: var(--panel-2);
+  color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.am-subj-head:hover { border-color: var(--accent); }
+.am-topics { display: grid; gap: 6px; padding: 10px 0 2px; }
+/* The [hidden] attribute loses to the display rules above, so restate it. */
+.am-topics[hidden] { display: none; }
+.am-topic-btn { text-align: left; background: transparent; color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+  font-size: 13.5px; cursor: pointer; }
+.am-topic-btn:hover { border-color: var(--accent); }
+.am-topic-btn.selected { border-color: var(--accent); background: rgba(123,47,247,.15); }
+.am-topic-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px;
+  color: var(--text); cursor: pointer; padding: 4px 2px; }
+.am-topic-row input { margin-top: 2px; accent-color: var(--accent); }

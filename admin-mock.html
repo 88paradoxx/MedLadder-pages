@@ -10,6 +10,9 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <link rel="stylesheet" href="/admin-mock.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" crossorigin="anonymous" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" defer></script>
+  <!-- Subject/topic picker data (same file the main site uses). Must load
+       before admin-mock.js so window.SYLLABUS_DATA is ready at init. -->
+  <script src="/syllabus.js" defer></script>
   <script src="/admin-mock.js" defer></script>
   <script src="/gtag-init.js" defer></script>
 </head>
@@ -36,9 +39,37 @@
       <section id="testsView" class="am-view" hidden>
         <div class="am-row">
           <h1>Mock tests</h1>
+          <button id="bankBtn" class="am-btn">Question bank</button>
           <button id="newTestBtn" class="am-btn am-btn-primary">+ New test</button>
         </div>
         <div id="testList" class="am-list"></div>
+      </section>
+
+      <!-- question bank authoring (not tied to any test) -->
+      <section id="bankView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="bankBackBtn" class="am-btn">← All tests</button>
+          <h1>Question bank</h1>
+        </div>
+        <p class="am-hint">Pick a subject, then a topic. New questions go live in the bank
+          immediately — no review queue. After adding, the form stays on the same topic
+          so you can keep entering questions.</p>
+        <div id="bankMenu" class="am-list"></div>
+        <p id="bankTopicLabel" class="am-hint">No topic selected yet — expand a subject above and pick a topic.</p>
+        <form id="bankQForm" class="am-card am-form">
+          <label class="am-wide">Question <textarea id="bqText" rows="3" required></textarea></label>
+          <label>A <input id="bqA" required></label>
+          <label>B <input id="bqB" required></label>
+          <label>C <input id="bqC" required></label>
+          <label>D <input id="bqD" required></label>
+          <label>E <input id="bqE"></label>
+          <label>Answer
+            <select id="bqAns"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option><option value="e">E</option></select>
+          </label>
+          <label class="am-wide">Explanation <textarea id="bqExpl" rows="2" required></textarea></label>
+          <div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Add to bank</button>
+            <span id="bankInfo" class="am-hint"></span></div>
+        </form>
       </section>
 
       <!-- editor -->
@@ -74,6 +105,19 @@
             <div class="am-actions">
               <input id="fillCount" type="number" value="50" min="1" max="500" style="width:70px">
               <button id="fillBtn" class="am-btn" title="Snapshot random questions from the bank">Fill from bank</button>
+            </div>
+          </div>
+
+          <div class="am-card">
+            <h3 style="margin-top:0">Fill from subjects</h3>
+            <p class="am-hint">Pick a subject, tick topics, and draw random questions from just those topics into this test.</p>
+            <div id="subjMenu" class="am-list"></div>
+            <div class="am-row">
+              <span id="subjSelInfo" class="am-hint">No topics selected.</span>
+              <div class="am-actions" style="margin-left:auto">
+                <input id="subjFillCount" type="number" value="50" min="1" max="500" style="width:70px">
+                <button id="subjFillBtn" class="am-btn" title="Snapshot random questions from the selected topics">Draw from topics</button>
+              </div>
             </div>
           </div>
 

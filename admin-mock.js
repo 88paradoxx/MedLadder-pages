@@ -10,6 +10,11 @@
   var editingTestId = null;
   var editingQId = null;
   var bulkParsed = [];
+  var bankTopic = null;       // {id, name, subject} selected in the bank menu
+  var bankMenuState = null;
+  var subjMenuState = null;
+  var bankMenuBuilt = false;
+  var subjMenuBuilt = false;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -36,6 +41,12 @@
     if (m.indexOf('BAD_ANSWER') !== -1) return 'Answer must be A–E.';
     if (m.indexOf('BAD_WINDOW') !== -1) return 'End time must be after start time.';
     if (m.indexOf('TEST_NOT_FOUND') !== -1) return 'Test not found.';
+    // BAD_MODULES must be checked before BAD_MODULE (substring).
+    if (m.indexOf('BAD_MODULES') !== -1) return 'Please select at least one topic.';
+    if (m.indexOf('BAD_MODULE') !== -1) return 'Please pick a subject and topic first.';
+    if (m.indexOf('BAD_QUESTION') !== -1) return 'Please enter the question text.';
+    if (m.indexOf('BAD_OPTION') !== -1) return 'Options A–D are required.';
+    if (m.indexOf('BAD_EXPLANATION') !== -1) return 'Please add an explanation.';
     var ml = m.toLowerCase();
     if (ml.indexOf('expired') !== -1)
       return 'Your session expired — please sign out and sign back in, then retry.';
@@ -48,10 +59,127 @@
       'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
   function showView(id) {
-    ['gateView', 'testsView', 'editorView'].forEach(function (v) {
+    ['gateView', 'testsView', 'editorView', 'bankView'].forEach(function (v) {
       $(v).hidden = v !== id;
     });
     window.scrollTo(0, 0);
+  }
+
+  /* ---------- subject/topic picker menu ----------
+   * Subjects come from window.SYLLABUS_DATA (same file the main site uses),
+   * so subject/topic names and module ids match the bank exactly. Each
+   * subject is a collapsible header; expanding it reveals its topics.
+   * Single mode: clicking a topic selects it. Multi mode: topics are
+   * checkboxes. Returns a state object whose .selected array the caller
+   * reads at submit time. */
+  function buildTopicMenu(container, multi, onChange) {
+    container.innerHTML = '';
+    var data = (window.SYLLABUS_DATA && window.SYLLABUS_DATA.length)
+      ? window.SYLLABUS_DATA : [];
+    if (!data.length) {
+      container.innerHTML = '<p class="am-hint">Subject list failed to load. Refresh the page.</p>';
+      return { selected: [] };
+    }
+    var state = { selected: [] };
+    data.forEach(function (subj) {
+      var wrap = document.createElement('div');
+      wrap.className = 'am-card';
+      var head = document.createElement('button');
+      head.type = 'button';
+      head.className = 'am-subj-head';
+      head.textContent = subj.name + ' · ' + subj.modules.length + ' topics';
+      var topicsDiv = document.createElement('div');
+      topicsDiv.className = 'am-topics';
+      topicsDiv.hidden = true;
+      head.onclick = function () { topicsDiv.hidden = !topicsDiv.hidden; };
+      subj.modules.forEach(function (mod) {
+        if (multi) {
+          var row = document.createElement('label');
+          row.className = 'am-topic-row';
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.onchange = function () {
+            if (cb.checked) {
+              state.selected.push({ id: mod.id, name: mod.name, subject: subj.name });
+            } else {
+              state.selected = state.selected.filter(function (s) { return s.id !== mod.id; });
+            }
+            onChange(state.selected);
+          };
+          row.appendChild(cb);
+          row.appendChild(document.createTextNode(' ' + mod.name));
+          topicsDiv.appendChild(row);
+        } else {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'am-topic-btn';
+          btn.textContent = mod.name;
+          btn.onclick = function () {
+            Array.prototype.forEach.call(
+              container.querySelectorAll('.am-topic-btn'),
+              function (b) { b.classList.remove('selected'); });
+            btn.classList.add('selected');
+            state.selected = [{ id: mod.id, name: mod.name, subject: subj.name }];
+            onChange(state.selected);
+          };
+          topicsDiv.appendChild(btn);
+        }
+      });
+      wrap.appendChild(head);
+      wrap.appendChild(topicsDiv);
+      container.appendChild(wrap);
+    });
+    return state;
+  }
+
+  /* ---------- question bank authoring ---------- */
+  function submitBankQuestion(ev) {
+    ev.preventDefault();
+    if (!bankTopic) { toast('Pick a subject and topic first.'); return; }
+    var d = {
+      p_module_id: bankTopic.id,
+      p_subject: bankTopic.subject,
+      p_question_text: $('bqText').value.trim(),
+      p_option_a: $('bqA').value.trim(), p_option_b: $('bqB').value.trim(),
+      p_option_c: $('bqC').value.trim(), p_option_d: $('bqD').value.trim(),
+      p_option_e: $('bqE').value.trim(),
+      p_answer: $('bqAns').value, p_explanation: $('bqExpl').value.trim()
+    };
+    if (!d.p_question_text || !d.p_option_a || !d.p_option_b ||
+        !d.p_option_c || !d.p_option_d || !d.p_explanation) {
+      toast('Question, options A–D and explanation are required.'); return;
+    }
+    sb.rpc('admin_add_bank_question', d).then(function (r) {
+      if (r.error) { toast(rpcErr(r.error)); return; }
+      var num = (r.data && r.data.question_num) || '';
+      toast('Added to bank (question #' + num + ').');
+      $('bankInfo').textContent = 'Last added: question #' + num + ' → ' +
+        bankTopic.subject + ' / ' + bankTopic.name;
+      // Keep the subject/topic: only the question fields are cleared, so the
+      // next question goes to the same topic without re-picking.
+      ['bqText', 'bqA', 'bqB', 'bqC', 'bqD', 'bqE', 'bqExpl'].forEach(function (id) {
+        $(id).value = '';
+      });
+      $('bqAns').value = 'a';
+    });
+  }
+
+  /* ---------- subject-mock draw ---------- */
+  function drawFromTopics() {
+    var sel = subjMenuState ? subjMenuState.selected : [];
+    if (!sel.length) { toast('Select at least one topic first.'); return; }
+    var n = parseInt($('subjFillCount').value, 10) || 50;
+    if (!window.confirm('Draw ' + n + ' random questions from ' + sel.length +
+        ' topic(s) into this test?')) return;
+    sb.rpc('admin_fill_subject_bank', {
+      p_test_id: editingTestId,
+      p_module_ids: sel.map(function (s) { return s.id; }),
+      p_count: n
+    }).then(function (r) {
+      if (r.error) { toast(rpcErr(r.error)); return; }
+      toast('Added ' + (r.data && r.data.added) + ' questions.');
+      loadQuestions();
+    });
   }
 
   /* ---------- auth gate ---------- */
@@ -131,6 +259,21 @@
     $('testForm').reset();
     $('qSection').hidden = true;
     showView('editorView');
+    if (!subjMenuBuilt) {
+      subjMenuBuilt = true;
+      subjMenuState = buildTopicMenu($('subjMenu'), true, function (sel) {
+        $('subjSelInfo').textContent = sel.length
+          ? sel.length + ' topic(s) selected.'
+          : 'No topics selected.';
+      });
+    } else {
+      // Fresh selection per test: never carry another test's ticks over.
+      subjMenuState.selected = [];
+      Array.prototype.forEach.call(
+        $('subjMenu').querySelectorAll('input[type="checkbox"]'),
+        function (cb) { cb.checked = false; });
+      $('subjSelInfo').textContent = 'No topics selected.';
+    }
     if (testId) {
       // Show the questions UI immediately; fill the form when the fetch lands.
       $('qSection').hidden = false;
@@ -179,6 +322,21 @@
   function wireEditor() {
     $('backBtn').onclick = loadTests;
     $('newTestBtn').onclick = function () { openEditor(null); };
+    $('bankBtn').onclick = function () {
+      showView('bankView');
+      if (!bankMenuBuilt) {
+        bankMenuBuilt = true;
+        bankMenuState = buildTopicMenu($('bankMenu'), false, function (sel) {
+          bankTopic = sel[0] || null;
+          $('bankTopicLabel').textContent = bankTopic
+            ? 'Selected: ' + bankTopic.subject + ' / ' + bankTopic.name
+            : 'No topic selected yet — expand a subject above and pick a topic.';
+        });
+      }
+    };
+    $('bankBackBtn').onclick = loadTests;
+    $('bankQForm').onsubmit = submitBankQuestion;
+    $('subjFillBtn').onclick = drawFromTopics;
     // Auto-fill the end time when a start time is picked (start + duration),
     // and always derive the duration from the start/end window.
     function syncDuration() {

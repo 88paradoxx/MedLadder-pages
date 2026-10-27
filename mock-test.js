@@ -12,6 +12,7 @@
   var currentUser = null;
   var currentTest = null;
   var attemptId = null;
+  var isPractice = false;  // post-window attempt: full timer, never ranked
   var questions = [];
   var answers = {};      // {"<sort_order>": "a"|"b"|"c"|"d"|"e"}
   var marked = {};       // {"<sort_order>": true}
@@ -835,6 +836,7 @@
             '</div>' +
             '<button class="mt-btn mt-btn-primary" data-act="open">' +
             (phase === 'upcoming' && expandedDetails[t.id] ? 'Hide details' : btn) + '</button>' +
+            (phase === 'ended' ? ' <button class="mt-btn" data-act="practice">Practice — not ranked</button>' : '') +
             ' <button class="mt-btn" data-act="share" title="Share this test">🔗</button>';
           var openBtn = card.querySelector('[data-act="open"]');
           if (phase === 'upcoming') {
@@ -851,6 +853,18 @@
           } else {
             openBtn.onclick = function () {
               openTest(t.id);
+            };
+          }
+          var pracBtn = card.querySelector('[data-act="practice"]');
+          if (pracBtn) {
+            pracBtn.onclick = function () {
+              // Fetch the test first so currentTest is fresh for the
+              // result view (the ended-test route would show the board).
+              sb.from('mock_tests').select('*').eq('id', t.id).single().then(function (tr) {
+                if (tr.error || !tr.data) { toast('Mock test not found.'); return; }
+                currentTest = tr.data;
+                startTestFlow(t.id);
+              });
             };
           }
           card.querySelector('[data-act="share"]').onclick = function () {
@@ -877,7 +891,8 @@
           '<div><div class="rr-title">' + esc(a.test_title) + '</div>' +
           '<div class="rr-sub">' + esc(a.exam || '') + ' \u00B7 ' +
           new Date(a.submitted_at).toLocaleDateString() + '</div></div>' +
-          '<div class="rr-score"><div class="rr-rank">#' + a.rank + '</div>' +
+          '<div class="rr-score"><div class="rr-rank">' +
+          (a.rank == null ? 'Practice' : '#' + a.rank) + '</div>' +
           '<div class="rr-pts">' + a.score + ' pts</div></div>' +
           '</div>';
       });
@@ -939,6 +954,7 @@
       if (res.error) { toast(friendlyErr(res.error)); loadLobby(); return; }
       var d = res.data;
       attemptId = d.attempt_id;
+      isPractice = !!d.practice;
       if (d.already_submitted) {
         showResultView();
         return;
@@ -960,6 +976,7 @@
   function renderTestView() {
     showView('testView');
     $('testTitle').textContent = currentTest.title;
+    $('practiceBadge').hidden = !isPractice;
     renderPalette();
     renderQuestion();
     startTimer();
@@ -1085,18 +1102,24 @@
     window.onbeforeunload = null;
     if (submitData) {
       renderScore(submitData);
-      loadLeaderboard();
+      $('practiceNote').hidden = !submitData.practice;
+      $('shareRankBtn').hidden = !!submitData.practice;
+      loadLeaderboard(!!submitData.practice);
     } else {
       // Returning user with an already-submitted attempt: pull detail via RPC.
       sb.rpc('get_my_attempt', { p_attempt_id: attemptId }).then(function (res) {
         if (res.error) { toast(friendlyErr(res.error)); loadLobby(); return; }
         var a = res.data.attempt;
+        var practice = !!(currentTest &&
+          new Date(a.started_at).getTime() > new Date(currentTest.ends_at).getTime());
         renderScore({
           score: a.score, correct: a.correct_count, wrong: a.wrong_count,
           skipped: a.skipped_count, time_taken_seconds: a.time_taken_seconds,
           rank: null, total_questions: questions.length || a.total
         });
-        loadLeaderboard();
+        $('practiceNote').hidden = !practice;
+        $('shareRankBtn').hidden = !!practice;
+        loadLeaderboard(practice);
       });
     }
     $('reviewBtn').onclick = loadReview;
@@ -1123,14 +1146,20 @@
       '<span>⏱ ' + fmtDur(d.time_taken_seconds) + '</span>';
   }
 
-  function loadLeaderboard() {
+  function loadLeaderboard(isPractice) {
     var box = $('leaderboard');
     box.innerHTML = '<div class="mt-board-empty">Loading leaderboard…</div>';
     sb.rpc('get_leaderboard', { p_mock_test_id: currentTest.id, p_limit: 100 })
       .then(function (res) {
         if (res.error) { box.innerHTML = '<div class="mt-board-empty">Could not load.</div>'; return; }
         renderBoard(res.data || []);
-        subscribeBoard();
+        if (isPractice) {
+          // Practice results sit beside the frozen board: never subscribe
+          // to live updates, and drop any channel left over from a ranked view.
+          if (lbChannel) { sb.removeChannel(lbChannel); lbChannel = null; }
+        } else {
+          subscribeBoard();
+        }
       });
   }
 
@@ -1171,6 +1200,7 @@
     $('endedTitle').textContent = t.title;
     $('endedMeta').textContent = t.exam + ' · ' + t.total_questions + ' questions · ' +
       'Ended ' + new Date(t.ends_at).toLocaleString();
+    $('endedPracticeBtn').onclick = function () { startTestFlow(currentTest.id); };
     loadEndedLeaderboard();
   }
   function loadEndedLeaderboard() {
