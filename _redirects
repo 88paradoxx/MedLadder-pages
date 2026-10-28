@@ -10,3 +10,8 @@
 /neet-ss-books.html    /neet-ss-books    301
 /landing.html    /landing    301
 /download-apk    /MedLadder-latest.apk    302
+# No AI-agent catalog is offered, so the ARD well-known paths must 404
+# instead of falling through to the SPA shell (HTML with 200), which
+# Lighthouse 13.5 reads as an invalid ai-catalog.json schema.
+/.well-known/ai-catalog.json    /    404
+/.well-known/ard.json    /    404
