@@ -10,8 +10,7 @@
 /neet-ss-books.html    /neet-ss-books    301
 /landing.html    /landing    301
 /download-apk    /MedLadder-latest.apk    302
-# No AI-agent catalog is offered, so the ARD well-known paths must 404
-# instead of falling through to the SPA shell (HTML with 200), which
-# Lighthouse 13.5 reads as an invalid ai-catalog.json schema.
-/.well-known/ai-catalog.json    /    404
-/.well-known/ard.json    /    404
+# NOTE: Workers Static Assets _redirects rejects status 404 (valid codes are
+# 200/301/302/303/307/308), so the ARD well-known paths cannot be forced to
+# 404 here — they fall through to the SPA shell. The ai-catalog audit item
+# stays open until a valid catalog is served or a Worker route handles it.
