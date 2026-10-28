@@ -1,0 +1,35 @@
+{
+    "entries": [
+        {
+            "description": "Medical education platform providing medical multiple-choice questions, subject-wise study resources, and exam preparation materials.",
+            "displayName": "MedLadder Medical Education Platform",
+            "identifier": "urn:air:medladder.top:website:medladder",
+            "representativeQueries": [
+                "What medical education resources are available on MedLadder?",
+                "Where can medical students practise MCQs?"
+            ],
+            "type": "text/html",
+            "url": "https://medladder.top/"
+        },
+        {
+            "description": "Sitemap listing discoverable pages on the MedLadder website.",
+            "displayName": "MedLadder XML Sitemap",
+            "identifier": "urn:air:medladder.top:catalog:sitemap",
+            "type": "application/xml",
+            "url": "https://medladder.top/sitemap.xml"
+        },
+        {
+            "description": "Public crawler instructions for the MedLadder website.",
+            "displayName": "MedLadder Crawler Instructions",
+            "identifier": "urn:air:medladder.top:document:robots",
+            "type": "text/plain",
+            "url": "https://medladder.top/robots.txt"
+        }
+    ],
+    "host": {
+        "displayName": "MedLadder",
+        "documentationUrl": "https://medladder.top/",
+        "identifier": "did:web:medladder.top"
+    },
+    "specVersion": "1.0"
+}
