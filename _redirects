@@ -1,15 +1,15 @@
 # Clean URLs are real directories (privacy/index.html etc.), served by
 # directory index — no rewrite rules needed for them.
-# .html URLs redirect straight to the trailing-slash form; /download-apk redirects to the APK.
+# .html URLs redirect to the clean form; /download-apk redirects to the APK.
 /inicet    /ini-cet/    301
 /inicet/    /ini-cet/    301
 /index.html    /    301
-/privacy.html    /privacy/    301
-/terms.html    /terms/    301
-/mock-test.html    /mock-test/    301
-/admin-mock.html    /admin-mock/    301
-/neet-ss-books.html    /neet-ss-books/    301
-/landing.html    /landing/    301
+/privacy.html    /privacy    301
+/terms.html    /terms    301
+/mock-test.html    /mock-test    301
+/admin-mock.html    /admin-mock    301
+/neet-ss-books.html    /neet-ss-books    301
+/landing.html    /landing    301
 /download-apk    /MedLadder-latest.apk    302
 # Unknown URLs now return a real 404 (404.html) instead of the SPA shell.
 # NOTE: Workers Static Assets _redirects rejects status 404 (valid codes are

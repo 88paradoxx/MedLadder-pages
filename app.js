@@ -422,7 +422,7 @@ window.addEventListener('error', function (ev) {
           '<span>100% Secure Checkout via Razorpay · UPI (GPay, PhonePe, Paytm), Cards, NetBanking</span>' +
           '</div>' +
           '<div class="pro-legal-links" style="font-size:11px;color:var(--ink-soft);text-align:center;margin-top:8px;line-height:1.45;">' +
-          'By subscribing, you agree to our <a href="/terms/" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a>, <a href="/privacy/" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy</a> &amp; <a href="/terms/#cancellation-refund" target="_blank" style="color:var(--accent);text-decoration:underline;">Cancellation/Refund Policy</a>.<br>' +
+          'By subscribing, you agree to our <a href="/terms" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a>, <a href="/privacy" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy</a> &amp; <a href="/terms#cancellation-refund" target="_blank" style="color:var(--accent);text-decoration:underline;">Cancellation/Refund Policy</a>.<br>' +
           'Instant digital activation · Billing support: <a href="mailto:99medladder@gmail.com" style="color:var(--accent);text-decoration:underline;">99medladder@gmail.com</a>' +
           '</div>' +
 
@@ -2037,7 +2037,7 @@ window.addEventListener('error', function (ev) {
           '</div>' +
           '</div>' +
           '<div class="auth-legal-note" style="font-size:11.5px;color:var(--ink-soft);text-align:center;margin:8px 0 12px;line-height:1.45;">' +
-          'By creating an account, you agree to our <a href="/terms/" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a> &amp; <a href="/privacy/" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy Policy</a>.' +
+          'By creating an account, you agree to our <a href="/terms" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a> &amp; <a href="/privacy" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy Policy</a>.' +
           '</div>' +
           '<button type="submit" class="auth-submit-btn" id="authSignUpSubmit">Create Account</button>' +
           '<div class="auth-footer-links">' +

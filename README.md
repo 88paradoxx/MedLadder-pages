@@ -18,9 +18,7 @@ standalone copy meant for Cloudflare Pages.
   (`privacy/index.html`, …) served by directory index, so they work
   with no rewrite rules at all — and unknown
   URLs get a real 404 via `404.html` (`not_found_handling: "404-page"` in
-  `wrangler.jsonc`). Canonicals, sitemap and internal links use the
-  trailing-slash form (`/privacy/`, `/mock-test/`, …) that Workers assets
-  serves for directory indexes.
+  `wrangler.jsonc`).
 - `_headers` carries the production security headers (CSP, HSTS, nosniff,
   frame deny) plus the APK download headers.
 
