@@ -4900,7 +4900,7 @@ window.addEventListener('error', function (ev) {
         if (path === '/neet-pg-syllabus' || path === '/neet-pg-high-yield-topics' ||
             path === '/neet-pg-top-100-questions' || path === '/medladder-vs-marrow' ||
             path === '/medladder-vs-prepladder' || path === '/best-free-neet-pg-question-bank' ||
-            path === '/ini-cet') {
+            path === '/inicet') {
           return;
         }
         if (path === '/mock-test' || path === '/mock-test.html') {
@@ -4926,7 +4926,7 @@ window.addEventListener('error', function (ev) {
         var exams = {
           '/neet-pg': { name: 'NEET PG', pyqId: 'NEET PG' },
           '/inicet': { name: 'INI-CET', pyqId: 'INICET' },
-          '/ini-cet': { name: 'INI-CET', pyqId: 'INICET' },
+          '/inicet': { name: 'INI-CET', pyqId: 'INICET' },
           '/fmge': { name: 'FMGE', pyqId: 'FMGE' },
           '/neet-ss': { name: 'NEET SS', pyqId: 'NEET SS' }
         };
@@ -4984,7 +4984,7 @@ window.addEventListener('error', function (ev) {
 
       window.addEventListener('popstate', function () {
         var p = window.location.pathname.replace(/\/$/, '').toLowerCase();
-        var isSeoUrl = p.indexOf('/subjects/') === 0 || ['/neet-pg', '/inicet', '/ini-cet', '/fmge', '/neet-ss'].indexOf(p) !== -1;
+        var isSeoUrl = p.indexOf('/subjects/') === 0 || ['/neet-pg', '/inicet', '/fmge', '/neet-ss'].indexOf(p) !== -1;
         // The DOM may have been replaced by renderHome()/quiz screens; reload so the current pre-rendered page is shown.
         if (isSeoUrl && !document.getElementById('seoStartBtn')) { window.location.reload(); return; }
         handleSeoRoute();
