@@ -4894,6 +4894,15 @@ window.addEventListener('error', function (ev) {
         if (path === '/pyqs' || path.indexOf('/pyqs/') === 0) {
           return;
         }
+        // Other pre-rendered static pages ship full HTML too: leave them alone.
+        // (Without this, the router falls through to renderHome() and wipes them,
+        // the same bug the /pyqs guard fixed.)
+        if (path === '/neet-pg-syllabus' || path === '/neet-pg-high-yield-topics' ||
+            path === '/neet-pg-top-100-questions' || path === '/medladder-vs-marrow' ||
+            path === '/medladder-vs-prepladder' || path === '/best-free-neet-pg-question-bank' ||
+            path === '/ini-cet') {
+          return;
+        }
         if (path === '/mock-test' || path === '/mock-test.html') {
           window.location.replace('/mock-test.html' + (window.location.search || ''));
           return;
