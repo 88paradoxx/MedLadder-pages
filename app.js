@@ -4890,6 +4890,10 @@ window.addEventListener('error', function (ev) {
 
       function handleSeoRoute() {
         var path = window.location.pathname.replace(/\/$/, '').toLowerCase();
+        // Pre-rendered PYQ pages (/pyqs/*) ship full static HTML: leave them alone.
+        if (path === '/pyqs' || path.indexOf('/pyqs/') === 0) {
+          return;
+        }
         if (path === '/mock-test' || path === '/mock-test.html') {
           window.location.replace('/mock-test.html' + (window.location.search || ''));
           return;
