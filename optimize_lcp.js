@@ -158,11 +158,11 @@ ${pyqSectionHtml}
           </a>
         </div>
         <div class="footer-links-row">
-          <a href="/privacy" class="footer-link">Privacy Policy</a>
+          <a href="/privacy/" class="footer-link">Privacy Policy</a>
           <span class="footer-dot" aria-hidden="true">·</span>
-          <a href="/terms" class="footer-link">Terms of Service</a>
+          <a href="/terms/" class="footer-link">Terms of Service</a>
           <span class="footer-dot" aria-hidden="true">·</span>
-          <a href="/terms#cancellation-refund" class="footer-link">Refund Policy</a>
+          <a href="/terms/#cancellation-refund" class="footer-link">Refund Policy</a>
         </div>
         <div class="footer-copy">
           <strong>MedLadder</strong> · Medical Entrance Exam Question Bank

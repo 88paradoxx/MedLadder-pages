@@ -16,10 +16,11 @@ standalone copy meant for Cloudflare Pages.
   301s, and the `/download-apk` → APK 302. Clean URLs (`/privacy`,
   `/mock-test`, `/neet-ss-books`, `/landing`, …) are real directories
   (`privacy/index.html`, …) served by directory index, so they work
-  with no rewrite rules at all — and the SPA
-  fallback (via `not_found_handling: "single-page-application"` in
-  `wrangler.jsonc` — a `/* /index.html 200` rule is rejected by
-  Workers static assets as an infinite loop).
+  with no rewrite rules at all — and unknown
+  URLs get a real 404 via `404.html` (`not_found_handling: "404-page"` in
+  `wrangler.jsonc`). Canonicals, sitemap and internal links use the
+  trailing-slash form (`/privacy/`, `/mock-test/`, …) that Workers assets
+  serves for directory indexes.
 - `_headers` carries the production security headers (CSP, HSTS, nosniff,
   frame deny) plus the APK download headers.
 

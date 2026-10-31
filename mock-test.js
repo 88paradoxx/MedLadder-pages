@@ -99,12 +99,12 @@
   }
   /* Share via the native sheet where available, else copy the link. */
   function normalizeShareUrl(url) {
-    if (!url) return 'https://medladder.top/mock-test';
+    if (!url) return 'https://medladder.top/mock-test/';
     return String(url).replace(/^(https?:\/\/localhost(:\d+)?|capacitor:\/\/localhost)/i, 'https://medladder.top');
   }
   function getShareUrl(testId) {
     var id = testId ? encodeURIComponent(testId) : '';
-    return 'https://medladder.top/mock-test' + (id ? '?id=' + id : '');
+    return 'https://medladder.top/mock-test/' + (id ? '?id=' + id : '');
   }
   function shareLink(title, text, url) {
     url = normalizeShareUrl(url);
@@ -302,7 +302,7 @@
       '</div>' +
       '</div>' +
       '<div class="auth-legal-note" style="font-size:11.5px;color:var(--muted);text-align:center;margin:8px 0 12px;line-height:1.45;">' +
-      'By creating an account, you agree to our <a href="/terms" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a> &amp; <a href="/privacy" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy Policy</a>.' +
+      'By creating an account, you agree to our <a href="/terms/" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a> &amp; <a href="/privacy/" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy Policy</a>.' +
       '</div>' +
       '<button type="submit" class="auth-submit-btn" id="authSignUpSubmit">Create Account</button>' +
       '<div class="auth-footer-links">' +
