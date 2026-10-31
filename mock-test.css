@@ -87,7 +87,7 @@ body {
 
 /* ---------- lobby ---------- */
 .mt-hero { text-align: center; margin-bottom: 30px; }
-.mt-hero h1 {
+.mt-hero h1, .mt-hero h2 {
   font-size: clamp(28px, 4.5vw, 40px); margin: 0 0 10px; letter-spacing: -.02em;
   background: linear-gradient(120deg, var(--text) 55%, var(--accent-2));
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
