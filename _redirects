@@ -1,7 +1,7 @@
 # Clean URLs are real directories (privacy/index.html etc.), served by
 # directory index — no rewrite rules needed for them.
 # .html URLs redirect to the clean form; /download-apk redirects to the APK.
-/ini-cet    /inicet    301
+/inicet    /ini-cet    301
 /index.html    /    301
 /privacy.html    /privacy    301
 /terms.html    /terms    301

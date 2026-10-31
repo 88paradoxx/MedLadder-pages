@@ -947,7 +947,7 @@
           startTestFlow(testId);
         }
       });
-      showView('lobbyView');
+      loadLobby();
       return;
     }
     sb.rpc('start_mock_attempt', { p_mock_test_id: testId }).then(function (res) {
