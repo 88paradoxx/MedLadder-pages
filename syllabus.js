@@ -2,7 +2,7 @@ window.SYLLABUS_DATA = [
   {
     "subjectId": 1000109,
     "name": "Anatomy",
-    "questionCount": 1651,
+    "questionCount": 2119,
     "moduleCount": 58,
     "modules": [
       {
@@ -10,406 +10,406 @@ window.SYLLABUS_DATA = [
         "moduleId": "m0",
         "name": "Gametogenesis",
         "section": "Embryology",
-        "questionCount": 10
+        "questionCount": 20
       },
       {
         "id": 2,
         "moduleId": "m1",
         "name": "Pre-Embryonic Phase of Development",
         "section": "Embryology",
-        "questionCount": 17
+        "questionCount": 25
       },
       {
         "id": 3,
         "moduleId": "m2",
         "name": "Embryonic Phase of Development",
         "section": "Embryology",
-        "questionCount": 38
+        "questionCount": 46
       },
       {
         "id": 4,
         "moduleId": "m3",
         "name": "Placenta, Fetal Membranes and Twinning",
         "section": "Embryology",
-        "questionCount": 15
+        "questionCount": 24
       },
       {
         "id": 5,
         "moduleId": "m4",
         "name": "Pharyngeal Arches, Skeletal & Muscular Systems",
         "section": "Embryology",
-        "questionCount": 31
+        "questionCount": 39
       },
       {
         "id": 6,
         "moduleId": "m5",
         "name": "Cardiovascular and Respiratory Systems",
         "section": "Embryology",
-        "questionCount": 50
+        "questionCount": 59
       },
       {
         "id": 7,
         "moduleId": "m6",
         "name": "Alimentary, Hepatobiliary Systems, Pancreas and Spleen",
         "section": "Embryology",
-        "questionCount": 19
+        "questionCount": 27
       },
       {
         "id": 8,
         "moduleId": "m7",
         "name": "Face, Nose & Palate, Eye, Ear",
         "section": "Embryology",
-        "questionCount": 14
+        "questionCount": 22
       },
       {
         "id": 9,
         "moduleId": "m8",
         "name": "Nervous System and Endocrine Glands",
         "section": "Embryology",
-        "questionCount": 17
+        "questionCount": 25
       },
       {
         "id": 10,
         "moduleId": "m9",
         "name": "Cell Structure, Epithelia, Glands & Connective Tissue",
         "section": "Histology",
-        "questionCount": 50
+        "questionCount": 58
       },
       {
         "id": 11,
         "moduleId": "m10",
         "name": "Bone, Cartilage & Muscular Tissue",
         "section": "Histology",
-        "questionCount": 17
+        "questionCount": 25
       },
       {
         "id": 12,
         "moduleId": "m11",
         "name": "Cardiovascular, Lymphatic and Respiratory Systems",
         "section": "Histology",
-        "questionCount": 9
+        "questionCount": 17
       },
       {
         "id": 13,
         "moduleId": "m12",
         "name": "Digestive, Hepatobiliary & Genitourinary Systems",
         "section": "Histology",
-        "questionCount": 18
+        "questionCount": 26
       },
       {
         "id": 14,
         "moduleId": "m13",
         "name": "Cranial Nerves",
         "section": "Neuroanatomy",
-        "questionCount": 76
+        "questionCount": 84
       },
       {
         "id": 15,
         "moduleId": "m14",
         "name": "Meninges and Dural Venous Sinuses",
         "section": "Neuroanatomy",
-        "questionCount": 13
+        "questionCount": 21
       },
       {
         "id": 16,
         "moduleId": "m15",
         "name": "Ventricular System and Subarachnoid Space",
         "section": "Neuroanatomy",
-        "questionCount": 13
+        "questionCount": 21
       },
       {
         "id": 17,
         "moduleId": "m16",
         "name": "Cerebrum",
         "section": "Neuroanatomy",
-        "questionCount": 14
+        "questionCount": 22
       },
       {
         "id": 18,
         "moduleId": "m17",
         "name": "White Matter of the Brain",
         "section": "Neuroanatomy",
-        "questionCount": 11
+        "questionCount": 19
       },
       {
         "id": 19,
         "moduleId": "m18",
         "name": "Basal Ganglia and Limbic System",
         "section": "Neuroanatomy",
-        "questionCount": 15
+        "questionCount": 23
       },
       {
         "id": 20,
         "moduleId": "m19",
         "name": "Diencephalon",
         "section": "Neuroanatomy",
-        "questionCount": 13
+        "questionCount": 21
       },
       {
         "id": 21,
         "moduleId": "m20",
         "name": "Brainstem",
         "section": "Neuroanatomy",
-        "questionCount": 20
+        "questionCount": 28
       },
       {
         "id": 22,
         "moduleId": "m21",
         "name": "Cerebellum",
         "section": "Neuroanatomy",
-        "questionCount": 30
+        "questionCount": 38
       },
       {
         "id": 23,
         "moduleId": "m22",
         "name": "Vascular Supply of Brain",
         "section": "Neuroanatomy",
-        "questionCount": 8
+        "questionCount": 16
       },
       {
         "id": 24,
         "moduleId": "m23",
         "name": "Spinal Cord",
         "section": "Neuroanatomy",
-        "questionCount": 35
+        "questionCount": 43
       },
       {
         "id": 25,
         "moduleId": "m24",
         "name": "Osteology, Scalp and Face",
         "section": "Head and Neck",
-        "questionCount": 25
+        "questionCount": 33
       },
       {
         "id": 26,
         "moduleId": "m25",
         "name": "Deep Fascia and Triangles of the Neck",
         "section": "Head and Neck",
-        "questionCount": 16
+        "questionCount": 24
       },
       {
         "id": 27,
         "moduleId": "m26",
         "name": "Muscles, Neurovascular Anatomy of Head & Neck",
         "section": "Head and Neck",
-        "questionCount": 106
+        "questionCount": 114
       },
       {
         "id": 28,
         "moduleId": "m27",
         "name": "Glands of the Head & Neck",
         "section": "Head and Neck",
-        "questionCount": 10
+        "questionCount": 18
       },
       {
         "id": 29,
         "moduleId": "m28",
         "name": "Tongue and Palate",
         "section": "Head and Neck",
-        "questionCount": 14
+        "questionCount": 22
       },
       {
         "id": 30,
         "moduleId": "m29",
         "name": "Pharynx",
         "section": "Head and Neck",
-        "questionCount": 35
+        "questionCount": 43
       },
       {
         "id": 31,
         "moduleId": "m30",
         "name": "Upper Limb Bones and Joints",
         "section": "Upper Limb",
-        "questionCount": 48
+        "questionCount": 56
       },
       {
         "id": 32,
         "moduleId": "m31",
         "name": "Fossae and Spaces of the Upper Limb",
         "section": "Upper Limb",
-        "questionCount": 20
+        "questionCount": 28
       },
       {
         "id": 33,
         "moduleId": "m32",
         "name": "Brachial Plexus and Nerves",
         "section": "Upper Limb",
-        "questionCount": 67
+        "questionCount": 75
       },
       {
         "id": 34,
         "moduleId": "m33",
         "name": "Muscles - Upper Limb",
         "section": "Upper Limb",
-        "questionCount": 20
+        "questionCount": 28
       },
       {
         "id": 35,
         "moduleId": "m34",
         "name": "Vessels - Upper Limb",
         "section": "Upper Limb",
-        "questionCount": 15
+        "questionCount": 23
       },
       {
         "id": 36,
         "moduleId": "m35",
         "name": "General Anatomy of Thorax",
         "section": "Thorax",
-        "questionCount": 33
+        "questionCount": 41
       },
       {
         "id": 37,
         "moduleId": "m36",
         "name": "Thoracic Wall",
         "section": "Thorax",
-        "questionCount": 27
+        "questionCount": 35
       },
       {
         "id": 38,
         "moduleId": "m37",
         "name": "Mediastinum",
         "section": "Thorax",
-        "questionCount": 27
+        "questionCount": 35
       },
       {
         "id": 39,
         "moduleId": "m38",
         "name": "Heart",
         "section": "Thorax",
-        "questionCount": 58
+        "questionCount": 66
       },
       {
         "id": 40,
         "moduleId": "m39",
         "name": "Lungs and Pleura",
         "section": "Thorax",
-        "questionCount": 38
+        "questionCount": 46
       },
       {
         "id": 41,
         "moduleId": "m40",
         "name": "Anterior Abdominal Wall",
         "section": "Abdomen and Pelvis",
-        "questionCount": 72
+        "questionCount": 80
       },
       {
         "id": 42,
         "moduleId": "m41",
         "name": "Abdominal Cavity and Peritoneum",
         "section": "Abdomen and Pelvis",
-        "questionCount": 25
+        "questionCount": 33
       },
       {
         "id": 43,
         "moduleId": "m42",
         "name": "GI Tract",
         "section": "Abdomen and Pelvis",
-        "questionCount": 37
+        "questionCount": 45
       },
       {
         "id": 44,
         "moduleId": "m43",
         "name": "Hepatobiliary System, Spleen & Pancreas",
         "section": "Abdomen and Pelvis",
-        "questionCount": 39
+        "questionCount": 47
       },
       {
         "id": 45,
         "moduleId": "m44",
         "name": "KUB & Adrenal Gland",
         "section": "Abdomen and Pelvis",
-        "questionCount": 27
+        "questionCount": 35
       },
       {
         "id": 46,
         "moduleId": "m45",
         "name": "Internal and External Genitalia",
         "section": "Abdomen and Pelvis",
-        "questionCount": 26
+        "questionCount": 34
       },
       {
         "id": 47,
         "moduleId": "m46",
         "name": "Pelvis & Perineum",
         "section": "Abdomen and Pelvis",
-        "questionCount": 46
+        "questionCount": 54
       },
       {
         "id": 48,
         "moduleId": "m47",
         "name": "Bones of the Lower Limb",
         "section": "Lower Limb",
-        "questionCount": 37
+        "questionCount": 45
       },
       {
         "id": 49,
         "moduleId": "m48",
         "name": "Joints of the Lower Limb",
         "section": "Lower Limb",
-        "questionCount": 22
+        "questionCount": 30
       },
       {
         "id": 50,
         "moduleId": "m49",
         "name": "Muscles of the Lower Limb",
         "section": "Lower Limb",
-        "questionCount": 23
+        "questionCount": 31
       },
       {
         "id": 51,
         "moduleId": "m50",
         "name": "Nerves & Vessels of Lower Limb",
         "section": "Lower Limb",
-        "questionCount": 65
+        "questionCount": 73
       },
       {
         "id": 52,
         "moduleId": "m51",
         "name": "Important Structures of Lower Limb",
         "section": "Lower Limb",
-        "questionCount": 9
+        "questionCount": 17
       },
       {
         "id": 53,
         "moduleId": "m52",
         "name": "Vertebral Column",
         "section": "Lower Limb",
-        "questionCount": 33
+        "questionCount": 41
       },
       {
         "id": 54,
         "moduleId": "m53",
         "name": "Bones, Joints and Cartilage",
         "section": "General Anatomy",
-        "questionCount": 37
+        "questionCount": 45
       },
       {
         "id": 55,
         "moduleId": "m54",
         "name": "Muscles and Tendons",
         "section": "General Anatomy",
-        "questionCount": 13
+        "questionCount": 21
       },
       {
         "id": 56,
         "moduleId": "m55",
         "name": "Cardiovascular, Lymphatic and Nervous Systems",
         "section": "General Anatomy",
-        "questionCount": 10
+        "questionCount": 18
       },
       {
         "id": 57,
         "moduleId": "m56",
         "name": "Skin, Connective Tissue and Ligaments",
         "section": "General Anatomy",
-        "questionCount": 8
+        "questionCount": 16
       },
       {
         "id": 58,
         "moduleId": "m57",
         "name": "Mixed / Miscellaneous Topics",
         "section": "General Anatomy",
-        "questionCount": 10
+        "questionCount": 18
       }
     ]
   },
