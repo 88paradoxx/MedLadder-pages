@@ -2987,6 +2987,10 @@ window.addEventListener('error', function (ev) {
       function scrollToPageTop() { window.scrollTo(0, 0); }
 
       function renderHome(force) {
+        // Home is document-dependent (home-only scripts, URL, title, tags):
+        // on any other document, load the real homepage instead of
+        // rendering home content in place and dropping pieces of it.
+        if (window.location.pathname !== '/' && window.location.pathname !== '/index.html' && window.location.pathname !== '') { goHomeFromSeo(); return; }
         clearTimer();
         releaseQuizPayload();
         state.screen = 'home';
