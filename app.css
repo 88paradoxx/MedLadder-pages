@@ -782,3 +782,23 @@ html.dark .cat-tab.active{background:linear-gradient(135deg,#10b981,#0ea5e9);bor
 html:not(.dark) .cat-tab.active{background:linear-gradient(135deg,#10b981,#0ea5e9);border-color:transparent;color:#fff;box-shadow:0 5px 14px rgba(16,185,129,.25)}
 html.dark .home-search-input:focus{border-color:#34d399!important;box-shadow:0 0 0 4px rgba(52,211,153,.18),0 8px 22px rgba(0,0,0,.25)!important}
 html:not(.dark) .home-search-input:focus{border-color:#10b981!important;box-shadow:0 0 0 4px rgba(16,185,129,.14),0 8px 22px rgba(16,185,129,.10)!important}
+
+/* Home compact pass: quick-action grid + tighter hero (colors unchanged). */
+.quick-actions-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:0 0 12px}
+@media(min-width:860px){.quick-actions-grid{grid-template-columns:repeat(4,1fr)}}
+.quick-actions-grid .custom-module-card{margin:0;padding:14px;gap:10px}
+.quick-actions-grid .custom-module-icon{flex-basis:38px;width:38px;height:38px;font-size:20px;border-radius:12px}
+.quick-actions-grid .custom-module-copy strong{font-size:15px}
+.quick-actions-grid .custom-module-copy span{font-size:12px}
+.quick-actions-grid .custom-module-arrow{font-size:20px}
+/* Hero: less vertical space, same content and colors. */
+.hero-wrap{padding:8px 4px 16px}
+.hero-wrap .hero-eyebrow{margin-bottom:6px}
+.hero-wrap h1.title{font-size:clamp(30px,4.5vw,40px);margin:0 0 8px}
+.hero-wrap .subtitle{font-size:13px;line-height:1.5;margin:0 auto 10px}
+.hero-wrap .bento-bar{margin-bottom:12px;gap:8px}
+.bento-stat{padding:8px 6px}
+.bento-stat-num{font-size:16px}
+.home-controls{margin-bottom:14px}
+.home-search-input{height:44px}
+.cat-tab{padding:7px 12px;font-size:12px}

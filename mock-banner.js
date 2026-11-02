@@ -38,11 +38,11 @@
     if (mode === 'live') {
       var t = state.live;
       return '<span class="mock-live-dot"></span>' +
-        '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:17px;">' +
+        '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:15px;">' +
         '<span style="color:#22c55e;">LIVE NOW</span> &middot; ' + escapeHtml(t.title) + '</strong>' +
-        '<span style="opacity:.75;font-size:13px;">Ends ' + fmtDate(t.ends_at) +
+        '<span style="opacity:.75;font-size:12px;">Ends ' + fmtDate(t.ends_at) +
         ' &middot; join before time runs out</span></span>' +
-        '<span style="font-weight:800;font-size:14px;color:#22c55e;">Join &rsaquo;</span>';
+        '<span style="font-weight:800;font-size:13px;color:#22c55e;">Join &rsaquo;</span>';
     }
     var sub;
     if (mode === 'next' && state.next) {
@@ -50,10 +50,10 @@
     } else {
       sub = 'Free All-India mocks &middot; real-time leaderboard';
     }
-    return '<span style="font-size:28px;line-height:1;">&#127942;</span>' +
-      '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:17px;">Live Mock Tests</strong>' +
-      '<span style="opacity:.72;font-size:13px;">' + sub + '</span></span>' +
-      '<span style="font-size:22px;opacity:.7;">&rsaquo;</span>';
+    return '<span style="font-size:24px;line-height:1;">&#127942;</span>' +
+      '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:15px;">Live Mock Tests</strong>' +
+      '<span style="opacity:.72;font-size:12px;">' + sub + '</span></span>' +
+      '<span style="font-size:20px;opacity:.7;">&rsaquo;</span>';
   }
 
   function escapeHtml(s) {
@@ -65,9 +65,6 @@
     if (!isHome) return;
     ensureStyle();
     var mode = state && state.live ? 'live' : (state && state.next ? 'next' : 'idle');
-    var anchor = document.querySelector('.pyq-section-wrap, #pyqBankToggle');
-    if (!anchor || !anchor.parentNode) return;
-    var section = (anchor.closest && anchor.closest('.pyq-section-wrap')) || anchor;
     var el = document.getElementById(BANNER_ID);
     if (!el) {
       el = document.createElement('a');
@@ -77,13 +74,23 @@
         e.preventDefault();
         window.location.href = '/mock-test.html';
       };
-      section.parentNode.insertBefore(el, section);
+      // Join the quick-actions grid when it exists (compact 2+/row layout);
+      // otherwise fall back to sitting directly before the PYQ section.
+      var grid = document.getElementById('quickActionsGrid');
+      if (grid) {
+        grid.appendChild(el);
+      } else {
+        var anchor = document.querySelector('.pyq-section-wrap, #pyqBankToggle');
+        if (!anchor || !anchor.parentNode) return;
+        var section = (anchor.closest && anchor.closest('.pyq-section-wrap')) || anchor;
+        section.parentNode.insertBefore(el, section);
+      }
     }
     if (mode !== lastMode || !el.innerHTML) {
       lastMode = mode;
       var live = mode === 'live';
       el.setAttribute('style',
-        'display:flex;align-items:center;gap:14px;margin:0 0 12px;padding:20px;' +
+        'display:flex;align-items:center;gap:10px;margin:0;padding:14px;' +
         'border-radius:16px;text-decoration:none;color:inherit;cursor:pointer;' +
         (live
           ? 'background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(34,197,94,.06));border:1px solid #22c55e;box-shadow:0 0 24px rgba(34,197,94,.25);'
