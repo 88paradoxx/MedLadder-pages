@@ -863,3 +863,11 @@ html:not(.dark) .cmeta, html.dark .cmeta{font-size:13px}
 @media (max-width:640px){
 html:not(.dark) .hero-wrap .subtitle, html.dark .hero-wrap .subtitle{font-size:13px;line-height:1.55}
 }
+
+/* Footer link directory as a colored box + tighter lower section. */
+nav[aria-label="Browse MedLadder"]{border-radius:16px}
+nav[aria-label="Browse MedLadder"] a{color:var(--accent)}
+html:not(.dark) nav[aria-label="Browse MedLadder"]{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.28)}
+html.dark nav[aria-label="Browse MedLadder"]{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.40)}
+footer.credit{margin-top:12px;padding-top:16px;padding-bottom:12px}
+.app{padding-bottom:24px}
