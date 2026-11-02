@@ -301,9 +301,11 @@ window.addEventListener('error', function (ev) {
 
       function rerenderLockedScreens() {
         try {
+          var y = window.scrollY;
           if (state.screen === 'modules' && state.subjectId) renderModuleList(state.subjectId);
           else if (state.screen === 'setup' && state.subjectId && state.moduleId) renderSetup(state.subjectId, state.moduleId);
           else if (state.screen === 'home') renderHome(true);
+          window.scrollTo(0, y);
         } catch (e) { console.warn('rerenderLockedScreens:', e); }
       }
 
@@ -1563,9 +1565,12 @@ window.addEventListener('error', function (ev) {
         } catch (e) { }
         // Then overlay with server data (async)
         loadModuleProgressFromDB(userId).then(function () {
-          // Re-render current screen to show updated progress pills
+          // Re-render current screen to show updated progress pills.
+          // Content refresh, not navigation: keep the user's scroll spot.
+          var y = window.scrollY;
           if (state.screen === 'home') renderHome();
           else if (state.screen === 'modules') renderModuleList(state.subjectId);
+          window.scrollTo(0, y);
         });
       }
 
@@ -2967,10 +2972,16 @@ window.addEventListener('error', function (ev) {
       var activeHomeCategory = 'all';
 
       // ---------- HOME: subject list ----------
+      // Every in-place view change resets the window scroll: without this,
+      // opening a subject/topic from the bottom of a list showed the new
+      // view scrolled to that same position instead of its top.
+      function scrollToPageTop() { window.scrollTo(0, 0); }
+
       function renderHome(force) {
         clearTimer();
         releaseQuizPayload();
         state.screen = 'home';
+        scrollToPageTop();
         if (app) {
           app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
         }
@@ -3231,6 +3242,7 @@ window.addEventListener('error', function (ev) {
         }
         clearTimer();
         releaseQuizPayload();
+        scrollToPageTop();
 
         // If server Pro check is in-flight, wait for it before showing paywall
         if (_proStatusPromise) {
@@ -3511,6 +3523,7 @@ window.addEventListener('error', function (ev) {
             pyqYear: selectedYear
           };
 
+          scrollToPageTop();
           renderQuiz();
           if (state.timeLimit > 0) startOverallTimer();
 
@@ -3574,6 +3587,7 @@ window.addEventListener('error', function (ev) {
         clearTimer();
         releaseQuizPayload();
         state.screen = 'modules';
+        scrollToPageTop();
         if (app) {
           app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
         }
@@ -3821,6 +3835,7 @@ window.addEventListener('error', function (ev) {
         }
         clearTimer();
         releaseQuizPayload();
+        scrollToPageTop();
         state.screen = 'setup';
         state.isPyqMode = false;
         state.subjectId = null;
@@ -3888,6 +3903,7 @@ window.addEventListener('error', function (ev) {
         }
         clearTimer();
         releaseQuizPayload();
+        scrollToPageTop();
         state.screen = 'setup';
         app.classList.remove('screen-quiz');
         app.classList.add('screen-setup');
@@ -4137,6 +4153,7 @@ window.addEventListener('error', function (ev) {
               remaining: setupChoice.timeLimit, timerId: null, progressKey: pool.key
             };
 
+          scrollToPageTop();
           renderQuiz();
           prefetchBookmarks();
           trackEvent('quiz_start', {
@@ -4614,6 +4631,7 @@ window.addEventListener('error', function (ev) {
         clearTimer();
         releaseQuizPayload();
         state.screen = 'bookmarks';
+        scrollToPageTop();
         if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
         if (!currentUser) {
           openAuthModal('signin', { reason: 'Please sign in to view your bookmarks.' });
@@ -4810,6 +4828,7 @@ window.addEventListener('error', function (ev) {
                 remaining: 0, timerId: null, progressKey: 'bookmarks',
                 bookmarkOrder: questionIds, bookmarkedIds: bmIds
               };
+              scrollToPageTop();
               renderQuiz();
             });
           });
@@ -4828,6 +4847,7 @@ window.addEventListener('error', function (ev) {
         clearTimer();
         releaseQuestionImages();
         state.screen = 'results';
+        scrollToPageTop();
         if (app) {
           app.classList.remove('screen-setup');
           app.classList.add('screen-quiz', 'screen-results');
@@ -5142,6 +5162,7 @@ window.addEventListener('error', function (ev) {
 
       function renderSeoLanding(type, item) {
         state.screen = 'seo';
+        scrollToPageTop();
         var subject = type === 'subject';
         var topic = type === 'topic';
         var subj = topic ? item.subject : (subject ? item : null);
@@ -5271,6 +5292,7 @@ window.addEventListener('error', function (ev) {
 
       function wireSeoStaticLanding(type, item) {
         state.screen = 'seo';
+        scrollToPageTop();
         var subject = type === 'subject';
         var topic = type === 'topic';
         var subj = topic ? item.subject : (subject ? item : null);

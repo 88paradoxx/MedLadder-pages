@@ -871,3 +871,8 @@ html:not(.dark) nav[aria-label="Browse MedLadder"]{background:rgba(124,58,237,.0
 html.dark nav[aria-label="Browse MedLadder"]{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.40)}
 footer.credit{margin-top:12px;padding-top:16px;padding-bottom:12px}
 .app{padding-bottom:24px}
+
+/* Dark-mode QUICK ACTIONS label contrast: --ink-muted (#73638E) is 3.65:1
+   on the dark page bg, below the 4.5:1 bar. --ink-soft (#A79BBF) is 7.55:1
+   and keeps the muted look. Light mode already passes (10.73:1). */
+html.dark .quick-actions-label{color:var(--ink-soft)}
