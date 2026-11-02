@@ -908,5 +908,5 @@ html.dark{--pal-sky:#38BDF8;--pal-orange:#FB923C}
 .seo-divider{height:2px;border:0;margin:30px 0;background:linear-gradient(90deg,transparent,var(--accent),var(--cta-b),transparent)}
 .seo-divider.emerald{background:linear-gradient(90deg,transparent,var(--green),var(--pal-sky),transparent)}
 
-/* Hide the footer directory on question screens (results keep it). */
-body:has(#app.screen-quiz:not(.screen-results)) nav[aria-label="Browse MedLadder"]{display:none}
+/* Hide the footer directory on question and setup screens (results keep it). */
+body:has(#app.screen-quiz:not(.screen-results), #app.screen-setup, #app .pyq-setup-badge) nav[aria-label="Browse MedLadder"]{display:none}

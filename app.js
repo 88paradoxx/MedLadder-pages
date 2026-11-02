@@ -4240,7 +4240,7 @@ window.addEventListener('error', function (ev) {
 
         state.screen = 'quiz';
         if (app) {
-          app.classList.remove('screen-setup');
+          app.classList.remove('screen-setup', 'screen-results');
           app.classList.add('screen-quiz');
         }
 
