@@ -3078,7 +3078,7 @@ window.addEventListener('error', function (ev) {
             '<div class="quick-actions-grid" id="quickActionsGrid">' +
             '<div class="custom-module-card" id="customModuleCard" role="button" tabindex="0">' +
             '<span class="custom-module-icon">🧩</span>' +
-            '<span class="custom-module-copy"><strong>Custom Module</strong><span>Build a mixed quiz from every subject and topic.</span><small>50 · 100 · 150 · 200 · 300 · Custom&nbsp;&nbsp; · &nbsp;Practice or timed · Shuffle</small></span>' +
+            '<span class="custom-module-copy"><strong>Custom Module</strong></span>' +
             '<span class="custom-module-arrow">›</span>' +
             '</div>' +
             bookmarksHomeCardHtml() +
@@ -4429,7 +4429,7 @@ window.addEventListener('error', function (ev) {
       function bookmarksHomeCardHtml() {
         return '<div class="custom-module-card" id="bookmarksHomeCard" role="button" tabindex="0">' +
           '<span class="custom-module-icon">🔖</span>' +
-          '<span class="custom-module-copy"><strong>My bookmarks</strong><span>Questions you saved for later — practise them anytime.</span></span>' +
+          '<span class="custom-module-copy"><strong>Bookmarks</strong></span>' +
           '<span class="custom-module-arrow">›</span>' +
           '</div>';
       }

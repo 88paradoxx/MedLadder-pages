@@ -802,3 +802,21 @@ html:not(.dark) .home-search-input:focus{border-color:#10b981!important;box-shad
 .home-controls{margin-bottom:14px}
 .home-search-input{height:44px}
 .cat-tab{padding:7px 12px;font-size:12px}
+
+/* Clean uniform boxes: icon + name only (subtitles removed from markup). */
+.quick-actions-grid .custom-module-card{padding:12px}
+.quick-actions-grid .custom-module-copy{display:flex;align-items:center}
+.quick-actions-grid .qa-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.08);font-size:20px}
+/* Upper segment, tighter still (colors unchanged). */
+.hero-wrap{padding:4px 4px 10px}
+.hero-wrap h1.title{font-size:clamp(28px,4.5vw,36px);margin:0 0 6px}
+.hero-wrap .subtitle{margin:0 auto 8px}
+.hero-wrap .bento-bar{grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.bento-stat{padding:6px 4px}
+.bento-stat-num{font-size:15px}
+.home-controls{margin-bottom:10px}
+.home-search-input{height:42px}
+.cat-tab{padding:6px 11px}
+/* PYQ card: emerald redesign. */
+.pyq-section-header{background:linear-gradient(135deg,rgba(16,185,129,.22),rgba(14,165,233,.08));border:1.5px solid rgba(16,185,129,.5);border-left:4px solid #10b981}
+.pyq-header-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,.18);font-size:20px;flex-shrink:0}

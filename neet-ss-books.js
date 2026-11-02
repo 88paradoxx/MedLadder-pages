@@ -26,14 +26,13 @@
     }
     if (!el.innerHTML) {
       el.setAttribute('style',
-        'display:flex;align-items:center;gap:10px;margin:0;padding:14px;' +
+        'display:flex;align-items:center;gap:10px;margin:0;padding:12px;' +
         'border-radius:16px;text-decoration:none;color:inherit;cursor:pointer;' +
         'background:linear-gradient(135deg,rgba(123,47,247,.20),rgba(123,47,247,.05));' +
         'border:1px solid #7b2ff7;');
       el.innerHTML =
-        '<span style="font-size:24px;line-height:1;">\uD83D\uDCDA</span>' +
-        '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:15px;">NEET SS Books</strong>' +
-        '<span style="opacity:.72;font-size:12px;">Free super-speciality review books</span></span>' +
+        '<span class="qa-icon">\uD83D\uDCDA</span>' +
+        '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:15px;">NEET SS Books</strong></span>' +
         '<span style="font-size:20px;opacity:.7;">&rsaquo;</span>';
     }
   }

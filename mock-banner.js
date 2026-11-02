@@ -36,23 +36,16 @@
 
   function bannerHtml(mode, state) {
     if (mode === 'live') {
-      var t = state.live;
-      return '<span class="mock-live-dot"></span>' +
-        '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:15px;">' +
-        '<span style="color:#22c55e;">LIVE NOW</span> &middot; ' + escapeHtml(t.title) + '</strong>' +
-        '<span style="opacity:.75;font-size:12px;">Ends ' + fmtDate(t.ends_at) +
-        ' &middot; join before time runs out</span></span>' +
-        '<span style="font-weight:800;font-size:13px;color:#22c55e;">Join &rsaquo;</span>';
+      // Uniform box: icon + name only. Live state still shows via the
+      // pulsing dot and the green border/glow set in renderBanner.
+      return '<span class="qa-icon">&#127942;</span>' +
+        '<span style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;">' +
+        '<span class="mock-live-dot"></span>' +
+        '<strong style="font-size:15px;">Mock Tests</strong></span>' +
+        '<span style="font-size:20px;opacity:.7;">&rsaquo;</span>';
     }
-    var sub;
-    if (mode === 'next' && state.next) {
-      sub = 'Next: ' + escapeHtml(state.next.title) + ' &middot; ' + fmtDate(state.next.starts_at);
-    } else {
-      sub = 'Free All-India mocks &middot; real-time leaderboard';
-    }
-    return '<span style="font-size:24px;line-height:1;">&#127942;</span>' +
-      '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:15px;">Live Mock Tests</strong>' +
-      '<span style="opacity:.72;font-size:12px;">' + sub + '</span></span>' +
+    return '<span class="qa-icon">&#127942;</span>' +
+      '<span style="flex:1;min-width:0;"><strong style="display:block;font-size:15px;">Mock Tests</strong></span>' +
       '<span style="font-size:20px;opacity:.7;">&rsaquo;</span>';
   }
 
@@ -90,7 +83,7 @@
       lastMode = mode;
       var live = mode === 'live';
       el.setAttribute('style',
-        'display:flex;align-items:center;gap:10px;margin:0;padding:14px;' +
+        'display:flex;align-items:center;gap:10px;margin:0;padding:12px;' +
         'border-radius:16px;text-decoration:none;color:inherit;cursor:pointer;' +
         (live
           ? 'background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(34,197,94,.06));border:1px solid #22c55e;box-shadow:0 0 24px rgba(34,197,94,.25);'
