@@ -907,3 +907,6 @@ html.dark{--pal-sky:#38BDF8;--pal-orange:#FB923C}
 .seo-main .btn:not(.secondary){background:linear-gradient(120deg,var(--cta-a),var(--cta-b));color:#fff;border:0}
 .seo-divider{height:2px;border:0;margin:30px 0;background:linear-gradient(90deg,transparent,var(--accent),var(--cta-b),transparent)}
 .seo-divider.emerald{background:linear-gradient(90deg,transparent,var(--green),var(--pal-sky),transparent)}
+
+/* Hide the footer directory on question screens (results keep it). */
+body:has(#app.screen-quiz:not(.screen-results)) nav[aria-label="Browse MedLadder"]{display:none}

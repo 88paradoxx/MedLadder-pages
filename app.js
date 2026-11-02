@@ -3322,8 +3322,9 @@ window.addEventListener('error', function (ev) {
         }).join('');
         var pyqCustomTimeHtml = setupChoice.timeLimit === 'custom' ? '<div class="custom-setup-control"><label for="customTimeInput">Minutes</label><input id="customTimeInput" type="number" min="1" max="600" value="' + esc(String(setupChoice.customTime || 30)) + '" inputmode="numeric"><span>1–600 min</span></div>' : '';
 
+        if (app) app.classList.remove('screen-quiz');
         app.innerHTML =
-          topBar('Back to Home', renderHome) +
+          topBar('Back to Home', goHomeFromSeo) +
           '<main id="mainContent" role="main">' +
           '<div class="pyq-setup-badge">📚 PYQ BANK · ' + esc(exam.name) + '</div>' +
           '<h1 class="setup-chapname">' + esc(exam.icon + ' ' + exam.name) + ' Official Exam Papers</h1>' +
@@ -3355,7 +3356,7 @@ window.addEventListener('error', function (ev) {
           '<div class="start-btn-wrap"><button class="btn start" id="startBtn">🚀 Start ' + esc(exam.name) + ' ' + esc(setupChoice.pyqYear) + ' Test</button></div>' +
           '</main>';
 
-        wireTopBar(renderHome);
+        wireTopBar(goHomeFromSeo);
         wireRipples('.type-card, .pill-choice, .pyq-year-pill, .btn, .auth-btn');
 
         app.querySelectorAll('#yearRow .pyq-year-pill').forEach(function (btn) {
