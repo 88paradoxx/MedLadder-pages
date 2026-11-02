@@ -820,3 +820,19 @@ html:not(.dark) .home-search-input:focus{border-color:#10b981!important;box-shad
 /* PYQ card: emerald redesign. */
 .pyq-section-header{background:linear-gradient(135deg,rgba(16,185,129,.22),rgba(14,165,233,.08));border:1.5px solid rgba(16,185,129,.5);border-left:4px solid #10b981}
 .pyq-header-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,.18);font-size:20px;flex-shrink:0}
+
+/* Tighter vertical rhythm + colored section dividers. */
+.masthead{margin-bottom:8px}
+.hero-wrap{padding:0 4px 6px}
+.hero-eyebrow{margin-bottom:4px}
+.hero-wrap h1.title{margin:0 0 4px}
+.hero-wrap .subtitle{margin:0 auto 6px}
+.hero-wrap .bento-bar{margin-bottom:8px}
+.bento-stat{min-height:48px}
+.home-controls{margin-bottom:8px}
+.quick-actions-label{margin:4px 0 8px}
+.quick-actions-grid{margin:0}
+.subject-grid{margin:0}
+.section-divider{height:2px;border-radius:2px;margin:12px 0}
+.divider-subjects{background:linear-gradient(90deg,transparent,#8b5cf6,#0ea5e9,transparent)}
+.divider-pyq{background:linear-gradient(90deg,transparent,#10b981,#14b8a6,transparent)}

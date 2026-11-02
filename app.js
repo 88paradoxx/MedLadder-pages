@@ -3083,8 +3083,10 @@ window.addEventListener('error', function (ev) {
             '</div>' +
             bookmarksHomeCardHtml() +
             '</div>' +
+            '<div class="section-divider divider-subjects"></div>' +
             '<div class="subject-grid" id="subjectGrid">' + rows + '</div>' +
             '<div id="homeNoMatch" class="no-match-card hidden">No subjects match your search.</div>' +
+            '<div class="section-divider divider-pyq"></div>' +
             pyqSectionHtml +
             modeNoteHtml() +
             '</main>' +
