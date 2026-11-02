@@ -3080,6 +3080,7 @@ window.addEventListener('error', function (ev) {
             '<span class="custom-module-copy"><strong>Custom Module</strong><span>Build a mixed quiz from every subject and topic.</span><small>50 · 100 · 150 · 200 · 300 · Custom&nbsp;&nbsp; · &nbsp;Practice or timed · Shuffle</small></span>' +
             '<span class="custom-module-arrow">›</span>' +
             '</div>' +
+            bookmarksHomeCardHtml() +
             '<div id="homeNoMatch" class="no-match-card hidden">No subjects match your search.</div>' +
             pyqSectionHtml +
             modeNoteHtml() +
@@ -3108,6 +3109,17 @@ window.addEventListener('error', function (ev) {
           if (customModuleCard) {
             customModuleCard.onclick = function () { setupChoice.count = 'all'; renderCustomSetup(); };
             customModuleCard.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setupChoice.count = 'all'; renderCustomSetup(); } };
+          }
+          // Bookmarks card: injected here too so cached home renders (which
+          // skip the full rebuild) still get it.
+          var bmHomeCard = document.getElementById('bookmarksHomeCard');
+          if (!bmHomeCard && customModuleCard && customModuleCard.parentNode) {
+            customModuleCard.insertAdjacentHTML('afterend', bookmarksHomeCardHtml());
+            bmHomeCard = document.getElementById('bookmarksHomeCard');
+          }
+          if (bmHomeCard) {
+            bmHomeCard.onclick = function () { renderBookmarks(); };
+            bmHomeCard.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); renderBookmarks(); } };
           }
           var resetBtn = document.getElementById('resetAll');
           if (resetBtn) {
@@ -4119,6 +4131,7 @@ window.addEventListener('error', function (ev) {
             };
 
           renderQuiz();
+          prefetchBookmarks();
           trackEvent('quiz_start', {
             subject_id: state.subjectId,
             module_id: state.moduleId,
@@ -4245,7 +4258,7 @@ window.addEventListener('error', function (ev) {
 
         var timerHtml = state.timeLimit > 0 ? '<span class="timer-badge" id="timerBadge">--:--</span>' : '';
         var isLast = state.idx + 1 >= total;
-        var backFn = state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); });
+        var backFn = state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'bookmarks' ? function () { renderBookmarks(); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); }));
 
         releaseQuestionImages();
         app.innerHTML =
@@ -4264,6 +4277,7 @@ window.addEventListener('error', function (ev) {
           '</div>' +
           '<div class="quiz-actions" style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;">' +
           '<div class="quiz-shortcuts-hint" style="font-size:12px;color:var(--ink-soft);opacity:0.8;">Keys <strong>1-4</strong> or <strong>A-D</strong> · <strong>Enter</strong> to advance</div>' +
+          (q.id ? '<span class="bm-row"><button class="btn secondary bm-btn' + (isBookmarked(q.id) ? ' active' : '') + '" id="bookmarkBtn" data-qid="' + q.id + '">' + (isBookmarked(q.id) ? '🔖 Saved' : '🔖 Save') + '</button><button class="btn secondary bm-btn" id="flagBtn" data-qid="' + q.id + '">🚩 Flag</button></span>' : '') +
           '<button class="btn" id="nextBtn" ' + (existing ? '' : 'disabled') + '>' + (isLast ? 'See results' : 'Next question') + '</button>' +
           '</div>' +
           '</main>';
@@ -4335,6 +4349,10 @@ window.addEventListener('error', function (ev) {
           });
         });
         document.getElementById('nextBtn').addEventListener('click', function () { commitAndAdvance(); });
+        var bookmarkBtn = document.getElementById('bookmarkBtn');
+        if (bookmarkBtn) bookmarkBtn.addEventListener('click', function () { toggleBookmark(q.id); });
+        var flagBtn = document.getElementById('flagBtn');
+        if (flagBtn) flagBtn.addEventListener('click', function () { openFlagDialog(q.id); });
 
         // Warm the explanation images while the user reads, so revealing the
         // answer doesn't trigger a big network fetch + decode at tap time.
@@ -4361,7 +4379,7 @@ window.addEventListener('error', function (ev) {
           window.removeEventListener('keydown', state._quizKeyHandler);
         }
         state._quizKeyHandler = function (e) {
-          if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+          if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
           var key = e.key ? e.key.toUpperCase() : '';
           var map = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E' };
           var letter = map[key] || (['A', 'B', 'C', 'D', 'E'].indexOf(key) !== -1 ? key : null);
@@ -4392,11 +4410,324 @@ window.addEventListener('error', function (ev) {
         // Persist to Supabase after a short quiet period so rapid mobile taps do
         // not create a burst of overlapping writes.
         if (progressSaveTimer) clearTimeout(progressSaveTimer);
+        // Bookmarked practice is not tied to a module: keep it out of the
+        // module-progress table entirely (local progress map only).
+        if (state.progressKey === 'bookmarks') return;
         var saveKey = state.progressKey;
         progressSaveTimer = setTimeout(function () {
           progressSaveTimer = null;
           saveModuleProgressToDB(saveKey, answered, correct, total);
         }, 350);
+      }
+
+      // ---------- BOOKMARKS + FLAGS (practice quiz) ----------
+      function bookmarksHomeCardHtml() {
+        return '<div class="custom-module-card" id="bookmarksHomeCard" role="button" tabindex="0">' +
+          '<span class="custom-module-icon">🔖</span>' +
+          '<span class="custom-module-copy"><strong>My bookmarks</strong><span>Questions you saved for later — practise them anytime.</span></span>' +
+          '<span class="custom-module-arrow">›</span>' +
+          '</div>';
+      }
+
+      function isBookmarked(id) {
+        return !!(state.bookmarkedIds && state.bookmarkedIds[id]);
+      }
+
+      // Non-essential fetch: never blocks the quiz render. When it lands it
+      // only flips the current question's button if the quiz is unchanged.
+      function prefetchBookmarks() {
+        if (!currentUser || !supabaseClient || !state.questions) return;
+        var key = state.progressKey;
+        var ids = state.questions.map(function (q) { return q.id; })
+          .filter(function (id) { return id !== null && id !== undefined; });
+        if (!ids.length) return;
+        supabaseClient.from('user_bookmarks').select('question_id')
+          .eq('user_id', currentUser.id).in('question_id', ids)
+          .then(function (res) {
+            if (res.error || !res.data || state.progressKey !== key) return;
+            var map = {};
+            res.data.forEach(function (row) { map[row.question_id] = true; });
+            state.bookmarkedIds = map;
+            refreshBookmarkBtn();
+          }).catch(function () {});
+      }
+
+      function refreshBookmarkBtn() {
+        var btn = document.getElementById('bookmarkBtn');
+        if (!btn || !state.questions) return;
+        var q = currentQuestion();
+        if (!q || String(btn.getAttribute('data-qid')) !== String(q.id)) return;
+        var saved = isBookmarked(q.id);
+        btn.textContent = saved ? '🔖 Saved' : '🔖 Save';
+        btn.classList.toggle('active', saved);
+      }
+
+      function toggleBookmark(questionId) {
+        if (!currentUser || !supabaseClient || !questionId) return;
+        if (!state.bookmarkedIds) state.bookmarkedIds = {};
+        var saved = isBookmarked(questionId);
+        if (saved) delete state.bookmarkedIds[questionId];
+        else state.bookmarkedIds[questionId] = true;
+        refreshBookmarkBtn();
+        var op = saved
+          ? supabaseClient.from('user_bookmarks').delete()
+              .eq('user_id', currentUser.id).eq('question_id', questionId)
+          : supabaseClient.from('user_bookmarks')
+              .insert({ user_id: currentUser.id, question_id: questionId });
+        op.then(function (res) {
+          if (res.error) {
+            if (saved) state.bookmarkedIds[questionId] = true;
+            else delete state.bookmarkedIds[questionId];
+            refreshBookmarkBtn();
+            showToast('Could not update bookmark — please retry.');
+          } else if (!saved) {
+            showToast('Bookmarked — find it under My bookmarks on the home screen.');
+          }
+        });
+      }
+
+      function closeFlagDialog() {
+        var d = document.getElementById('flagDialog');
+        if (d && d.parentNode) d.parentNode.removeChild(d);
+      }
+
+      function openFlagDialog(questionId) {
+        if (!currentUser || !questionId) return;
+        closeFlagDialog();
+        var overlay = document.createElement('div');
+        overlay.className = 'bm-modal-overlay';
+        overlay.id = 'flagDialog';
+        overlay.innerHTML = '<div class="bm-modal glass">' +
+          '<h3>🚩 Flag this question</h3>' +
+          '<p class="bm-hint">Tell the admin what is wrong. Your report goes to the review queue.</p>' +
+          '<label>Reason<select id="flagReason">' +
+          '<option value="wrong_key">Wrong answer key</option>' +
+          '<option value="wrong_explanation">Wrong explanation</option>' +
+          '<option value="wrong_location">Wrong subject or topic</option>' +
+          '<option value="unclear">Unclear or incorrect question</option>' +
+          '<option value="other">Something else</option>' +
+          '</select></label>' +
+          '<label>Details (optional)<textarea id="flagDetail" rows="3" placeholder="e.g. The correct answer should be B because…"></textarea></label>' +
+          '<div class="bm-modal-actions">' +
+          '<button class="btn secondary" id="flagCancel">Cancel</button>' +
+          '<button class="btn" id="flagSubmit">Send report</button>' +
+          '</div></div>';
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) closeFlagDialog();
+        });
+        document.getElementById('flagCancel').addEventListener('click', closeFlagDialog);
+        document.getElementById('flagSubmit').addEventListener('click', function () {
+          var reason = document.getElementById('flagReason').value;
+          var detail = document.getElementById('flagDetail').value.trim();
+          supabaseClient.from('question_flags').insert({
+            question_id: questionId, user_id: currentUser.id,
+            reason: reason, detail: detail
+          }).then(function (res) {
+            closeFlagDialog();
+            if (res.error) {
+              if (res.error.code === '23505' ||
+                  /duplicate/i.test(res.error.message || '')) {
+                showToast('You already flagged this question — it is under review.');
+              } else {
+                showToast('Could not send report — please retry.');
+              }
+              return;
+            }
+            showToast('Report sent — thank you. The admin will review it.');
+          });
+        });
+      }
+
+      function stripHtmlPreview(text, maxLen) {
+        var plain = String(text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        return plain.length > maxLen ? plain.slice(0, maxLen) + '…' : plain;
+      }
+
+      function renderBookmarks() {
+        clearTimer();
+        releaseQuizPayload();
+        state.screen = 'bookmarks';
+        if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
+        if (!currentUser) {
+          openAuthModal('signin', { reason: 'Please sign in to view your bookmarks.' });
+          renderHome();
+          return;
+        }
+        app.innerHTML =
+          topBar('Back', renderHome) +
+          '<main id="mainContent" role="main">' +
+          '<div class="glass bm-wrap">' +
+          '<h1 class="bm-title">🔖 My bookmarks</h1>' +
+          '<p class="bm-hint">Questions you saved while practising. Tap one to practise it, or practise them all together.</p>' +
+          '<div class="bm-actions"><button class="btn" id="bmPractiseAll" disabled>Practise all</button><span id="bmCount" class="bm-hint"></span></div>' +
+          '<div id="bmList" class="bm-list"><p class="bm-hint">Loading…</p></div>' +
+          '</div></main>' +
+          footerHtml();
+        wireTopBar(renderHome);
+        wireRipples('.btn');
+        var listEl = document.getElementById('bmList');
+        supabaseClient.from('user_bookmarks').select('question_id,created_at')
+          .eq('user_id', currentUser.id).order('created_at', { ascending: false })
+          .then(function (res) {
+            if (res.error) {
+              listEl.innerHTML = '<p class="bm-hint">Could not load bookmarks — please retry.</p>';
+              return;
+            }
+            var marks = res.data || [];
+            var countEl = document.getElementById('bmCount');
+            if (countEl) countEl.textContent = marks.length ? marks.length + ' saved' : '';
+            var allBtn = document.getElementById('bmPractiseAll');
+            if (allBtn) {
+              allBtn.disabled = !marks.length;
+              allBtn.onclick = function () {
+                practiseBookmarks(marks.map(function (m) { return m.question_id; }));
+              };
+            }
+            if (!marks.length) {
+              listEl.innerHTML = '<p class="bm-hint">No bookmarks yet. While practising, tap 🔖 Save on any question to keep it here.</p>';
+              return;
+            }
+            var ids = marks.map(function (m) { return m.question_id; });
+            supabaseClient.from('questions').select('id,question_num,question_text,module_id')
+              .in('id', ids).then(function (qr) {
+                if (qr.error || !qr.data) {
+                  listEl.innerHTML = '<p class="bm-hint">Could not load bookmarked questions — please retry.</p>';
+                  return;
+                }
+                var byId = {};
+                qr.data.forEach(function (r) { byId[r.id] = r; });
+                var rows = marks.map(function (m) { return byId[m.question_id]; })
+                  .filter(function (r) { return !!r; });
+                var modIds = rows.map(function (r) { return r.module_id; })
+                  .filter(function (v, i, a) { return v !== null && v !== undefined && a.indexOf(v) === i; });
+                var renderRows = function (modMap, subjMap) {
+                  listEl.innerHTML = '';
+                  rows.forEach(function (r) {
+                    var mod = modMap[r.module_id] || {};
+                    var subj = subjMap[mod.subject_id] || {};
+                    var row = document.createElement('div');
+                    row.className = 'bm-item';
+                    row.innerHTML = '<div class="bm-stem">' + esc(stripHtmlPreview(r.question_text, 180)) + '</div>' +
+                      '<div class="bm-meta">' + esc(subj.name || 'Question bank') +
+                      (mod.name ? ' / ' + esc(mod.name) : '') + ' · Q#' + r.question_num + '</div>' +
+                      '<div class="bm-row"><button class="btn secondary bm-btn" data-act="go">Practise</button>' +
+                      '<button class="btn secondary bm-btn" data-act="del">Remove</button></div>';
+                    row.querySelector('[data-act="go"]').onclick = function () { practiseBookmarks([r.id]); };
+                    row.querySelector('[data-act="del"]').onclick = function () {
+                      supabaseClient.from('user_bookmarks').delete()
+                        .eq('user_id', currentUser.id).eq('question_id', r.id)
+                        .then(function (dr) {
+                          if (dr.error) { showToast('Could not remove bookmark — please retry.'); return; }
+                          showToast('Bookmark removed.');
+                          renderBookmarks();
+                        });
+                    };
+                    listEl.appendChild(row);
+                  });
+                };
+                if (!modIds.length) { renderRows({}, {}); return; }
+                supabaseClient.from('modules').select('id,name,subject_id').in('id', modIds)
+                  .then(function (mr) {
+                    var modMap = {};
+                    (mr.data || []).forEach(function (m) { modMap[m.id] = m; });
+                    var subjIds = Object.keys(modMap).map(function (k) { return modMap[k].subject_id; })
+                      .filter(function (v, i, a) { return v !== null && v !== undefined && a.indexOf(v) === i; });
+                    if (!subjIds.length) { renderRows(modMap, {}); return; }
+                    supabaseClient.from('subjects').select('id,name').in('id', subjIds)
+                      .then(function (sr) {
+                        var subjMap = {};
+                        (sr.data || []).forEach(function (s) { subjMap[s.id] = s; });
+                        renderRows(modMap, subjMap);
+                      });
+                  });
+              });
+          });
+      }
+
+      // Practise bookmarked questions as a quiz pool. Built from the fetched
+      // bank rows (same mapping as startQuiz) rather than reusing the setup
+      // flow, so no subject/module setup is assumed.
+      function practiseBookmarks(questionIds) {
+        if (!questionIds || !questionIds.length) {
+          showToast('No bookmarked questions to practise.');
+          renderBookmarks();
+          return;
+        }
+        if (!currentUser) {
+          openAuthModal('signin', { reason: 'Please sign in to practise your bookmarks.' });
+          renderHome();
+          return;
+        }
+        clearTimer();
+        app.innerHTML =
+          topBar('Back', renderBookmarks) +
+          '<main id="mainContent" role="main">' +
+          '<div class="loading-screen" style="position:relative;margin:80px auto;max-width:440px;">' +
+          '<div class="loading-card glass" style="padding:36px 24px;text-align:center;">' +
+          '<div class="loading-logo">MedLadder</div>' +
+          '<div class="loading-sub">My bookmarks</div>' +
+          '<div class="loading-text" style="margin-top:14px;font-weight:600;">Loading your saved questions<span class="loading-dots"></span></div>' +
+          '<div class="loading-spinner"></div>' +
+          '</div></div></main>';
+        wireTopBar(renderBookmarks);
+        supabaseClient.from('questions')
+          .select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation')
+          .in('id', questionIds).then(function (res) {
+            if (res.error || !res.data || !res.data.length) {
+              showToast('Could not load bookmarked questions.');
+              renderBookmarks();
+              return;
+            }
+            var byId = {};
+            res.data.forEach(function (r) { byId[r.id] = r; });
+            var rows = questionIds.map(function (id) { return byId[id]; })
+              .filter(function (r) { return !!r; });
+            if (!rows.length) {
+              showToast('Those bookmarks are no longer available.');
+              renderBookmarks();
+              return;
+            }
+            return loadQuestionImages(rows).then(function (imageRows) {
+              var imagesByQuestion = {};
+              imageRows.forEach(function (image) {
+                var key = String(image.question_id);
+                if (!imagesByQuestion[key]) imagesByQuestion[key] = { question_text: [], explanation: [] };
+                if (image.content_field && imagesByQuestion[key][image.content_field]) {
+                  imagesByQuestion[key][image.content_field].push(image);
+                }
+              });
+              var fetchedQuestions = rows.map(function (r) {
+                var opts = {};
+                if (r.option_a) opts.A = r.option_a;
+                if (r.option_b) opts.B = r.option_b;
+                if (r.option_c) opts.C = r.option_c;
+                if (r.option_d) opts.D = r.option_d;
+                if (r.option_e) opts.E = r.option_e;
+                return {
+                  id: r.id,
+                  num: String(r.id || r.question_num),
+                  question: r.question_text || '',
+                  options: opts,
+                  answer: r.answer || 'A',
+                  explanation: r.explanation || '',
+                  questionImages: (imagesByQuestion[String(r.id)] || {}).question_text || [],
+                  explanationImages: (imagesByQuestion[String(r.id)] || {}).explanation || []
+                };
+              });
+              var bmIds = {};
+              fetchedQuestions.forEach(function (q) { bmIds[q.id] = true; });
+              state = {
+                screen: 'quiz', subjectId: null, moduleId: 'bookmarks',
+                poolTitle: 'My bookmarks', questions: fetchedQuestions,
+                order: fetchedQuestions.map(function (q, i) { return i; }),
+                idx: 0, answers: {}, quizType: 'practice', timeLimit: 0,
+                remaining: 0, timerId: null, progressKey: 'bookmarks',
+                bookmarkOrder: questionIds, bookmarkedIds: bmIds
+              };
+              renderQuiz();
+            });
+          });
       }
 
       // ---------- RESULTS ----------
@@ -4454,7 +4785,7 @@ window.addEventListener('error', function (ev) {
         }).join(''); };
         var reviewHtml = '';
 
-        var resBackFn = state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); });
+        var resBackFn = state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'bookmarks' ? function () { renderBookmarks(); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); }));
 
         app.innerHTML =
           topBar('Back', resBackFn) +
@@ -4478,11 +4809,14 @@ window.addEventListener('error', function (ev) {
         wireRipples('.btn, .auth-btn');
 
         document.getElementById('retryBtn').addEventListener('click', function () {
-          if (state.isPyqMode) startPYQQuiz(state.pyqExam);
+          if (state.moduleId === 'bookmarks') practiseBookmarks(state.bookmarkOrder || []);
+          else if (state.isPyqMode) startPYQQuiz(state.pyqExam);
           else startQuiz();
         });
         document.getElementById('setupBtn').addEventListener('click', function () {
-          if (state.isPyqMode) {
+          if (state.moduleId === 'bookmarks') {
+            renderBookmarks();
+          } else if (state.isPyqMode) {
             renderPYQSetup(state.pyqExam);
           } else if (state.moduleId === 'custom') {
             renderCustomSetup();
@@ -4522,6 +4856,12 @@ window.addEventListener('error', function (ev) {
           e.preventDefault();
           setupChoice.count = 'all';
           renderCustomSetup();
+          return;
+        }
+        var bmHomeCardEl = e.target && e.target.closest ? e.target.closest('#bookmarksHomeCard') : null;
+        if (bmHomeCardEl) {
+          e.preventDefault();
+          renderBookmarks();
           return;
         }
         var noteBtn = e.target && e.target.closest ? e.target.closest('#noteSignInBtn') : null;

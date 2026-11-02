@@ -44,6 +44,10 @@
     if (m.indexOf('BAD_QUESTION') !== -1) return 'Please enter the question text.';
     if (m.indexOf('BAD_OPTION') !== -1) return 'Options A–D are required.';
     if (m.indexOf('BAD_EXPLANATION') !== -1) return 'Please add an explanation.';
+    if (m.indexOf('FLAG_NOT_FOUND') !== -1) return 'Flag not found — it may have been handled already.';
+    if (m.indexOf('FLAG_CLOSED') !== -1) return 'This flag is already resolved or dismissed.';
+    if (m.indexOf('QUESTION_NOT_FOUND') !== -1) return 'Bank question not found.';
+    if (m.indexOf('BAD_STATUS') !== -1) return 'Unknown flag status.';
     var ml = m.toLowerCase();
     if (ml.indexOf('expired') !== -1)
       return 'Your session expired — please sign out and sign back in, then retry.';
@@ -56,7 +60,7 @@
       'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
   function showView(id) {
-    ['gateView', 'testsView', 'editorView', 'bankView'].forEach(function (v) {
+    ['gateView', 'testsView', 'editorView', 'bankView', 'flaggedView'].forEach(function (v) {
       $(v).hidden = v !== id;
     });
     window.scrollTo(0, 0);
@@ -361,6 +365,11 @@
     $('backBtn').onclick = loadTests;
     $('newTestBtn').onclick = function () { openEditor(null); };
     $('bankBtn').onclick = function () { showView('bankView'); };
+    $('flaggedBtn').onclick = function () { loadFlags('open'); };
+    $('flaggedBackBtn').onclick = loadTests;
+    Array.prototype.forEach.call(document.querySelectorAll('.flag-filter'), function (b) {
+      b.onclick = function () { loadFlags(b.getAttribute('data-status')); };
+    });
     $('bankBackBtn').onclick = loadTests;
     $('bankQForm').onsubmit = submitBankQuestion;
     if ($('bqSubj')) $('bqSubj').onchange = rebuildBqTopics;
@@ -888,6 +897,219 @@
       });
     }
     next();
+  }
+
+  /* ---------- flagged questions review queue ----------
+   * User reports from the practice quiz land here. Per flag the admin can
+   * move the bank question to its correct subject/topic (resolving the
+   * flag), fix the question's content (flag stays open until explicitly
+   * resolved or dismissed), resolve it, or dismiss it. */
+  var flagStatus = 'open';
+  var flagDetailId = null;
+  var flagDetailQ = null;
+
+  var FLAG_REASONS = {
+    wrong_key: 'Wrong answer key',
+    wrong_explanation: 'Wrong explanation',
+    wrong_location: 'Wrong subject/topic',
+    unclear: 'Unclear question',
+    other: 'Other'
+  };
+
+  function loadFlags(status) {
+    flagStatus = status || 'open';
+    flagDetailId = null;
+    showView('flaggedView');
+    $('flagDetail').hidden = true;
+    var list = $('flagList');
+    list.innerHTML = '<p class="am-hint">Loading…</p>';
+    sb.rpc('admin_list_flags', { p_status: flagStatus }).then(function (res) {
+      if (res.error) { toast(rpcErr(res.error)); return; }
+      var flags = res.data || [];
+      $('flagCount').textContent = flags.length + ' ' + flagStatus;
+      if (!flags.length) {
+        list.innerHTML = '<div class="am-card">No ' + flagStatus + ' flags.</div>';
+        return;
+      }
+      list.innerHTML = '';
+      flags.forEach(function (f) {
+        var plain = String(f.question_text || '')
+          .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        var loc = (f.current_subject ? esc(f.current_subject) : 'Question bank') +
+          (f.current_topic ? ' / ' + esc(f.current_topic) : '');
+        var row = document.createElement('div');
+        row.className = 'am-card';
+        row.style.cursor = 'pointer';
+        row.innerHTML = '<div class="qhead"><span class="am-badge">' +
+          esc(FLAG_REASONS[f.reason] || f.reason) + '</span>' +
+          '<span class="am-hint">' + loc + ' · Q#' + f.question_num + '</span>' +
+          '<span class="sp"></span>' +
+          '<span class="am-hint">' + new Date(f.created_at).toLocaleString() + '</span></div>' +
+          '<div class="qt">' + esc(plain.slice(0, 160)) + (plain.length > 160 ? '…' : '') + '</div>' +
+          (f.open_flag_count > 1
+            ? '<div class="am-hint">' + f.open_flag_count + ' open flags on this question</div>' : '') +
+          (f.admin_note ? '<div class="am-hint">Note: ' + esc(f.admin_note) + '</div>' : '');
+        row.onclick = function () { openFlagDetail(f); };
+        list.appendChild(row);
+      });
+    });
+  }
+
+  function populateFlagSubj() {
+    var subjSel = $('flagSubj');
+    if (!subjSel) return;
+    var idx = bulkBuildIndex();
+    subjSel.innerHTML = '<option value="">Select subject</option>';
+    idx.subjects.forEach(function (s) {
+      var o = document.createElement('option');
+      o.value = s.name; o.textContent = s.name;
+      subjSel.appendChild(o);
+    });
+    var cur = (flagDetailQ && flagDetailQ.current_subject) || '';
+    if (cur) subjSel.value = cur;
+  }
+
+  function rebuildFlagTopics() {
+    var subjSel = $('flagSubj'), topicSel = $('flagTopic');
+    if (!subjSel || !topicSel) return;
+    var idx = bulkBuildIndex();
+    var subj = idx.bySubject[(subjSel.value || '').toLowerCase()];
+    topicSel.innerHTML = '<option value="">Select topic</option>';
+    topicSel.disabled = !subj;
+    if (!subj) return;
+    subj.modules.forEach(function (m) {
+      var o = document.createElement('option');
+      o.value = m.name; o.textContent = m.name;
+      topicSel.appendChild(o);
+    });
+    var cur = (flagDetailQ && flagDetailQ.current_topic) || '';
+    if (cur) topicSel.value = cur;
+  }
+
+  function openFlagDetail(f) {
+    flagDetailId = f.id;
+    flagDetailQ = f;
+    var detail = $('flagDetail');
+    detail.hidden = false;
+    var opts = '';
+    ['a', 'b', 'c', 'd', 'e'].forEach(function (k) {
+      if (f['option_' + k]) {
+        opts += '<div>' + (k === (f.answer || '').toLowerCase()
+          ? '<b>[' + k.toUpperCase() + ']</b> ' : k.toUpperCase() + '. ') +
+          esc(f['option_' + k]) + '</div>';
+      }
+    });
+    var loc = (f.current_subject ? esc(f.current_subject) : 'Question bank') +
+      (f.current_topic ? ' / ' + esc(f.current_topic) : '');
+    detail.innerHTML =
+      '<div class="qhead"><span class="n">Q#' + f.question_num + '</span>' +
+      '<span class="am-badge">' + esc(FLAG_REASONS[f.reason] || f.reason) + '</span>' +
+      '<span class="sp"></span>' +
+      '<span class="am-hint">' + new Date(f.created_at).toLocaleString() + '</span></div>' +
+      '<div class="qt">' + renderAdminQText(f.question_text) + '</div>' +
+      '<div class="opts">' + opts + '</div>' +
+      (f.explanation ? '<div class="expl"><strong>Explanation:</strong> ' + esc(f.explanation) + '</div>' : '') +
+      '<div class="am-hint">Currently: ' + loc +
+      (f.open_flag_count > 1 ? ' · ' + f.open_flag_count + ' open flags on this question' : '') + '</div>' +
+      (f.detail ? '<div class="am-hint">User note: ' + esc(f.detail) + '</div>' : '') +
+      (f.status !== 'open'
+        ? '<div class="am-hint">Status: ' + esc(f.status) +
+          (f.resolved_subject ? ' → ' + esc(f.resolved_subject) +
+            (f.resolved_topic ? ' / ' + esc(f.resolved_topic) : '') : '') +
+          (f.admin_note ? ' · Note: ' + esc(f.admin_note) : '') + '</div>'
+        : '') +
+      '<div class="am-row" style="margin-top:10px">' +
+      '<label>Move to subject <select id="flagSubj"></select></label>' +
+      '<label>Topic <select id="flagTopic"></select></label>' +
+      '</div>' +
+      '<div class="am-row"><label class="am-wide">Admin note <input id="flagNote" maxlength="300"></label></div>' +
+      '<div class="am-row">' +
+      '<button id="flagMoveBtn" class="am-btn am-btn-primary">Move + resolve</button>' +
+      '<button id="flagResolveBtn" class="am-btn">Resolve</button>' +
+      '<button id="flagDismissBtn" class="am-btn">Dismiss</button>' +
+      '<button id="flagEditBtn" class="am-btn">Edit question</button>' +
+      '</div>' +
+      '<form id="flagEditForm" class="am-form" hidden>' +
+      '<label class="am-wide">Question <textarea id="flagQText" rows="3" required></textarea></label>' +
+      '<label>A <input id="flagQA" required></label>' +
+      '<label>B <input id="flagQB" required></label>' +
+      '<label>C <input id="flagQC" required></label>' +
+      '<label>D <input id="flagQD" required></label>' +
+      '<label>E <input id="flagQE"></label>' +
+      '<label>Answer <select id="flagQAns"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option><option value="e">E</option></select></label>' +
+      '<label class="am-wide">Explanation <textarea id="flagQExpl" rows="2" required></textarea></label>' +
+      '<div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Save changes</button></div>' +
+      '</form>';
+    populateFlagSubj();
+    rebuildFlagTopics();
+    $('flagSubj').onchange = rebuildFlagTopics;
+    $('flagNote').value = '';
+    $('flagQText').value = f.question_text || '';
+    $('flagQA').value = f.option_a || ''; $('flagQB').value = f.option_b || '';
+    $('flagQC').value = f.option_c || ''; $('flagQD').value = f.option_d || '';
+    $('flagQE').value = f.option_e || '';
+    $('flagQAns').value = (f.answer || 'a').toLowerCase();
+    $('flagQExpl').value = f.explanation || '';
+    var openOnly = f.status === 'open';
+    ['flagMoveBtn', 'flagResolveBtn', 'flagDismissBtn'].forEach(function (id) {
+      $(id).disabled = !openOnly;
+    });
+    $('flagMoveBtn').onclick = function () {
+      var subj = $('flagSubj').value, topic = $('flagTopic').value;
+      var hit = subj && topic
+        ? bulkBuildIndex().byKey[subj.toLowerCase() + '\n' + topic.toLowerCase()] : null;
+      if (!hit) { toast('Pick a subject and topic first.'); return; }
+      if (!window.confirm('Move this question to ' + hit.subject + ' / ' + hit.name +
+          ' and resolve the flag?')) return;
+      sb.rpc('admin_resolve_flag', {
+        p_flag_id: f.id, p_module_id: hit.id, p_admin_note: $('flagNote').value.trim()
+      }).then(function (r) {
+        if (r.error) { toast(rpcErr(r.error)); return; }
+        toast('Moved to ' + hit.subject + ' / ' + hit.name + ' and resolved.');
+        loadFlags(flagStatus);
+      });
+    };
+    $('flagResolveBtn').onclick = function () {
+      sb.rpc('admin_resolve_flag', {
+        p_flag_id: f.id, p_module_id: null, p_admin_note: $('flagNote').value.trim()
+      }).then(function (r) {
+        if (r.error) { toast(rpcErr(r.error)); return; }
+        toast('Flag resolved.');
+        loadFlags(flagStatus);
+      });
+    };
+    $('flagDismissBtn').onclick = function () {
+      sb.rpc('admin_dismiss_flag', {
+        p_flag_id: f.id, p_admin_note: $('flagNote').value.trim()
+      }).then(function (r) {
+        if (r.error) { toast(rpcErr(r.error)); return; }
+        toast('Flag dismissed.');
+        loadFlags(flagStatus);
+      });
+    };
+    $('flagEditBtn').onclick = function () {
+      $('flagEditForm').hidden = !$('flagEditForm').hidden;
+    };
+    $('flagEditForm').onsubmit = function (ev) {
+      ev.preventDefault();
+      sb.rpc('admin_update_bank_question', {
+        p_question_id: f.question_id,
+        p_question_text: $('flagQText').value.trim(),
+        p_option_a: $('flagQA').value.trim(), p_option_b: $('flagQB').value.trim(),
+        p_option_c: $('flagQC').value.trim(), p_option_d: $('flagQD').value.trim(),
+        p_option_e: $('flagQE').value.trim(),
+        p_answer: $('flagQAns').value, p_explanation: $('flagQExpl').value.trim()
+      }).then(function (r) {
+        if (r.error) { toast(rpcErr(r.error)); return; }
+        toast('Bank question updated.');
+        sb.rpc('admin_list_flags', { p_status: flagStatus }).then(function (lr) {
+          var updated = !lr.error && (lr.data || [])
+            .filter(function (x) { return x.id === flagDetailId; })[0];
+          if (updated) openFlagDetail(updated); else loadFlags(flagStatus);
+        });
+      });
+    };
+    detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /* ---------- init ---------- */

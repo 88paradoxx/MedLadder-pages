@@ -40,6 +40,7 @@
         <div class="am-row">
           <h1>Mock tests</h1>
           <button id="bankBtn" class="am-btn">Question bank</button>
+          <button id="flaggedBtn" class="am-btn">🚩 Flagged questions</button>
           <button id="newTestBtn" class="am-btn am-btn-primary">+ New test</button>
         </div>
         <div id="testList" class="am-list"></div>
@@ -101,6 +102,26 @@ Q: Next question…</pre></p>
           </div>
           <div id="bankBulkPreview" class="am-list" style="margin-top:10px"></div>
         </div>
+      </section>
+
+      <!-- flagged questions review queue -->
+      <section id="flaggedView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="flaggedBackBtn" class="am-btn">← All tests</button>
+          <h1>Flagged questions</h1>
+        </div>
+        <p class="am-hint">User reports that a bank question has an error. Open a flag to move
+          the question to its correct subject/topic, fix its content, resolve it,
+          or dismiss it. Fixing content does not resolve the flag — resolve or
+          dismiss it explicitly once handled.</p>
+        <div class="am-row">
+          <button class="am-btn flag-filter" data-status="open">Open</button>
+          <button class="am-btn flag-filter" data-status="resolved">Resolved</button>
+          <button class="am-btn flag-filter" data-status="dismissed">Dismissed</button>
+          <span id="flagCount" class="am-hint"></span>
+        </div>
+        <div id="flagList" class="am-list"></div>
+        <div id="flagDetail" class="am-card" hidden></div>
       </section>
 
       <!-- editor -->
