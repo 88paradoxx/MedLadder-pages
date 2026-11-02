@@ -745,3 +745,4 @@ body.is-native-app .nav-download-btn,
 .bm-subj{font-size:15px;font-weight:800;margin:18px 0 4px}
 .bm-subj:first-child{margin-top:0}
 .bm-topic{font-size:13px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
+.bm-top-row{display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px}
