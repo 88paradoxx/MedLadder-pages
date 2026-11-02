@@ -83,8 +83,8 @@
       lastMode = mode;
       var live = mode === 'live';
       el.setAttribute('style',
-        'display:flex;align-items:center;gap:14px;margin:18px 0;padding:18px 20px;' +
-        'border-radius:14px;text-decoration:none;color:inherit;cursor:pointer;' +
+        'display:flex;align-items:center;gap:14px;margin:0 0 12px;padding:20px;' +
+        'border-radius:16px;text-decoration:none;color:inherit;cursor:pointer;' +
         (live
           ? 'background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(34,197,94,.06));border:1px solid #22c55e;box-shadow:0 0 24px rgba(34,197,94,.25);'
           : 'background:linear-gradient(135deg,rgba(123,47,247,.20),rgba(123,47,247,.05));border:1px solid #7b2ff7;'));

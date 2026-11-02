@@ -746,3 +746,39 @@ body.is-native-app .nav-download-btn,
 .bm-subj:first-child{margin-top:0}
 .bm-topic{font-size:13px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
 .bm-top-row{display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px}
+
+/* Home refresh: fresh tile washes + quick-action boxes (appended overrides). */
+.quick-actions-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);margin:6px 0 12px}
+/* Subject tiles: mint / sky / violet washes instead of flat grey. */
+.subject-grid .item:nth-child(3n+1){background:linear-gradient(135deg,rgba(16,185,129,.16),rgba(16,185,129,.04)),var(--glass-bg-strong)!important;border-color:rgba(16,185,129,.35)!important}
+.subject-grid .item:nth-child(3n+2){background:linear-gradient(135deg,rgba(14,165,233,.16),rgba(14,165,233,.04)),var(--glass-bg-strong)!important;border-color:rgba(14,165,233,.35)!important}
+.subject-grid .item:nth-child(3n){background:linear-gradient(135deg,rgba(167,139,250,.18),rgba(167,139,250,.05)),var(--glass-bg-strong)!important;border-color:rgba(167,139,250,.4)!important}
+.subject-grid .item:nth-child(3n+1)::before{background:#10b981}
+.subject-grid .item:nth-child(3n+2)::before{background:#0ea5e9}
+.subject-grid .item:nth-child(3n)::before{background:#a78bfa}
+.subject-grid .item:nth-child(3n+1) .item-icon-box{background:#d1fae5!important}
+.subject-grid .item:nth-child(3n+2) .item-icon-box{background:#e0f2fe!important}
+.subject-grid .item:nth-child(3n) .item-icon-box{background:#ede9fe!important}
+.subject-grid .item:nth-child(3n+1) .item-category-tag{color:#059669}
+.subject-grid .item:nth-child(3n+2) .item-category-tag{color:#0284c7}
+.subject-grid .item:nth-child(3n) .item-category-tag{color:#7c3aed}
+html.dark .subject-grid .item:nth-child(3n+1) .item-category-tag{color:#34d399}
+html.dark .subject-grid .item:nth-child(3n+2) .item-category-tag{color:#38bdf8}
+html.dark .subject-grid .item:nth-child(3n) .item-category-tag{color:#c4b5fd}
+/* Quick-action boxes: chunky filled boxes, one accent each. */
+.custom-module-card{margin:0 0 12px;border-radius:16px;padding:20px}
+#customModuleCard{background:linear-gradient(135deg,rgba(167,139,250,.22),rgba(167,139,250,.06)),var(--glass-bg-strong);border:1px solid rgba(167,139,250,.45);border-left:4px solid #a78bfa}
+#bookmarksHomeCard{background:linear-gradient(135deg,rgba(251,191,36,.20),rgba(251,191,36,.05)),var(--glass-bg-strong);border:1px solid rgba(251,191,36,.45);border-left:4px solid #fbbf24}
+#bookmarksHomeCard .custom-module-icon{background:linear-gradient(135deg,#f59e0b,#f97316);box-shadow:0 8px 18px rgba(245,158,11,.35)}
+.pyq-section-wrap{margin:0 0 24px}
+.subject-grid{margin:4px 0 32px}
+/* Hero refresh: mint-tinged glow, fresh stat numbers, fresh active tab. */
+.hero-wrap::before{background:radial-gradient(circle,rgba(16,185,129,.16),rgba(124,58,237,.06) 48%,transparent 72%)}
+.bento-bar .bento-stat:nth-child(1) .bento-stat-num{color:#10b981}
+.bento-bar .bento-stat:nth-child(2) .bento-stat-num{color:#0ea5e9}
+.bento-bar .bento-stat:nth-child(3) .bento-stat-num{color:#a78bfa}
+.bento-bar .bento-stat:nth-child(4) .bento-stat-num{color:#f59e0b}
+html.dark .cat-tab.active{background:linear-gradient(135deg,#10b981,#0ea5e9);border-color:transparent;box-shadow:0 6px 16px rgba(16,185,129,.3)}
+html:not(.dark) .cat-tab.active{background:linear-gradient(135deg,#10b981,#0ea5e9);border-color:transparent;color:#fff;box-shadow:0 5px 14px rgba(16,185,129,.25)}
+html.dark .home-search-input:focus{border-color:#34d399!important;box-shadow:0 0 0 4px rgba(52,211,153,.18),0 8px 22px rgba(0,0,0,.25)!important}
+html:not(.dark) .home-search-input:focus{border-color:#10b981!important;box-shadow:0 0 0 4px rgba(16,185,129,.14),0 8px 22px rgba(16,185,129,.10)!important}
