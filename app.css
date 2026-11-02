@@ -836,3 +836,19 @@ html:not(.dark) .home-search-input:focus{border-color:#10b981!important;box-shad
 .section-divider{height:2px;border-radius:2px;margin:12px 0}
 .divider-subjects{background:linear-gradient(90deg,transparent,#8b5cf6,#0ea5e9,transparent)}
 .divider-pyq{background:linear-gradient(90deg,transparent,#10b981,#14b8a6,transparent)}
+
+/* Theme-proof rhythm: light rules are html:not(.dark)-scoped and beat
+   unscoped rules, so re-assert the same tight values per theme. */
+html:not(.dark) .masthead, html.dark .masthead{margin-bottom:8px}
+html:not(.dark) .hero-wrap, html.dark .hero-wrap{padding:0 4px 6px}
+html:not(.dark) .hero-eyebrow, html.dark .hero-eyebrow{margin-bottom:4px}
+html:not(.dark) .hero-wrap h1.title, html.dark .hero-wrap h1.title{font-size:clamp(28px,4.5vw,36px);margin:0 0 4px}
+html:not(.dark) .hero-wrap .subtitle, html.dark .hero-wrap .subtitle{margin:0 auto 6px}
+html:not(.dark) .hero-wrap .bento-bar, html.dark .hero-wrap .bento-bar{grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+html:not(.dark) .bento-stat, html.dark .bento-stat{min-height:48px;padding:6px 4px}
+html:not(.dark) .home-controls, html.dark .home-controls{margin-bottom:8px}
+html:not(.dark) .home-search-input, html.dark .home-search-input{height:42px}
+html:not(.dark) .home-controls .cat-tab, html.dark .home-controls .cat-tab{padding:6px 11px}
+html:not(.dark) .quick-actions-label, html.dark .quick-actions-label{margin:4px 0 8px}
+html:not(.dark) .quick-actions-grid, html.dark .quick-actions-grid{margin:0}
+html:not(.dark) .subject-grid, html.dark .subject-grid{margin:0}
