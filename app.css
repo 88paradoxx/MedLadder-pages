@@ -852,3 +852,14 @@ html:not(.dark) .home-controls .cat-tab, html.dark .home-controls .cat-tab{paddi
 html:not(.dark) .quick-actions-label, html.dark .quick-actions-label{margin:4px 0 8px}
 html:not(.dark) .quick-actions-grid, html.dark .quick-actions-grid{margin:0}
 html:not(.dark) .subject-grid, html.dark .subject-grid{margin:0}
+
+/* No vertical hover movement (laptop/mouse-only jumps): keep the hover
+   shadow/border feedback, but tiles, cards, tabs and boxes must not move. */
+html:not(.dark) .bento-stat:hover, html.dark .bento-stat:hover{transform:none}
+html:not(.dark) .subject-grid .item:hover, html:not(.dark) .subject-grid .item:active, html:not(.dark) .subject-grid .item:focus-visible, html.dark .subject-grid .item:hover, html.dark .subject-grid .item:active, html.dark .subject-grid .item:focus-visible{transform:none}
+html:not(.dark) .cat-tab:hover, html.dark .cat-tab:hover{transform:none}
+html:not(.dark) .pyq-section-header:hover, html.dark .pyq-section-header:hover{transform:none}
+html:not(.dark) .custom-module-card:hover, html:not(.dark) .custom-module-card:focus-visible, html.dark .custom-module-card:hover, html.dark .custom-module-card:focus-visible{transform:none}
+/* Reserve the scrollbar gutter so desktop content never reflows when
+   the scrollbar appears. */
+html{scrollbar-gutter:stable}
