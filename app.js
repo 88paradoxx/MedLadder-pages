@@ -3471,6 +3471,7 @@ window.addEventListener('error', function (ev) {
               if (r.option_e) opts.E = r.option_e;
               return {
                 id: r.id,
+                moduleId: r.module_id,
                 num: String(r.id || r.question_num),
                 question: r.question_text || '',
                 options: opts,
@@ -4047,7 +4048,7 @@ window.addEventListener('error', function (ev) {
         wireTopBar(function () { isCustom ? renderCustomSetup() : renderSetup(state.subjectId, state.moduleId || 'all'); });
 
         // Build Supabase Query
-        var query = supabaseClient.from('questions').select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation');
+        var query = supabaseClient.from('questions').select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,module_id');
         if (pool.moduleId === 'all' || pool.moduleId === 'custom') {
           query = query.in('module_id', pool.moduleDbIds);
         } else {
@@ -4112,6 +4113,7 @@ window.addEventListener('error', function (ev) {
 
               return {
                 id: r.id,
+                moduleId: r.module_id,
                 num: String(r.id || r.question_num),
                 question: r.question_text || '',
                 options: opts,
@@ -4350,7 +4352,7 @@ window.addEventListener('error', function (ev) {
         });
         document.getElementById('nextBtn').addEventListener('click', function () { commitAndAdvance(); });
         var bookmarkBtn = document.getElementById('bookmarkBtn');
-        if (bookmarkBtn) bookmarkBtn.addEventListener('click', function () { toggleBookmark(q.id); });
+        if (bookmarkBtn) bookmarkBtn.addEventListener('click', function () { toggleBookmark(q); });
         var flagBtn = document.getElementById('flagBtn');
         if (flagBtn) flagBtn.addEventListener('click', function () { openFlagDialog(q.id); });
 
@@ -4433,6 +4435,48 @@ window.addEventListener('error', function (ev) {
         return !!(state.bookmarkedIds && state.bookmarkedIds[id]);
       }
 
+      // Module id → { subject, topic } from the baked syllabus data.
+      // Used instead of querying the modules/subjects tables: the app's
+      // key cannot read those tables (RLS returns []), which is why
+      // every bookmark previously showed 'Question bank'.
+      var _bookmarkModuleMap = null;
+      function bookmarkModuleMap() {
+        if (_bookmarkModuleMap) return _bookmarkModuleMap;
+        var map = {};
+        if (typeof SYLLABUS !== 'undefined' && Array.isArray(SYLLABUS)) {
+          SYLLABUS.forEach(function (s) {
+            (s.modules || []).forEach(function (mod) {
+              map[mod.id] = { subject: s.name, topic: mod.name };
+            });
+          });
+        }
+        _bookmarkModuleMap = map;
+        return map;
+      }
+
+      // Where a bookmark belongs, best source first: the question's own
+      // module (live truth, survives admin reassigns), then single-topic
+      // quiz context, then subject only. Nulls mean 'unknown', not an error.
+      function resolveBookmarkLocation(q) {
+        if (q && q.moduleId !== null && q.moduleId !== undefined) {
+          var hit = bookmarkModuleMap()[q.moduleId];
+          if (hit) return hit;
+        }
+        if (state.moduleId !== 'bookmarks' && setupChoice && setupChoice.pool &&
+            setupChoice.pool.moduleDbId) {
+          var hit2 = bookmarkModuleMap()[setupChoice.pool.moduleDbId];
+          if (hit2) return hit2;
+        }
+        if (state.subjectId && typeof SUBJECT_INDEX !== 'undefined') {
+          for (var i = 0; i < SUBJECT_INDEX.length; i++) {
+            if (SUBJECT_INDEX[i].subjectId === state.subjectId) {
+              return { subject: SUBJECT_INDEX[i].name, topic: null };
+            }
+          }
+        }
+        return { subject: null, topic: null };
+      }
+
       // Non-essential fetch: never blocks the quiz render. When it lands it
       // only flips the current question's button if the quiz is unchanged.
       function prefetchBookmarks() {
@@ -4462,19 +4506,15 @@ window.addEventListener('error', function (ev) {
         btn.classList.toggle('active', saved);
       }
 
-      function toggleBookmark(questionId) {
-        if (!currentUser || !supabaseClient || !questionId) return;
+      function toggleBookmark(q) {
+        if (!currentUser || !supabaseClient || !q || !q.id) return;
+        var questionId = q.id;
         if (!state.bookmarkedIds) state.bookmarkedIds = {};
         var saved = isBookmarked(questionId);
         if (saved) delete state.bookmarkedIds[questionId];
         else state.bookmarkedIds[questionId] = true;
         refreshBookmarkBtn();
-        var op = saved
-          ? supabaseClient.from('user_bookmarks').delete()
-              .eq('user_id', currentUser.id).eq('question_id', questionId)
-          : supabaseClient.from('user_bookmarks')
-              .insert({ user_id: currentUser.id, question_id: questionId });
-        op.then(function (res) {
+        var done = function (res) {
           if (res.error) {
             if (saved) state.bookmarkedIds[questionId] = true;
             else delete state.bookmarkedIds[questionId];
@@ -4482,6 +4522,27 @@ window.addEventListener('error', function (ev) {
             showToast('Could not update bookmark — please retry.');
           } else if (!saved) {
             showToast('Bookmarked — find it under My bookmarks on the home screen.');
+          }
+        };
+        if (saved) {
+          supabaseClient.from('user_bookmarks').delete()
+            .eq('user_id', currentUser.id).eq('question_id', questionId).then(done);
+          return;
+        }
+        var loc = resolveBookmarkLocation(q);
+        var payload = {
+          user_id: currentUser.id, question_id: questionId,
+          subject_name: loc.subject, topic_name: loc.topic
+        };
+        supabaseClient.from('user_bookmarks').insert(payload).then(function (res) {
+          // The subject/topic columns arrive via a second migration: if a
+          // deploy lands before it runs, retry without them instead of
+          // failing the save.
+          if (res.error && /subject_name|topic_name/.test(res.error.message || '')) {
+            supabaseClient.from('user_bookmarks')
+              .insert({ user_id: currentUser.id, question_id: questionId }).then(done);
+          } else {
+            done(res);
           }
         });
       }
@@ -4567,7 +4628,7 @@ window.addEventListener('error', function (ev) {
         wireTopBar(renderHome);
         wireRipples('.btn');
         var listEl = document.getElementById('bmList');
-        supabaseClient.from('user_bookmarks').select('question_id,created_at')
+        supabaseClient.from('user_bookmarks').select('question_id,subject_name,topic_name,created_at')
           .eq('user_id', currentUser.id).order('created_at', { ascending: false })
           .then(function (res) {
             if (res.error) {
@@ -4597,50 +4658,68 @@ window.addEventListener('error', function (ev) {
                 }
                 var byId = {};
                 qr.data.forEach(function (r) { byId[r.id] = r; });
-                var rows = marks.map(function (m) { return byId[m.question_id]; })
-                  .filter(function (r) { return !!r; });
-                var modIds = rows.map(function (r) { return r.module_id; })
-                  .filter(function (v, i, a) { return v !== null && v !== undefined && a.indexOf(v) === i; });
-                var renderRows = function (modMap, subjMap) {
-                  listEl.innerHTML = '';
-                  rows.forEach(function (r) {
-                    var mod = modMap[r.module_id] || {};
-                    var subj = subjMap[mod.subject_id] || {};
-                    var row = document.createElement('div');
-                    row.className = 'bm-item';
-                    row.innerHTML = '<div class="bm-stem">' + esc(stripHtmlPreview(r.question_text, 180)) + '</div>' +
-                      '<div class="bm-meta">' + esc(subj.name || 'Question bank') +
-                      (mod.name ? ' / ' + esc(mod.name) : '') + ' · Q#' + r.question_num + '</div>' +
-                      '<div class="bm-row"><button class="btn secondary bm-btn" data-act="go">Practise</button>' +
-                      '<button class="btn secondary bm-btn" data-act="del">Remove</button></div>';
-                    row.querySelector('[data-act="go"]').onclick = function () { practiseBookmarks([r.id]); };
-                    row.querySelector('[data-act="del"]').onclick = function () {
-                      supabaseClient.from('user_bookmarks').delete()
-                        .eq('user_id', currentUser.id).eq('question_id', r.id)
-                        .then(function (dr) {
-                          if (dr.error) { showToast('Could not remove bookmark — please retry.'); return; }
-                          showToast('Bookmark removed.');
-                          renderBookmarks();
-                        });
-                    };
-                    listEl.appendChild(row);
+                // Group by subject, then topic, in first-saved order.
+                // Location resolves from the question's own module via the
+                // baked syllabus data first, then the subject/topic stored
+                // when the bookmark was saved, then 'Question bank'.
+                var modMap = bookmarkModuleMap();
+                var subjects = [];
+                var subjByName = {};
+                marks.forEach(function (m) {
+                  var r = byId[m.question_id];
+                  if (!r) return;
+                  var hit = (r.module_id !== null && r.module_id !== undefined)
+                    ? modMap[r.module_id] : null;
+                  var subjName = (hit && hit.subject) || m.subject_name || 'Question bank';
+                  var topicName = (hit && hit.topic) || m.topic_name || '';
+                  var sg = subjByName[subjName];
+                  if (!sg) {
+                    sg = { name: subjName, topics: [], topicByName: {} };
+                    subjByName[subjName] = sg;
+                    subjects.push(sg);
+                  }
+                  var tg = sg.topicByName[topicName];
+                  if (!tg) {
+                    tg = { name: topicName, rows: [] };
+                    sg.topicByName[topicName] = tg;
+                    sg.topics.push(tg);
+                  }
+                  tg.rows.push(r);
+                });
+                listEl.innerHTML = '';
+                subjects.forEach(function (sg) {
+                  var sh = document.createElement('div');
+                  sh.className = 'bm-subj';
+                  sh.textContent = sg.name;
+                  listEl.appendChild(sh);
+                  sg.topics.forEach(function (tg) {
+                    if (tg.name) {
+                      var th = document.createElement('div');
+                      th.className = 'bm-topic';
+                      th.textContent = tg.name;
+                      listEl.appendChild(th);
+                    }
+                    tg.rows.forEach(function (r) {
+                      var row = document.createElement('div');
+                      row.className = 'bm-item';
+                      row.innerHTML = '<div class="bm-stem">' + esc(stripHtmlPreview(r.question_text, 180)) + '</div>' +
+                        '<div class="bm-meta">Q#' + r.question_num + '</div>' +
+                        '<div class="bm-row"><button class="btn secondary bm-btn" data-act="go">Practise</button>' +
+                        '<button class="btn secondary bm-btn" data-act="del">Remove</button></div>';
+                      row.querySelector('[data-act="go"]').onclick = function () { practiseBookmarks([r.id]); };
+                      row.querySelector('[data-act="del"]').onclick = function () {
+                        supabaseClient.from('user_bookmarks').delete()
+                          .eq('user_id', currentUser.id).eq('question_id', r.id)
+                          .then(function (dr) {
+                            if (dr.error) { showToast('Could not remove bookmark — please retry.'); return; }
+                            showToast('Bookmark removed.');
+                            renderBookmarks();
+                          });
+                      };
+                      listEl.appendChild(row);
+                    });
                   });
-                };
-                if (!modIds.length) { renderRows({}, {}); return; }
-                supabaseClient.from('modules').select('id,name,subject_id').in('id', modIds)
-                  .then(function (mr) {
-                    var modMap = {};
-                    (mr.data || []).forEach(function (m) { modMap[m.id] = m; });
-                    var subjIds = Object.keys(modMap).map(function (k) { return modMap[k].subject_id; })
-                      .filter(function (v, i, a) { return v !== null && v !== undefined && a.indexOf(v) === i; });
-                    if (!subjIds.length) { renderRows(modMap, {}); return; }
-                    supabaseClient.from('subjects').select('id,name').in('id', subjIds)
-                      .then(function (sr) {
-                        var subjMap = {};
-                        (sr.data || []).forEach(function (s) { subjMap[s.id] = s; });
-                        renderRows(modMap, subjMap);
-                      });
-                  });
+                });
               });
           });
       }
@@ -4672,7 +4751,7 @@ window.addEventListener('error', function (ev) {
           '</div></div></main>';
         wireTopBar(renderBookmarks);
         supabaseClient.from('questions')
-          .select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation')
+          .select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,module_id')
           .in('id', questionIds).then(function (res) {
             if (res.error || !res.data || !res.data.length) {
               showToast('Could not load bookmarked questions.');
@@ -4706,6 +4785,7 @@ window.addEventListener('error', function (ev) {
                 if (r.option_e) opts.E = r.option_e;
                 return {
                   id: r.id,
+                  moduleId: r.module_id,
                   num: String(r.id || r.question_num),
                   question: r.question_text || '',
                   options: opts,
