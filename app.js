@@ -1751,6 +1751,15 @@ window.addEventListener('error', function (ev) {
           '</div>';
       }
 
+      // Hide the page's baked-in generic footer when the app renders its own,
+      // so static documents don't show the same footer twice.
+      function hideStaticFooter() {
+        var appEl = document.getElementById('app');
+        if (!appEl) return;
+        document.querySelectorAll('footer.credit').forEach(function (f) {
+          if (!appEl.contains(f)) f.style.display = 'none';
+        });
+      }
       function footerHtml() {
         var isNative = !!(
           (window.MedLadderNative && window.MedLadderNative.isNative) ||
@@ -3101,7 +3110,7 @@ window.addEventListener('error', function (ev) {
             pyqSectionHtml +
             modeNoteHtml() +
             '</main>' +
-            footerHtml();
+            footerHtml(); hideStaticFooter();
         }
 
         function setPyqExpanded(expanded) {
@@ -3699,7 +3708,7 @@ window.addEventListener('error', function (ev) {
           '<div class="item-list" id="moduleItemList" style="list-style:none;padding:0;margin:12px 0 0;">' + allCard + rows + '</div>' +
           '<div id="noMatchCard" class="no-match-card hidden">No subtopics match your search.</div>' +
           '</main>' +
-          footerHtml();
+          footerHtml(); hideStaticFooter();
 
         wireTopBar(function () { renderHome(); });
         wireRipples('.item, .auth-btn');
@@ -4648,7 +4657,7 @@ window.addEventListener('error', function (ev) {
           '<div class="bm-actions"><button class="btn" id="bmPractiseAll" disabled>Practise all</button><span id="bmCount" class="bm-hint"></span></div>' +
           '<div id="bmList" class="bm-list"><p class="bm-hint">Loading…</p></div>' +
           '</div></main>' +
-          footerHtml();
+          footerHtml(); hideStaticFooter();
         wireTopBar(renderHome);
         wireRipples('.btn');
         var listEl = document.getElementById('bmList');
@@ -4909,7 +4918,7 @@ window.addEventListener('error', function (ev) {
           '<button class="review-toggle" id="reviewToggle">Show full review ▾</button>' +
           '<div id="reviewBlock" class="hidden" data-loaded="false">' + reviewHtml + '</div>' +
           '</main>' +
-          footerHtml();
+          footerHtml(); hideStaticFooter();
 
         wireTopBar(resBackFn);
         wireRipples('.btn, .auth-btn');
@@ -5271,7 +5280,7 @@ window.addEventListener('error', function (ev) {
           linksHtml +
           '<section aria-labelledby="seoExplore" style="margin-top:32px;"><h2 id="seoExplore" class="seo-section-title">Continue your preparation</h2><p style="color:var(--ink-soft);line-height:1.65;">Use the topic links above to move through the syllabus, or return to the MedLadder home page to explore the complete question bank.</p></section>' +
           '</main>' +
-          footerHtml();
+          footerHtml(); hideStaticFooter();
 
         wireTopBar(function () { goHomeFromSeo(); });
         updateSeoMeta(title, description, window.location.pathname);
