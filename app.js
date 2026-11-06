@@ -5404,6 +5404,10 @@ window.addEventListener('error', function (ev) {
         var path = window.location.pathname.replace(/\/$/, '').toLowerCase();
         // Pre-rendered PYQ pages (/pyqs/*) ship full static HTML: leave them alone.
         if (path === '/pyqs' || path.indexOf('/pyqs/') === 0) {
+          // Mark this an SEO page, not home: otherwise the logged-in
+          // progress refresh (loadUserProgress) treats this document as
+          // the SPA home and renderHome() bounces it back to '/'.
+          state.screen = 'seo';
           return;
         }
         // Other pre-rendered static pages ship full HTML too: leave them alone.
@@ -5413,6 +5417,8 @@ window.addEventListener('error', function (ev) {
             path === '/neet-pg-top-100-questions' || path === '/medladder-vs-marrow' ||
             path === '/medladder-vs-prepladder' || path === '/best-free-neet-pg-question-bank' ||
             path === '/inicet') {
+          // Same as the PYQ guard above: this is an SEO page, not home.
+          state.screen = 'seo';
           return;
         }
         if (path === '/mock-test' || path === '/mock-test.html') {
