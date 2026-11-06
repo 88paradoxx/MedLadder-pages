@@ -59,6 +59,9 @@
           <label class="am-wide">Subject <select id="bqSubj"></select></label>
           <label class="am-wide">Topic <select id="bqTopic"></select></label>
           <label class="am-wide">Question <textarea id="bqText" rows="3" required></textarea></label>
+          <label class="am-wide">Question image <input type="file" id="bqQImg" accept="image/*">
+            <img id="bqQImgPrev" hidden alt="Question image preview" style="max-width:160px;max-height:120px;display:block;margin-top:6px;border-radius:6px">
+            <button type="button" id="bqQImgClear" class="am-btn" hidden>Remove image</button></label>
           <label>A <input id="bqA" required></label>
           <label>B <input id="bqB" required></label>
           <label>C <input id="bqC" required></label>
@@ -68,6 +71,9 @@
             <select id="bqAns"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option><option value="e">E</option></select>
           </label>
           <label class="am-wide">Explanation <textarea id="bqExpl" rows="2" required></textarea></label>
+          <label class="am-wide">Explanation image <input type="file" id="bqEImg" accept="image/*">
+            <img id="bqEImgPrev" hidden alt="Explanation image preview" style="max-width:160px;max-height:120px;display:block;margin-top:6px;border-radius:6px">
+            <button type="button" id="bqEImgClear" class="am-btn" hidden>Remove image</button></label>
           <div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Add to bank</button>
             <span id="bankInfo" class="am-hint"></span></div>
         </form>

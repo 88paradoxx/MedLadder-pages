@@ -171,6 +171,79 @@
     });
   }
 
+  /* ---------- bank question images (upload to R2, then insert) ---------- */
+  var BANK_IMG_MAX = 768;
+
+  function downscaleBankImage(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      var objUrl = URL.createObjectURL(file);
+      img.onload = function () {
+        var scale = Math.min(1, BANK_IMG_MAX / Math.max(img.naturalWidth, img.naturalHeight));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(objUrl);
+        canvas.toBlob(function (blob) {
+          blob ? resolve(blob) : reject(new Error('Could not process that image.'));
+        }, 'image/webp', 0.8);
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(objUrl);
+        reject(new Error('That file is not a readable image.'));
+      };
+      img.src = objUrl;
+    });
+  }
+
+  function uploadBankImage(blob) {
+    return sb.auth.getSession().then(function (res) {
+      var token = res.data && res.data.session && res.data.session.access_token;
+      if (!token) throw new Error('Sign in again, then retry.');
+      var fd = new FormData();
+      fd.append('image', blob, 'question.webp');
+      return fetch('/api/upload-image', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: fd
+      });
+    }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    }).then(function (out) {
+      if (!out.body || !out.body.ok || !out.body.url) {
+        throw new Error('Image upload failed. Try again.');
+      }
+      return out.body.url;
+    });
+  }
+
+  function bankImgTag(url) {
+    return '<p><img src="' + url + '" alt="Question image" loading="lazy" decoding="async" style="max-width:100%;height:auto;object-fit:contain"></p>';
+  }
+
+  function clearBankImageInput(fileId, prevId, clearId) {
+    var input = $(fileId), prev = $(prevId), clearBtn = $(clearId);
+    if (input) input.value = '';
+    if (prev) { prev.hidden = true; prev.src = ''; }
+    if (clearBtn) clearBtn.hidden = true;
+  }
+
+  function wireBankImageInput(fileId, prevId, clearId) {
+    var input = $(fileId), prev = $(prevId), clearBtn = $(clearId);
+    if (!input) return;
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      if (!f) { clearBankImageInput(fileId, prevId, clearId); return; }
+      prev.src = URL.createObjectURL(f);
+      prev.hidden = false;
+      clearBtn.hidden = false;
+    });
+    clearBtn.addEventListener('click', function () {
+      clearBankImageInput(fileId, prevId, clearId);
+    });
+  }
+
   function submitBankQuestion(ev) {
     ev.preventDefault();
     var subj = $('bqSubj') ? $('bqSubj').value : '';
@@ -191,19 +264,46 @@
         !d.p_option_c || !d.p_option_d || !d.p_explanation) {
       toast('Question, options A–D and explanation are required.'); return;
     }
-    sb.rpc('admin_add_bank_question', d).then(function (r) {
-      if (r.error) { toast(rpcErr(r.error)); return; }
-      var num = (r.data && r.data.question_num) || '';
-      toast('Added to bank (question #' + num + ').');
-      $('bankInfo').textContent = 'Last added: question #' + num + ' → ' +
-        hit.subject + ' / ' + hit.name;
-      // Keep the subject/topic: only the question fields are cleared, so the
-      // next question goes to the same topic without re-picking.
-      ['bqText', 'bqA', 'bqB', 'bqC', 'bqD', 'bqE', 'bqExpl'].forEach(function (id) {
-        $(id).value = '';
-      });
-      $('bqAns').value = 'a';
-    });
+    var submitBtn = document.querySelector('#bankQForm button[type="submit"]');
+    var qFile = $('bqQImg') && $('bqQImg').files && $('bqQImg').files[0];
+    var eFile = $('bqEImg') && $('bqEImg').files && $('bqEImg').files[0];
+    if (submitBtn) submitBtn.disabled = true;
+    if (qFile || eFile) $('bankInfo').textContent = 'Uploading image(s)…';
+    /* Upload any picked images to R2 first; only then insert the question,
+       with the returned URLs attached. If an upload fails, nothing is
+       added to the bank. */
+    Promise.resolve()
+      .then(function () {
+        return qFile ? downscaleBankImage(qFile).then(uploadBankImage) : null;
+      })
+      .then(function (qUrl) {
+        if (qUrl) d.p_question_text += '\n' + bankImgTag(qUrl);
+        return eFile ? downscaleBankImage(eFile).then(uploadBankImage) : null;
+      })
+      .then(function (eUrl) {
+        if (eUrl) d.p_explanation += '\n' + bankImgTag(eUrl);
+        return sb.rpc('admin_add_bank_question', d);
+      })
+      .then(function (r) {
+        if (r.error) { toast(rpcErr(r.error)); $('bankInfo').textContent = ''; return; }
+        var num = (r.data && r.data.question_num) || '';
+        toast('Added to bank (question #' + num + ').');
+        $('bankInfo').textContent = 'Last added: question #' + num + ' → ' +
+          hit.subject + ' / ' + hit.name;
+        // Keep the subject/topic: only the question fields are cleared, so the
+        // next question goes to the same topic without re-picking.
+        ['bqText', 'bqA', 'bqB', 'bqC', 'bqD', 'bqE', 'bqExpl'].forEach(function (id) {
+          $(id).value = '';
+        });
+        $('bqAns').value = 'a';
+        clearBankImageInput('bqQImg', 'bqQImgPrev', 'bqQImgClear');
+        clearBankImageInput('bqEImg', 'bqEImgPrev', 'bqEImgClear');
+      })
+      .catch(function (err) {
+        toast(err && err.message ? err.message : 'Image upload failed.');
+        $('bankInfo').textContent = '';
+      })
+      .then(function () { if (submitBtn) submitBtn.disabled = false; });
   }
 
   /* ---------- subject-mock draw ---------- */
@@ -372,6 +472,8 @@
     });
     $('bankBackBtn').onclick = loadTests;
     $('bankQForm').onsubmit = submitBankQuestion;
+    wireBankImageInput('bqQImg', 'bqQImgPrev', 'bqQImgClear');
+    wireBankImageInput('bqEImg', 'bqEImgPrev', 'bqEImgClear');
     if ($('bqSubj')) $('bqSubj').onchange = rebuildBqTopics;
     populateBqDefaults();
     $('bankBulkParseBtn').onclick = previewBankBulk;
