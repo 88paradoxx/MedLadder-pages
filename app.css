@@ -910,3 +910,15 @@ html.dark{--pal-sky:#38BDF8;--pal-orange:#FB923C}
 
 /* Hide the footer directory on question and setup screens (results keep it). */
 body:has(#app.screen-quiz:not(.screen-results), #app.screen-setup, #app .pyq-setup-badge) nav[aria-label="Browse MedLadder"]{display:none}
+
+/* Google hero button (auth modal): one-tap Google sign-in is the main action,
+   so it reads as a white Google button first and the email form second.
+   Explicit colours (same in light and dark) by design. */
+.auth-google-btn{background:#fff;border:1px solid #dadce0;color:#1f1f1f;font-size:15px;font-weight:700;padding:14px 16px;gap:12px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.18),0 4px 14px rgba(0,0,0,.10)}
+.auth-google-btn:hover{transform:translateY(-1px);border-color:#bdc1c6;box-shadow:0 1px 3px rgba(0,0,0,.18),0 6px 18px rgba(0,0,0,.14)}
+.auth-google-btn:active{transform:scale(.985)}
+.auth-google-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.auth-google-btn svg{width:20px;height:20px;flex-shrink:0}
+.auth-google-badge{font-size:11px;font-weight:700;line-height:1;padding:3px 8px;border-radius:999px;background:#e6f4ea;color:#137333;white-space:nowrap}
+.auth-google-btn .auth-spinner{border:2px solid rgba(0,0,0,.14)}
+.auth-google-btn:disabled{opacity:.75}
