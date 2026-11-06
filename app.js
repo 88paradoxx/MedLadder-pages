@@ -31,6 +31,52 @@ window.addEventListener('error', function (ev) {
         } catch (err) {}
       }
 
+      // ─── GA4 SPA VIRTUAL PAGEVIEWS ─────────────────────────────────────────
+      // The gtag config sends one automatic page_view for the initial load.
+      // Every later in-app view sends exactly one manual page_view via
+      // trackPageView(path, view). Same view+path re-renders are ignored, and
+      // the load view itself is never double-counted: its first call is
+      // skipped because the config already covered that URL.
+      var __mlLoadPath = window.location.pathname || '/';
+      var __mlLoadViewCounted = false;
+      var __mlLastViewKey = null;
+      function trackPageView(path, view, title) {
+        try {
+          var p = path || window.location.pathname || '/';
+          var key = (view || 'view') + '|' + p;
+          if (!__mlLoadViewCounted && p === __mlLoadPath) { __mlLoadViewCounted = true; __mlLastViewKey = key; return; }
+          if (key === __mlLastViewKey) return;
+          __mlLastViewKey = key;
+          trackEvent('page_view', {
+            page_title: title || document.title,
+            page_location: 'https://medladder.top' + p,
+            page_path: p
+          });
+        } catch (err) {}
+      }
+      function pyqSlug(examId) {
+        var s = String(examId || '').toLowerCase();
+        if (s === 'inicet') return 'ini-cet';
+        return s.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      }
+      function practiceBasePath() {
+        try {
+          if (state.isPyqMode && state.pyqExam) return '/pyqs/' + pyqSlug(state.pyqExam);
+          if (state.moduleId === 'bookmarks') return '/bookmarks';
+          if (state.moduleId === 'custom') return '/custom-module';
+          var subj = null, mod = null;
+          if (state.subjectId) {
+            subj = SUBJECT_INDEX.find(function (s) { return s.subjectId === state.subjectId; });
+            if (subj && state.moduleId && state.moduleId !== 'all') {
+              mod = getSubjectModules(state.subjectId).find(function (m) { return m.moduleId === state.moduleId; });
+            }
+          }
+          if (subj && mod) return topicPath(subj, mod);
+          if (subj) return subjectPath(subj) + (state.moduleId === 'all' ? '/all' : '');
+          return '/';
+        } catch (err) { return '/'; }
+      }
+
       // Preserve campaign UTM attribution across auth / payment redirects
       (function captureUtmParams() {
         try {
@@ -2994,6 +3040,7 @@ window.addEventListener('error', function (ev) {
         clearTimer();
         releaseQuizPayload();
         state.screen = 'home';
+        trackPageView('/', 'home');
         scrollToPageTop();
         if (app) {
           app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
@@ -3282,6 +3329,7 @@ window.addEventListener('error', function (ev) {
         state.screen = 'setup';
         state.isPyqMode = true;
         state.pyqExam = examId;
+        trackPageView('/pyqs/' + pyqSlug(examId), 'pyq');
         state.subjectId = null;
         state.moduleId = 'pyq_' + examId;
 
@@ -3607,6 +3655,7 @@ window.addEventListener('error', function (ev) {
         }
         var subjMeta = SUBJECT_INDEX.find(function (s) { return s.subjectId === subjectId; });
         var modules = getSubjectModules(subjectId);
+        trackPageView(subjectPath(subjMeta), 'modules');
         state.subjectId = subjectId;
 
         var allCount = modules.reduce(function (s, m) { return s + m.questionCount; }, 0);
@@ -3854,6 +3903,7 @@ window.addEventListener('error', function (ev) {
         state.isPyqMode = false;
         state.subjectId = null;
         state.moduleId = 'custom';
+        trackPageView('/custom-module', 'custom');
         app.classList.remove('screen-quiz');
         app.classList.add('screen-setup');
         var pool = customPool();
@@ -3923,6 +3973,7 @@ window.addEventListener('error', function (ev) {
         app.classList.add('screen-setup');
         state.subjectId = subjectId;
         state.moduleId = moduleId;
+        trackPageView(practiceBasePath(), 'setup');
         var pool = resolvePool(subjectId, moduleId);
         setupChoice.pool = pool;
         var total = pool.questionCount;
@@ -4252,6 +4303,7 @@ window.addEventListener('error', function (ev) {
         }
 
         state.screen = 'quiz';
+        trackPageView(practiceBasePath() + '/quiz', 'quiz');
         if (app) {
           app.classList.remove('screen-setup', 'screen-results');
           app.classList.add('screen-quiz');
@@ -4652,6 +4704,7 @@ window.addEventListener('error', function (ev) {
           renderHome();
           return;
         }
+        trackPageView('/bookmarks', 'bookmarks');
         app.innerHTML =
           topBar('Back', renderHome) +
           '<main id="mainContent" role="main">' +
@@ -4861,6 +4914,7 @@ window.addEventListener('error', function (ev) {
         clearTimer();
         releaseQuestionImages();
         state.screen = 'results';
+        trackPageView(practiceBasePath() + '/results', 'results');
         scrollToPageTop();
         if (app) {
           app.classList.remove('screen-setup');
@@ -5143,12 +5197,8 @@ window.addEventListener('error', function (ev) {
         if (ogDesc) ogDesc.setAttribute('content', description);
         if (ogUrl) ogUrl.setAttribute('content', 'https://medladder.top' + (path || '/'));
 
-        // GA4 SPA Virtual Pageview Telemetry
-        trackEvent('page_view', {
-          page_title: title,
-          page_location: window.location.href,
-          page_path: path || window.location.pathname
-        });
+        // GA4 page_view for this view is sent by trackPageView at the render
+        // call site (the gtag config already covers the initial load).
       }
 
       function goHomeFromSeo() {
@@ -5288,6 +5338,7 @@ window.addEventListener('error', function (ev) {
 
         wireTopBar(function () { goHomeFromSeo(); });
         updateSeoMeta(title, description, window.location.pathname);
+        trackPageView(window.location.pathname, 'seo', title);
 
         document.getElementById('seoHomeTop').addEventListener('click', function(e){ e.preventDefault(); goHomeFromSeo(); });
         document.getElementById('seoHomeBottom').addEventListener('click', function(e){ e.preventDefault(); goHomeFromSeo(); });

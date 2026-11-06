@@ -22,6 +22,35 @@
   var lbChannel = null;
   var submitLock = false;
 
+  /* ---------- GA4 SPA virtual pageviews ---------- */
+  // The gtag config sends one automatic page_view for the initial load.
+  // Every later mock view sends exactly one manual page_view via
+  // trackMockPageView. Same view+path re-renders are ignored, and the load
+  // view itself is never double-counted.
+  var __mlMockLoadPath = window.location.pathname || '/mock-test';
+  var __mlMockBase = __mlMockLoadPath.replace(/\.html$/, '') || '/mock-test';
+  var __mlMockLoadViewCounted = false;
+  var __mlMockLastViewKey = null;
+  function trackMockPageView(path, view) {
+    try {
+      var p = path || window.location.pathname || '/mock-test';
+      var key = (view || 'view') + '|' + p;
+      if (!__mlMockLoadViewCounted && p === __mlMockLoadPath) { __mlMockLoadViewCounted = true; __mlMockLastViewKey = key; return; }
+      if (key === __mlMockLastViewKey) return;
+      __mlMockLastViewKey = key;
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'page_view', {
+          page_title: document.title,
+          page_location: 'https://medladder.top' + p,
+          page_path: p
+        });
+      } else if (window.dataLayer && Array.isArray(window.dataLayer)) {
+        window.dataLayer.push({ event: 'page_view', page_title: document.title, page_location: 'https://medladder.top' + p, page_path: p });
+      }
+    } catch (err) {}
+  }
+
+
   /* ---------- utils ---------- */
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -1273,6 +1302,10 @@
 
   /* ---------- view switching ---------- */
   function showView(id) {
+    if (id === 'lobbyView') trackMockPageView(__mlMockLoadPath, 'lobby');
+    else if (id === 'testView') trackMockPageView(__mlMockBase + '/test', 'test');
+    else if (id === 'resultView') trackMockPageView(__mlMockBase + '/results', 'result');
+    else if (id === 'endedView') trackMockPageView(__mlMockBase + '/ended', 'ended');
     ['lobbyView', 'testView', 'resultView', 'endedView'].forEach(function (v) {
       $(v).hidden = v !== id;
     });
