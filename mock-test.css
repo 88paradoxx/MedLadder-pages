@@ -416,6 +416,14 @@ html:not(.dark) .mt-topbar {
   --ink-soft: #25133E;
 }
 
+@media (min-width: 900px) {
+  /* True centre on wide screens: auto margins only centre the pill in the
+     space left of the theme toggle, which still reads as right-of-centre.
+     Anchor it to the bar itself instead; the toggle hugs the right edge. */
+  .mt-auth { position: absolute; left: 50%; transform: translateX(-50%); margin: 0; }
+  .mt-topbar .theme-toggle { margin-left: auto; }
+}
+
 /* ---------- auth pill (same as index page) ---------- */
 .auth-btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px;
   background: var(--glass-bg-strong); border: 1px solid var(--glass-border); color: var(--ink);
