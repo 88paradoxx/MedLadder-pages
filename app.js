@@ -1846,11 +1846,11 @@ window.addEventListener('error', function (ev) {
           '</a>' +
           '</div>' +
           '<div class="footer-links-row">' +
-          '<a href="/privacy.html" class="footer-link">Privacy Policy</a>' +
+          '<a href="/privacy" class="footer-link">Privacy Policy</a>' +
           '<span class="footer-dot" aria-hidden="true">·</span>' +
-          '<a href="/terms.html" class="footer-link">Terms of Service</a>' +
+          '<a href="/terms" class="footer-link">Terms of Service</a>' +
           '<span class="footer-dot" aria-hidden="true">·</span>' +
-          '<a href="/terms.html#cancellation-refund" class="footer-link">Refund Policy</a>' +
+          '<a href="/terms#cancellation-refund" class="footer-link">Refund Policy</a>' +
           (isAdmin(currentUser) ? '<span class="footer-dot" aria-hidden="true">·</span><a href="#" class="admin-footer-link footer-link admin-pill">👑 Admin Access</a>' : '') +
           '</div>' +
           '<div class="footer-copy"><strong>MedLadder</strong> · Medical Entrance Exam Question Bank</div>' +
@@ -5421,24 +5421,28 @@ window.addEventListener('error', function (ev) {
           state.screen = 'seo';
           return;
         }
-        if (path === '/mock-test' || path === '/mock-test.html') {
-          window.location.replace('/mock-test.html' + (window.location.search || ''));
+        if (path === '/mock-test') { return; } // real static page now (no .html hop)
+        if (path === '/mock-test.html') {
+          window.location.replace('/mock-test' + (window.location.search || ''));
           return;
         }
         if (path === '/admin-mock' || path === '/admin-mock.html') {
           window.location.replace('/admin-mock.html' + (window.location.search || ''));
           return;
         }
-        if (path === '/privacy' || path === '/privacy.html') {
-          window.location.replace('/privacy.html' + (window.location.search || '') + (window.location.hash || ''));
+        if (path === '/privacy') { return; } // real static page now (no .html hop)
+        if (path === '/privacy.html') {
+          window.location.replace('/privacy' + (window.location.search || '') + (window.location.hash || ''));
           return;
         }
-        if (path === '/terms' || path === '/terms.html') {
-          window.location.replace('/terms.html' + (window.location.search || '') + (window.location.hash || ''));
+        if (path === '/terms') { return; } // real static page now (no .html hop)
+        if (path === '/terms.html') {
+          window.location.replace('/terms' + (window.location.search || '') + (window.location.hash || ''));
           return;
         }
-        if (path === '/neet-ss-books' || path === '/neet-ss-books.html') {
-          window.location.replace('/neet-ss-books.html' + (window.location.search || ''));
+        if (path === '/neet-ss-books') { return; } // real static page now (no .html hop)
+        if (path === '/neet-ss-books.html') {
+          window.location.replace('/neet-ss-books' + (window.location.search || ''));
           return;
         }
         var exams = {

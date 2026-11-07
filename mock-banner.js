@@ -62,10 +62,10 @@
     if (!el) {
       el = document.createElement('a');
       el.id = BANNER_ID;
-      el.href = '/mock-test.html';
+      el.href = '/mock-test';
       el.onclick = function (e) {
         e.preventDefault();
-        window.location.href = '/mock-test.html';
+        window.location.href = '/mock-test';
       };
       // Join the quick-actions grid when it exists (compact 2+/row layout);
       // otherwise fall back to sitting directly before the PYQ section.

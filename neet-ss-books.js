@@ -1,13 +1,13 @@
 /* MedLadder NEET SS Books pill (standalone, so app.js stays untouched).
  * Injects a single "NEET SS Books" pill directly beneath the mock-test banner
- * (#mockTestBanner) on the home page. Tapping it opens /neet-ss-books.html,
+ * (#mockTestBanner) on the home page. Tapping it opens /neet-ss-books,
  * which lists every book with download links.
  * Re-injects after SPA re-renders via MutationObserver, same as mock-banner.js. */
 (function () {
   'use strict';
 
   var PILL_ID = 'neetSsBooksPill';
-  var BOOKS_URL = '/neet-ss-books.html';
+  var BOOKS_URL = '/neet-ss-books';
 
   var isHome = window.location.pathname === '/' ||
                window.location.pathname === '/index.html' ||
