@@ -160,6 +160,6 @@ const md=[
 "- Title/description similarity and slug clusters are automated triage signals, not proof of keyword cannibalization.",
 "- Search-intent gaps and actual cannibalization require Google Search Console query-to-page data, impressions, clicks, positions, and ideally SERP review.",
 "- Internal link validation checks repository-local href targets; external destinations and runtime redirects are not tested."
-].join("\\n");
-fs.writeFileSync(path.join(root,"audit-output/topic-seo-audit.md"),md+"\\n");
+].join("\n");
+fs.writeFileSync(path.join(root,"audit-output/topic-seo-audit.md"),md+"\n");
 console.log(JSON.stringify({pages:records.length,topicPages:topics.length,subjectLandingPages:records.length-topics.length,exactTitleDuplicates:exactTitleDuplicates.length,nearTitlePairs:nearTitlePairs.length,exactDescriptionDuplicates:exactDescriptionDuplicates.length,nearDescriptionPairs:nearDescriptionPairs.length,missingMeta:missingMeta.length,socialMismatches:mismatch.length,brokenInternalLinks:localLinkIssues.length,schemaErrors:schemaIssues.length,output:"audit-output/"},null,2));
