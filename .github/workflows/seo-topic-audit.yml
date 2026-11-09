@@ -1,0 +1,31 @@
+name: MedLadder SEO topic audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out audit branch
+        uses: actions/checkout@v4
+        with:
+          ref: audit/seo-comprehensive-2026-11-09
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run repository-wide SEO audit
+        run: node scripts/seo-topic-audit.mjs
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: medladder-seo-topic-audit
+          path: |
+            audit-output/topic-seo-audit.md
+            audit-output/topic-seo-audit.json
+          if-no-files-found: error
