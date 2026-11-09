@@ -962,3 +962,14 @@ body:has(#app.screen-quiz:not(.screen-results), #app.screen-setup, #app .pyq-set
 .pyq-subject-bank-actions .btn{white-space:nowrap;text-align:center;text-decoration:none;font-size:13px;padding:11px 16px}
 .pyq-subject-bank-primary{background:linear-gradient(100deg,#9d69ff,#f05bb8);color:#fff;border:0}
 @media(max-width:640px){.pyq-subject-bank-cta{width:calc(100% - 28px);margin:22px auto;padding:18px 16px;display:block}.pyq-subject-bank-actions{margin-top:14px;display:grid;grid-template-columns:1fr}.pyq-subject-bank-actions .btn{width:100%;white-space:normal}}
+
+/* Footer visibility (2026-11-09): the link directory reads as a card instead of
+   text on the page background, and directory links/chips are brighter and
+   roomier so the footer is legible in both themes. */
+.footer-directory{background:var(--glass-bg-strong);border:1px solid var(--glass-border);border-radius:18px;padding:18px 20px;box-shadow:var(--glass-shadow)}
+.footer-directory-group>strong,.footer-directory-group>summary{font-size:13px;letter-spacing:.06em}
+.footer-directory-group a{font-size:13px;line-height:1.7}
+html.dark .footer-directory-group a{color:#DCD6F5}
+.footer-directory-group details>div a{padding:7px 10px;font-size:13px}
+html.dark .footer-directory-group details>div a{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#EDE9FE}
+html:not(.dark) .footer-directory-group details>div a{background:#fff;border-color:rgba(109,40,217,.3);color:#2E1A52}
