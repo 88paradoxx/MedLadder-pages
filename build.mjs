@@ -41,6 +41,9 @@ const EXCLUDE_ENTRIES = new Set([
   'package.json',
   'package-lock.json',
   'build.mjs',
+  // Node build script (require('fs')), referenced by no page — was being
+  // served publicly. sw.js stays: it is registered from app.js, not via <script src>.
+  'optimize_lcp.js',
   '.assetsignore',
   '.gitignore',
   // Repo documentation — must not be publicly served.
