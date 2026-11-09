@@ -1,0 +1,15 @@
+{
+  "name": "medladder-pages",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static frontend export of medladder.top, deployed as Cloudflare Worker static assets.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "deploy": "npm run build && wrangler deploy",
+    "preview": "npm run build && wrangler dev"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
