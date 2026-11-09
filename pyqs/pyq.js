@@ -54,4 +54,52 @@
   });
 
   update();
+
+  // Context-aware CTA for individual PYQ paper/session pages.
+  // The main app validates exam/year again and applies its existing auth/Pro gates.
+  try {
+    var pathParts = window.location.pathname.replace(/\\/$/, '').split('/').filter(Boolean);
+    if (pathParts[0] === 'pyqs' && pathParts.length >= 3) {
+      var examSlug = pathParts[1].toLowerCase();
+      var yearSlug = pathParts[2].toLowerCase();
+      var examMap = {
+        'neet-pg': 'NEET PG',
+        'ini-cet': 'INICET',
+        'fmge': 'FMGE'
+      };
+      var examId = examMap[examSlug];
+      var yearMap = {
+        'jan-2025': 'Jan 2025', 'july-2025': 'July 2025',
+        'jan-2024': 'Jan 2024', 'june-2024': 'June 2024',
+        'jan-2023': 'Jan 2023', 'july-2023': 'July 2023',
+        'june-2022': 'June 2022', 'june-2021': 'June 2021',
+        'dec-2021': 'Dec 2021', 'dec-2020': 'Dec 2020',
+        'may-2025': 'May 2025', 'nov-2024': 'Nov 2024',
+        'may-2024': 'May 2024', 'nov-2023': 'Nov 2023',
+        'may-2023': 'May 2023', 'nov-2022': 'Nov 2022',
+        'may-2022': 'May 2022', 'nov-2021': 'Nov 2021',
+        'may-2021': 'May 2021', 'nov-2020': 'Nov 2020',
+        '2018': '2018', '2019': '2019', '2020': '2020',
+        '2021': '2021', '2022': '2022', '2023': '2023',
+        '2024': '2024', '2025': '2025'
+      };
+      var paperYear = yearMap[yearSlug];
+      if (examId && paperYear) {
+        var cta = document.createElement('a');
+        cta.className = 'btn';
+        cta.href = '/?openPyq=' + encodeURIComponent(examId) + '&year=' + encodeURIComponent(paperYear);
+        cta.textContent = 'Explore Complete Question Bank — ' + examId + ' ' + paperYear;
+        cta.setAttribute('aria-label', cta.textContent);
+        cta.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;margin:18px auto;padding:13px 22px;text-decoration:none;font-weight:700;';
+        var main = document.querySelector('main');
+        if (main) {
+          var wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex;justify-content:center;flex-wrap:wrap;margin:8px 0 22px;';
+          wrap.appendChild(cta);
+          main.appendChild(wrap);
+        }
+      }
+    }
+  } catch (e) {}
+
 })();
