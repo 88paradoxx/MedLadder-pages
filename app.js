@@ -5700,7 +5700,14 @@ window.addEventListener('error', function (ev) {
         var isSeoUrl = p.indexOf('/subjects/') === 0 || ['/neet-pg', '/inicet', '/fmge', '/neet-ss'].indexOf(p) !== -1;
         // The DOM may have been replaced by renderHome()/quiz screens; reload so the current pre-rendered page is shown.
         if (isSeoUrl && !document.getElementById('seoStartBtn')) { window.location.reload(); return; }
-        handleSeoRoute();
+        // Keep the pre-rendered global header aligned with the verified live Supabase inventory.
+      // Subject/module bank: 29,282; PYQs: 6,937; total: 36,219.
+      // This updates only the global masthead counter, not subject/topic counts.
+      document.querySelectorAll('.masthead .stat').forEach(function (node) {
+        node.textContent = '36,219 MCQs';
+      });
+
+      handleSeoRoute();
       });
       handleSeoRoute();
       document.documentElement.classList.add('app-ready');
