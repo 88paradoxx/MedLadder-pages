@@ -165,6 +165,8 @@ window.addEventListener('error', function (ev) {
       wireThemeBtn();
 
       var setupChoice = { pool: null, quizType: 'practice', count: 'all', customCount: 50, timeLimit: 0, customTime: 30, orderMode: 'structured', pyqYear: null };
+      var pendingPyqDeepLink = null;
+      var pendingPyqDeepLinkStarted = false;
       var state = {
         screen: 'home', subjectId: null, moduleId: null, poolTitle: '', order: [], questions: [], idx: 0,
         answers: {}, quizType: 'practice', timeLimit: 0, remaining: 0, timerId: null, progressKey: null,
@@ -2641,6 +2643,15 @@ window.addEventListener('error', function (ev) {
         });
       }
 
+      function launchPendingPyqDeepLink() {
+        if (!pendingPyqDeepLink || pendingPyqDeepLinkStarted) return;
+        pendingPyqDeepLinkStarted = true;
+        var target = pendingPyqDeepLink;
+        pendingPyqDeepLink = null;
+        setupChoice.pyqYear = target.year;
+        renderPYQSetup(target.examId);
+      }
+
       function initAuth() {
         // One-time cleanup of things older versions wrote to the browser. None of it
         // is trusted any more (admin/pro flags, cached user object, whitelist, passkey).
@@ -2670,6 +2681,7 @@ window.addEventListener('error', function (ev) {
             updateProModalUI();
             refreshProStatus();
             if (recoveryMode) { cleanAuthReturnUrl(); openAuthModal('reset'); }
+            launchPendingPyqDeepLink();
           } else {
             // No session: still render the masthead auth controls, so the
             // signed-out Sign In pill also appears on the pre-rendered SEO
@@ -2677,6 +2689,7 @@ window.addEventListener('error', function (ev) {
             // auth element of its own.
             updateMastheadAuth();
             updateProModalUI();
+            launchPendingPyqDeepLink();
             if (recoveryMode) {
               // Reset link was invalid, expired, or already used.
               recoveryMode = false;
@@ -2724,6 +2737,7 @@ window.addEventListener('error', function (ev) {
             updateProModalUI();
             // Deferred: supabase-js must not be re-entered from inside this callback.
             if (userChanged) setTimeout(refreshProStatus, 0);
+            if (pendingPyqDeepLink) launchPendingPyqDeepLink();
             if (event === 'SIGNED_IN' && !prevUser && !recoveryMode) {
               if ((window.location.hash && window.location.hash.includes('access_token')) ||
                   (window.location.search && window.location.search.includes('code='))) {
@@ -5372,6 +5386,10 @@ window.addEventListener('error', function (ev) {
         if (bottomHome) bottomHome.addEventListener('click', function(e){ e.preventDefault(); goHomeFromSeo(); });
         var startBtn = document.getElementById('seoStartBtn');
         if (startBtn) {
+          var contextName = topic ? mod.name : (subject ? subj.name : item.name);
+          startBtn.textContent = 'Explore Complete Question Bank — ' + contextName;
+          startBtn.setAttribute('aria-label', 'Explore Complete Question Bank — ' + contextName);
+          startBtn.title = 'Open the complete ' + contextName + ' question bank';
           startBtn.onclick = function () {
             if (topic) {
               renderSetup(subj.subjectId, mod.moduleId);
@@ -5476,6 +5494,23 @@ window.addEventListener('error', function (ev) {
 
         if (window.location.search && typeof URLSearchParams !== 'undefined') {
           var sp = new URLSearchParams(window.location.search);
+          var deepExam = sp.get('openPyq');
+          var deepYear = sp.get('year');
+          if (deepExam) {
+            var examAliases = {
+              'neet-pg': 'NEET PG', 'neet pg': 'NEET PG',
+              'inicet': 'INICET', 'ini-cet': 'INICET',
+              'fmge': 'FMGE', 'aiims': 'AIIMS', 'neet-ss': 'NEET SS', 'neet ss': 'NEET SS'
+            };
+            var examId = examAliases[String(deepExam).toLowerCase()] || deepExam;
+            var examMeta = PYQ_EXAMS.find(function (exam) { return exam.id.toLowerCase() === String(examId).toLowerCase(); });
+            if (examMeta) {
+              var requestedYear = deepYear || (examMeta.years && examMeta.years[0]);
+              if (examMeta.years && examMeta.years.indexOf(requestedYear) !== -1) {
+                pendingPyqDeepLink = { examId: examMeta.id, year: requestedYear };
+              }
+            }
+          }
           if (sp.get('screen') === 'pyq') {
             setTimeout(function () {
               var wrap = document.getElementById('pyqCardsWrap');
