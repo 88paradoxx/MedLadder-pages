@@ -424,7 +424,7 @@ window.addEventListener('error', function (ev) {
           '<button class="pro-modal-close" id="proModalClose" aria-label="Close modal" title="Close modal (Esc)">✕</button>' +
           '<div class="pro-modal-badge">⭐ MEDLADDER PRO</div>' +
           '<h2 class="pro-modal-title" id="proModalTitle">Unlock Full Medical QBank</h2>' +
-          '<p class="pro-modal-sub" id="proModalSub">Free registered accounts get 8 topics per subject. Upgrade to Pro for unrestricted access to all 739 topics and 37,076 questions.</p>' +
+          '<p class="pro-modal-sub" id="proModalSub">Free registered accounts get 8 topics per subject. Upgrade to Pro for unrestricted access to all 739 topics and 36,219 questions.</p>' +
           '</div>' +
           '<div class="pro-modal-body">' +
           '<div class="pro-features-list">' +
@@ -438,7 +438,7 @@ window.addEventListener('error', function (ev) {
           '<div class="pro-feature-item">' +
           '<div class="pro-feature-icon">✓</div>' +
           '<div class="pro-feature-text">' +
-          '<strong>37,076 NEET PG, FMGE &amp; NEET SS MCQs</strong>' +
+          '<strong>36,219 NEET PG, FMGE &amp; NEET SS MCQs</strong>' +
           '<span>Every single question with clinical pearls, rationale &amp; tables.</span>' +
           '</div>' +
           '</div>' +
@@ -1808,6 +1808,29 @@ window.addEventListener('error', function (ev) {
           if (!appEl.contains(f)) f.style.display = 'none';
         });
       }
+
+      // Remove repeated keyword-stuffed footer blocks from static SEO pages.
+      // The subject/topic pages retain their page-specific content and contextual links;
+      // this only removes the generic "Popular searches" keyword list and global link wall.
+      (function cleanStaticSeoFooter() {
+        // Do not strip the baked directory nav on pages the router leaves alone
+        // (/pyqs/*, guides, /mock-test, /privacy, /terms, /neet-ss-books, /admin-mock):
+        // nothing re-injects a directory there, so removing it would leave those
+        // pages with no navigation at all.
+        var cleanPath = (window.location.pathname || '/').replace(/\/$/, '').toLowerCase();
+        if (cleanPath === '/pyqs' || cleanPath.indexOf('/pyqs/') === 0 ||
+            cleanPath === '/neet-pg-syllabus' || cleanPath === '/neet-pg-high-yield-topics' ||
+            cleanPath === '/neet-pg-top-100-questions' || cleanPath === '/medladder-vs-marrow' ||
+            cleanPath === '/medladder-vs-prepladder' || cleanPath === '/best-free-neet-pg-question-bank' ||
+            cleanPath === '/inicet' || cleanPath === '/mock-test' || cleanPath === '/mock-test.html' ||
+            cleanPath === '/admin-mock' || cleanPath === '/admin-mock.html' ||
+            cleanPath === '/privacy' || cleanPath === '/privacy.html' ||
+            cleanPath === '/terms' || cleanPath === '/terms.html' ||
+            cleanPath === '/neet-ss-books' || cleanPath === '/neet-ss-books.html') return;
+        document.querySelectorAll('.popular-searches, nav[aria-label="Browse MedLadder"]').forEach(function (node) {
+          node.remove();
+        });
+      }());
       function footerHtml() {
         var isNative = !!(
           (window.MedLadderNative && window.MedLadderNative.isNative) ||
@@ -1830,6 +1853,62 @@ window.addEventListener('error', function (ev) {
           '<span>Latest</span>' +
           '</span>' +
           '</a>';
+        var pathParts = (window.location.pathname || '/').replace(/\/index\.html$/i, '').split('/').filter(Boolean);
+        var currentSubject = null;
+        var currentModules = [];
+        var currentModuleIndex = -1;
+        if (pathParts[0] === 'subjects' && pathParts[1] && Array.isArray(SUBJECT_INDEX)) {
+          currentSubject = SUBJECT_INDEX.find(function (s) { return slugifySeo(s.name) === pathParts[1]; }) || null;
+          if (currentSubject) {
+            currentModules = getSubjectModules(currentSubject.subjectId) || [];
+            if (pathParts[2]) currentModuleIndex = currentModules.findIndex(function (m) { return slugifySeo(m.name) === pathParts[2]; });
+          }
+        }
+        if (!currentSubject && state && state.subjectId && Array.isArray(SUBJECT_INDEX)) {
+          currentSubject = SUBJECT_INDEX.find(function (s) { return s.subjectId === state.subjectId; }) || null;
+          if (currentSubject) {
+            currentModules = getSubjectModules(currentSubject.subjectId) || [];
+            if (state.moduleId && state.moduleId !== 'all') currentModuleIndex = currentModules.findIndex(function (m) { return String(m.moduleId) === String(state.moduleId); });
+          }
+        }
+        var isHomeDirectory = pathParts.length === 0 && state && state.screen === 'home';
+        var isTopicDirectory = !!(currentSubject && (pathParts.length >= 3 || (pathParts.length === 0 && state && state.moduleId && state.moduleId !== 'all')));
+        var isSubjectDirectory = !!(currentSubject && !isTopicDirectory);
+        var directoryHtml = '';
+        if (isHomeDirectory) {
+          directoryHtml =
+            '<nav class="footer-directory" aria-label="Explore MedLadder">' +
+            '<div class="footer-directory-group"><strong>Exams</strong><div><a href="/neet-pg">NEET PG</a><a href="/fmge">FMGE</a><a href="/inicet">INI-CET</a><a href="/neet-ss">NEET SS</a></div></div>' +
+            '<div class="footer-directory-group"><details><summary>Subjects (19)</summary><div>' +
+            SUBJECT_INDEX.map(function (s) { return '<a href="' + subjectPath(s) + '">' + esc(s.name) + '</a>'; }).join('') +
+            '</div></details></div>' +
+            '<div class="footer-directory-group"><strong>Preparation</strong><div><a href="/neet-pg-syllabus">NEET PG Syllabus</a><a href="/neet-pg-high-yield-topics">High-Yield Topics</a><a href="/neet-pg-top-100-questions">Top 100 Questions</a><a href="/mock-test">Mock Tests</a><a href="/pyqs">Previous-Year Questions</a><a href="/best-free-neet-pg-question-bank">Free Question Bank</a></div></div>' +
+            '<div class="footer-directory-group"><strong>About &amp; policies</strong><div><a href="/medladder-vs-marrow">MedLadder vs Marrow</a><a href="/medladder-vs-prepladder">MedLadder vs PrepLadder</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/terms#cancellation-refund">Refund Policy</a>' +
+            (isAdmin(currentUser) ? '<a href="#" class="admin-footer-link">👑 Admin Access</a>' : '') +
+            '</div></div></nav>';
+        } else if (isSubjectDirectory) {
+          var relatedSubjects = SUBJECT_INDEX.filter(function (s) { return s.subjectId !== currentSubject.subjectId && s.cat === currentSubject.cat; }).slice(0, 5);
+          directoryHtml =
+            '<nav class="footer-directory footer-directory-medium" aria-label="Related MedLadder links">' +
+            '<div class="footer-directory-group"><strong>Subject</strong><div><a href="/">All subjects</a><a href="' + subjectPath(currentSubject) + '">' + esc(currentSubject.name) + ' topics</a></div></div>' +
+            '<div class="footer-directory-group"><strong>Related subjects</strong><div>' + relatedSubjects.map(function (s) { return '<a href="' + subjectPath(s) + '">' + esc(s.name) + '</a>'; }).join('') + '</div></div>' +
+            '<div class="footer-directory-group"><strong>Exams &amp; PYQs</strong><div><a href="/neet-pg">NEET PG</a><a href="/fmge">FMGE</a><a href="/inicet">INI-CET</a><a href="/neet-ss">NEET SS</a><a href="/pyqs">All PYQs</a></div></div>' +
+            '<div class="footer-directory-group"><strong>Policies</strong><div><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/terms#cancellation-refund">Refunds</a></div></div></nav>';
+        } else if (isTopicDirectory) {
+          var nearbyModules = [];
+          for (var offset = -2; offset <= 2; offset++) {
+            if (!offset) continue;
+            var nearbyModule = currentModules[currentModuleIndex + offset];
+            if (nearbyModule) nearbyModules.push(nearbyModule);
+          }
+          directoryHtml =
+            '<nav class="footer-directory footer-directory-minimal" aria-label="Topic navigation">' +
+            '<div class="footer-directory-group"><strong>Explore ' + esc(currentSubject.name) + '</strong><div><a href="' + subjectPath(currentSubject) + '">All ' + esc(currentSubject.name) + ' topics</a>' +
+            nearbyModules.map(function (m) { return '<a href="' + topicPath(currentSubject, m) + '">' + esc(m.name) + '</a>'; }).join('') +
+            '</div></div><div class="footer-directory-group"><strong>Site information</strong><div><a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></div></nav>';
+        } else {
+          directoryHtml = '<nav class="footer-directory footer-directory-minimal" aria-label="Site information"><div class="footer-directory-group"><strong>MedLadder</strong><div><a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></div></nav>';
+        }
         return '<footer class="credit">' +
           '<div class="footer-content">' +
           apkBtnHtml +
@@ -1847,18 +1926,10 @@ window.addEventListener('error', function (ev) {
           '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.329-.913.489-1.302.481-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.14.121.099.155.232.164.333-.008.068.002.193-.006.31z"/></svg>' +
           '</a>' +
           '</div>' +
-          '<div class="footer-links-row">' +
-          '<a href="/privacy" class="footer-link">Privacy Policy</a>' +
-          '<span class="footer-dot" aria-hidden="true">·</span>' +
-          '<a href="/terms" class="footer-link">Terms of Service</a>' +
-          '<span class="footer-dot" aria-hidden="true">·</span>' +
-          '<a href="/terms#cancellation-refund" class="footer-link">Refund Policy</a>' +
-          (isAdmin(currentUser) ? '<span class="footer-dot" aria-hidden="true">·</span><a href="#" class="admin-footer-link footer-link admin-pill">👑 Admin Access</a>' : '') +
-          '</div>' +
+          directoryHtml +
           '<div class="footer-copy"><strong>MedLadder</strong> · Medical Entrance Exam Question Bank</div>' +
           '<div class="footer-subcopy">MBBS · FMGE · NEET PG · INI-CET · NEET SS · USMLE · MCAT · PLAB · MRCS · MRCP · State PG</div>' +
-          '</div>' +
-          '</footer>';
+          '</div>' +          '</footer>';
       }
 
       function modeNoteHtml() {
@@ -2652,6 +2723,30 @@ window.addEventListener('error', function (ev) {
         renderPYQSetup(target.examId);
       }
 
+      // Parse a ?openPyq=<exam>&year=<year> deep link (if present) into the
+      // pending link that launchPendingPyqDeepLink() fires after sign-in.
+      // Called both from the /pyqs/ early-return guard and the home fall-through,
+      // so a deep link is captured whichever page it lands on.
+      function captureOpenPyqDeepLink() {
+        if (!window.location.search || typeof URLSearchParams === 'undefined') return;
+        var sp = new URLSearchParams(window.location.search);
+        var deepExam = sp.get('openPyq');
+        var deepYear = sp.get('year');
+        if (!deepExam) return;
+        var examAliases = {
+          'neet-pg': 'NEET PG', 'neet pg': 'NEET PG',
+          'inicet': 'INICET', 'ini-cet': 'INICET',
+          'fmge': 'FMGE', 'aiims': 'AIIMS', 'neet-ss': 'NEET SS', 'neet ss': 'NEET SS'
+        };
+        var examId = examAliases[String(deepExam).toLowerCase()] || deepExam;
+        var examMeta = PYQ_EXAMS.find(function (exam) { return exam.id.toLowerCase() === String(examId).toLowerCase(); });
+        if (!examMeta) return;
+        var requestedYear = deepYear || (examMeta.years && examMeta.years[0]);
+        if (examMeta.years && examMeta.years.indexOf(requestedYear) !== -1) {
+          pendingPyqDeepLink = { examId: examMeta.id, year: requestedYear };
+        }
+      }
+
       function initAuth() {
         // One-time cleanup of things older versions wrote to the browser. None of it
         // is trusted any more (admin/pro flags, cached user object, whitelist, passkey).
@@ -3032,10 +3127,8 @@ window.addEventListener('error', function (ev) {
       }
 
       function totalQuestions() {
-        var t = 0;
-        for (var i = 0; i < SUBJECT_INDEX.length; i++) t += SUBJECT_INDEX[i].questionCount;
-        t += 6862; // PYQ bank questions (NEET PG, FMGE, INI-CET, AIIMS, NEET SS)
-        return t;
+        // Live Supabase inventory: 29,282 subject/module questions + 6,937 PYQs.
+        return 36219;
       }
 
       var activeHomeCategory = 'all';
@@ -5386,10 +5479,6 @@ window.addEventListener('error', function (ev) {
         if (bottomHome) bottomHome.addEventListener('click', function(e){ e.preventDefault(); goHomeFromSeo(); });
         var startBtn = document.getElementById('seoStartBtn');
         if (startBtn) {
-          var contextName = topic ? mod.name : (subject ? subj.name : item.name);
-          startBtn.textContent = 'Explore Complete Question Bank — ' + contextName;
-          startBtn.setAttribute('aria-label', 'Explore Complete Question Bank — ' + contextName);
-          startBtn.title = 'Open the complete ' + contextName + ' question bank';
           startBtn.onclick = function () {
             if (topic) {
               renderSetup(subj.subjectId, mod.moduleId);
@@ -5399,6 +5488,45 @@ window.addEventListener('error', function (ev) {
               renderPYQSetup(item.pyqId);
             }
           };
+        }
+
+        // Topic visitors often arrive directly from search. Show the size of the
+        // complete subject bank and give them a clear next step beyond the sample.
+        if (topic && subj && !document.getElementById('seoFullBankCta')) {
+          var topicHero = document.querySelector('.seo-main .hero-wrap');
+          if (topicHero) {
+            var bankCta = document.createElement('section');
+            bankCta.id = 'seoFullBankCta';
+            bankCta.className = 'seo-full-bank-cta';
+            bankCta.setAttribute('aria-label', 'Explore the complete subject question bank');
+            bankCta.innerHTML =
+              '<div class="seo-full-bank-copy"><span class="seo-full-bank-eyebrow">MORE TO PRACTISE</span>' +
+              '<h2>Explore the complete ' + esc(subj.name) + ' question bank</h2>' +
+              '<p>This is one topic from a larger bank of <strong>' + Number(subj.questionCount || 0).toLocaleString() +
+              ' MCQs across ' + Number(subj.moduleCount || (Array.isArray(subj.modules) ? subj.modules.length : 0)).toLocaleString() +
+              ' topics</strong>, with explanations and exam-focused practice.</p></div>' +
+              '<div class="seo-full-bank-actions"><a class="btn seo-full-bank-primary" href="' + subjectPath(subj) +
+              '">Explore all ' + esc(subj.name) + ' topics</a><button type="button" class="btn secondary seo-full-bank-signin" id="seoFullBankSignin">Sign in to MedLadder</button></div>';
+            topicHero.insertAdjacentElement('afterend', bankCta);
+            var bankSignin = document.getElementById('seoFullBankSignin');
+            if (bankSignin) bankSignin.addEventListener('click', function () { openAuthModal('signin'); });
+          }
+        }
+
+        // Static SEO pages keep their pre-rendered content. Inject the same
+        // context-aware directory used by SPA-rendered pages into their existing footer.
+        // The old keyword/footer link walls are removed separately at startup.
+        var staticFooter = document.querySelector('footer.credit');
+        var staticFooterContent = staticFooter && staticFooter.querySelector('.footer-content');
+        if (staticFooterContent && !staticFooterContent.querySelector('.footer-directory')) {
+          var footerTemplate = document.createElement('div');
+          footerTemplate.innerHTML = footerHtml();
+          var directory = footerTemplate.querySelector('.footer-directory');
+          var footerCopy = staticFooterContent.querySelector('.footer-copy');
+          if (directory) {
+            if (footerCopy) staticFooterContent.insertBefore(directory, footerCopy);
+            else staticFooterContent.appendChild(directory);
+          }
         }
 
         // /subjects/* links (breadcrumb, related topics) are normal links: full load of the pre-rendered page.
@@ -5426,6 +5554,7 @@ window.addEventListener('error', function (ev) {
           // progress refresh (loadUserProgress) treats this document as
           // the SPA home and renderHome() bounces it back to '/'.
           state.screen = 'seo';
+          captureOpenPyqDeepLink();
           return;
         }
         // Other pre-rendered static pages ship full HTML too: leave them alone.
@@ -5494,23 +5623,7 @@ window.addEventListener('error', function (ev) {
 
         if (window.location.search && typeof URLSearchParams !== 'undefined') {
           var sp = new URLSearchParams(window.location.search);
-          var deepExam = sp.get('openPyq');
-          var deepYear = sp.get('year');
-          if (deepExam) {
-            var examAliases = {
-              'neet-pg': 'NEET PG', 'neet pg': 'NEET PG',
-              'inicet': 'INICET', 'ini-cet': 'INICET',
-              'fmge': 'FMGE', 'aiims': 'AIIMS', 'neet-ss': 'NEET SS', 'neet ss': 'NEET SS'
-            };
-            var examId = examAliases[String(deepExam).toLowerCase()] || deepExam;
-            var examMeta = PYQ_EXAMS.find(function (exam) { return exam.id.toLowerCase() === String(examId).toLowerCase(); });
-            if (examMeta) {
-              var requestedYear = deepYear || (examMeta.years && examMeta.years[0]);
-              if (examMeta.years && examMeta.years.indexOf(requestedYear) !== -1) {
-                pendingPyqDeepLink = { examId: examMeta.id, year: requestedYear };
-              }
-            }
-          }
+          captureOpenPyqDeepLink();
           if (sp.get('screen') === 'pyq') {
             setTimeout(function () {
               var wrap = document.getElementById('pyqCardsWrap');
