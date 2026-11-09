@@ -2536,7 +2536,8 @@ window.addEventListener('error', function (ev) {
         var origText = btn.innerHTML;
         btn.innerHTML = '<span class="auth-spinner"></span> Creating account...';
 
-        var redirectUrl = window.location.origin + window.location.pathname;
+        // Preserve a ?openPyq= deep link when email confirmation opens in a new tab.
+        var redirectUrl = window.location.origin + window.location.pathname + (window.location.search || '');
         supabaseClient.auth.signUp({
           email: email,
           password: password,
