@@ -2011,6 +2011,30 @@ window.addEventListener('error', function (ev) {
         });
       }
 
+      // PYQ paper pages: the static preview notice says "Sign in to access the
+      // complete paper" for everyone. Re-label it once auth/Pro state is known
+      // so a signed-in user never sees a sign-in CTA, and a Pro user is told
+      // the button opens the complete paper. Runs from updateMastheadAuth, which
+      // fires on paper pages after sign-in and again after the Pro check resolves.
+      // Gated on a Pro check having run, so a Pro user is never briefly
+      // mislabelled "Upgrade" while the check is still in flight.
+      function updatePyqPreviewNotice() {
+        try {
+          var notice = document.querySelector('.pyq-preview-notice');
+          if (!notice || !currentUser || !_proStatusPromise) return;
+          var btn = notice.querySelector('a.btn');
+          var para = notice.querySelector('p');
+          if (!btn) return;
+          if (isUserPro(currentUser)) {
+            btn.textContent = 'Practise the complete paper';
+            if (para) para.textContent = 'This page shows a 50-question preview of the complete paper. Download the full paper as a PDF above, or practise the complete paper in the MedLadder app.';
+          } else {
+            btn.textContent = 'Upgrade to access the complete paper';
+            if (para) para.textContent = 'This page shows a 50-question preview of the complete paper. Download the full paper as a PDF above, or upgrade to Pro to practise the complete paper in the MedLadder app.';
+          }
+        } catch (e) { console.warn('updatePyqPreviewNotice:', e); }
+      }
+
       function updateMastheadAuth() {
         var rightEls = document.querySelectorAll('.masthead .right');
         rightEls.forEach(function (rc) {
@@ -2038,6 +2062,7 @@ window.addEventListener('error', function (ev) {
         updateModeNote();
         updatePyqSectionLocks();
         wireAuthControls();
+        updatePyqPreviewNotice();
       }
 
       function wireAuthControls() {
@@ -2832,8 +2857,18 @@ window.addEventListener('error', function (ev) {
             updateMastheadAuth();
             updateProModalUI();
             // Deferred: supabase-js must not be re-entered from inside this callback.
-            if (userChanged) setTimeout(refreshProStatus, 0);
-            if (pendingPyqDeepLink) launchPendingPyqDeepLink();
+            if (pendingPyqDeepLink && userChanged) {
+              // Refresh Pro state FIRST (deferred: supabase-js must not be
+              // re-entered from inside this callback), then launch. Launching
+              // immediately here used to race the refresh: proState had just
+              // been reset, so a signed-in Pro user got the paywall and the
+              // one-shot link was consumed. renderPYQSetup awaits the refresh
+              // promise, so this order is what makes the gate correct.
+              setTimeout(function () { refreshProStatus(); launchPendingPyqDeepLink(); }, 0);
+            } else {
+              if (userChanged) setTimeout(refreshProStatus, 0);
+              if (pendingPyqDeepLink) launchPendingPyqDeepLink();
+            }
             if (event === 'SIGNED_IN' && !prevUser && !recoveryMode) {
               if ((window.location.hash && window.location.hash.includes('access_token')) ||
                   (window.location.search && window.location.search.includes('code='))) {
@@ -3424,6 +3459,16 @@ window.addEventListener('error', function (ev) {
             onSuccess: function () { renderPYQSetup(examId); }
           });
           return;
+        }
+
+        // If no server Pro check has run yet for this user (e.g. the deep link
+        // launched from a path that never refreshed), run one now and wait —
+        // otherwise a signed-in Pro user is paywalled on a stale reset state.
+        if (!_proStatusPromise && !isUserPro(currentUser)) {
+          refreshProStatus();
+          if (_proStatusPromise) {
+            try { await _proStatusPromise; } catch (e) { }
+          }
         }
 
         // Pro gate
