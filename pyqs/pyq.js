@@ -58,7 +58,7 @@
   // Context-aware CTA for individual PYQ paper/session pages.
   // The main app validates exam/year again and applies its existing auth/Pro gates.
   try {
-    var pathParts = window.location.pathname.replace(/\\/$/, '').split('/').filter(Boolean);
+    var pathParts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
     if (pathParts[0] === 'pyqs' && pathParts.length >= 3) {
       var examSlug = pathParts[1].toLowerCase();
       var yearSlug = pathParts[2].toLowerCase();
