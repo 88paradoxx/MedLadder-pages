@@ -5506,10 +5506,8 @@ window.addEventListener('error', function (ev) {
               ' MCQs across ' + Number(subj.moduleCount || (Array.isArray(subj.modules) ? subj.modules.length : 0)).toLocaleString() +
               ' topics</strong>, with explanations and exam-focused practice.</p></div>' +
               '<div class="seo-full-bank-actions"><a class="btn seo-full-bank-primary" href="' + subjectPath(subj) +
-              '">Explore all ' + esc(subj.name) + ' topics</a><button type="button" class="btn secondary seo-full-bank-signin" id="seoFullBankSignin">Sign in to MedLadder</button></div>';
+              '">Explore all ' + esc(subj.name) + ' topics</a></div>';
             topicHero.insertAdjacentElement('afterend', bankCta);
-            var bankSignin = document.getElementById('seoFullBankSignin');
-            if (bankSignin) bankSignin.addEventListener('click', function () { openAuthModal('signin'); });
           }
         }
 
