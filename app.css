@@ -1013,3 +1013,286 @@ html.dark #authDropdown #dropdownDashboardBtn.dropdown-progress-btn:hover {
 .auth-dropdown .dropdown-progress-btn > span { flex: 1 1 auto; }
 .auth-dropdown .dropdown-progress-btn .dropdown-progress-arrow { flex: 0 0 auto; opacity: 0.8; }
 .auth-dropdown .dropdown-divider.dropdown-divider-wide { margin: 18px 0 14px !important; }
+
+
+/* ==========================================================================
+   SITE FOOTER
+   --------------------------------------------------------------------------
+   One layout for the footer the app renders and the one baked into the
+   static pages (same class names). Plain columns of links instead of boxed
+   pills, so long subject names no longer break mid-word. Transparent, so it
+   sits on whatever ground the page above it uses.
+   ========================================================================== */
+footer.credit {
+  --ft-ink: #121715;
+  --ft-dim: #2C3532;
+  --ft-quiet: #5F6A66;
+  --ft-rule: rgba(18, 23, 21, 0.16);
+  --ft-raise: rgba(18, 23, 21, 0.04);
+  --ft-sans: Archivo, Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  display: block !important;
+  width: 100% !important;
+  max-width: 1080px !important;
+  margin: 56px auto 0 !important;
+  padding: 0 20px 40px !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--ft-dim) !important;
+  font-family: var(--ft-sans) !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+}
+html.dark footer.credit {
+  --ft-ink: #E7EBE8;
+  --ft-dim: #C7CFD2;
+  --ft-quiet: #93A1AA;
+  --ft-rule: rgba(231, 235, 232, 0.16);
+  --ft-raise: rgba(231, 235, 232, 0.05);
+}
+#app footer.credit { padding-left: 0 !important; padding-right: 0 !important; }
+footer.credit::before,
+footer.credit::after { content: none !important; }
+footer.credit *,
+footer.credit *::before,
+footer.credit *::after { box-sizing: border-box !important; }
+
+footer.credit .footer-content {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-areas:
+    "app social"
+    "dir dir"
+    "copy copy"
+    "sub sub";
+  align-items: center !important;
+  gap: 0 24px !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 28px 0 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-top: 1px solid var(--ft-rule) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+footer.credit .footer-content > * { grid-column: 1 / -1 !important; }
+
+/* Google Play */
+footer.credit .footer-apk-btn {
+  grid-area: app !important;
+  grid-column: auto !important;
+  justify-self: start !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: auto !important;
+  max-width: 100% !important;
+  min-height: 52px !important;
+  margin: 0 !important;
+  padding: 8px 16px 8px 12px !important;
+  background: var(--ft-ink) !important;
+  background-image: none !important;
+  border: 1px solid var(--ft-ink) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  color: #F0F2F1 !important;
+  text-decoration: none !important;
+  transform: none !important;
+  animation: none !important;
+}
+html.dark footer.credit .footer-apk-btn { color: #0E1317 !important; }
+footer.credit .footer-apk-btn::before,
+footer.credit .footer-apk-btn::after { content: none !important; }
+footer.credit .footer-apk-btn:hover { opacity: 0.88 !important; transform: none !important; }
+footer.credit .footer-apk-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  transform: none !important;
+}
+footer.credit .footer-apk-text { display: flex !important; flex-direction: column !important; gap: 1px !important; text-align: left !important; }
+footer.credit .footer-apk-sub {
+  color: inherit !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1.2 !important;
+  opacity: 0.75 !important;
+  text-transform: uppercase !important;
+}
+footer.credit .footer-apk-title {
+  color: inherit !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.25 !important;
+}
+footer.credit .footer-apk-badge { display: none !important; }
+
+/* Social */
+footer.credit .footer-social-row {
+  grid-area: social !important;
+  grid-column: auto !important;
+  justify-self: end !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+footer.credit .footer-social-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  background: none !important;
+  border: 1px solid var(--ft-rule) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  color: var(--ft-quiet) !important;
+  transform: none !important;
+}
+footer.credit .footer-social-btn:hover { color: var(--ft-ink) !important; border-color: var(--ft-quiet) !important; background: var(--ft-raise) !important; transform: none !important; }
+
+/* Link directory */
+footer.credit .footer-directory {
+  grid-area: dir !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important;
+  gap: 30px 36px !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 30px 0 0 !important;
+  padding: 28px 0 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-top: 1px solid var(--ft-rule) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+footer.credit .footer-directory-group {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+}
+footer.credit .footer-directory-group > strong,
+footer.credit .footer-directory-group summary {
+  display: block !important;
+  margin: 0 0 10px !important;
+  padding: 0 !important;
+  color: var(--ft-quiet) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.4 !important;
+  text-transform: none !important;
+}
+footer.credit .footer-directory-group summary { list-style: none !important; cursor: default !important; pointer-events: none !important; }
+footer.credit .footer-directory-group summary::-webkit-details-marker { display: none !important; }
+footer.credit .footer-directory-group summary::after,
+footer.credit .footer-directory-group summary::before { content: none !important; }
+footer.credit .footer-directory-group > div,
+footer.credit .footer-directory-group details > div {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+}
+footer.credit .footer-directory a {
+  display: block !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 6px 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--ft-dim) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  text-decoration: none !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  break-inside: avoid !important;
+}
+footer.credit .footer-directory a:hover { color: var(--ft-ink) !important; text-decoration: underline !important; text-underline-offset: 3px !important; }
+/* The subject list is long: give it room and run it in columns. */
+footer.credit .footer-directory-group:has(details) { grid-column: span 2 !important; }
+footer.credit .footer-directory-group details > div { columns: 3 130px !important; column-gap: 28px !important; }
+
+/* Sign-off */
+footer.credit .footer-copy {
+  grid-area: copy !important;
+  margin: 30px 0 0 !important;
+  padding: 20px 0 0 !important;
+  border-top: 1px solid var(--ft-rule) !important;
+  color: var(--ft-dim) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
+footer.credit .footer-copy strong { color: var(--ft-ink) !important; font-weight: 600 !important; }
+footer.credit .footer-subcopy {
+  grid-area: sub !important;
+  margin: 6px 0 0 !important;
+  color: var(--ft-quiet) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  text-align: left !important;
+}
+footer.credit .footer-content > a:not(.footer-apk-btn),
+footer.credit .footer-links a,
+footer.credit .footer-policy-links a {
+  color: var(--ft-dim) !important;
+  font-size: 13px !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+
+@media (max-width: 640px) {
+  footer.credit { margin-top: 40px !important; padding-bottom: 32px !important; }
+  footer.credit .footer-content { grid-template-columns: minmax(0, 1fr) !important; grid-template-areas: "app" "social" "dir" "copy" "sub" !important; }
+  footer.credit .footer-social-row { justify-self: start !important; margin-top: 16px !important; }
+  footer.credit .footer-directory { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 26px 20px !important; }
+  footer.credit .footer-directory-group:has(details) { grid-column: 1 / -1 !important; }
+  footer.credit .footer-directory-group details > div { columns: 2 !important; column-gap: 20px !important; }
+  footer.credit .footer-directory a { padding: 9px 0 !important; }
+}
+footer.credit .footer-links-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-start !important;
+  gap: 4px 18px !important;
+  margin: 12px 0 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+footer.credit .footer-links-row .footer-link {
+  color: var(--ft-dim) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+footer.credit .footer-links-row .footer-link:hover { color: var(--ft-ink) !important; }
+footer.credit .footer-links-row > span,
+footer.credit .footer-links-row .footer-dot { display: none !important; }

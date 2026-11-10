@@ -2058,9 +2058,11 @@ window.addEventListener('error', function (ev) {
 
       document.addEventListener('click', function (e) {
         var btn = e.target.closest('.footer-apk-btn');
-        if (btn) {
+        // Only a direct .apk link is downloaded in-page. The button now points
+        // at Google Play, and intercepting that click stopped it opening.
+        if (btn && /\.apk(\?|#|$)/i.test(btn.getAttribute('href') || '')) {
           e.preventDefault();
-          downloadMedLadderApkInPage(btn.getAttribute('href') || '/MedLadder-latest.apk');
+          downloadMedLadderApkInPage(btn.getAttribute('href'));
         }
       });
 
@@ -2177,7 +2179,7 @@ window.addEventListener('error', function (ev) {
           '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>' +
           '</span>' +
           '<span class="footer-apk-text">' +
-          '<span class="footer-apk-sub">Android App</span>' +
+          '<span class="footer-apk-sub">Android app</span>' +
           '<span class="footer-apk-title">Get it on Google Play</span>' +
           '</span>' +
           '<span class="footer-apk-badge">' +
