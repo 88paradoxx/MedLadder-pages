@@ -4570,6 +4570,10 @@ window.addEventListener('error', function (ev) {
         }
 
         var pool = setupChoice.pool;
+        // Remember that this run was started without an account, so renderQuiz
+        // and anything after it do not have to re-derive eligibility from
+        // setupChoice, which the user can change behind them.
+        state.isGuestRun = !currentUser && guestCanStart(pool);
         quizLoadInFlight = true;
         beginAttemptLog(pool);
 
@@ -4749,7 +4753,7 @@ window.addEventListener('error', function (ev) {
       }
 
       function renderQuiz() {
-        if (!currentUser) {
+        if (!currentUser && !state.isGuestRun) {
           openAuthModal('signin', {
             reason: 'Please sign in or create an account to view and solve questions.'
           });
