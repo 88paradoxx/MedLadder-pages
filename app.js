@@ -2084,6 +2084,10 @@ window.addEventListener('error', function (ev) {
           '</div>' +
           '<div class="dashboard-progress-note"><span class="dashboard-progress-dot"></span><span>' + (totalDone > 0 ? 'Keep building momentum across your started topics.' : 'Start a topic to begin tracking your progress here.') + '</span></div>' +
           '<div class="dropdown-divider"></div>' +
+          '<button class="dropdown-action-btn" id="dropdownDashboardBtn">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path></svg>' +
+          'My progress' +
+          '</button>' +
           '<button class="dropdown-action-btn" id="authSignOutBtn">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>' +
           'Sign Out' +
@@ -2390,6 +2394,13 @@ window.addEventListener('error', function (ev) {
           headerGoPro.onclick = function (e) {
             e.stopPropagation();
             openProModal('header');
+          };
+        }
+        var dropdownDashboardBtn = document.getElementById('dropdownDashboardBtn');
+        if (dropdownDashboardBtn) {
+          dropdownDashboardBtn.onclick = function (e) {
+            e.stopPropagation();
+            renderDashboard();
           };
         }
         var dropdownUpgradeBtn = document.getElementById('dropdownUpgradeBtn');
@@ -4307,6 +4318,12 @@ window.addEventListener('error', function (ev) {
         if (!app) return;
         var c = app.classList;
         var on = c.contains('screen-setup') || (c.contains('screen-quiz') && !c.contains('screen-results'));
+        var dash = false;
+        for (var ci = 0; ci < app.children.length; ci++) {
+          if (app.children[ci].classList && app.children[ci].classList.contains('rr-dash')) { dash = true; break; }
+        }
+        on = on || dash;
+        document.documentElement.classList.toggle('ml-dash', dash);
         document.documentElement.classList.toggle('ml-reading', on);
         if (on && !document.getElementById('rr-fonts')) {
           var f = document.createElement('link');
@@ -4317,7 +4334,7 @@ window.addEventListener('error', function (ev) {
         }
       }
       if (app && window.MutationObserver) {
-        new MutationObserver(syncReadingMode).observe(app, { attributes: true, attributeFilter: ['class'] });
+        new MutationObserver(syncReadingMode).observe(app, { attributes: true, attributeFilter: ['class'], childList: true });
       }
 
       var RR_BACK_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
@@ -5299,6 +5316,174 @@ window.addEventListener('error', function (ev) {
       function stripHtmlPreview(text, maxLen) {
         var plain = String(text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
         return plain.length > maxLen ? plain.slice(0, maxLen) + '…' : plain;
+      }
+
+      // ---------- MY PROGRESS (dashboard) ----------
+      // Built from the progress map already loaded for the signed-in user
+      // (module_progress: the latest run of every topic), so it costs no extra
+      // query. Recent sessions come from the attempts table.
+      var DASH_MIN_SUBJECT = 10;  // answers before a subject is ranked
+      var DASH_MIN_TOPIC = 5;     // answers before a topic can be flagged
+
+      function dashboardData() {
+        var subjects = {};
+        SUBJECT_INDEX.forEach(function (sx) {
+          subjects[String(sx.subjectId)] = { subjectId: sx.subjectId, name: sx.name, done: 0, correct: 0, topics: 0 };
+        });
+        var out = { done: 0, correct: 0, topicsStarted: 0, pyqDone: 0, pyqCorrect: 0, topics: [] };
+        Object.keys(progress).forEach(function (k) {
+          var p = progress[k];
+          if (!p || !p.done) return;
+          var done = p.done || 0;
+          var correct = Math.min(p.correct || 0, done);
+          out.done += done;
+          out.correct += correct;
+          var parts = String(k).split(':');
+          if (parts[0] === 'pyq') { out.pyqDone += done; out.pyqCorrect += correct; return; }
+          var sub = subjects[parts[0]];
+          if (!sub || parts.length < 2) return;
+          sub.done += done;
+          sub.correct += correct;
+          if (parts[1] === 'all') return;
+          sub.topics++;
+          out.topicsStarted++;
+          var mod = getSubjectModules(sub.subjectId).find(function (m) { return String(m.moduleId) === parts.slice(1).join(':'); });
+          if (mod) out.topics.push({ subjectId: sub.subjectId, subjectName: sub.name, moduleId: mod.moduleId, name: mod.name, done: done, correct: correct, pct: Math.round((correct / done) * 100) });
+        });
+        out.subjects = Object.keys(subjects).map(function (id) {
+          var sb = subjects[id];
+          sb.pct = sb.done > 0 ? Math.round((sb.correct / sb.done) * 100) : null;
+          return sb;
+        });
+        return out;
+      }
+
+      function renderDashboard() {
+        if (!currentUser) {
+          openAuthModal('signin', { reason: 'Sign in to see your progress.', onSuccess: function () { renderDashboard(); } });
+          return;
+        }
+        if (!quizStylesReady) { ensureQuizStyles().then(renderDashboard); return; }
+        clearTimer();
+        releaseQuizPayload();
+        state.screen = 'dashboard';
+        scrollToPageTop();
+        if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
+        trackPageView('/dashboard', 'dashboard');
+
+        var d = dashboardData();
+        var started = d.subjects.filter(function (sb) { return sb.done > 0; })
+          .sort(function (a, b) { return b.pct - a.pct || b.done - a.done; });
+        var untouched = d.subjects.filter(function (sb) { return !sb.done; });
+        var ranked = started.filter(function (sb) { return sb.done >= DASH_MIN_SUBJECT; });
+        var pick = Math.min(3, Math.floor(ranked.length / 2));
+        var strongest = ranked.slice(0, pick);
+        var weakest = ranked.slice(ranked.length - pick).reverse();
+        var overallPct = d.done > 0 ? Math.round((d.correct / d.done) * 100) : null;
+
+        var rankList = function (list, tone) {
+          return '<ol class="rr-rank">' + list.map(function (sb) {
+            return '<li><button class="rr-rank-row" data-subject="' + esc(String(sb.subjectId)) + '">' +
+              '<span class="rr-rank-name">' + esc(sb.name) + '</span>' +
+              '<span class="rr-rank-meta">' + sb.done.toLocaleString() + ' answered</span>' +
+              '<span class="rr-rank-pct ' + tone + '">' + sb.pct + '%</span>' +
+              '</button></li>';
+          }).join('') + '</ol>';
+        };
+
+        var strengthsHtml = pick > 0
+          ? '<div class="rr-dash-cols">' +
+            '<section><h2 class="rr-h2">Strongest subjects</h2>' + rankList(strongest, 'ok') + '</section>' +
+            '<section><h2 class="rr-h2">Needs work</h2>' + rankList(weakest, 'bad') + '</section>' +
+            '</div>'
+          : '<section><h2 class="rr-h2">Strongest and weakest subjects</h2>' +
+            '<p class="rr-dash-note">Answer at least ' + DASH_MIN_SUBJECT + ' questions in two subjects and they will be ranked here.</p></section>';
+
+        var subjectRows = started.map(function (sb) {
+          return '<li><button class="rr-sub-row" data-subject="' + esc(String(sb.subjectId)) + '">' +
+            '<span class="rr-sub-name">' + esc(sb.name) + '</span>' +
+            '<span class="rr-sub-count">' + sb.correct.toLocaleString() + ' / ' + sb.done.toLocaleString() + '</span>' +
+            '<span class="rr-sub-bar" aria-hidden="true"><i style="width:' + sb.pct + '%"></i></span>' +
+            '<span class="rr-sub-pct">' + sb.pct + '%</span>' +
+            '</button></li>';
+        }).join('');
+        var untouchedHtml = untouched.length
+          ? '<p class="rr-dash-note">Not started yet: ' + untouched.map(function (sb) {
+            return '<button class="rr-inline-link" data-subject="' + esc(String(sb.subjectId)) + '">' + esc(sb.name) + '</button>';
+          }).join(', ') + '.</p>'
+          : '';
+
+        var revisit = d.topics.filter(function (t) { return t.done >= DASH_MIN_TOPIC && t.pct < 60; })
+          .sort(function (a, b) { return a.pct - b.pct || b.done - a.done; }).slice(0, 6);
+        var revisitHtml = revisit.length
+          ? '<section><h2 class="rr-h2">Topics to revisit</h2><ul class="rr-topic-list">' + revisit.map(function (t) {
+            return '<li><button class="rr-topic-row" data-subject="' + esc(String(t.subjectId)) + '" data-module="' + esc(String(t.moduleId)) + '">' +
+              '<span class="rr-topic-text"><span class="rr-topic-name">' + esc(t.name) + '</span>' +
+              '<span class="rr-topic-sub">' + esc(t.subjectName) + ' \u00b7 ' + t.correct + ' of ' + t.done + ' correct</span></span>' +
+              '<span class="rr-topic-go">Practise</span>' +
+              '</button></li>';
+          }).join('') + '</ul></section>'
+          : '';
+
+        var bodyHtml = d.done > 0
+          ? '<dl class="rr-stats">' +
+            '<div><dt>Questions answered</dt><dd>' + d.done.toLocaleString() + '</dd></div>' +
+            '<div><dt>Accuracy</dt><dd>' + overallPct + '%</dd><span class="rr-stat-foot">' + d.correct.toLocaleString() + ' correct</span></div>' +
+            '<div><dt>Topics started</dt><dd>' + d.topicsStarted.toLocaleString() + '</dd><span class="rr-stat-foot">in ' + started.length + ' of ' + d.subjects.length + ' subjects</span></div>' +
+            '</dl>' +
+            strengthsHtml +
+            '<section><h2 class="rr-h2">All subjects</h2><ul class="rr-sub-list">' + subjectRows + '</ul>' + untouchedHtml + '</section>' +
+            (d.pyqDone > 0 ? '<section><h2 class="rr-h2">Past papers</h2><p class="rr-dash-note">' + d.pyqCorrect.toLocaleString() + ' of ' + d.pyqDone.toLocaleString() + ' correct (' + Math.round((d.pyqCorrect / d.pyqDone) * 100) + '%).</p></section>' : '') +
+            revisitHtml +
+            '<section id="dashRecent"></section>'
+          : '<section class="rr-dash-empty"><p>Nothing to show yet. Finish a few questions in any topic and your accuracy, strongest subjects and weak spots will appear here.</p>' +
+            '<button class="btn" id="dashBrowseBtn">Browse subjects</button></section>';
+
+        app.innerHTML =
+          rrTopBar('Back to home', 'Home') +
+          '<main id="mainContent" role="main" class="rr-dash">' +
+          '<h1 class="rr-dash-title">My progress</h1>' +
+          '<p class="rr-dash-sub">Counted from your most recent run of each topic.</p>' +
+          bodyHtml +
+          '</main>';
+        wireTopBar(renderHome);
+
+        app.querySelectorAll('.rr-dash [data-subject]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var sid = btn.getAttribute('data-subject');
+            var sx = SUBJECT_INDEX.find(function (x) { return String(x.subjectId) === sid; });
+            if (!sx) return;
+            var mid = btn.getAttribute('data-module');
+            if (mid) renderSetup(sx.subjectId, mid); else renderModuleList(sx.subjectId);
+          });
+        });
+        var browseBtn = document.getElementById('dashBrowseBtn');
+        if (browseBtn) browseBtn.onclick = function () { renderHome(); };
+
+        // Recent sessions arrive separately; the page is complete without them.
+        var recentEl = document.getElementById('dashRecent');
+        if (!recentEl || !supabaseClient) return;
+        try {
+          supabaseClient.from('attempts')
+            .select('id,subject_id,module_id,question_count,score_pct,started_at,finished_at')
+            .eq('user_id', currentUser.id).order('started_at', { ascending: false }).limit(8)
+            .then(function (res) {
+              if (state.screen !== 'dashboard' || !document.getElementById('dashRecent')) return;
+              var rows = (res && !res.error && res.data) || [];
+              if (!rows.length) return;
+              recentEl.innerHTML = '<h2 class="rr-h2">Recent sessions</h2><ul class="rr-recent">' + rows.map(function (r) {
+                var sx = SUBJECT_INDEX.find(function (x) { return String(x.subjectId) === String(r.subject_id); });
+                var mod = sx && r.module_id != null ? getSubjectModules(sx.subjectId).find(function (m) { return String(m.id) === String(r.module_id); }) : null;
+                var label = mod ? mod.name : (sx ? sx.name + ' \u2014 mixed topics' : 'Mixed set');
+                var when = '';
+                try { when = new Date(r.started_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) {}
+                var result = (r.finished_at && r.score_pct != null) ? r.score_pct + '%' : 'Not finished';
+                return '<li><span class="rr-recent-text"><span class="rr-topic-name">' + esc(label) + '</span>' +
+                  '<span class="rr-topic-sub">' + esc(when) + (sx && mod ? ' \u00b7 ' + esc(sx.name) : '') + (r.question_count ? ' \u00b7 ' + r.question_count + ' questions' : '') + '</span></span>' +
+                  '<span class="rr-recent-score">' + result + '</span></li>';
+              }).join('') + '</ul>';
+            });
+        } catch (e) { console.warn('dashboard recent sessions failed:', e); }
       }
 
       function renderBookmarks() {
