@@ -5455,12 +5455,40 @@ window.addEventListener('error', function (ev) {
           }).join('') + '</ul></section>'
           : '';
 
+        // Up next: in every subject where at least one topic has been worked
+        // through to its last question, the first topic in syllabus order
+        // that has not.
+        var upNext = [];
+        SUBJECT_INDEX.forEach(function (sx) {
+          var mods = getSubjectModules(sx.subjectId);
+          var finished = 0, next = null;
+          mods.forEach(function (m, i) {
+            if (!m.questionCount) return;
+            var p = progress[sx.subjectId + ':' + m.moduleId];
+            var doneCount = p ? (p.done || 0) : 0;
+            if (doneCount >= m.questionCount) { finished++; return; }
+            if (!next) next = { subjectId: sx.subjectId, subjectName: sx.name, moduleId: m.moduleId, name: m.name, questionCount: m.questionCount, done: doneCount, locked: isModuleLocked(sx.subjectId, m.moduleId, i) };
+          });
+          if (finished > 0 && next) { next.finished = finished; next.totalTopics = mods.length; upNext.push(next); }
+        });
+        var upNextHtml = upNext.length
+          ? '<section><h2 class="rr-h2">Up next</h2><ul class="rr-topic-list rr-next-list">' + upNext.slice(0, 8).map(function (t) {
+            return '<li><button class="rr-topic-row" data-subject="' + esc(String(t.subjectId)) + '" data-module="' + esc(String(t.moduleId)) + '">' +
+              '<span class="rr-topic-text"><span class="rr-topic-name">' + esc(t.name) + '</span>' +
+              '<span class="rr-topic-sub">' + esc(t.subjectName) + ' \u00b7 ' + t.finished + ' of ' + t.totalTopics + ' topics completed \u00b7 ' +
+              (t.done > 0 ? t.done + ' of ' + t.questionCount + ' answered' : t.questionCount + ' questions') + '</span></span>' +
+              '<span class="rr-topic-go' + (t.locked ? '' : ' rr-topic-go-primary') + '">' + (t.locked ? 'Pro' : (t.done > 0 ? 'Continue' : 'Start')) + '</span>' +
+              '</button></li>';
+          }).join('') + '</ul></section>'
+          : '';
+
         var bodyHtml = d.done > 0
           ? '<dl class="rr-stats">' +
             '<div><dt>Questions answered</dt><dd>' + d.done.toLocaleString() + '</dd></div>' +
             '<div><dt>Accuracy</dt><dd>' + overallPct + '%</dd><span class="rr-stat-foot">' + d.correct.toLocaleString() + ' correct</span></div>' +
             '<div><dt>Topics started</dt><dd>' + d.topicsStarted.toLocaleString() + '</dd><span class="rr-stat-foot">in ' + started.length + ' of ' + d.subjects.length + ' subjects</span></div>' +
             '</dl>' +
+            upNextHtml +
             strengthsHtml +
             '<section><h2 class="rr-h2">All subjects</h2><ul class="rr-sub-list">' + subjectRows + '</ul>' + untouchedHtml + '</section>' +
             (d.pyqDone > 0 ? '<section><h2 class="rr-h2">Past papers</h2><p class="rr-dash-note">' + d.pyqCorrect.toLocaleString() + ' of ' + d.pyqDone.toLocaleString() + ' correct (' + Math.round((d.pyqCorrect / d.pyqDone) * 100) + '%).</p></section>' : '') +
