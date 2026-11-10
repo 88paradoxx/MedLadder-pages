@@ -39,8 +39,8 @@ function esc(s) {
     .replace(/'/g, '&#39;');
 }
 
-const totalQuestions = 37076;
-const totalQStr = '37,076';
+const totalQuestions = 36219;
+const totalQStr = '36,219';
 
 const subjectRows = syllabus.map((s, i) => {
   const meta = SUBJECT_META[s.name] || { cat: 'clinical', catLabel: 'Clinical', icon: '📚' };
@@ -231,20 +231,20 @@ const indexHtml = `<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MedLadder — FMGE, NEET PG, INI-CET &amp; NEET SS QBank</title>
-  <meta name="description" content="Prepare for FMGE, NEET PG, INI-CET and NEET SS with MedLadder. Practice 37,076 medical MCQs, previous-year questions, detailed explanations and track your performance.">
+  <meta name="description" content="Prepare for FMGE, NEET PG, INI-CET and NEET SS with MedLadder. Practice 36,219 medical MCQs, previous-year questions, detailed explanations and track your performance.">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="https://medladder.top/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="MedLadder">
   <meta property="og:title" content="MedLadder — FMGE, NEET PG, INI-CET &amp; NEET SS QBank">
-  <meta property="og:description" content="Prepare for FMGE, NEET PG, INI-CET and NEET SS with MedLadder. Practice 37,076 medical MCQs, previous-year questions, detailed explanations and track your performance.">
+  <meta property="og:description" content="Prepare for FMGE, NEET PG, INI-CET and NEET SS with MedLadder. Practice 36,219 medical MCQs, previous-year questions, detailed explanations and track your performance.">
   <meta property="og:url" content="https://medladder.top/">
   <meta property="og:image" content="https://medladder.top/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MedLadder — FMGE, NEET PG, INI-CET &amp; NEET SS QBank">
-  <meta name="twitter:description" content="Prepare for FMGE, NEET PG, INI-CET and NEET SS with MedLadder. Practice 37,076 medical MCQs, previous-year questions, detailed explanations and track your performance.">
+  <meta name="twitter:description" content="Prepare for FMGE, NEET PG, INI-CET and NEET SS with MedLadder. Practice 36,219 medical MCQs, previous-year questions, detailed explanations and track your performance.">
   <meta name="twitter:image" content="https://medladder.top/og-image.png">
 
   <!-- PWA Support -->
@@ -287,7 +287,7 @@ const indexHtml = `<!DOCTYPE html>
         "name": "What medical entrance exams does MedLadder cover?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "MedLadder is specifically built for FMGE, NEET PG, INI-CET, AIIMS, and NEET SS preparation, covering 19 subjects and 37,076 MCQs."
+          "text": "MedLadder is specifically built for FMGE, NEET PG, INI-CET, AIIMS, and NEET SS preparation, covering 19 subjects and 36,219 MCQs."
         }
       },
       {

@@ -12,7 +12,8 @@
 /landing.html    /landing    301
 /download-apk    /MedLadder-latest.apk    302
 # Unknown URLs now return a real 404 (404.html) instead of the SPA shell.
-# NOTE: Workers Static Assets _redirects rejects status 404 (valid codes are
-# 200/301/302/303/307/308), so the ARD well-known paths cannot be forced to
-# 404 here — they fall through to the SPA shell. The ai-catalog audit item
-# stays open until a valid catalog is served or a Worker route handles it.
+# NOTE: Workers Static Assets _redirects only accepts 200/301/302/303/307/308,
+# so a 404 cannot be forced here. It is not needed: not_found_handling
+# ("404-page" in wrangler.jsonc) already serves 404.html for unknown URLs, and
+# the /.well-known/ JSON documents are served directly as static assets
+# (verified live 2026-11-09: /.well-known/ai-catalog.json returns real JSON).

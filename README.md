@@ -30,17 +30,38 @@ standalone copy meant for Cloudflare Pages.
 here contains a secret — the Android `google-services.json` was never in the
 snapshot and is excluded by design.
 
-## Deploy to Cloudflare Pages
+## Build
 
-Option A — drag-and-drop (fastest):
-1. Cloudflare dashboard → Workers & Pages → Create → Pages → Upload assets.
-2. Upload this whole folder. No build step, no framework preset.
+`wrangler.jsonc` serves static assets from `./dist`, which is gitignored and
+generated. Run the build before deploying:
 
-Option B — connect Git:
-1. Push this folder to a new GitHub repo.
-2. Cloudflare dashboard → Workers & Pages → Create → Pages → Import a
-   repository. Framework preset: **None**. Build command: **(empty)**.
-   Output directory: **`/`** (root). Deploy.
+```bash
+npm run build          # node build.mjs -> populates ./dist
+npm run deploy         # build + wrangler deploy
+```
+
+`build.mjs` copies the site into `dist/` and deliberately leaves out anything a
+browser should not fetch: `worker.js` (Worker source, bundled separately via
+`main`), `wrangler.jsonc`, `package.json`, `build.mjs`, `audit-output/`, and all
+`.md` files including this README and the audit reports. It fails the build if
+`index.html`, `404.html`, `_headers`, `_redirects`, `robots.txt` or
+`sitemap.xml` are missing from the output.
+
+Requires Node 18+. No dependencies.
+
+## Deploy to Cloudflare
+
+Connect Git (current setup — Worker `medladder-pages`):
+1. Cloudflare dashboard → Workers & Pages → the `medladder-pages` project.
+2. Build command: **`npm run build`**. Output/assets directory: **`dist`**
+   (this must match `assets.directory` in `wrangler.jsonc`).
+3. Deploy.
+
+> If the project is currently configured with an empty build command and an
+> output directory of `/`, it is serving the repo root and ignoring
+> `wrangler.jsonc`. That works, but the repo and the dashboard then disagree,
+> and `wrangler deploy` from a clean checkout fails because `./dist` does not
+> exist. Setting the two values above makes the repo deployable as committed.
 
 ## Notes
 
