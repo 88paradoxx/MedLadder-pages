@@ -1205,3 +1205,915 @@ body.is-native-app .nav-download-btn,
 [data-native="true"] .nav-download-btn {
   display: none !important;
 }
+
+
+/* ==========================================================================
+   READING ROOM — quiz screen and quiz setup screen
+   --------------------------------------------------------------------------
+   Active only while <html> carries .ml-reading, which app.js sets when #app
+   is .screen-setup or .screen-quiz (and not .screen-results). Every rule
+   below is scoped to that class, so no other screen is affected.
+
+   The interface is achromatic until the student answers. Colour appears once,
+   at the reveal, and each state is also named in words and marked with a
+   rule, so hue is never the only signal.
+   ========================================================================== */
+
+html.ml-reading {
+  --rr-ground: #F0F2F1;
+  --rr-raised: #F7F8F7;
+  --rr-rule: #D6DAD8;
+  --rr-rule-soft: #E2E5E3;
+  --rr-ink: #121715;
+  --rr-ink-dim: #2C3532;
+  --rr-ink-quiet: #5F6A66;
+  --rr-tick: #D3D8D5;
+  --rr-ok: #166B45;
+  --rr-ok-bg: rgba(22, 107, 69, 0.08);
+  --rr-bad: #A33B2E;
+  --rr-bad-bg: rgba(163, 59, 46, 0.07);
+  --rr-serif: Literata, "Source Serif 4", Georgia, "Times New Roman", serif;
+  --rr-sans: Archivo, Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light !important;
+}
+html.dark.ml-reading {
+  --rr-ground: #0E1317;
+  --rr-raised: #11171B;
+  --rr-rule: #27313A;
+  --rr-rule-soft: #1C242A;
+  --rr-ink: #E7EBE8;
+  --rr-ink-dim: #C7CFD2;
+  --rr-ink-quiet: #93A1AA;
+  --rr-tick: #26303A;
+  --rr-ok: #4FA97A;
+  --rr-ok-bg: rgba(79, 169, 122, 0.09);
+  --rr-bad: #D2695C;
+  --rr-bad-bg: rgba(210, 105, 92, 0.09);
+  color-scheme: dark !important;
+}
+
+/* ---- ground ------------------------------------------------------------ */
+html.ml-reading,
+html.ml-reading body {
+  background: var(--rr-ground) !important;
+  background-image: none !important;
+}
+html.ml-reading body::before,
+html.ml-reading body::after { display: none !important; }
+
+html.ml-reading #app {
+  max-width: 600px !important;
+  margin: 0 auto !important;
+  padding: 0 20px !important;
+  background: none !important;
+  color: var(--rr-ink) !important;
+  font-family: var(--rr-sans) !important;
+  font-variant-numeric: tabular-nums !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+html.ml-reading #app { animation: none !important; opacity: 1 !important; transform: none !important; }
+/* A quiz in progress is not the place for the store badge and link farm. They
+   return on every other screen, including setup. */
+html.ml-reading #app.screen-quiz ~ footer.credit { display: none !important; }
+html.ml-reading #app.screen-setup ~ footer.credit { margin-top: 24px !important; }
+html.ml-reading #app *,
+html.ml-reading #app *::before,
+html.ml-reading #app *::after { box-sizing: border-box !important; }
+
+html.ml-reading #app .ripple,
+html.ml-reading #app .ripple-effect { display: none !important; }
+
+html.ml-reading #app button { font-family: inherit !important; }
+html.ml-reading #app :focus-visible {
+  outline: 2px solid var(--rr-ink) !important;
+  outline-offset: 2px !important;
+}
+
+/* ---- top bar ----------------------------------------------------------- */
+html.ml-reading #app .rr-top {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 14px 0 10px !important;
+  margin: 0 !important;
+  background: none !important;
+  border: 0 !important;
+}
+html.ml-reading #app .rr-back {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 44px !important;
+  height: 44px !important;
+  margin-left: -12px !important;
+  padding: 0 0 0 12px !important;
+  flex-shrink: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 3px !important;
+  color: var(--rr-ink-quiet) !important;
+  cursor: pointer !important;
+}
+html.ml-reading #app .rr-back:hover { color: var(--rr-ink) !important; }
+html.ml-reading #app .rr-crumb {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  font-size: 12.5px !important;
+  color: var(--rr-ink-quiet) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+html.ml-reading #app .rr-top-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+/* Header controls keep their behaviour; only their dress changes here. */
+html.ml-reading #app .rr-top-right .btn-go-pro,
+html.ml-reading #app .rr-top-right .pro-badge-header,
+html.ml-reading #app .rr-top-right .admin-badge-header,
+html.ml-reading #app .rr-top-right .auth-btn,
+html.ml-reading #app .rr-top-right .auth-user-btn {
+  min-height: 36px !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--rr-ink-quiet) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 12.5px !important;
+}
+html.ml-reading #app .rr-top-right .auth-user-name { color: inherit !important; }
+html.ml-reading #app .rr-top-right .theme-toggle {
+  min-height: 36px !important;
+  padding: 0 8px !important;
+  gap: 6px !important;
+  background: none !important;
+  border: 1px solid transparent !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  color: var(--rr-ink-quiet) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+  transform: none !important;
+  animation: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+html.ml-reading #app .rr-top-right .btn-go-pro::before,
+html.ml-reading #app .rr-top-right .btn-go-pro::after,
+html.ml-reading #app .rr-top-right .auth-btn::before,
+html.ml-reading #app .rr-top-right .auth-btn::after { content: none !important; }
+html.ml-reading #app .rr-top-right svg { stroke: currentColor !important; color: inherit !important; }
+html.ml-reading #app .rr-top-right .theme-toggle {
+  width: 36px !important;
+  padding: 0 !important;
+  filter: grayscale(1) !important;
+  opacity: 0.8 !important;
+}
+html.ml-reading #app .rr-top-right button:hover { color: var(--rr-ink) !important; }
+
+/* ---- setup ------------------------------------------------------------- */
+html.ml-reading #app.screen-setup { max-width: 520px !important; }
+html.ml-reading #app.screen-setup main { padding: 14px 0 40px !important; }
+
+html.ml-reading #app .setup-chapname {
+  margin: 0 0 10px !important;
+  padding: 0 !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: var(--rr-ink) !important;
+  font-family: var(--rr-serif) !important;
+  font-size: 26px !important;
+  line-height: 1.26 !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.012em !important;
+  text-align: left !important;
+  text-shadow: none !important;
+}
+html.ml-reading #app .setup-sub {
+  margin: 0 0 26px !important;
+  color: var(--rr-ink-dim) !important;
+  font-family: var(--rr-serif) !important;
+  font-size: 15.5px !important;
+  line-height: 1.6 !important;
+  text-align: left !important;
+}
+html.ml-reading #app .start-btn-wrap {
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+  position: static !important;
+  background: none !important;
+  border: 0 !important;
+}
+
+/* The one filled control on each screen. */
+html.ml-reading #app .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 44px !important;
+  padding: 0 22px !important;
+  background: var(--rr-ink) !important;
+  border: 1px solid var(--rr-ink) !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  color: var(--rr-ground) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  animation: none !important;
+  transition: opacity 0.15s ease !important;
+  cursor: pointer !important;
+}
+html.ml-reading #app .btn::before,
+html.ml-reading #app .btn::after { content: none !important; }
+html.ml-reading #app .btn:hover { opacity: 0.88 !important; }
+html.ml-reading #app .btn:disabled {
+  background: none !important;
+  border-color: var(--rr-rule) !important;
+  color: var(--rr-ink-quiet) !important;
+  opacity: 0.7 !important;
+  cursor: default !important;
+}
+html.ml-reading #app .btn.start {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 52px !important;
+  margin: 0 !important;
+  font-size: 16px !important;
+}
+
+html.ml-reading #app .rr-defaults {
+  margin: 0 0 22px !important;
+  color: var(--rr-ink-quiet) !important;
+  font-size: 12.5px !important;
+  line-height: 1.5 !important;
+  text-align: center !important;
+}
+html.ml-reading #app .rr-note {
+  margin: 0 0 22px !important;
+  padding: 12px 0 0 !important;
+  border-top: 1px solid var(--rr-rule-soft) !important;
+  color: var(--rr-ink-dim) !important;
+  font-size: 13.5px !important;
+  line-height: 1.55 !important;
+}
+html.ml-reading #app .rr-note .auth-link {
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  color: var(--rr-ink) !important;
+  font-size: inherit !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  cursor: pointer !important;
+}
+
+html.ml-reading #app .rr-settings > summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 44px !important;
+  border-top: 1px solid var(--rr-rule) !important;
+  border-bottom: 1px solid var(--rr-rule) !important;
+  color: var(--rr-ink-quiet) !important;
+  font-size: 14px !important;
+  list-style: none !important;
+  cursor: pointer !important;
+}
+html.ml-reading #app .rr-settings > summary::-webkit-details-marker { display: none !important; }
+html.ml-reading #app .rr-settings > summary:hover { color: var(--rr-ink) !important; }
+html.ml-reading #app .rr-settings[open] > summary svg { transform: rotate(180deg) !important; }
+html.ml-reading #app .rr-settings-body { padding: 6px 0 4px !important; }
+
+html.ml-reading #app .setup-section {
+  margin: 0 !important;
+  padding: 16px 0 18px !important;
+  background: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--rr-rule-soft) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html.ml-reading #app .setup-label {
+  margin: 0 0 10px !important;
+  color: var(--rr-ink-quiet) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+html.ml-reading #app .pill-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+html.ml-reading #app .pill-choice {
+  min-height: 44px !important;
+  padding: 0 16px !important;
+  background: none !important;
+  border: 1px solid var(--rr-rule) !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  color: var(--rr-ink-dim) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transform: none !important;
+  animation: none !important;
+  cursor: pointer !important;
+}
+html.ml-reading #app .pill-choice::before,
+html.ml-reading #app .pill-choice::after { content: none !important; }
+html.ml-reading #app .pill-choice:hover { border-color: var(--rr-ink-quiet) !important; }
+html.ml-reading #app .pill-choice.active {
+  background: var(--rr-ink) !important;
+  border-color: var(--rr-ink) !important;
+  color: var(--rr-ground) !important;
+}
+html.ml-reading #app .type-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+html.ml-reading #app .type-card {
+  display: block !important;
+  padding: 12px 14px !important;
+  background: none !important;
+  border: 1px solid var(--rr-rule) !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  color: var(--rr-ink-dim) !important;
+  text-align: left !important;
+  transform: none !important;
+  animation: none !important;
+  cursor: pointer !important;
+}
+html.ml-reading #app .type-card::before,
+html.ml-reading #app .type-card::after { content: none !important; }
+html.ml-reading #app .type-card .tname {
+  display: block !important;
+  margin-bottom: 4px !important;
+  color: var(--rr-ink) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+}
+html.ml-reading #app .type-card .tdesc {
+  display: block !important;
+  color: var(--rr-ink-quiet) !important;
+  font-size: 12.5px !important;
+  line-height: 1.45 !important;
+}
+html.ml-reading #app .type-card.active {
+  border-color: var(--rr-ink) !important;
+  box-shadow: inset 2px 0 0 var(--rr-ink) !important;
+}
+html.ml-reading #app .custom-setup-control {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-top: 12px !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  color: var(--rr-ink-quiet) !important;
+  font-size: 13px !important;
+}
+html.ml-reading #app .custom-setup-control input {
+  width: 96px !important;
+  min-height: 44px !important;
+  padding: 0 10px !important;
+  background: var(--rr-raised) !important;
+  border: 1px solid var(--rr-rule) !important;
+  border-radius: 3px !important;
+  color: var(--rr-ink) !important;
+  font: inherit !important;
+  font-size: 15px !important;
+}
+html.ml-reading #app .mode-note {
+  color: var(--rr-ink-quiet) !important;
+  font-size: 12.5px !important;
+}
+
+html.ml-reading #app .rr-last {
+  margin-top: 28px !important;
+  padding-top: 20px !important;
+  border-top: 1px solid var(--rr-rule-soft) !important;
+}
+html.ml-reading #app .rr-eyebrow {
+  margin-bottom: 10px !important;
+  color: var(--rr-ink-quiet) !important;
+  font-size: 12.5px !important;
+}
+html.ml-reading #app .rr-last-row {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 9px !important;
+}
+html.ml-reading #app .rr-last-num { font-size: 30px !important; font-weight: 600 !important; }
+html.ml-reading #app .rr-last-of { color: var(--rr-ink-quiet) !important; font-size: 15px !important; }
+
+/* ---- quiz -------------------------------------------------------------- */
+html.ml-reading #app .rr-quiz {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: calc(100vh - 68px) !important;
+  min-height: calc(100dvh - 68px) !important;
+  padding: 0 !important;
+}
+html.ml-reading #app .rr-rail { padding: 0 0 18px !important; }
+html.ml-reading #app .rr-rail-sub,
+html.ml-reading #app .rr-rail-title,
+html.ml-reading #app .rr-legend { display: none !important; }
+html.ml-reading #app .rr-meta {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 8px !important;
+}
+html.ml-reading #app .rr-count,
+html.ml-reading #app .rr-score {
+  margin: 0 !important;
+  color: var(--rr-ink-quiet) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+html.ml-reading #app .rr-score {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+}
+html.ml-reading #app .timer-badge {
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--rr-ink) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  animation: none !important;
+}
+
+html.ml-reading #app .rr-ladder { display: flex !important; gap: 3px !important; }
+html.ml-reading #app .rr-ladder-mid { gap: 1px !important; }
+html.ml-reading #app .rr-ladder-dense { gap: 0 !important; }
+html.ml-reading #app .rr-ladder .tick {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  height: 3px !important;
+  border-radius: 2px !important;
+  background: var(--rr-tick) !important;
+  font-size: 0 !important;
+  font-style: normal !important;
+  overflow: hidden !important;
+}
+html.ml-reading #app .rr-ladder-dense .tick { border-radius: 0 !important; }
+html.ml-reading #app .rr-ladder .tick.cur { background: var(--rr-ink) !important; }
+html.ml-reading #app .rr-ladder .tick.ok { background: var(--rr-ok) !important; }
+html.ml-reading #app .rr-ladder .tick.bad { background: var(--rr-bad) !important; }
+
+html.ml-reading #app .rr-q { flex: 0 0 auto !important; padding: 10px 0 0 !important; }
+html.ml-reading #app .qtext {
+  margin: 0 0 22px !important;
+  padding: 0 !important;
+  background: none !important;
+  color: var(--rr-ink) !important;
+  font-family: var(--rr-serif) !important;
+  font-size: 21px !important;
+  line-height: 1.42 !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.005em !important;
+  overflow-wrap: anywhere !important;
+}
+html.ml-reading #app .qtext p { margin: 0 0 0.7em !important; }
+html.ml-reading #app .qtext p:last-child { margin-bottom: 0 !important; }
+html.ml-reading #app .qtext img,
+html.ml-reading #app .explain img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 3px !important;
+}
+/* Once answered, the vignette steps back and the options take over. */
+html.ml-reading #app .rr-q:has(.opt.locked) .qtext { color: var(--rr-ink-quiet) !important; }
+
+html.ml-reading #app .options {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-bottom: 1px solid var(--rr-rule) !important;
+}
+html.ml-reading #app .opt {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 16px !important;
+  width: 100% !important;
+  min-height: 56px !important;
+  margin: 0 !important;
+  padding: 16px 2px !important;
+  background: none !important;
+  border: 0 !important;
+  border-top: 1px solid var(--rr-rule) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--rr-ink) !important;
+  font-family: var(--rr-serif) !important;
+  font-size: 16.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  text-align: left !important;
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+  transition: background-color 0.12s ease !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+html.ml-reading #app .opt::before,
+html.ml-reading #app .opt::after { content: none !important; }
+html.ml-reading #app .opt > span:last-child {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  color: inherit !important;
+  font-family: var(--rr-serif) !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+  line-height: inherit !important;
+  overflow-wrap: anywhere !important;
+}
+html.ml-reading #app .opt .letter {
+  flex: 0 0 12px !important;
+  width: 12px !important;
+  height: auto !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--rr-ink-quiet) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+}
+@media (hover: hover) {
+  html.ml-reading #app .opt:not(.locked):hover { background: var(--rr-raised) !important; }
+}
+html.ml-reading #app .opt:not(.locked):active { background: var(--rr-raised) !important; }
+html.ml-reading #app .opt.locked { cursor: default !important; }
+html.ml-reading #app .opt.dim { opacity: 0.45 !important; }
+
+/* The reveal: the only colour in the product, and the only motion. */
+html.ml-reading #app .opt.correct,
+html.ml-reading #app .opt.incorrect {
+  width: calc(100% + 16px) !important;
+  margin-left: -16px !important;
+  padding-left: 14px !important;
+  opacity: 1 !important;
+  animation: rr-reveal 0.24s ease-out both !important;
+}
+html.ml-reading #app .opt.correct {
+  background: var(--rr-ok-bg) !important;
+  border-left: 2px solid var(--rr-ok) !important;
+}
+html.ml-reading #app .opt.incorrect {
+  background: var(--rr-bad-bg) !important;
+  border-left: 2px solid var(--rr-bad) !important;
+}
+html.ml-reading #app .opt.correct .letter { color: var(--rr-ok) !important; }
+html.ml-reading #app .opt.incorrect .letter { color: var(--rr-bad) !important; }
+html.ml-reading #app .opt.correct > span:last-child::after,
+html.ml-reading #app .opt.incorrect > span:last-child::after {
+  display: block !important;
+  margin-top: 5px !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1.3 !important;
+}
+html.ml-reading #app .opt.correct > span:last-child::after { content: "CORRECT" !important; color: var(--rr-ok) !important; }
+html.ml-reading #app .opt.incorrect > span:last-child::after { content: "YOUR ANSWER" !important; color: var(--rr-bad) !important; }
+@keyframes rr-reveal {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+/* ---- rationale --------------------------------------------------------- */
+html.ml-reading #app .rr-rationale { flex: 1 0 auto !important; padding: 24px 0 28px !important; }
+html.ml-reading #app .rr-await {
+  margin: 0 !important;
+  color: var(--rr-ink-quiet) !important;
+  font-size: 12.5px !important;
+  line-height: 1.5 !important;
+}
+html.ml-reading #app .explain {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-height: none !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--rr-ink-dim) !important;
+  font-family: var(--rr-serif) !important;
+  font-size: 15.5px !important;
+  line-height: 1.62 !important;
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+  overflow-wrap: anywhere !important;
+}
+html.ml-reading #app .explain::before,
+html.ml-reading #app .explain::after { content: none !important; }
+html.ml-reading #app .explain .exlabel {
+  display: block !important;
+  margin: 0 0 10px !important;
+  padding: 0 !important;
+  background: none !important;
+  color: var(--rr-ink-quiet) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  border: 0 !important;
+}
+html.ml-reading #app .explain p,
+html.ml-reading #app .explain li,
+html.ml-reading #app .explain span:not(.exlabel),
+html.ml-reading #app .explain div:not(.skip-tag),
+html.ml-reading #app .explain em { color: inherit !important; font-family: inherit !important; font-size: inherit !important; line-height: inherit !important; }
+html.ml-reading #app .explain p { margin: 0 0 14px !important; }
+html.ml-reading #app .explain ul,
+html.ml-reading #app .explain ol { margin: 0 0 14px !important; padding-left: 20px !important; }
+html.ml-reading #app .explain li { margin-bottom: 6px !important; }
+html.ml-reading #app .explain strong,
+html.ml-reading #app .explain b { color: var(--rr-ink) !important; font-weight: 600 !important; }
+html.ml-reading #app .explain h1,
+html.ml-reading #app .explain h2,
+html.ml-reading #app .explain h3,
+html.ml-reading #app .explain h4 {
+  margin: 18px 0 8px !important;
+  color: var(--rr-ink) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+html.ml-reading #app .explain a,
+html.ml-reading #app .explain .explain-text-link {
+  color: inherit !important;
+  text-decoration: none !important;
+  cursor: text !important;
+}
+html.ml-reading #app .explain table {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 0 14px !important;
+  border-collapse: collapse !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+  overflow-x: auto !important;
+}
+html.ml-reading #app .explain th,
+html.ml-reading #app .explain td {
+  padding: 8px 10px !important;
+  background: none !important;
+  border: 1px solid var(--rr-rule) !important;
+  color: var(--rr-ink-dim) !important;
+  text-align: left !important;
+  vertical-align: top !important;
+}
+html.ml-reading #app .explain th { color: var(--rr-ink) !important; font-weight: 600 !important; }
+html.ml-reading #app .explain .no-explain { color: var(--rr-ink-quiet) !important; font-style: italic !important; }
+html.ml-reading #app .explain .skip-tag {
+  margin-top: 14px !important;
+  padding: 12px 0 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-top: 1px solid var(--rr-rule) !important;
+  border-radius: 0 !important;
+  color: var(--rr-ink-quiet) !important;
+  font-family: var(--rr-sans) !important;
+  font-size: 12.5px !important;
+}
+
+/* ---- action bar -------------------------------------------------------- */
+html.ml-reading #app .rr-actions {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 5 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin: 0 -20px !important;
+  padding: 12px 20px calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  background: var(--rr-ground) !important;
+  border-top: 1px solid var(--rr-rule) !important;
+}
+html.ml-reading #app .rr-keys { display: none !important; }
+html.ml-reading #app .rr-actions-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-left: auto !important;
+}
+html.ml-reading #app .rr-text-btn {
+  min-height: 44px !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  color: var(--rr-ink-quiet) !important;
+  font-size: 14.5px !important;
+  cursor: pointer !important;
+}
+html.ml-reading #app .rr-text-btn:hover { color: var(--rr-ink) !important; }
+html.ml-reading #app .rr-icon-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  color: var(--rr-ink-quiet) !important;
+  cursor: pointer !important;
+}
+html.ml-reading #app .rr-icon-btn:hover { color: var(--rr-ink) !important; }
+html.ml-reading #app .rr-icon-btn.active { color: var(--rr-ink) !important; }
+html.ml-reading #app .rr-icon-btn.active svg { fill: currentColor !important; }
+
+/* ---- wide screens: rail, question, rationale --------------------------- */
+@media (min-width: 1080px) {
+  html.ml-reading #app.screen-quiz {
+    max-width: 1440px !important;
+    padding: 0 !important;
+  }
+  html.ml-reading #app.screen-quiz .rr-top {
+    padding: 10px 28px !important;
+    border-bottom: 1px solid var(--rr-rule-soft) !important;
+  }
+  html.ml-reading #app.screen-quiz .rr-crumb { visibility: hidden !important; }
+
+  html.ml-reading #app .rr-quiz {
+    display: grid !important;
+    grid-template-columns: 220px minmax(0, 1fr) 360px !important;
+    grid-template-rows: auto 1fr !important;
+    grid-template-areas:
+      "rail q rationale"
+      "rail actions rationale";
+    min-height: calc(100vh - 65px) !important;
+  }
+  html.ml-reading #app .rr-rail {
+    grid-area: rail !important;
+    padding: 36px 26px !important;
+    border-right: 1px solid var(--rr-rule-soft) !important;
+  }
+  html.ml-reading #app .rr-rail-sub {
+    display: block !important;
+    margin: 0 0 6px !important;
+    color: var(--rr-ink-quiet) !important;
+    font-size: 12.5px !important;
+  }
+  html.ml-reading #app .rr-rail-title {
+    display: block !important;
+    margin: 0 0 26px !important;
+    color: var(--rr-ink) !important;
+    font-family: var(--rr-serif) !important;
+    font-size: 19px !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.01em !important;
+  }
+  html.ml-reading #app .rr-meta { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; margin-bottom: 12px !important; }
+  html.ml-reading #app .rr-ladder,
+  html.ml-reading #app .rr-ladder-mid,
+  html.ml-reading #app .rr-ladder-dense {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    max-height: 46vh !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+  }
+  html.ml-reading #app .rr-ladder .tick {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 26px !important;
+    background: none !important;
+    border: 1px solid var(--rr-rule-soft) !important;
+    border-radius: 3px !important;
+    color: var(--rr-ink-quiet) !important;
+    font-size: 10.5px !important;
+    opacity: 0.75 !important;
+  }
+  html.ml-reading #app .rr-ladder .tick.cur {
+    background: none !important;
+    border-color: var(--rr-ink) !important;
+    color: var(--rr-ink) !important;
+    opacity: 1 !important;
+  }
+  html.ml-reading #app .rr-ladder .tick.ok {
+    background: var(--rr-ok-bg) !important;
+    border-color: var(--rr-ok) !important;
+    color: var(--rr-ok) !important;
+    opacity: 1 !important;
+  }
+  html.ml-reading #app .rr-ladder .tick.bad {
+    background: var(--rr-bad-bg) !important;
+    border-color: var(--rr-bad) !important;
+    color: var(--rr-bad) !important;
+    opacity: 1 !important;
+  }
+  html.ml-reading #app .rr-legend {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-top: 22px !important;
+    padding-top: 20px !important;
+    border-top: 1px solid var(--rr-rule-soft) !important;
+    color: var(--rr-ink-dim) !important;
+    font-size: 12.5px !important;
+  }
+  html.ml-reading #app .rr-legend span { display: flex !important; align-items: center !important; gap: 10px !important; }
+  html.ml-reading #app .rr-legend span::before {
+    content: "" !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 2px !important;
+    background: var(--rr-ok) !important;
+  }
+  html.ml-reading #app .rr-legend span.bad::before { background: var(--rr-bad) !important; }
+
+  html.ml-reading #app .rr-q {
+    grid-area: q !important;
+    max-width: 760px !important;
+    padding: 40px 44px 0 !important;
+  }
+  html.ml-reading #app .qtext { font-size: 25px !important; line-height: 1.4 !important; margin-bottom: 30px !important; }
+  html.ml-reading #app .rr-q:has(.opt.locked) .qtext { color: var(--rr-ink) !important; }
+  html.ml-reading #app .options { max-width: 560px !important; }
+  html.ml-reading #app .opt { font-size: 17.5px !important; padding: 18px 2px !important; }
+
+  html.ml-reading #app .rr-rationale {
+    grid-area: rationale !important;
+    padding: 36px 40px 40px !important;
+    background: var(--rr-raised) !important;
+    border-left: 1px solid var(--rr-rule-soft) !important;
+  }
+  html.ml-reading #app .explain { font-size: 16.5px !important; }
+
+  html.ml-reading #app .rr-actions {
+    grid-area: actions !important;
+    position: static !important;
+    align-self: start !important;
+    justify-content: flex-start !important;
+    max-width: 760px !important;
+    margin: 0 !important;
+    padding: 30px 44px 40px !important;
+    border-top: 0 !important;
+    gap: 24px !important;
+  }
+  html.ml-reading #app .rr-actions-right { order: 1 !important; margin: 0 !important; flex-direction: row-reverse !important; gap: 20px !important; }
+  html.ml-reading #app .rr-actions .rr-text-btn { order: 2 !important; }
+  html.ml-reading #app .rr-keys {
+    order: 3 !important;
+    display: block !important;
+    margin-left: auto !important;
+    color: var(--rr-ink-quiet) !important;
+    font-size: 12px !important;
+    opacity: 1 !important;
+  }
+  html.ml-reading #app .rr-keys strong { color: var(--rr-ink-dim) !important; font-weight: 500 !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ml-reading #app .opt.correct,
+  html.ml-reading #app .opt.incorrect { animation: none !important; }
+  html.ml-reading #app .btn,
+  html.ml-reading #app .opt { transition: none !important; }
+}

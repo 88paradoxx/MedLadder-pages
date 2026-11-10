@@ -4298,6 +4298,42 @@ window.addEventListener('error', function (ev) {
           '<div class="right">' + proHeaderBtnHtml() + authBtnHtml() + themeBtnHtml() + '</div>' +
           '</header>';
       }
+      // ---------- READING-ROOM SCREENS (quiz + quiz setup) ----------
+      // These two screens use their own visual system. It is switched by a
+      // class on <html>, kept in step with #app's screen-* classes by an
+      // observer, so the dozen places that add or remove those classes do not
+      // each need to know about it. Results stays on the old system for now.
+      function syncReadingMode() {
+        if (!app) return;
+        var c = app.classList;
+        var on = c.contains('screen-setup') || (c.contains('screen-quiz') && !c.contains('screen-results'));
+        document.documentElement.classList.toggle('ml-reading', on);
+        if (on && !document.getElementById('rr-fonts')) {
+          var f = document.createElement('link');
+          f.id = 'rr-fonts';
+          f.rel = 'stylesheet';
+          f.href = 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&display=swap';
+          document.head.appendChild(f);
+        }
+      }
+      if (app && window.MutationObserver) {
+        new MutationObserver(syncReadingMode).observe(app, { attributes: true, attributeFilter: ['class'] });
+      }
+
+      var RR_BACK_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+      var RR_BOOKMARK_SVG = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>';
+      var RR_CHEVRON_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
+      // Same ids as topBar(), so wireTopBar() works unchanged.
+      function rrTopBar(backLabel, crumb) {
+        return '<header class="rr-top" role="banner">' +
+          '<button class="rr-back" id="backBtn" aria-label="' + esc(backLabel) + '">' + RR_BACK_SVG + '</button>' +
+          '<div class="rr-crumb">' + esc(crumb || '') + '</div>' +
+          '<div class="right rr-top-right">' + proHeaderBtnHtml() + authBtnHtml() + themeBtnHtml() + '</div>' +
+          '</header>';
+      }
+      var setupSettingsOpen = false;
+
       function wireTopBar(handler) {
         wireThemeBtn();
         wireAuthControls();
@@ -4377,7 +4413,7 @@ window.addEventListener('error', function (ev) {
         var customCountHtml = setupChoice.count === 'custom' ? '<div class="custom-setup-control"><label for="customCountInput">Questions</label><input id="customCountInput" type="number" min="1" max="' + total + '" value="' + esc(String(setupChoice.customCount || 50)) + '" inputmode="numeric"><span>of ' + total + '</span></div>' : '';
         var customTimeHtml = setupChoice.timeLimit === 'custom' ? '<div class="custom-setup-control"><label for="customTimeInput">Minutes</label><input id="customTimeInput" type="number" min="1" max="600" value="' + esc(String(setupChoice.customTime || 30)) + '" inputmode="numeric"><span>1–600 min</span></div>' : '';
         var typeHtml = '<button class="type-card ' + (setupChoice.quizType === 'practice' ? 'active' : '') + '" data-type="practice"><span class="tname">Practice</span><span class="tdesc">Instant answer and explanation after every question.</span></button><button class="type-card ' + (setupChoice.quizType === 'timed' ? 'active' : '') + '" data-type="timed"><span class="tname">Timed Test</span><span class="tdesc">Set a clock and work through your custom question set.</span></button>';
-        app.innerHTML = topBar('Back to Home', renderHome) + '<main id="mainContent" role="main"><h1 class="setup-chapname">✦ Custom Module</h1><p class="setup-sub">Choose questions from all ' + SUBJECT_INDEX.length + ' subjects and every topic.</p><div class="setup-section"><div class="setup-label">Quiz type</div><div class="type-grid" id="typeGrid">' + typeHtml + '</div></div><div class="setup-section"><div class="setup-label">Number of questions</div><div class="pill-row" id="countRow">' + countHtml + '</div>' + customCountHtml + '</div><div class="setup-section"><div class="setup-label">Time limit</div><div class="pill-row" id="timeRow">' + timeHtml + '</div>' + customTimeHtml + '</div><div class="setup-section"><div class="setup-label">Question order</div><div class="pill-row" id="orderRow"><button class="pill-choice ' + (setupChoice.orderMode === 'structured' ? 'active' : '') + '" data-order="structured">Structured</button><button class="pill-choice ' + (setupChoice.orderMode === 'shuffled' ? 'active' : '') + '" data-order="shuffled">Shuffled</button></div></div><div class="start-btn-wrap"><button class="btn start" id="startBtn">Start custom quiz</button></div></main>';
+        app.innerHTML = rrTopBar('Back to home', '') + '<main id="mainContent" role="main" class="rr-setup"><h1 class="setup-chapname">Custom module</h1><p class="setup-sub">Choose questions from all ' + SUBJECT_INDEX.length + ' subjects and every topic.</p><div class="setup-section"><div class="setup-label">Quiz type</div><div class="type-grid" id="typeGrid">' + typeHtml + '</div></div><div class="setup-section"><div class="setup-label">Number of questions</div><div class="pill-row" id="countRow">' + countHtml + '</div>' + customCountHtml + '</div><div class="setup-section"><div class="setup-label">Time limit</div><div class="pill-row" id="timeRow">' + timeHtml + '</div>' + customTimeHtml + '</div><div class="setup-section"><div class="setup-label">Question order</div><div class="pill-row" id="orderRow"><button class="pill-choice ' + (setupChoice.orderMode === 'structured' ? 'active' : '') + '" data-order="structured">Structured</button><button class="pill-choice ' + (setupChoice.orderMode === 'shuffled' ? 'active' : '') + '" data-order="shuffled">Shuffled</button></div></div><div class="start-btn-wrap"><button class="btn start" id="startBtn">Start custom quiz</button></div></main>';
         wireTopBar(renderHome);
         wireRipples('.type-card, .pill-choice, .btn, .auth-btn');
         app.querySelectorAll('#typeGrid .type-card').forEach(function (btn) { btn.onclick = function () { setupChoice.quizType = btn.getAttribute('data-type'); renderCustomSetup(); }; });
@@ -4467,33 +4503,71 @@ window.addEventListener('error', function (ev) {
         var guestOk = !currentUser && !isLocked && guestCanStart(pool);
 
         var startBtnLabel = isLocked
-          ? '🔒 Unlock with MedLadder Pro (₹' + PRO_CONFIG.PRICE_INR + ')'
-          : ((currentUser || guestOk) ? 'Start quiz' : '🔒 Sign in to start quiz');
+          ? 'Unlock with MedLadder Pro (₹' + PRO_CONFIG.PRICE_INR + ')'
+          : ((currentUser || guestOk) ? 'Start quiz' : 'Sign in to start quiz');
         var startBtnClass = isLocked ? 'btn start btn-locked-pro' : 'btn start';
 
         var setupNoteHtml = isLocked
-          ? '<div class="mode-note" style="margin-top:10px;text-align:center;color:#FF7A3D;font-weight:600;">⭐ This topic is a MedLadder Pro exclusive. The first 8 topics in this subject are free!</div>'
+          ? '<p class="rr-note">This topic is part of MedLadder Pro. The first 8 topics in this subject are free.</p>'
           : (guestOk
-            ? '<div class="mode-note" style="margin-top:10px;text-align:center;">Free to try \u2014 no account needed. Sign in afterwards to keep your score and open the rest of this subject.</div>'
-            : (!currentUser ? '<div class="mode-note" style="margin-top:10px;text-align:center;">Sign in or create a free account to take quizzes and save test history. <button class="auth-link" id="setupAuthLink" style="font-weight:700;">Sign In / Register</button></div>' : ''));
+            ? '<p class="rr-note">Free to try \u2014 no account needed. Sign in afterwards to keep your score and open the rest of this subject.</p>'
+            : (!currentUser ? '<p class="rr-note">Sign in or create a free account to take quizzes and save test history. <button class="auth-link" id="setupAuthLink">Sign in / Register</button></p>' : ''));
+
+        // pool.title is "Subject \u2014 Topic": the topic is the heading, the
+        // subject goes in the breadcrumb.
+        var titleParts = String(pool.title || '').split(' \u2014 ');
+        var setupCrumb = titleParts.length > 1 ? titleParts[0] : '';
+        var setupTitle = titleParts.length > 1 ? titleParts.slice(1).join(' \u2014 ') : pool.title;
+
+        // One sentence stating what Start will do, so the settings can stay folded.
+        var chosenCount = resolveSetupCount(total);
+        var chosenTime = setupChoice.timeLimit === 'custom'
+          ? (parseInt(setupChoice.customTime, 10) || 30) + ' minutes'
+          : (setupChoice.timeLimit > 0
+            ? (setupChoice.timeLimit >= 3600 ? (setupChoice.timeLimit / 3600) + (setupChoice.timeLimit === 3600 ? ' hour' : ' hours') : (setupChoice.timeLimit / 60) + ' minutes')
+            : 'no time limit');
+        var defaultsLine =
+          (setupChoice.quizType === 'timed' ? 'Timed test' : 'Practice mode') + ', ' +
+          (chosenCount === 'all' ? 'all ' + total + ' questions' : chosenCount + ' of ' + total + ' questions') + ', ' +
+          chosenTime + ', ' +
+          (setupChoice.orderMode === 'shuffled' ? 'shuffled' : 'topic order') + '.';
+
+        var last = progress[pool.key];
+        var lastRunHtml = (last && last.done > 0)
+          ? '<section class="rr-last"><div class="rr-eyebrow">Your last run</div>' +
+            '<div class="rr-last-row"><span class="rr-last-num">' + (last.correct || 0) + '</span>' +
+            '<span class="rr-last-of">correct of ' + last.done + ' answered</span></div></section>'
+          : '';
 
         app.innerHTML =
-          topBar('Back to topics', function () { renderModuleList(subjectId); }) +
-          '<main id="mainContent" role="main">' +
-          '<h1 class="setup-chapname">' + esc(pool.title) + '</h1>' +
-          '<p class="setup-sub">' + total + ' questions available in this bank.</p>' +
+          rrTopBar('Back to topics', setupCrumb) +
+          '<main id="mainContent" role="main" class="rr-setup">' +
+          '<h1 class="setup-chapname">' + esc(setupTitle) + '</h1>' +
+          '<p class="setup-sub">' + total + ' questions, each with an explained answer.</p>' +
+          '<div class="start-btn-wrap">' +
+          '<button class="' + startBtnClass + '" id="startBtn">' + startBtnLabel + '</button>' +
+          '</div>' +
+          '<p class="rr-defaults">' + esc(defaultsLine) + '</p>' +
+          setupNoteHtml +
+          '<details class="rr-settings" id="setupSettings"' + (setupSettingsOpen ? ' open' : '') + '>' +
+          '<summary><span>Change settings</span>' + RR_CHEVRON_SVG + '</summary>' +
+          '<div class="rr-settings-body">' +
           '<div class="setup-section"><div class="setup-label">Quiz type</div><div class="type-grid" id="typeGrid">' + typeHtml + '</div></div>' +
           '<div class="setup-section"><div class="setup-label">Number of questions</div><div class="pill-row" id="countRow">' + countHtml + '</div>' + customCountHtml + '</div>' +
           '<div class="setup-section"><div class="setup-label">Time limit</div><div class="pill-row" id="timeRow">' + timeHtml + '</div>' + customTimeHtml + '</div>' +
           '<div class="setup-section"><div class="setup-label">Question order</div><div class="pill-row" id="orderRow">' +
-          '<button class="pill-choice ' + (setupChoice.orderMode === 'structured' ? 'active' : '') + '" data-order="structured">Structured (Topic Order)</button>' +
-          '<button class="pill-choice ' + (setupChoice.orderMode === 'shuffled' ? 'active' : '') + '" data-order="shuffled">Shuffled (Exam Mode)</button>' +
+          '<button class="pill-choice ' + (setupChoice.orderMode === 'structured' ? 'active' : '') + '" data-order="structured">Topic order</button>' +
+          '<button class="pill-choice ' + (setupChoice.orderMode === 'shuffled' ? 'active' : '') + '" data-order="shuffled">Shuffled</button>' +
           '</div></div>' +
-          '<div class="start-btn-wrap">' +
-          '<button class="' + startBtnClass + '" id="startBtn">' + startBtnLabel + '</button>' +
           '</div>' +
-          setupNoteHtml +
+          '</details>' +
+          lastRunHtml +
           '</main>';
+
+        // Every choice re-renders this screen; remember whether the panel was
+        // open so it does not snap shut under the user's finger.
+        var settingsEl = document.getElementById('setupSettings');
+        if (settingsEl) settingsEl.addEventListener('toggle', function () { setupSettingsOpen = settingsEl.open; });
 
         wireTopBar(function () { renderModuleList(subjectId); });
         wireRipples('.type-card, .pill-choice, .btn, .auth-btn');
@@ -4849,7 +4923,7 @@ window.addEventListener('error', function (ev) {
 
         var explainHtml = '';
         if (reveal) {
-          explainHtml = '<div class="explain show"><span class="exlabel">💡 Clinical Rationale &amp; Explanation</span>' +
+          explainHtml = '<div class="explain show"><span class="exlabel">Rationale</span>' +
             (q.explanation ? formatExplanation(q.explanation, q.explanationImages) : '<span class="no-explain">No explanation was captured for this item in the source text.</span>') +
             (existing && existing.skipped ? '<div class="skip-tag">Time ran out before you answered.</div>' : '') +
             '</div>';
@@ -4859,30 +4933,51 @@ window.addEventListener('error', function (ev) {
         var isLast = state.idx + 1 >= total;
         var backFn = state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'bookmarks' ? function () { renderBookmarks(); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); }));
 
+        // One tick per question. On a phone they are the thin ladder under the
+        // counter; on a wide screen the same elements become the numbered grid
+        // in the left rail.
+        var wrongSoFar = answeredCount - correctSoFar;
+        var ticksHtml = state.order.map(function (qi, i) {
+          var tq = state.questions[qi];
+          var ta = tq ? state.answers[String(tq.id || tq.num)] : null;
+          return '<i class="tick' + (ta ? (ta.isCorrect ? ' ok' : ' bad') : '') + (i === state.idx ? ' cur' : '') + '">' + (i + 1) + '</i>';
+        }).join('');
+        var ladderDensity = total <= 40 ? 'sparse' : (total <= 110 ? 'mid' : 'dense');
+        var quizCrumb = String(state.poolTitle || '').replace(' \u2014 ', ' / ');
+        var railParts = String(state.poolTitle || '').split(' \u2014 ');
+
         releaseQuestionImages();
         app.innerHTML =
-          topBar('Back', backFn) +
-          '<main id="mainContent" role="main">' +
-          '<div class="qmeta-row">' +
-          '<span class="chap-tag">' + esc(state.poolTitle) + '</span>' +
-          '<span class="score-tag" style="display:flex;align-items:center;gap:8px;">' + timerHtml + '<span id="scoreText">' + correctSoFar + ' / ' + answeredCount + ' correct</span></span>' +
+          rrTopBar('Back', quizCrumb) +
+          '<main id="mainContent" role="main" class="rr-quiz">' +
+          '<aside class="rr-rail">' +
+          (railParts.length > 1 ? '<div class="rr-rail-sub">' + esc(railParts[0]) + '</div>' : '') +
+          '<div class="rr-rail-title">' + esc(railParts.length > 1 ? railParts.slice(1).join(' \u2014 ') : state.poolTitle) + '</div>' +
+          '<div class="rr-meta">' +
+          '<h1 class="rr-count">Question ' + (state.idx + 1) + ' of ' + total + '</h1>' +
+          '<span class="rr-score">' + timerHtml + '<span id="scoreText">' + correctSoFar + ' correct</span></span>' +
           '</div>' +
-          '<div class="qprog-track"><div class="qprog-fill" style="width:' + Math.round(((state.idx) / total) * 100) + '%"></div></div>' +
-          '<div class="qcard glass">' +
-          '<h1 class="qnum-eyebrow" style="margin:0 0 10px;font-size:11px;line-height:1.4;">Question ' + (state.idx + 1) + ' of ' + total + ' · <span style="color:var(--accent);text-transform:none;letter-spacing:normal;font-weight:700;">' + esc(state.poolTitle) + '</span></h1>' +
-          (q.id ? '<div class="bm-top-row"><button class="btn secondary bm-btn' + (isBookmarked(q.id) ? ' active' : '') + '" id="bookmarkBtn" data-qid="' + q.id + '">' + (isBookmarked(q.id) ? '🔖 Bookmarked' : '🔖 Bookmark') + '</button><button class="btn secondary bm-btn" id="flagBtn" data-qid="' + q.id + '">🚩 Flag</button></div>' : '') +
+          '<div class="rr-ladder rr-ladder-' + ladderDensity + '" id="rrLadder" role="img" aria-label="' + correctSoFar + ' correct, ' + wrongSoFar + ' incorrect, ' + (total - answeredCount) + ' remaining">' + ticksHtml + '</div>' +
+          '<div class="rr-legend"><span class="ok">Correct</span><span class="bad">Missed</span></div>' +
+          '</aside>' +
+          '<section class="rr-q">' +
           '<div class="qtext">' + renderQuestionContent(q.question || '', q.questionImages) + '</div>' +
           '<div class="options">' + optsHtml + '</div>' +
-          explainHtml +
-          '</div>' +
-          '<div class="quiz-actions" style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;">' +
-          '<div class="quiz-shortcuts-hint" style="font-size:12px;color:var(--ink-soft);opacity:0.8;">Keys <strong>1-4</strong> or <strong>A-D</strong> · <strong>Enter</strong> to advance</div>' +
+          '</section>' +
+          '<aside class="rr-rationale" id="rrRationale" aria-live="polite">' +
+          (explainHtml || '<p class="rr-await">Answer to see the rationale.</p>') +
+          '</aside>' +
+          '<div class="quiz-actions rr-actions">' +
+          (q.id ? '<button class="rr-text-btn" id="flagBtn" data-qid="' + q.id + '">Flag</button>' : '<span></span>') +
+          '<div class="quiz-shortcuts-hint rr-keys">Keys <strong>1\u20134</strong> or <strong>A\u2013D</strong> \u00b7 <strong>Enter</strong> to advance</div>' +
+          '<div class="rr-actions-right">' +
+          (q.id ? '<button class="rr-icon-btn bm-btn' + (isBookmarked(q.id) ? ' active' : '') + '" id="bookmarkBtn" data-qid="' + q.id + '" aria-pressed="' + (isBookmarked(q.id) ? 'true' : 'false') + '" aria-label="' + (isBookmarked(q.id) ? 'Remove bookmark' : 'Bookmark this question') + '">' + RR_BOOKMARK_SVG + '</button>' : '') +
           '<button class="btn" id="nextBtn" ' + (existing ? '' : 'disabled') + '>' + (isLast ? 'See results' : 'Next question') + '</button>' +
+          '</div>' +
           '</div>' +
           '</main>';
 
         wireTopBar(backFn);
-        wireRipples('.opt, .btn, .auth-btn');
         if (state.timeLimit > 0) updateTimerBadge();
 
         var explainBox = app.querySelector('.explain');
@@ -4918,15 +5013,17 @@ window.addEventListener('error', function (ev) {
 
             var correctNow = Object.values(state.answers).filter(function (item) { return item.isCorrect; }).length;
             var scoreText = document.getElementById('scoreText');
-            if (scoreText) scoreText.textContent = correctNow + ' / ' + Object.keys(state.answers).length + ' correct';
+            if (scoreText) scoreText.textContent = correctNow + ' correct';
+            var curTick = app.querySelector('#rrLadder .tick.cur');
+            if (curTick) curTick.classList.add(answer.isCorrect ? 'ok' : 'bad');
 
             // 2) Explanation, guarded so bad editorial HTML cannot break the tap.
             try {
-              var explanationHtml = '<div class="explain show"><span class="exlabel">💡 Clinical Rationale &amp; Explanation</span>' +
+              var explanationHtml = '<div class="explain show"><span class="exlabel">Rationale</span>' +
                 (q.explanation ? formatExplanation(q.explanation, q.explanationImages) : '<span class="no-explain">No explanation was captured for this item in the source text.</span>') +
                 '</div>';
-              var optionsContainer = app.querySelector('.options');
-              if (optionsContainer && !app.querySelector('.explain')) optionsContainer.insertAdjacentHTML('afterend', explanationHtml);
+              var rationaleHolder = document.getElementById('rrRationale');
+              if (rationaleHolder && !app.querySelector('.explain')) rationaleHolder.innerHTML = explanationHtml;
               var explanationBox = app.querySelector('.explain');
               if (explanationBox) {
                 explanationBox.addEventListener('click', function (event) {
@@ -5100,8 +5197,9 @@ window.addEventListener('error', function (ev) {
         var q = currentQuestion();
         if (!q || String(btn.getAttribute('data-qid')) !== String(q.id)) return;
         var saved = isBookmarked(q.id);
-        btn.textContent = saved ? '🔖 Bookmarked' : '🔖 Bookmark';
         btn.classList.toggle('active', saved);
+        btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+        btn.setAttribute('aria-label', saved ? 'Remove bookmark' : 'Bookmark this question');
       }
 
       function toggleBookmark(q) {
