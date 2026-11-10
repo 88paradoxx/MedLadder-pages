@@ -2525,3 +2525,9 @@ html.ml-reading #app .rr-year-section .pill-choice.pyq-year-pill.active {
   border-color: var(--rr-ink) !important;
   color: var(--rr-ground) !important;
 }
+html.ml-reading #app .rr-topic-go.rr-topic-go-primary {
+  background: var(--rr-ink) !important;
+  border-color: var(--rr-ink) !important;
+  color: var(--rr-ground) !important;
+  font-weight: 600 !important;
+}
