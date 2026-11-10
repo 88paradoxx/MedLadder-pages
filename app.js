@@ -1804,6 +1804,15 @@ window.addEventListener('error', function (ev) {
             var map = {};
             res.data.forEach(function (r) { if (r && r.module_id != null) map[String(r.module_id)] = true; });
             guestModuleIds = map;
+            // The screen painted before this arrived, so repaint it now that we
+            // know which module is open. renderSetup calls loadGuestModules
+            // again, but it returns immediately once guestModuleIds is set.
+            try {
+              if (!currentUser && state.subjectId) {
+                if (state.screen === 'setup') renderSetup(state.subjectId, state.moduleId || 'all');
+                else if (state.screen === 'modules') renderModuleList(state.subjectId);
+              }
+            } catch (e) { console.warn('guest re-render failed:', e); }
           }).catch(function () { guestModulesLoading = false; guestModuleIds = {}; });
         } catch (e) { guestModulesLoading = false; guestModuleIds = {}; }
       }
@@ -4096,6 +4105,7 @@ window.addEventListener('error', function (ev) {
         var pAll = progress[subjectId + ':all'];
         var allScore = pAll && pAll.done > 0 ? Math.round((pAll.correct / pAll.done) * 100) + '% last run' : '';
 
+        if (!currentUser) loadGuestModules();
         var isPro = isUserPro(currentUser);
         var isAllLocked = isModuleLocked(subjectId, 'all');
 
@@ -4139,6 +4149,7 @@ window.addEventListener('error', function (ev) {
           }
           var dimClass = (m.questionCount === 0) ? ' dim' : '';
           var isLocked = isModuleLocked(subjectId, m.moduleId, i);
+          var guestFree = !currentUser && !isLocked && isGuestModule(m.id);
 
           if (isLocked) {
             return sectionHeader + (
@@ -4154,9 +4165,11 @@ window.addEventListener('error', function (ev) {
             return sectionHeader + (
               '<button class="item' + dimClass + '" data-mod="' + m.moduleId + '" data-locked="false" data-name="' + esc(m.name.toLowerCase()) + '" data-sec="' + esc((m.section || '').toLowerCase()) + '" style="animation-delay:' + (Math.min(i, 20) * 0.015) + 's">' +
               '<span class="num">' + String(i + 1).padStart(2, '0') + '</span>' +
-              '<span class="info"><span class="cname">' + esc(m.name) + '</span>' +
+              '<span class="info"><span class="cname">' + esc(m.name) +
+              (guestFree ? ' <span class="score-pill">Free to try</span>' : '') + '</span>' +
               progHtml +
-              '<span class="cmeta">' + m.questionCount + ' questions</span></span>' +
+              '<span class="cmeta">' + m.questionCount + ' questions' +
+              (guestFree ? ' \u00b7 no account needed' : '') + '</span></span>' +
               '<span class="arrow">›</span>' +
               '</button>'
             );
@@ -4442,14 +4455,20 @@ window.addEventListener('error', function (ev) {
         }
         var isLocked = isModuleLocked(subjectId, moduleId, modIndex);
 
+        // A signed-out visitor may start a guest module. guestCanStart also
+        // rules out PYQ, whole-subject and custom pools.
+        var guestOk = !currentUser && !isLocked && guestCanStart(pool);
+
         var startBtnLabel = isLocked
           ? '🔒 Unlock with MedLadder Pro (₹' + PRO_CONFIG.PRICE_INR + ')'
-          : (currentUser ? 'Start quiz' : '🔒 Sign in to start quiz');
+          : ((currentUser || guestOk) ? 'Start quiz' : '🔒 Sign in to start quiz');
         var startBtnClass = isLocked ? 'btn start btn-locked-pro' : 'btn start';
 
         var setupNoteHtml = isLocked
           ? '<div class="mode-note" style="margin-top:10px;text-align:center;color:#FF7A3D;font-weight:600;">⭐ This topic is a MedLadder Pro exclusive. The first 8 topics in this subject are free!</div>'
-          : (!currentUser ? '<div class="mode-note" style="margin-top:10px;text-align:center;">Sign in or create a free account to take quizzes and save test history. <button class="auth-link" id="setupAuthLink" style="font-weight:700;">Sign In / Register</button></div>' : '');
+          : (guestOk
+            ? '<div class="mode-note" style="margin-top:10px;text-align:center;">Free to try \u2014 no account needed. Sign in afterwards to keep your score and open the rest of this subject.</div>'
+            : (!currentUser ? '<div class="mode-note" style="margin-top:10px;text-align:center;">Sign in or create a free account to take quizzes and save test history. <button class="auth-link" id="setupAuthLink" style="font-weight:700;">Sign In / Register</button></div>' : ''));
 
         app.innerHTML =
           topBar('Back to topics', function () { renderModuleList(subjectId); }) +
