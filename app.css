@@ -1296,3 +1296,31 @@ footer.credit .footer-links-row .footer-link {
 footer.credit .footer-links-row .footer-link:hover { color: var(--ft-ink) !important; }
 footer.credit .footer-links-row > span,
 footer.credit .footer-links-row .footer-dot { display: none !important; }
+
+/* ---- Footer: compact on phones ------------------------------------------
+   Links flow inline instead of one per row, so each group takes two or
+   three lines rather than a screenful. Tap targets stay about 32px tall. */
+@media (max-width: 640px) {
+  footer.credit { margin-top: 28px !important; padding-bottom: 24px !important; }
+  footer.credit .footer-content { padding-top: 20px !important; }
+  footer.credit .footer-apk-btn { min-height: 48px !important; }
+  footer.credit .footer-social-row { margin-top: 12px !important; }
+  footer.credit .footer-directory {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px !important;
+    margin-top: 20px !important;
+    padding-top: 18px !important;
+  }
+  footer.credit .footer-directory-group:has(details) { grid-column: auto !important; }
+  footer.credit .footer-directory-group > strong,
+  footer.credit .footer-directory-group summary { margin-bottom: 4px !important; }
+  footer.credit .footer-directory-group > div,
+  footer.credit .footer-directory-group details > div {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0 18px !important;
+    columns: auto !important;
+  }
+  footer.credit .footer-directory a { padding: 6px 0 !important; font-size: 14px !important; }
+  footer.credit .footer-copy { margin-top: 20px !important; padding-top: 16px !important; }
+}
