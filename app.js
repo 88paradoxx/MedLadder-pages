@@ -1607,6 +1607,8 @@ window.addEventListener('error', function (ev) {
       // nothing wrote to them. Everything below is fire-and-forget: any failure
       // is logged and swallowed, never surfaced, and never blocks a quiz.
       var GUEST_ATTEMPT_KEY = 'medladder_guest_attempts';
+      // One-shot: only ever clear a stale session and retry once per page.
+      var guestAuthRetry = false;
       var attemptLog = { id: null, creating: false, failed: false, pending: [], flushTimer: null, meta: null };
 
       function subjectIdForModuleDbId(moduleDbId) {
@@ -4694,7 +4696,28 @@ window.addEventListener('error', function (ev) {
 
         }).catch(function (err) {
           quizLoadInFlight = false;
-          console.error('Fetch questions error:', err);
+          console.error('Fetch questions error:', err, err && err.status, err && err.code);
+
+          // A signed-out visitor can still be carrying a dead session: if a
+          // refresh token in localStorage has expired, supabase-js restores it
+          // and sends it as Authorization, and PostgREST answers 401 even
+          // though the anon key alone is accepted (verified: the same query
+          // returns rows against /rest/v1 with only the publishable key).
+          // currentUser is null in that state, so the UI says "signed out"
+          // while every query fails. Clear the local session once, retry clean.
+          var authish = err && (err.status === 401 || err.code === 'PGRST301' ||
+            /jwt|token|unauthor/i.test(String(err.message || '')));
+          if (!currentUser && authish && !guestAuthRetry && supabaseClient && supabaseClient.auth) {
+            guestAuthRetry = true;
+            console.warn('clearing a stale local session, retrying as anon');
+            try {
+              Promise.resolve(supabaseClient.auth.signOut({ scope: 'local' }))
+                .catch(function () {})
+                .then(function () { startQuiz(); });
+            } catch (e) { startQuiz(); }
+            return;
+          }
+
           showToast('Failed to load questions: ' + (err.message || err), 'error');
           if (state.isPyqMode && state.pyqExam) {
             renderPYQSetup(state.pyqExam);
