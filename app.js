@@ -3801,7 +3801,7 @@ window.addEventListener('error', function (ev) {
 
         var yearsHtml = yearsList.map(function (y) {
           var activeCls = (setupChoice.pyqYear === y) ? 'active' : '';
-          return '<button class="pyq-year-pill ' + activeCls + '" data-year="' + esc(y) + '">' + esc(y) + '</button>';
+          return '<button class="pill-choice pyq-year-pill ' + activeCls + '" data-year="' + esc(y) + '">' + esc(y) + '</button>';
         }).join('');
 
         // PYQ Bank: Every year PYQ acts as a dedicated single test covering the full paper
@@ -3809,10 +3809,10 @@ window.addEventListener('error', function (ev) {
 
         // Exam Timers: 120 min (2 Hours) for INICET, 180 min (3 Hours) for NEET PG & FMGE
         var PYQ_TIME_OPTIONS = [
-          { label: '120 min (2 Hours)', value: 7200, hint: 'INICET Standard' },
-          { label: '180 min (3 Hours)', value: 10800, hint: 'NEET PG / FMGE Standard' },
-          { label: 'Untimed / Practice', value: 0, hint: 'Self-paced study' },
-          { label: 'Custom minutes', value: 'custom', hint: 'Set your own countdown' }
+          { label: '2 hours', value: 7200, hint: 'INICET Standard' },
+          { label: '3 hours', value: 10800, hint: 'NEET PG / FMGE Standard' },
+          { label: 'No limit', value: 0, hint: 'Self-paced study' },
+          { label: 'Custom', value: 'custom', hint: 'Set your own countdown' }
         ];
 
         if (setupChoice.timeLimit !== 7200 && setupChoice.timeLimit !== 10800 && setupChoice.timeLimit !== 0 && setupChoice.timeLimit !== 'custom') {
@@ -3820,7 +3820,7 @@ window.addEventListener('error', function (ev) {
         }
 
         var pool = {
-          title: exam.icon + ' ' + exam.name + ' — ' + setupChoice.pyqYear,
+          title: exam.name + ' — ' + setupChoice.pyqYear,
           isPyq: true,
           pyqExam: examId,
           pyqYear: setupChoice.pyqYear,
@@ -3831,52 +3831,54 @@ window.addEventListener('error', function (ev) {
 
         var typeHtml =
           '<button class="type-card ' + (setupChoice.quizType === 'practice' ? 'active' : '') + '" data-type="practice">' +
-          '<span class="tname">Practice Mode</span><span class="tdesc">Instant clinical explanations and correct answer keys after each question.</span>' +
+          '<span class="tname">Practice</span><span class="tdesc">See the answer and explanation after each question.</span>' +
           '</button>' +
           '<button class="type-card ' + (setupChoice.quizType === 'timed' ? 'active' : '') + '" data-type="timed">' +
-          '<span class="tname">Exam Simulation</span><span class="tdesc">Complete official test paper with a countdown timer (' + (setupChoice.timeLimit === 7200 ? '120 min' : (setupChoice.timeLimit === 10800 ? '180 min' : 'unlimited')) + ').</span>' +
+          '<span class="tname">Exam simulation</span><span class="tdesc">The full paper against the clock.</span>' +
           '</button>';
 
         var timeHtml = PYQ_TIME_OPTIONS.map(function (t) {
           return '<button class="pill-choice ' + (setupChoice.timeLimit === t.value ? 'active' : '') + '" data-time="' + t.value + '">' +
-            '<span style="font-weight:700;">' + esc(t.label) + '</span>' +
+            esc(t.label) +
             '</button>';
         }).join('');
         var pyqCustomTimeHtml = setupChoice.timeLimit === 'custom' ? '<div class="custom-setup-control"><label for="customTimeInput">Minutes</label><input id="customTimeInput" type="number" min="1" max="600" value="' + esc(String(setupChoice.customTime || 30)) + '" inputmode="numeric"><span>1–600 min</span></div>' : '';
 
-        if (app) app.classList.remove('screen-quiz');
+        var pyqTimeLine = setupChoice.timeLimit === 'custom'
+          ? (parseInt(setupChoice.customTime, 10) || 30) + ' minutes'
+          : (setupChoice.timeLimit === 7200 ? '2 hours' : (setupChoice.timeLimit === 10800 ? '3 hours' : 'no time limit'));
+        var pyqDefaults = (setupChoice.quizType === 'timed' ? 'Exam simulation' : 'Practice mode') + ', ' + pyqTimeLine + ', ' +
+          (setupChoice.orderMode === 'shuffled' ? 'shuffled' : 'paper order') + '.';
+
+        if (app) { app.classList.remove('screen-quiz', 'screen-results'); app.classList.add('screen-setup'); }
         app.innerHTML =
-          topBar('Back to Home', goHomeFromSeo) +
-          '<main id="mainContent" role="main">' +
-          '<div class="pyq-setup-badge">📚 PYQ BANK · ' + esc(exam.name) + '</div>' +
-          '<h1 class="setup-chapname">' + esc(exam.icon + ' ' + exam.name) + ' Official Exam Papers</h1>' +
-          '<p class="setup-sub">' + esc(exam.label) + ' · Each year acts as a complete, single full-length official test.</p>' +
-          '<div class="setup-section pyq-year-section">' +
-          '<div class="setup-label">Select Exam Year / Session (Single Official Test)</div>' +
-          '<div class="pyq-years-scroll" id="yearRow">' + yearsHtml + '</div>' +
-          '<div class="pyq-source-note">💡 Each year session is an independent full paper with authentic recall questions and explanations</div>' +
+          rrTopBar('Back to home', 'Past papers') +
+          '<main id="mainContent" role="main" class="rr-setup">' +
+          '<h1 class="setup-chapname">' + esc(exam.name) + ' past papers</h1>' +
+          '<p class="setup-sub">' + esc(exam.label) + '. Each session is one complete paper, with answers and explanations.</p>' +
+          '<div class="setup-section rr-year-section">' +
+          '<div class="setup-label">Year or session</div>' +
+          '<div class="pill-row" id="yearRow">' + yearsHtml + '</div>' +
           '</div>' +
-          '<div class="setup-section">' +
-          '<div class="setup-label">Test Format</div>' +
-          '<div class="pyq-single-test-card glass">' +
-          '<div class="pyq-single-test-badge-row">' +
-          '<span class="pyq-full-badge">📋 Single Full Test</span>' +
-          '<span class="pyq-paper-badge">' + esc(exam.name) + ' · ' + esc(setupChoice.pyqYear) + '</span>' +
+          '<div class="start-btn-wrap"><button class="btn start" id="startBtn">Start ' + esc(exam.name) + (/^all/i.test(setupChoice.pyqYear) ? ', all years' : ' ' + esc(setupChoice.pyqYear)) + '</button></div>' +
+          '<p class="rr-defaults">' + esc(pyqDefaults) + '</p>' +
+          '<details class="rr-settings" id="setupSettings"' + (setupSettingsOpen ? ' open' : '') + '>' +
+          '<summary><span>Change settings</span>' + RR_CHEVRON_SVG + '</summary>' +
+          '<div class="rr-settings-body">' +
+          '<div class="setup-section"><div class="setup-label">Mode</div><div class="type-grid" id="typeGrid">' + typeHtml + '</div></div>' +
+          '<div class="setup-section"><div class="setup-label">Time limit</div><div class="pill-row" id="timeRow">' + timeHtml + '</div>' + pyqCustomTimeHtml +
+          '<p class="rr-hint">The real exams allow 3 hours for NEET PG and FMGE, and 2 hours for INI-CET.</p>' +
           '</div>' +
-          '<div class="pyq-single-test-title">Official Complete Paper (' + esc(setupChoice.pyqYear) + ')</div>' +
-          '<p class="pyq-single-test-desc">Every year PYQ acts as a single comprehensive test containing all official recall MCQs, image-based stems, answer keys, and high-yield clinical explanations.</p>' +
-          '</div>' +
-          '</div>' +
-          '<div class="setup-section"><div class="setup-label">Test Mode</div><div class="type-grid" id="typeGrid">' + typeHtml + '</div></div>' +
-          '<div class="setup-section"><div class="setup-label">Exam Duration (Timer)</div><div class="pill-row" id="timeRow">' + timeHtml + '</div>' + pyqCustomTimeHtml +
-          '<div class="pyq-time-hint">⏱ 180 min (3 Hours) for NEET PG &amp; FMGE · 120 min (2 Hours) for INICET</div>' +
-          '</div>' +
-          '<div class="setup-section"><div class="setup-label">Question Order</div><div class="pill-row" id="orderRow">' +
-          '<button class="pill-choice ' + (setupChoice.orderMode === 'structured' ? 'active' : '') + '" data-order="structured">Paper Sequence (Original Order)</button>' +
-          '<button class="pill-choice ' + (setupChoice.orderMode === 'shuffled' ? 'active' : '') + '" data-order="shuffled">Shuffled (Exam Mode)</button>' +
+          '<div class="setup-section"><div class="setup-label">Question order</div><div class="pill-row" id="orderRow">' +
+          '<button class="pill-choice ' + (setupChoice.orderMode === 'structured' ? 'active' : '') + '" data-order="structured">Paper order</button>' +
+          '<button class="pill-choice ' + (setupChoice.orderMode === 'shuffled' ? 'active' : '') + '" data-order="shuffled">Shuffled</button>' +
           '</div></div>' +
-          '<div class="start-btn-wrap"><button class="btn start" id="startBtn">🚀 Start ' + esc(exam.name) + ' ' + esc(setupChoice.pyqYear) + ' Test</button></div>' +
+          '</div>' +
+          '</details>' +
           '</main>';
+
+        var pyqSettingsEl = document.getElementById('setupSettings');
+        if (pyqSettingsEl) pyqSettingsEl.addEventListener('toggle', function () { setupSettingsOpen = pyqSettingsEl.open; });
 
         wireTopBar(goHomeFromSeo);
         wireRipples('.type-card, .pill-choice, .pyq-year-pill, .btn, .auth-btn');
@@ -4031,7 +4033,7 @@ window.addEventListener('error', function (ev) {
               screen: 'quiz',
               subjectId: null,
               moduleId: 'pyq_' + examId + '_' + selectedYear.replace(/\s+/g, '_'),
-              poolTitle: exam.icon + ' ' + exam.name + yearLabelInTitle,
+              poolTitle: exam.name + (isAll ? '' : ' \u2014 ' + selectedYear),
               questions: fetchedQuestions,
               order: orderIndices,
             idx: 0,
@@ -4313,11 +4315,11 @@ window.addEventListener('error', function (ev) {
       // These two screens use their own visual system. It is switched by a
       // class on <html>, kept in step with #app's screen-* classes by an
       // observer, so the dozen places that add or remove those classes do not
-      // each need to know about it. Results stays on the old system for now.
+      // each need to know about it.
       function syncReadingMode() {
         if (!app) return;
         var c = app.classList;
-        var on = c.contains('screen-setup') || (c.contains('screen-quiz') && !c.contains('screen-results'));
+        var on = c.contains('screen-setup') || c.contains('screen-quiz');
         var dash = false;
         for (var ci = 0; ci < app.children.length; ci++) {
           if (app.children[ci].classList && app.children[ci].classList.contains('rr-dash')) { dash = true; break; }
@@ -5755,31 +5757,64 @@ window.addEventListener('error', function (ev) {
 
         var resBackFn = state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'bookmarks' ? function () { renderBookmarks(); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); }));
 
+        // The questions that were missed or left unanswered, each a row that
+        // opens its own review. Built lazily, like the full review.
+        var plainText = function (html) {
+          var t = String(html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+          return t.length > 120 ? t.slice(0, 117).replace(/\s+\S*$/, '') + '\u2026' : t;
+        };
+        var missIdx = [];
+        state.order.forEach(function (oi, i) {
+          var mq = state.questions[oi];
+          var ma = mq ? state.answers[String(mq.id || mq.num)] : null;
+          if (!ma || !ma.isCorrect) missIdx.push(i);
+        });
+        var MISS_CAP = 60;
+        var missesHtml = missIdx.length
+          ? '<section class="rr-misses"><h2 class="rr-h2">' + (missIdx.length === 1 ? 'The one you missed' : 'The ' + missIdx.length + ' you missed') + '</h2>' +
+            missIdx.slice(0, MISS_CAP).map(function (i) {
+              var mq = state.questions[state.order[i]];
+              return '<details class="rr-miss" data-idx="' + i + '"><summary>' +
+                '<span class="rr-miss-n">' + (i + 1 < 10 ? '0' : '') + (i + 1) + '</span>' +
+                '<span class="rr-miss-q">' + esc(plainText(mq.question) || 'Image-based question') + '</span>' +
+                RR_CHEVRON_SVG + '</summary><div class="rr-miss-body"></div></details>';
+            }).join('') +
+            (missIdx.length > MISS_CAP ? '<p class="rr-dash-note">Showing the first ' + MISS_CAP + '. The full review below has all of them.</p>' : '') +
+            '</section>'
+          : '';
+        var resCrumb = String(state.poolTitle || '').replace(' \u2014 ', ' / ');
+
         app.innerHTML =
-          topBar('Back', resBackFn) +
-          '<main id="mainContent" role="main">' +
-          '<div class="result-hero glass">' +
-          '<div class="pct">' + pct + '%</div>' +
-          '<div class="frac">' + correct + ' of ' + total + ' correct' + (timedOut ? ' · time ran out' : '') + '</div>' +
-          '<h1 class="chapname" style="margin:14px 0 0;font-size:12.5px;line-height:1.4;">' + esc(state.poolTitle) + ' · Test Results</h1>' +
-          '<div class="verdict">' + verdictFor(pct) + '</div>' +
-          '</div>' +
+          rrTopBar('Back', resCrumb) +
+          '<main id="mainContent" role="main" class="rr-results">' +
+          '<h1 class="rr-res-score"><span class="rr-res-num">' + correct + '</span>' +
+          '<span class="rr-res-of">of ' + total + ' correct \u00b7 ' + pct + '%' + (timedOut ? ' \u00b7 time ran out' : '') + '</span></h1>' +
+          '<p class="rr-res-verdict">' + verdictFor(pct) + '</p>' +
           (currentUser ? '' :
-            '<div class="result-actions" style="flex-direction:column;align-items:stretch;gap:8px;">' +
-            '<p style="margin:0 0 2px;line-height:1.5;">You answered ' + correct + ' of ' + total +
-            ' without an account. Sign in to keep this result' +
-            (wrongCount ? ' and revisit the ' + wrongCount + ' you missed' : '') +
+            '<div class="rr-res-guest">' +
+            '<p>You answered these without an account. Sign in to keep this result' +
+            (wrongCount ? ' and the ' + wrongCount + ' you missed' : '') +
             ', and to open the rest of this subject.</p>' +
-            '<button class="btn" id="guestSaveBtn">Sign in to keep this result</button>' +
+            '<button class="btn" id="guestSaveBtn">Keep my result</button>' +
             '</div>') +
-          '<div class="result-actions">' +
-          '<button class="btn" id="retryBtn">Retry same setup</button>' +
-          '<button class="btn secondary" id="setupBtn">' + (state.isPyqMode ? 'Change PYQ Setup' : 'Change setup') + '</button>' +
-          '</div>' +
-          '<button class="review-toggle" id="reviewToggle">Show full review ▾</button>' +
+          missesHtml +
+          '<button class="review-toggle" id="reviewToggle">Show full review \u25be</button>' +
           '<div id="reviewBlock" class="hidden" data-loaded="false">' + reviewHtml + '</div>' +
-          '</main>' +
-          footerHtml(); hideStaticFooter();
+          '<div class="result-actions rr-res-actions">' +
+          '<button class="btn secondary" id="retryBtn">Retry</button>' +
+          '<button class="btn secondary" id="setupBtn">' + (state.isPyqMode ? 'Change paper' : 'Change setup') + '</button>' +
+          '</div>' +
+          '</main>';
+
+        app.querySelectorAll('.rr-miss').forEach(function (row) {
+          row.addEventListener('toggle', function () {
+            var body = row.querySelector('.rr-miss-body');
+            if (!row.open || !body || body.getAttribute('data-loaded') === 'true') return;
+            var i = parseInt(row.getAttribute('data-idx'), 10);
+            body.setAttribute('data-loaded', 'true');
+            try { body.innerHTML = buildReviewHtml(i, i + 1); } catch (err) { console.warn('review item failed:', err); }
+          });
+        });
 
         var guestSaveBtn = document.getElementById('guestSaveBtn');
         if (guestSaveBtn) {
