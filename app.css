@@ -973,3 +973,43 @@ html.dark .footer-directory-group a{color:#DCD6F5}
 .footer-directory-group details>div a{padding:7px 10px;font-size:13px}
 html.dark .footer-directory-group details>div a{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#EDE9FE}
 html:not(.dark) .footer-directory-group details>div a{background:#fff;border-color:rgba(109,40,217,.3);color:#2E1A52}
+
+/* ---- Account menu: "View my progress" ----------------------------------
+   Green and set apart from Sign out, so the two are not confused or
+   mis-tapped. Lives in app.css because the menu opens on screens where
+   quiz-pro.css is not yet active. */
+#authDropdown #dropdownDashboardBtn.dropdown-progress-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start !important;
+  gap: 9px;
+  width: 100%;
+  min-height: 46px;
+  margin: 12px 0 0 !important;
+  padding: 0 14px !important;
+  border-radius: 12px !important;
+  background: rgba(22, 163, 74, 0.14) !important;
+  background-image: none !important;
+  border: 1px solid rgba(22, 163, 74, 0.45) !important;
+  color: #15803d !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  text-align: left;
+}
+html.dark #authDropdown #dropdownDashboardBtn.dropdown-progress-btn {
+  background: rgba(74, 222, 128, 0.14) !important;
+  background-image: none !important;
+  border-color: rgba(74, 222, 128, 0.40) !important;
+  color: #86efac !important;
+}
+#authDropdown #dropdownDashboardBtn.dropdown-progress-btn:hover {
+  background: rgba(22, 163, 74, 0.24) !important;
+  border-color: #16a34a !important;
+}
+html.dark #authDropdown #dropdownDashboardBtn.dropdown-progress-btn:hover {
+  background: rgba(74, 222, 128, 0.24) !important;
+  border-color: #4ade80 !important;
+}
+.auth-dropdown .dropdown-progress-btn > span { flex: 1 1 auto; }
+.auth-dropdown .dropdown-progress-btn .dropdown-progress-arrow { flex: 0 0 auto; opacity: 0.8; }
+.auth-dropdown .dropdown-divider.dropdown-divider-wide { margin: 18px 0 14px !important; }
