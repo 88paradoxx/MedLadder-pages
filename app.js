@@ -1915,6 +1915,40 @@ window.addEventListener('error', function (ev) {
         });
       }
 
+      // "Reset all progress" must leave nothing for the dashboard to count:
+      // the per-topic totals (module_progress), the session history
+      // (attempts; attempt_answers go with them by cascade), any write still
+      // queued from the last answer, and a guest buffer waiting to migrate.
+      var lastProgressReset = 0;
+      function resetAllProgress() {
+        // The button has both a direct and a delegated listener; run once.
+        if (Date.now() - lastProgressReset < 800) return;
+        lastProgressReset = Date.now();
+        if (progressSaveTimer) { clearTimeout(progressSaveTimer); progressSaveTimer = null; }
+        progress = {};
+        persistProgress();
+        try { localStorage.removeItem(GUEST_ATTEMPT_KEY); } catch (e) { }
+        try {
+          if (attemptLog.flushTimer) clearTimeout(attemptLog.flushTimer);
+          attemptLog = { id: null, creating: false, failed: false, pending: [], flushTimer: null, meta: null };
+        } catch (e) { }
+        if (currentUser && currentUser.id && supabaseClient) {
+          var uid = currentUser.id;
+          ['module_progress', 'attempts'].forEach(function (table) {
+            try {
+              supabaseClient.from(table).delete().eq('user_id', uid).then(function (res) {
+                if (res && res.error) {
+                  console.warn('reset ' + table + ' failed:', res.error);
+                  showToast('Could not clear everything on the server. Please try the reset again.', 'error');
+                }
+              });
+            } catch (e) { console.warn('reset ' + table + ' threw:', e); }
+          });
+        }
+        showToast('All progress reset.');
+        if (state.screen === 'dashboard') renderDashboard(); else renderHome(true);
+      }
+
       function persistProgress() {
         if (currentUser && currentUser.id) {
           try { localStorage.setItem('medladder_progress_' + currentUser.id, JSON.stringify(progress)); } catch (e) { }
@@ -2083,11 +2117,12 @@ window.addEventListener('error', function (ev) {
           '<div class="dashboard-stat-card"><span class="dashboard-stat-icon amber">▦</span><span class="dashboard-stat-value">' + attemptedTopics.toLocaleString() + '</span><span class="dashboard-stat-label">topics started</span></div>' +
           '</div>' +
           '<div class="dashboard-progress-note"><span class="dashboard-progress-dot"></span><span>' + (totalDone > 0 ? 'Keep building momentum across your started topics.' : 'Start a topic to begin tracking your progress here.') + '</span></div>' +
-          '<div class="dropdown-divider"></div>' +
-          '<button class="dropdown-action-btn" id="dropdownDashboardBtn">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path></svg>' +
-          'My progress' +
+          '<button class="dropdown-action-btn dropdown-progress-btn" id="dropdownDashboardBtn">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path></svg>' +
+          '<span>View my progress</span>' +
+          '<svg class="dropdown-progress-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>' +
           '</button>' +
+          '<div class="dropdown-divider dropdown-divider-wide"></div>' +
           '<button class="dropdown-action-btn" id="authSignOutBtn">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>' +
           'Sign Out' +
@@ -3650,15 +3685,7 @@ window.addEventListener('error', function (ev) {
           }
           var resetBtn = document.getElementById('resetAll');
           if (resetBtn) {
-            resetBtn.onclick = function () {
-              progress = {};
-              persistProgress();
-              if (currentUser && currentUser.id && supabaseClient) {
-                supabaseClient.from('module_progress').delete().eq('user_id', currentUser.id).then(function () {}).catch(function () {});
-              }
-              showToast('Reset quiz progress and test state.');
-              renderHome(true);
-            };
+            resetBtn.onclick = function () { resetAllProgress(); };
           }
 
           // Search filter logic
@@ -4351,7 +4378,8 @@ window.addEventListener('error', function (ev) {
           '<div class="right rr-top-right">' + proHeaderBtnHtml() + authBtnHtml() + themeBtnHtml() + '</div>' +
           '</header>';
       }
-      var setupSettingsOpen = false;
+      // Open by default: the settings are visible on arrival and can be folded away.
+      var setupSettingsOpen = true;
 
       function wireTopBar(handler) {
         wireThemeBtn();
@@ -5438,7 +5466,12 @@ window.addEventListener('error', function (ev) {
             (d.pyqDone > 0 ? '<section><h2 class="rr-h2">Past papers</h2><p class="rr-dash-note">' + d.pyqCorrect.toLocaleString() + ' of ' + d.pyqDone.toLocaleString() + ' correct (' + Math.round((d.pyqCorrect / d.pyqDone) * 100) + '%).</p></section>' : '') +
             revisitHtml +
             '<section id="dashRecent"></section>'
-          : '<section class="rr-dash-empty"><p>Nothing to show yet. Finish a few questions in any topic and your accuracy, strongest subjects and weak spots will appear here.</p>' +
+          : '<dl class="rr-stats">' +
+            '<div><dt>Questions answered</dt><dd>0</dd></div>' +
+            '<div><dt>Accuracy</dt><dd>\u2014</dd></div>' +
+            '<div><dt>Topics started</dt><dd>0</dd><span class="rr-stat-foot">in 0 of ' + d.subjects.length + ' subjects</span></div>' +
+            '</dl>' +
+            '<section class="rr-dash-empty"><p>Nothing to show yet. Finish a few questions in any topic and your accuracy, strongest subjects and weak spots will appear here.</p>' +
             '<button class="btn" id="dashBrowseBtn">Browse subjects</button></section>';
 
         app.innerHTML =
@@ -5894,13 +5927,7 @@ window.addEventListener('error', function (ev) {
         var resetBtn = e.target && e.target.closest ? e.target.closest('#resetAll') : null;
         if (resetBtn) {
           e.preventDefault();
-          progress = {};
-          persistProgress();
-          if (currentUser && currentUser.id && supabaseClient) {
-            supabaseClient.from('module_progress').delete().eq('user_id', currentUser.id).then(function () {}).catch(function () {});
-          }
-          showToast('Reset quiz progress and test state.');
-          renderHome(true);
+          resetAllProgress();
           return;
         }
       });
