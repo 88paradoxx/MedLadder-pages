@@ -1600,6 +1600,283 @@ window.addEventListener('error', function (ev) {
         }).catch(function (e) { console.warn('saveModuleProgress catch:', e); });
       }
 
+      // ---------- ATTEMPT HISTORY (attempts + attempt_answers) ----------
+      // module_progress above keeps only aggregate counts, so which questions a
+      // student actually got wrong was never stored anywhere. These two tables
+      // already existed with the right RLS (with_check: auth.uid() = user_id);
+      // nothing wrote to them. Everything below is fire-and-forget: any failure
+      // is logged and swallowed, never surfaced, and never blocks a quiz.
+      var GUEST_ATTEMPT_KEY = 'medladder_guest_attempts';
+      var attemptLog = { id: null, creating: false, failed: false, pending: [], flushTimer: null, meta: null };
+
+      function subjectIdForModuleDbId(moduleDbId) {
+        if (!moduleDbId || !window.SYLLABUS_DATA) return null;
+        for (var i = 0; i < window.SYLLABUS_DATA.length; i++) {
+          var subj = window.SYLLABUS_DATA[i];
+          var mods = subj.modules || [];
+          for (var j = 0; j < mods.length; j++) {
+            if (Number(mods[j].id) === Number(moduleDbId)) return Number(subj.subjectId);
+          }
+        }
+        return null;
+      }
+
+      // Called once a quiz pool is resolved. The attempts row itself is created
+      // lazily on the first answer, so abandoning the setup screen never leaves
+      // an empty attempt behind.
+      function beginAttemptLog(pool) {
+        if (attemptLog.flushTimer) clearTimeout(attemptLog.flushTimer);
+        attemptLog = { id: null, creating: false, failed: false, pending: [], flushTimer: null, meta: null };
+        try {
+          var moduleDbId = pool && typeof pool.moduleDbId === 'number' ? pool.moduleDbId : null;
+          var subjectDbId = Number(state.subjectId);
+          if (!isFinite(subjectDbId) || subjectDbId <= 0) subjectDbId = subjectIdForModuleDbId(moduleDbId);
+          // subject_id is NOT NULL: multi-subject custom sets and bookmark
+          // practice have no single subject, so they are simply not logged.
+          if (!subjectDbId) return;
+          attemptLog.meta = {
+            guest_key: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+            subject_id: subjectDbId,
+            module_id: moduleDbId,
+            quiz_type: state.quizType === 'timed' ? 'timed' : 'practice',
+            time_limit_s: Number(state.timeLimit) || 0,
+            order_mode: (setupChoice && setupChoice.orderMode === 'structured') ? 'structured' : 'shuffled',
+            started_at: new Date().toISOString()
+          };
+        } catch (e) { attemptLog.meta = null; }
+      }
+
+      function ensureAttemptRow(cb) {
+        if (!attemptLog.meta || attemptLog.failed) return;
+        if (attemptLog.id) { if (cb) cb(); return; }
+        if (attemptLog.creating) return;
+        if (!currentUser || !currentUser.id || !supabaseClient) return;
+        attemptLog.creating = true;
+        try {
+        supabaseClient.from('attempts').insert({
+          user_id: currentUser.id,
+          subject_id: attemptLog.meta.subject_id,
+          module_id: attemptLog.meta.module_id,
+          quiz_type: attemptLog.meta.quiz_type,
+          question_count: state.order.length || attemptLog.pending.length || 1,
+          time_limit_s: attemptLog.meta.time_limit_s,
+          order_mode: attemptLog.meta.order_mode,
+          started_at: attemptLog.meta.started_at
+        }).select('id').single().then(function (res) {
+          attemptLog.creating = false;
+          if (res.error || !res.data) {
+            attemptLog.failed = true;
+            console.warn('attempt insert error:', res.error);
+            return;
+          }
+          attemptLog.id = res.data.id;
+          if (cb) cb();
+        }).catch(function (e) {
+          attemptLog.creating = false;
+          attemptLog.failed = true;
+          console.warn('attempt insert catch:', e);
+        });
+        } catch (e) {
+          attemptLog.creating = false;
+          attemptLog.failed = true;
+          console.warn('attempt insert threw:', e);
+        }
+      }
+
+      // Buffered and debounced, so a fast tapper does not fire one request per tap.
+      function logAnswer(q, answer) {
+        if (!attemptLog.meta) return;
+        var qid = Number(q && q.id);
+        if (!isFinite(qid) || qid <= 0) return;
+        attemptLog.pending.push({
+          question_id: qid,
+          picked_option: (answer && answer.picked) ? String(answer.picked).slice(0, 1) : null,
+          is_correct: !!(answer && answer.isCorrect),
+          skipped: !!(answer && answer.skipped),
+          answered_at: new Date().toISOString()
+        });
+        if (attemptLog.flushTimer) clearTimeout(attemptLog.flushTimer);
+        attemptLog.flushTimer = setTimeout(function () {
+          attemptLog.flushTimer = null;
+          flushAttemptAnswers();
+        }, 900);
+      }
+
+      function flushAttemptAnswers() {
+        if (!attemptLog.meta || attemptLog.failed || !attemptLog.pending.length) return;
+        if (!currentUser || !currentUser.id || !supabaseClient) { bufferGuestAnswers(); return; }
+        if (!attemptLog.id) { ensureAttemptRow(flushAttemptAnswers); return; }
+        var attemptId = attemptLog.id;
+        var batch = attemptLog.pending.splice(0, attemptLog.pending.length);
+        try {
+        supabaseClient.from('attempt_answers').insert(batch.map(function (r) {
+          return {
+            attempt_id: attemptId,
+            user_id: currentUser.id,
+            question_id: r.question_id,
+            picked_option: r.picked_option,
+            is_correct: r.is_correct,
+            skipped: r.skipped,
+            answered_at: r.answered_at
+          };
+        })).then(function (res) {
+          if (res.error) console.warn('attempt_answers insert error:', res.error);
+        }).catch(function (e) { console.warn('attempt_answers catch:', e); });
+        } catch (e) {
+          // Put them back so the next flush (or the results screen) retries.
+          attemptLog.pending = batch.concat(attemptLog.pending);
+          console.warn('attempt_answers threw:', e);
+        }
+      }
+
+      // Signed-out practice is not possible yet. When guest modules open, this
+      // is the buffer that gets migrated into the account on sign-up.
+      function bufferGuestAnswers() {
+        try {
+          if (!attemptLog.pending.length) return;
+          var raw = localStorage.getItem(GUEST_ATTEMPT_KEY);
+          var store = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(store)) store = [];
+          var batch = attemptLog.pending.splice(0, attemptLog.pending.length);
+          // Repeated flushes during one quiz must append to that quiz's entry,
+          // not create a new attempt each time.
+          var entry = null;
+          for (var i = 0; i < store.length; i++) {
+            if (store[i] && store[i].meta && store[i].meta.guest_key === attemptLog.meta.guest_key) { entry = store[i]; break; }
+          }
+          if (entry) {
+            entry.answers = (entry.answers || []).concat(batch);
+          } else {
+            store.push({ meta: attemptLog.meta, answers: batch });
+          }
+          while (store.length > 20) store.shift();
+          localStorage.setItem(GUEST_ATTEMPT_KEY, JSON.stringify(store));
+        } catch (e) { }
+      }
+
+      function finishAttemptLog(pct) {
+        if (!attemptLog.meta) return;
+        if (attemptLog.flushTimer) { clearTimeout(attemptLog.flushTimer); attemptLog.flushTimer = null; }
+        if (!currentUser || !currentUser.id || !supabaseClient || attemptLog.failed) {
+          bufferGuestAnswers();
+          return;
+        }
+        var close = function () {
+          if (!attemptLog.id) return;
+          try {
+          supabaseClient.from('attempts').update({
+            finished_at: new Date().toISOString(),
+            score_pct: isFinite(pct) ? Math.round(pct) : null
+          }).eq('id', attemptLog.id).then(function (res) {
+            if (res.error) console.warn('attempt finish error:', res.error);
+          }).catch(function (e) { console.warn('attempt finish catch:', e); });
+          } catch (e) { console.warn('attempt finish threw:', e); }
+        };
+        if (attemptLog.id) { flushAttemptAnswers(); close(); }
+        else ensureAttemptRow(function () { flushAttemptAnswers(); close(); });
+      }
+
+      // A quiz abandoned mid-way should still keep the answers already given.
+      try {
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'hidden') {
+            try { flushAttemptAnswers(); } catch (e) { }
+          }
+        });
+      } catch (e) { }
+
+      // ---------- GUEST PRACTICE (signed-out visitors) ----------
+      // One module per subject is readable by the anon role, so a visitor who
+      // arrives on a topic page from search can actually answer questions
+      // instead of meeting a sign-in wall before any value is delivered.
+      // RLS decides what is readable; this only decides what the UI offers.
+      var guestModuleIds = null;        // null = not loaded yet
+      var guestModulesLoading = false;
+
+      function loadGuestModules() {
+        if (currentUser || guestModuleIds || guestModulesLoading || !supabaseClient) return;
+        guestModulesLoading = true;
+        try {
+          // As anon this returns only the guest-flagged rows.
+          supabaseClient.from('free_modules').select('module_id').then(function (res) {
+            guestModulesLoading = false;
+            if (res.error || !res.data) { guestModuleIds = {}; return; }
+            var map = {};
+            res.data.forEach(function (r) { if (r && r.module_id != null) map[String(r.module_id)] = true; });
+            guestModuleIds = map;
+          }).catch(function () { guestModulesLoading = false; guestModuleIds = {}; });
+        } catch (e) { guestModulesLoading = false; guestModuleIds = {}; }
+      }
+
+      function isGuestModule(moduleDbId) {
+        if (moduleDbId == null || !guestModuleIds) return false;
+        return !!guestModuleIds[String(moduleDbId)];
+      }
+
+      // A signed-out visitor may start a quiz only on a single guest module.
+      // Whole-subject sets, custom sets, bookmarks and PYQs still need an account.
+      function guestCanStart(pool) {
+        if (currentUser) return false;
+        if (!pool || state.isPyqMode) return false;
+        if (pool.moduleId === 'all' || pool.moduleId === 'custom') return false;
+        return isGuestModule(pool.moduleDbId);
+      }
+
+      // Move anything practised while signed out into the new account, so
+      // signing in preserves work rather than discarding it.
+      function migrateGuestAttempts() {
+        if (!currentUser || !currentUser.id || !supabaseClient) return;
+        var store;
+        try {
+          var raw = localStorage.getItem(GUEST_ATTEMPT_KEY);
+          if (!raw) return;
+          store = JSON.parse(raw);
+          if (!Array.isArray(store) || !store.length) { localStorage.removeItem(GUEST_ATTEMPT_KEY); return; }
+        } catch (e) { return; }
+
+        // Clear first: a half-failed migration must not replay on every sign-in.
+        try { localStorage.removeItem(GUEST_ATTEMPT_KEY); } catch (e) { }
+
+        store.forEach(function (entry) {
+          if (!entry || !entry.meta || !entry.answers || !entry.answers.length) return;
+          var meta = entry.meta;
+          var answers = entry.answers;
+          var correct = answers.filter(function (a) { return a.is_correct; }).length;
+          try {
+            supabaseClient.from('attempts').insert({
+              user_id: currentUser.id,
+              subject_id: meta.subject_id,
+              module_id: meta.module_id,
+              quiz_type: meta.quiz_type || 'practice',
+              question_count: answers.length,
+              time_limit_s: meta.time_limit_s || 0,
+              order_mode: meta.order_mode || 'shuffled',
+              started_at: meta.started_at || new Date().toISOString(),
+              finished_at: new Date().toISOString(),
+              score_pct: Math.round((correct / answers.length) * 100)
+            }).select('id').single().then(function (res) {
+              if (res.error || !res.data) { console.warn('guest attempt migrate error:', res.error); return; }
+              var attemptId = res.data.id;
+              try {
+                supabaseClient.from('attempt_answers').insert(answers.map(function (a) {
+                  return {
+                    attempt_id: attemptId,
+                    user_id: currentUser.id,
+                    question_id: a.question_id,
+                    picked_option: a.picked_option,
+                    is_correct: !!a.is_correct,
+                    skipped: !!a.skipped,
+                    answered_at: a.answered_at
+                  };
+                })).then(function (r2) {
+                  if (r2.error) console.warn('guest answers migrate error:', r2.error);
+                }).catch(function (e) { console.warn('guest answers migrate catch:', e); });
+              } catch (e) { console.warn('guest answers migrate threw:', e); }
+            }).catch(function (e) { console.warn('guest attempt migrate catch:', e); });
+          } catch (e) { console.warn('guest attempt migrate threw:', e); }
+        });
+      }
+
       // Legacy shim — kept to not break any old callers
       function loadUserProgress(userId) {
         if (!userId) return;
@@ -2852,6 +3129,11 @@ window.addEventListener('error', function (ev) {
             if (userChanged) {
               resetProState();
               loadUserProgress(currentUser.id);
+              // Deferred: supabase-js must not be re-entered from inside this
+              // callback. Anything practised signed-out moves into the account.
+              setTimeout(function () {
+                try { migrateGuestAttempts(); } catch (e) { console.warn('migrateGuestAttempts failed:', e); }
+              }, 0);
             }
             updateMastheadAuth();
             updateProModalUI();
@@ -4113,6 +4395,7 @@ window.addEventListener('error', function (ev) {
       }
 
       function renderSetup(subjectId, moduleId) {
+        if (!currentUser) loadGuestModules();
         if (!quizStylesReady) {
           ensureQuizStyles().then(function () { renderSetup(subjectId, moduleId); });
           return;
@@ -4257,7 +4540,7 @@ window.addEventListener('error', function (ev) {
           return;
         }
 
-        if (!currentUser) {
+        if (!currentUser && !guestCanStart(setupChoice.pool)) {
           openAuthModal('signin', {
             reason: 'Please sign in or create an account to start practicing questions.',
             onSuccess: function () {
@@ -4269,6 +4552,7 @@ window.addEventListener('error', function (ev) {
 
         var pool = setupChoice.pool;
         quizLoadInFlight = true;
+        beginAttemptLog(pool);
 
         // Show loading screen while fetching from Supabase
         app.innerHTML =
@@ -4587,6 +4871,7 @@ window.addEventListener('error', function (ev) {
             // 3) Persistence (localStorage + Supabase) deferred off the tap's critical path.
             setTimeout(function () {
               try { saveProgress(); } catch (err) { console.warn('saveProgress failed:', err); }
+              try { logAnswer(q, answer); } catch (err) { console.warn('logAnswer failed:', err); }
             }, 0);
           });
         });
@@ -5075,7 +5360,9 @@ window.addEventListener('error', function (ev) {
         var total = state.order.length;
         var correct = Object.values(state.answers).filter(function (a) { return a.isCorrect; }).length;
         var pct = Math.round((correct / total) * 100);
+        var wrongCount = Object.values(state.answers).filter(function (a) { return !a.isCorrect; }).length;
         saveProgress();
+        try { finishAttemptLog(pct); } catch (err) { console.warn('finishAttemptLog failed:', err); }
         trackEvent('quiz_complete', {
           subject_id: state.subjectId,
           module_id: state.moduleId,
@@ -5121,6 +5408,14 @@ window.addEventListener('error', function (ev) {
           '<h1 class="chapname" style="margin:14px 0 0;font-size:12.5px;line-height:1.4;">' + esc(state.poolTitle) + ' · Test Results</h1>' +
           '<div class="verdict">' + verdictFor(pct) + '</div>' +
           '</div>' +
+          (currentUser ? '' :
+            '<div class="result-actions" style="flex-direction:column;align-items:stretch;gap:8px;">' +
+            '<p style="margin:0 0 2px;line-height:1.5;">You answered ' + correct + ' of ' + total +
+            ' without an account. Sign in to keep this result' +
+            (wrongCount ? ' and revisit the ' + wrongCount + ' you missed' : '') +
+            ', and to open the rest of this subject.</p>' +
+            '<button class="btn" id="guestSaveBtn">Sign in to keep this result</button>' +
+            '</div>') +
           '<div class="result-actions">' +
           '<button class="btn" id="retryBtn">Retry same setup</button>' +
           '<button class="btn secondary" id="setupBtn">' + (state.isPyqMode ? 'Change PYQ Setup' : 'Change setup') + '</button>' +
@@ -5129,6 +5424,15 @@ window.addEventListener('error', function (ev) {
           '<div id="reviewBlock" class="hidden" data-loaded="false">' + reviewHtml + '</div>' +
           '</main>' +
           footerHtml(); hideStaticFooter();
+
+        var guestSaveBtn = document.getElementById('guestSaveBtn');
+        if (guestSaveBtn) {
+          guestSaveBtn.addEventListener('click', function () {
+            openAuthModal('signup', {
+              reason: 'Create a free account to keep this result and open the rest of the subject.'
+            });
+          });
+        }
 
         wireTopBar(resBackFn);
         wireRipples('.btn, .auth-btn');
