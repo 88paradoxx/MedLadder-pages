@@ -1794,6 +1794,11 @@ window.addEventListener('error', function (ev) {
       // RLS decides what is readable; this only decides what the UI offers.
       var guestModuleIds = null;        // null = not loaded yet
       var guestModulesLoading = false;
+      // Deliberately NOT on `state`: startQuiz's success handler, the PYQ path
+      // and the bookmarks path each replace `state` wholesale before calling
+      // renderQuiz, which would drop the flag and bounce the guest to the
+      // sign-in modal after the questions had already loaded.
+      var guestRunActive = false;
 
       function loadGuestModules() {
         if (currentUser || guestModuleIds || guestModulesLoading || !supabaseClient) return;
@@ -4575,7 +4580,7 @@ window.addEventListener('error', function (ev) {
         // Remember that this run was started without an account, so renderQuiz
         // and anything after it do not have to re-derive eligibility from
         // setupChoice, which the user can change behind them.
-        state.isGuestRun = !currentUser && guestCanStart(pool);
+        guestRunActive = !currentUser && guestCanStart(pool);
         quizLoadInFlight = true;
         beginAttemptLog(pool);
 
@@ -4709,11 +4714,33 @@ window.addEventListener('error', function (ev) {
             /jwt|token|unauthor/i.test(String(err.message || '')));
           if (!currentUser && authish && !guestAuthRetry && supabaseClient && supabaseClient.auth) {
             guestAuthRetry = true;
-            console.warn('clearing a stale local session, retrying as anon');
+            // Never sign out here. currentUser is set asynchronously, so a
+            // genuinely signed-in user can reach this branch before it is
+            // populated, and signing out would end their session on every
+            // device over a failed question fetch. Confirm with the client
+            // that there is no live session, then drop only the cached token.
             try {
-              Promise.resolve(supabaseClient.auth.signOut({ scope: 'local' }))
-                .catch(function () {})
-                .then(function () { startQuiz(); });
+              Promise.resolve(supabaseClient.auth.getSession())
+                .then(function (res) {
+                  var sess = res && res.data && res.data.session;
+                  var exp = sess && sess.expires_at;
+                  var live = !!(sess && sess.user) &&
+                    (!exp || (exp * 1000) > Date.now());
+                  if (live) {
+                    // Real session; the 401 is not a stale-token problem.
+                    showToast('Failed to load questions: ' + (err.message || err), 'error');
+                    renderSetup(state.subjectId, state.moduleId || 'all');
+                    return;
+                  }
+                  console.warn('dropping a stale cached session, retrying as anon');
+                  try {
+                    Object.keys(window.localStorage || {}).forEach(function (k) {
+                      if (/^sb-.*-auth-token$/.test(k)) window.localStorage.removeItem(k);
+                    });
+                  } catch (e) { /* storage blocked; the retry may still work */ }
+                  startQuiz();
+                })
+                .catch(function () { startQuiz(); });
             } catch (e) { startQuiz(); }
             return;
           }
@@ -4776,7 +4803,7 @@ window.addEventListener('error', function (ev) {
       }
 
       function renderQuiz() {
-        if (!currentUser && !state.isGuestRun) {
+        if (!currentUser && !guestRunActive) {
           openAuthModal('signin', {
             reason: 'Please sign in or create an account to view and solve questions.'
           });
