@@ -4926,6 +4926,10 @@ window.addEventListener('error', function (ev) {
       }
 
       function renderQuiz() {
+        // The quiz stylesheet is switched on by the setup screens. A quiz
+        // reached without passing through one (bookmarks, opened from home)
+        // would otherwise render the new markup with no styles at all.
+        if (!quizStylesReady) { ensureQuizStyles().then(renderQuiz); return; }
         if (!currentUser && !guestRunActive) {
           openAuthModal('signin', {
             reason: 'Please sign in or create an account to view and solve questions.'
@@ -5769,6 +5773,7 @@ window.addEventListener('error', function (ev) {
       }
 
       function renderResults(timedOut) {
+        if (!quizStylesReady) { ensureQuizStyles().then(function () { renderResults(timedOut); }); return; }
         clearTimer();
         releaseQuestionImages();
         state.screen = 'results';
