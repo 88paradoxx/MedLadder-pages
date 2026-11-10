@@ -992,9 +992,9 @@
         <a href="#faq">FAQ</a>
       </div>
       <div class="nav-actions">
-        <a href="/MedLadder-latest.apk" class="nav-download-btn" download="MedLadder-latest.apk" title="Download MedLadder Android APK">
+        <a href="https://play.google.com/store/apps/details?id=com.medladder.app" class="nav-download-btn" target="_blank" rel="noopener" title="Get MedLadder on Google Play">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Download APK</span>
+          <span>Get the app</span>
         </a>
         <a href="/" class="nav-cta">Launch App →</a>
       </div>
@@ -1627,7 +1627,7 @@
 
     document.addEventListener('click', function(e) {
       var btn = e.target.closest('.nav-download-btn, .footer-apk-btn');
-      if (btn) {
+      if (btn && /\.apk(\?|#|$)/i.test(btn.getAttribute('href') || '')) {
         e.preventDefault();
         downloadMedLadderApkInPage();
       }
