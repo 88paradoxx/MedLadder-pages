@@ -2761,3 +2761,43 @@ html.ml-reading #app .v2-row.v2-subj {
 html.ml-reading #app .v2-row.v2-subj:hover { border-color: var(--rr-ink-quiet) !important; }
 html.ml-reading #app .v2-sec > .v2-h2 + .v2-subj,
 html.ml-reading #app #v2SubjList > .v2-subj:first-child { margin-top: 12px !important; }
+
+/* ---- loading a set: skeleton of the question screen ------------------- */
+html.ml-reading #app .rr-loading { padding: 18px 0 60px !important; }
+html.ml-reading #app .rr-load-title {
+  margin: 0 0 4px !important; color: var(--rr-ink) !important;
+  font-family: var(--rr-serif) !important; font-size: 22px !important; line-height: 1.3 !important; font-weight: 600 !important;
+}
+html.ml-reading #app .rr-load-line { margin: 0 0 16px !important; color: var(--rr-ink-quiet) !important; font-size: 13.5px !important; }
+html.ml-reading #app .rr-load-track { position: relative !important; height: 2px !important; margin: 0 0 30px !important; background: var(--rr-tick) !important; overflow: hidden !important; border-radius: 1px !important; }
+html.ml-reading #app .rr-load-track span {
+  position: absolute !important; top: 0 !important; bottom: 0 !important; width: 35% !important;
+  background: var(--v2-accent, var(--rr-ink)) !important; animation: rr-load-slide 1.1s ease-in-out infinite !important;
+}
+html.ml-reading #app .rr-skel {
+  display: block !important; height: 14px !important; margin: 0 0 12px !important; border-radius: 3px !important;
+  background: var(--rr-rule-soft) !important; animation: rr-skel-pulse 1.4s ease-in-out infinite !important;
+}
+html.ml-reading #app .rr-load-opts { margin-top: 30px !important; }
+html.ml-reading #app .rr-load-opts .rr-skel { height: 18px !important; margin: 0 0 26px !important; }
+@keyframes rr-load-slide { 0% { left: -35%; } 100% { left: 100%; } }
+@keyframes rr-skel-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  html.ml-reading #app .rr-load-track span { animation: none !important; left: 0 !important; width: 100% !important; opacity: .5 !important; }
+  html.ml-reading #app .rr-skel { animation: none !important; }
+}
+
+/* ---- how other students answered ---------------------------------------- */
+html.ml-reading #app .opt .rr-peer {
+  margin-left: auto !important; padding-left: 12px !important; flex: 0 0 auto !important;
+  color: var(--rr-ink-quiet) !important; font-family: var(--rr-sans) !important; font-size: 12.5px !important; font-variant-numeric: tabular-nums !important;
+}
+html.ml-reading #app .rr-peer-line { margin: 0 0 12px !important; color: var(--rr-ink-quiet) !important; font-size: 13px !important; line-height: 1.5 !important; }
+html.ml-reading #app .v2-pace { display: inline-block !important; margin-top: 4px !important; }
+html.ml-reading #app #whichRow .pill-choice[disabled] { opacity: .45 !important; cursor: default !important; }
+html.ml-reading #app a.v2-row { text-decoration: none !important; }
+html.ml-reading #app .v2-live { display: inline-flex !important; align-items: center !important; gap: 6px !important; color: var(--rr-ok) !important; font-weight: 600 !important; }
+html.ml-reading #app .v2-live::before { content: "" !important; width: 8px !important; height: 8px !important; border-radius: 50% !important; background: currentColor !important; }
+html.ml-reading #app .options .opt { position: relative !important; }
+html.ml-reading #app .opt .rr-peer { position: absolute !important; right: 14px !important; top: 16px !important; margin: 0 !important; padding: 0 !important; }
+html.ml-reading #app .options .opt.locked { padding-right: 56px !important; }

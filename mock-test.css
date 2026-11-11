@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap");
 /* MedLadder mock tests — premium design system.
  * Deep canvas, glassy surfaces, clear visual hierarchy per section. */
 :root {
@@ -622,3 +623,51 @@ html.dark .auth-alert.success { color: #9ae6b4; background: rgba(56, 161, 105, .
   }
 }
 
+
+/* ==========================================================================
+   Reading-room theme (Nov 2026): the same calm ground, Literata headings,
+   Archivo text and one MedLadder violet as the rest of the app. Overrides
+   the tokens above, so every rule that reads them follows.
+   ========================================================================== */
+html.dark, :root {
+  --bg: #0E1317; --bg-glow: none; --panel: #141B20; --panel-solid: #141B20; --panel-2: #1C242A;
+  --text: #E7EBE8; --ink: #E7EBE8; --muted: #93A1AA; --faint: #6F7C84;
+  --accent: #6F52D9; --accent-2: #A893F5; --accent-soft: rgba(168, 147, 245, .14);
+  --green: #4FA97A; --green-soft: rgba(79, 169, 122, .12); --red: #D2695C; --red-soft: rgba(210, 105, 92, .12);
+  --amber: #D9A44A; --amber-soft: rgba(217, 164, 74, .12);
+  --border: #27313A; --border-strong: #33404A; --shadow: none; --radius: 10px;
+}
+html:not(.dark) {
+  --bg: #F0F2F1; --bg-glow: none; --panel: #FFFFFF; --panel-solid: #FFFFFF; --panel-2: #F7F8F7;
+  --text: #121715; --ink: #121715; --muted: #5F6A66; --faint: #8A9590;
+  --accent: #5B34C9; --accent-2: #5B34C9; --accent-soft: rgba(91, 52, 201, .09);
+  --green: #166B45; --green-soft: rgba(22, 107, 69, .08); --red: #A33B2E; --red-soft: rgba(163, 59, 46, .07);
+  --amber: #8A5A0A; --amber-soft: rgba(138, 90, 10, .08);
+  --border: #D6DAD8; --border-strong: #C5CBC8; --shadow: none; --radius: 10px;
+}
+body {
+  background: var(--bg) !important; background-image: none !important;
+  font-family: Archivo, Inter, system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums;
+}
+body::before, body::after { background: none !important; }
+h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
+  font-family: Literata, "Source Serif 4", Georgia, serif !important;
+  letter-spacing: -0.01em !important; background: none !important; -webkit-text-fill-color: currentColor !important;
+}
+.mt-qcard .qtext, .mt-question-pane .qtext, .mt-qcard > p, .mt-opt, .am-q .qt {
+  font-family: Literata, "Source Serif 4", Georgia, serif !important;
+}
+.mt-test-card, .mt-qcard, .mt-score-card, .mt-board, .mt-detail, .mt-auth, .am-card, .am-test-row, .am-q,
+.auth-modal-card, .auth-dropdown {
+  background: var(--panel) !important; border: 1px solid var(--border) !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-radius: 10px !important;
+}
+.mt-topbar, .am-topbar { background: var(--bg) !important; backdrop-filter: none !important; box-shadow: none !important; }
+.mt-btn, .am-btn, .auth-submit-btn { border-radius: 6px !important; box-shadow: none !important; background-image: none !important; }
+.mt-btn-primary, .am-btn-primary, .auth-submit-btn { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
+.mt-opt { border-radius: 6px !important; box-shadow: none !important; }
+.mt-badge, .am-badge { border-radius: 4px !important; letter-spacing: .02em !important; }
+.mt-brand, .am-brand { font-family: Literata, Georgia, serif !important; font-weight: 600 !important; }
+.am-title, .mt-title { color: var(--accent-2) !important; }
+.theme-toggle { background: transparent !important; }

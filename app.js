@@ -1215,19 +1215,44 @@ window.addEventListener('error', function (ev) {
           '</div>' +
 
           '<div class="admin-section">' +
-          '<div class="admin-sec-title"><span>QBank &amp; PYQ System Overview</span></div>' +
-          '<div class="admin-stats-grid">' +
-          '<div class="admin-stat-card"><div class="admin-stat-num">30,214</div><div class="admin-stat-label">Standard Subject MCQs</div></div>' +
-          '<div class="admin-stat-card"><div class="admin-stat-num">6,862</div><div class="admin-stat-label">Extracted PYQ Questions</div></div>' +
-          '<div class="admin-stat-card"><div class="admin-stat-num">19 / 19</div><div class="admin-stat-label">Subjects (Pre, Para, Clinical)</div></div>' +
-          '<div class="admin-stat-card"><div class="admin-stat-num">5 Exams</div><div class="admin-stat-label">NEET PG, INICET, FMGE, etc.</div></div>' +
+          '<div class="admin-sec-title"><span>How MedLadder is being used</span></div>' +
+          '<div class="admin-stats-grid" id="adminOverview">' +
+          '<div class="admin-stat-card"><div class="admin-stat-num">\u2026</div><div class="admin-stat-label">Loading live numbers</div></div>' +
           '</div>' +
+          '<div id="adminHard"></div>' +
           '</div>';
 
         document.getElementById('adminLockSessionBtn').addEventListener('click', function () {
           handleSignOut();
           closeAdminModal();
         });
+
+        // Live counts from the database (admin-only RPC).
+        try {
+          supabaseClient.rpc('admin_overview').then(function (res) {
+            var box = document.getElementById('adminOverview');
+            if (!box) return;
+            var d = res && res.data;
+            if (!d || res.error) { box.innerHTML = '<div class="admin-stat-card"><div class="admin-stat-label">Could not load live numbers.</div></div>'; return; }
+            var n = function (v) { return Number(v || 0).toLocaleString(); };
+            var card = function (num, label) { return '<div class="admin-stat-card"><div class="admin-stat-num">' + num + '</div><div class="admin-stat-label">' + label + '</div></div>'; };
+            box.innerHTML =
+              card(n(d.students), 'Accounts \u00b7 ' + n(d.new_7d) + ' new this week') +
+              card(n(d.active_7d), 'Practised this week \u00b7 ' + n(d.active_1d) + ' today') +
+              card(n(d.answers_7d), 'Answers this week' + (d.accuracy_7d != null ? ' \u00b7 ' + d.accuracy_7d + '% correct' : '')) +
+              card(n(d.pro_active), 'Active Pro students') +
+              card(n(d.flags_open), 'Flagged questions waiting') +
+              card(n(d.questions), 'Questions \u00b7 ' + n(d.pyq_questions) + ' past-paper');
+            var hard = document.getElementById('adminHard');
+            if (hard && d.hard_questions && d.hard_questions.length) {
+              hard.innerHTML = '<div class="admin-sec-title" style="margin-top:18px;"><span>Most-missed questions (5+ answers)</span></div>' +
+                '<ol class="admin-hard">' + d.hard_questions.map(function (h) {
+                  return '<li><span class="admin-hard-text">' + esc(h.text || ('Question ' + h.id)) + '</span>' +
+                    '<span class="admin-hard-meta">#' + h.id + (h.topic ? ' \u00b7 ' + esc(h.topic) : '') + ' \u00b7 ' + h.pct + '% of ' + h.n + ' correct</span></li>';
+                }).join('') + '</ol><p class="admin-hard-note">A very low score can mean a hard question, or a wrong answer key. Worth a look.</p>';
+            }
+          }, function () {});
+        } catch (e) { }
 
         async function callAdminGrant(action) {
           var emailInput = document.getElementById('grantProEmailInput');
@@ -3976,17 +4001,7 @@ window.addEventListener('error', function (ev) {
         var yearDisplay = isAll ? 'All Sessions' : selectedYear;
 
         app.innerHTML =
-          topBar('Back to PYQ Setup', function () { renderPYQSetup(examId); }) +
-          '<main id="mainContent" role="main">' +
-          '<div class="loading-screen" style="position:relative;margin:80px auto;max-width:440px;">' +
-          '<div class="loading-card glass" style="padding:36px 24px;text-align:center;">' +
-          '<div class="loading-logo">MedLadder</div>' +
-          '<div class="loading-sub">' + esc(exam.icon + ' ' + exam.name + ' · ' + yearDisplay) + ' </div>' +
-          '<div class="loading-text" style="margin-top:14px;font-weight:600;">Loading questions<span class="loading-dots"></span></div>' +
-          '<div class="loading-spinner"></div>' +
-          '</div>' +
-          '</div>' +
-          '</main>';
+          rrLoadingHtml('Back to past papers', esc(exam.name + ' \u00b7 ' + yearDisplay), 'Loading the paper');
         wireTopBar(function () { renderPYQSetup(examId); });
 
         // Query Supabase: filter by is_pyq = true AND pyq_exam = examId
@@ -4081,8 +4096,12 @@ window.addEventListener('error', function (ev) {
             pyqYear: selectedYear
           };
 
+          // Each paper is its own attempt; without this its answers were
+          // written into whatever quiz ran before it.
+          beginAttemptLog(null);
           scrollToPageTop();
           renderQuiz();
+          prefetchBookmarks();
           if (state.timeLimit > 0) startOverallTimer();
 
           });
@@ -4360,6 +4379,7 @@ window.addEventListener('error', function (ev) {
           if (!cl) continue;
           if (cl.contains('rr-dash')) dash = true;
           if (cl.contains('v2')) v2 = true;
+          if (cl.contains('rr-loading')) on = true;
         }
         on = on || dash || v2;
         document.documentElement.classList.toggle('ml-dash', dash);
@@ -4380,6 +4400,21 @@ window.addEventListener('error', function (ev) {
       var RR_BACK_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
       var RR_BOOKMARK_SVG = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>';
       var RR_CHEVRON_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
+      // Loading a set: the shape of the question screen, drawn before the
+      // questions arrive. The title is already escaped by the caller.
+      function rrLoadingHtml(backLabel, titleHtml, line) {
+        if (!quizStylesReady) ensureQuizStyles();
+        var bar = function (w) { return '<span class="rr-skel" style="width:' + w + '%"></span>'; };
+        return rrTopBar(backLabel, '') +
+          '<main id="mainContent" role="main" class="rr-loading" aria-busy="true">' +
+          '<p class="rr-load-title">' + titleHtml + '</p>' +
+          '<p class="rr-load-line" role="status">' + esc(line) + '\u2026</p>' +
+          '<div class="rr-load-track" aria-hidden="true"><span></span></div>' +
+          '<div class="rr-load-skel" aria-hidden="true">' + bar(92) + bar(84) + bar(56) +
+          '<div class="rr-load-opts">' + bar(46) + bar(38) + bar(52) + bar(41) + '</div></div>' +
+          '</main>';
+      }
 
       // Same ids as topBar(), so wireTopBar() works unchanged.
       function rrTopBar(backLabel, crumb) {
@@ -4509,6 +4544,19 @@ window.addEventListener('error', function (ev) {
         };
       }
 
+      // This topic's record from the answer history: answered, right on the
+      // latest answer, missed on it, and not yet answered.
+      function setupHistory(pool, total) {
+        if (!pool || typeof pool.moduleDbId !== 'number' || !v2HaveHistory()) return null;
+        var seen = 0, ok = 0;
+        Object.keys(reviewData.q).forEach(function (k) {
+          var e = reviewData.q[k];
+          if (e.mod === pool.moduleDbId) { seen++; if (e.ok) ok++; }
+        });
+        seen = Math.min(seen, total);
+        return { seen: seen, ok: ok, missed: seen - ok, unseen: Math.max(0, total - seen) };
+      }
+
       function renderSetup(subjectId, moduleId) {
         state.idSet = null;
         if (!currentUser) loadGuestModules();
@@ -4592,8 +4640,33 @@ window.addEventListener('error', function (ev) {
           chosenTime + ', ' +
           (setupChoice.orderMode === 'shuffled' ? 'shuffled' : 'topic order') + '.';
 
+        // Which questions: all, only those not answered yet, or only those
+        // missed on the latest try. Needs the answer history for this topic.
+        if (setupChoice.whichKey !== pool.key) { setupChoice.which = 'all'; setupChoice.whichKey = pool.key; }
+        var whichHtml = '';
+        var hist = setupHistory(pool, total);
+        if (hist && hist.seen > 0 && !isLocked) {
+          if (setupChoice.which === 'unseen' && !hist.unseen) setupChoice.which = 'all';
+          if (setupChoice.which === 'missed' && !hist.missed) setupChoice.which = 'all';
+          var whichOpt = function (v, label, n) {
+            return '<button class="pill-choice ' + (setupChoice.which === v ? 'active' : '') + '" data-which="' + v + '"' + (n === 0 ? ' disabled' : '') + '>' + label + ' ' + n + '</button>';
+          };
+          whichHtml = '<div class="setup-section"><div class="setup-label">Which questions</div><div class="pill-row" id="whichRow">' +
+            whichOpt('all', 'All', total) + whichOpt('unseen', 'Not answered yet', hist.unseen) + whichOpt('missed', 'Missed last time', hist.missed) +
+            '</div></div>';
+          if (setupChoice.which !== 'all') {
+            defaultsLine = defaultsLine.replace(/^([^,]+), [^,]+,/, '$1, ' + (setupChoice.which === 'unseen' ? hist.unseen + ' not answered yet' : hist.missed + ' missed last time') + ',');
+          }
+        } else if (currentUser && !v2HaveHistory()) {
+          loadReviewData().then(function (rd) { if (rd && state.screen === 'setup' && state.moduleId === moduleId && state.subjectId === subjectId) renderSetup(subjectId, moduleId); });
+        }
+
         var last = progress[pool.key];
-        var lastRunHtml = (last && last.done > 0)
+        var lastRunHtml = (hist && hist.seen > 0)
+          ? '<section class="rr-last"><div class="rr-eyebrow">Your record here</div>' +
+            '<div class="rr-last-row"><span class="rr-last-num">' + hist.seen + '</span>' +
+            '<span class="rr-last-of">of ' + total + ' answered \u00b7 ' + Math.round(100 * hist.ok / hist.seen) + '% correct on your latest answers</span></div></section>'
+          : (last && last.done > 0)
           ? '<section class="rr-last"><div class="rr-eyebrow">Your last run</div>' +
             '<div class="rr-last-row"><span class="rr-last-num">' + (last.correct || 0) + '</span>' +
             '<span class="rr-last-of">correct of ' + last.done + ' answered</span></div></section>'
@@ -4612,6 +4685,7 @@ window.addEventListener('error', function (ev) {
           '<details class="rr-settings" id="setupSettings"' + (setupSettingsOpen ? ' open' : '') + '>' +
           '<summary><span>Change settings</span>' + RR_CHEVRON_SVG + '</summary>' +
           '<div class="rr-settings-body">' +
+          whichHtml +
           '<div class="setup-section"><div class="setup-label">Quiz type</div><div class="type-grid" id="typeGrid">' + typeHtml + '</div></div>' +
           '<div class="setup-section"><div class="setup-label">Number of questions</div><div class="pill-row" id="countRow">' + countHtml + '</div>' + customCountHtml + '</div>' +
           '<div class="setup-section"><div class="setup-label">Time limit</div><div class="pill-row" id="timeRow">' + timeHtml + '</div>' + customTimeHtml + '</div>' +
@@ -4650,6 +4724,9 @@ window.addEventListener('error', function (ev) {
             setupChoice.orderMode = btn.getAttribute('data-order');
             renderSetup(subjectId, moduleId);
           });
+        });
+        app.querySelectorAll('#whichRow .pill-choice').forEach(function (btn) {
+          btn.addEventListener('click', function () { setupChoice.which = btn.getAttribute('data-which'); renderSetup(subjectId, moduleId); });
         });
         document.getElementById('startBtn').addEventListener('click', function () {
           if (isLocked) {
@@ -4720,17 +4797,7 @@ window.addEventListener('error', function (ev) {
 
         // Show loading screen while fetching from Supabase
         app.innerHTML =
-          topBar('Back to setup', function () { isCustom ? renderCustomSetup() : renderSetup(state.subjectId, state.moduleId || 'all'); }) +
-          '<main id="mainContent" role="main">' +
-          '<div class="loading-screen" style="position:relative;margin:80px auto;max-width:440px;">' +
-          '<div class="loading-card glass" style="padding:36px 24px;text-align:center;">' +
-          '<div class="loading-logo">MedLadder</div>' +
-          '<div class="loading-sub">' + esc(pool.title) + '</div>' +
-          '<div class="loading-text" style="margin-top:14px;font-weight:600;">Securely retrieving MCQs from cloud<span class="loading-dots"></span></div>' +
-          '<div class="loading-spinner"></div>' +
-          '</div>' +
-          '</div>' +
-          '</main>';
+          rrLoadingHtml('Back to setup', esc(pool.title), 'Loading ' + (resolveSetupCount(pool.questionCount) === 'all' ? '' : resolveSetupCount(pool.questionCount) + ' ') + 'questions');
         wireTopBar(function () { isCustom ? renderCustomSetup() : renderSetup(state.subjectId, state.moduleId || 'all'); });
 
         // Build Supabase Query
@@ -4771,6 +4838,15 @@ window.addEventListener('error', function (ev) {
             return;
           }
 
+          if (setupChoice.which && setupChoice.which !== 'all' && setupChoice.whichKey === pool.key && v2HaveHistory()) {
+            var wantMissed = setupChoice.which === 'missed';
+            var kept = rows.filter(function (r) {
+              var e = reviewData.q[r.id];
+              return wantMissed ? (e && !e.ok) : !e;
+            });
+            if (kept.length) rows = kept;
+            else showToast(wantMissed ? 'Nothing missed here \u2014 starting all questions.' : 'You have answered every question \u2014 starting all of them.');
+          }
           var idxs = rows.map(function (q, i) { return i; });
           var picked = (setupChoice.orderMode === 'shuffled') ? shuffle(idxs) : idxs.slice();
           var selectedCount = resolveSetupCount(rows.length);
@@ -4950,6 +5026,7 @@ window.addEventListener('error', function (ev) {
         }
 
         state.screen = 'quiz';
+        setTimeout(function () { try { applyPeerStats(); } catch (e) { } }, 0);
         trackPageView(practiceBasePath() + '/quiz', 'quiz');
         if (app) {
           app.classList.remove('screen-setup', 'screen-results');
@@ -5101,6 +5178,7 @@ window.addEventListener('error', function (ev) {
             } catch (err) {
               console.warn('Explanation render failed:', err);
             }
+            try { applyPeerStats(); } catch (err) { }
 
             // 3) Persistence (localStorage + Supabase) deferred off the tap's critical path.
             setTimeout(function () {
@@ -5242,7 +5320,54 @@ window.addEventListener('error', function (ev) {
 
       // Non-essential fetch: never blocks the quiz render. When it lands it
       // only flips the current question's button if the quiz is unchanged.
+      // How other students answered: shown under each option once a question
+      // is answered, when at least 5 students have answered it.
+      var peerStats = {};
+      function prefetchPeerStats() {
+        if (!currentUser || !supabaseClient || !state.questions) return;
+        var ids = state.questions.map(function (q) { return Number(q.id); })
+          .filter(function (n) { return n > 0 && !peerStats[n]; }).slice(0, 200);
+        if (!ids.length) { applyPeerStats(); return; }
+        try {
+          supabaseClient.rpc('question_answer_stats', { p_ids: ids }).then(function (res) {
+            if (res && res.error) return;
+            ((res && res.data) || []).forEach(function (r) {
+              var e = peerStats[r.question_id] || (peerStats[r.question_id] = { total: Number(r.total) || 0, by: {} });
+              e.by[String(r.picked_option || '').toUpperCase()] = Number(r.n) || 0;
+            });
+            ids.forEach(function (id) { if (!peerStats[id]) peerStats[id] = { total: 0, by: {} }; });
+            applyPeerStats();
+          }, function () {});
+        } catch (e) { }
+      }
+      function applyPeerStats() {
+        if (state.screen !== 'quiz' || !app) return;
+        var q = currentQuestion();
+        if (!q) return;
+        var st = peerStats[Number(q.id)];
+        if (!st || st.total < 5) return;
+        var opts = app.querySelectorAll('.options .opt.locked[data-letter]');
+        if (!opts.length) return;
+        opts.forEach(function (b) {
+          if (b.querySelector('.rr-peer')) return;
+          var sp = document.createElement('span');
+          sp.className = 'rr-peer';
+          sp.textContent = Math.round((100 * (st.by[b.getAttribute('data-letter')] || 0)) / st.total) + '%';
+          // Before the text span: the CORRECT / YOUR ANSWER label hangs off
+          // the option's last span.
+          b.insertBefore(sp, b.lastElementChild);
+        });
+        var rh = document.getElementById('rrRationale');
+        if (rh && !rh.querySelector('.rr-peer-line')) {
+          var p = document.createElement('p');
+          p.className = 'rr-peer-line';
+          p.textContent = Math.round((100 * (st.by[q.answer] || 0)) / st.total) + '% of ' + st.total + ' MedLadder students got this right on their first try. The figure beside each option is how many chose it.';
+          rh.insertBefore(p, rh.firstChild);
+        }
+      }
+
       function prefetchBookmarks() {
+        try { prefetchPeerStats(); } catch (e) { }
         if (!currentUser || !supabaseClient || !state.questions) return;
         var key = state.progressKey;
         var ids = state.questions.map(function (q) { return q.id; })
@@ -5855,15 +5980,7 @@ window.addEventListener('error', function (ev) {
       function v2Loading(title, line, back) {
         clearTimer();
         app.innerHTML =
-          topBar('Back', back) +
-          '<main id="mainContent" role="main">' +
-          '<div class="loading-screen" style="position:relative;margin:80px auto;max-width:440px;">' +
-          '<div class="loading-card glass" style="padding:36px 24px;text-align:center;">' +
-          '<div class="loading-logo">MedLadder</div>' +
-          '<div class="loading-sub">' + esc(title) + '</div>' +
-          '<div class="loading-text" style="margin-top:14px;font-weight:600;">' + esc(line) + '<span class="loading-dots"></span></div>' +
-          '<div class="loading-spinner"></div>' +
-          '</div></div></main>';
+          rrLoadingHtml('Back', esc(title), line);
         wireTopBar(back);
       }
 
@@ -6011,7 +6128,7 @@ window.addEventListener('error', function (ev) {
       function v2ExamGet() {
         try { var v = JSON.parse(localStorage.getItem('ml_exam_goal') || 'null'); return v && v.exam ? v : null; } catch (e) { return null; }
       }
-      function v2ExamLine() {
+      function v2ExamLine(ix) {
         var g = v2ExamGet();
         var editor = '<form class="v2-exam-form" id="v2ExamForm" hidden>' +
           '<label><span>Exam</span><select id="v2ExamName">' + V2_EXAMS.map(function (x) {
@@ -6026,6 +6143,14 @@ window.addEventListener('error', function (ev) {
         if (g.date) {
           var days = v2Day(Date.parse(g.date + 'T00:00:00')) - v2Day(Date.now());
           if (isFinite(days)) line += ' · ' + (days > 1 ? days + ' days to go' : days === 1 ? 'tomorrow' : days === 0 ? 'today' : 'date passed');
+          // The pace that covers every open topic once before the exam.
+          if (ix && currentUser && days > 1) {
+            var left = 0;
+            SUBJECT_INDEX.forEach(function (sx) {
+              v2SubjectStats(sx, ix).mods.forEach(function (x) { if (x.open) left += Math.max(0, x.st.total - x.st.seen); });
+            });
+            if (left > 0) line += '<br><span class="v2-pace">About ' + Math.ceil(left / days).toLocaleString() + ' new questions a day covers all ' + left.toLocaleString() + ' you have not answered in your open topics.</span>';
+          }
         }
         return '<p class="v2-exam">' + line + ' · <button class="v2-link" id="v2ExamEdit">change</button></p>' + editor;
       }
@@ -6125,7 +6250,7 @@ window.addEventListener('error', function (ev) {
         var pro = isUserPro(currentUser);
         var out = '';
 
-        out += v2ExamLine();
+        out += v2ExamLine(ix);
 
         // Today's set, or a way in for a visitor.
         if (!currentUser) {
@@ -6259,6 +6384,7 @@ window.addEventListener('error', function (ev) {
           PYQ_EXAMS.map(function (ex) {
             return '<button class="v2-chip" data-pyq="' + esc(ex.id) + '">' + esc(ex.name) + (pro ? '' : ' <span class="v2-lock" aria-label="Pro">' + v2LockSvg() + '</span>') + '</button>';
           }).join('') + '</div>' +
+          v2MockRow() +
           '<button class="v2-row v2-row-plain" id="v2Custom"><span>Build a custom set from any topics</span><span aria-hidden="true">›</span></button></section>';
 
         v2Paint('home', v2Shell('today', v2Header(), out, ix.due.length));
@@ -6273,7 +6399,31 @@ window.addEventListener('error', function (ev) {
         if (su) su.onclick = function () { openAuthModal('signup', { reason: 'Create a free account to open 8 topics in every subject.' }); };
         var cu = document.getElementById('v2Custom');
         if (cu) cu.onclick = function () { setupChoice.count = 'all'; renderCustomSetup(); };
+        v2LoadMockState();
         v2WithHistory('home', renderHomeV2);
+      }
+
+      // Live mock tests: a row that says when one is running or next opens.
+      var v2MockState = null;
+      function v2MockRow() {
+        var st = v2MockState, end = '\u203a';
+        if (st && st.live) end = '<span class="v2-live">Live now</span>';
+        else if (st && st.next && st.next.starts_at) {
+          try { end = 'Next ' + new Date(st.next.starts_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { }
+        }
+        return '<a class="v2-row v2-row-plain" id="v2Mock" href="/mock-test"><span>Mock tests</span><span class="v2-row-end">' + end + '</span></a>';
+      }
+      function v2LoadMockState() {
+        if (v2MockState !== null || !supabaseClient) return;
+        v2MockState = false;
+        try {
+          supabaseClient.rpc('mock_banner_state').then(function (res) {
+            if (!res || res.error || !res.data) return;
+            v2MockState = res.data;
+            var row = document.getElementById('v2Mock');
+            if (row) row.outerHTML = v2MockRow();
+          }, function () {});
+        } catch (e) { }
       }
 
       function v2LockSvg() {
@@ -6321,6 +6471,7 @@ window.addEventListener('error', function (ev) {
           '<section class="v2-sec" id="v2SubjList">' + SUBJECT_INDEX.map(function (sx) { return v2SubjectRow(sx, ix); }).join('') + '</section>' +
           '<p class="v2-empty" id="v2SubjNone" hidden>No subject matches.</p>' +
           '<section class="v2-sec"><h2 class="v2-h2">More ways to practise</h2>' +
+          v2MockRow() +
           '<button class="v2-row v2-row-plain" id="v2Custom"><span>Custom set from any topics</span><span aria-hidden="true">›</span></button>' +
           PYQ_EXAMS.map(function (ex) {
             return '<button class="v2-row v2-row-plain" data-pyq="' + esc(ex.id) + '"><span>' + esc(ex.name) + ' past papers</span><span class="v2-row-end">' + (isUserPro(currentUser) ? '›' : 'Pro') + '</span></button>';
@@ -6350,6 +6501,7 @@ window.addEventListener('error', function (ev) {
           };
         });
         apply();
+        v2LoadMockState();
         v2WithHistory('subjects', renderSubjectsV2);
       }
 
@@ -6698,15 +6850,7 @@ window.addEventListener('error', function (ev) {
         }
         clearTimer();
         app.innerHTML =
-          topBar('Back', renderBookmarks) +
-          '<main id="mainContent" role="main">' +
-          '<div class="loading-screen" style="position:relative;margin:80px auto;max-width:440px;">' +
-          '<div class="loading-card glass" style="padding:36px 24px;text-align:center;">' +
-          '<div class="loading-logo">MedLadder</div>' +
-          '<div class="loading-sub">My bookmarks</div>' +
-          '<div class="loading-text" style="margin-top:14px;font-weight:600;">Loading your saved questions<span class="loading-dots"></span></div>' +
-          '<div class="loading-spinner"></div>' +
-          '</div></div></main>';
+          rrLoadingHtml('Back', 'My bookmarks', 'Loading your saved questions');
         wireTopBar(renderBookmarks);
         supabaseClient.from('questions')
           .select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,module_id')
@@ -6876,6 +7020,7 @@ window.addEventListener('error', function (ev) {
           '<button class="review-toggle" id="reviewToggle">Show full review \u25be</button>' +
           '<div id="reviewBlock" class="hidden" data-loaded="false">' + reviewHtml + '</div>' +
           '<div class="result-actions rr-res-actions">' +
+          (currentUser && wrongCount ? '<button class="btn" id="retryMissedBtn">Retry the ' + wrongCount + ' missed</button>' : '') +
           '<button class="btn secondary" id="retryBtn">Retry</button>' +
           '<button class="btn secondary" id="setupBtn">' + (state.idSet ? 'Done' : state.isPyqMode ? 'Change paper' : 'Change setup') + '</button>' +
           '</div>' +
@@ -6903,6 +7048,28 @@ window.addEventListener('error', function (ev) {
         wireTopBar(resBackFn);
         wireRipples('.btn, .auth-btn');
 
+        var retryMissedBtn = document.getElementById('retryMissedBtn');
+        if (retryMissedBtn) {
+          var missedIds = state.order.map(function (i) { return state.questions[i]; }).filter(function (q) {
+            var a = q && state.answers[String(q.id || q.num)];
+            return q && q.id && (!a || !a.isCorrect);
+          }).map(function (q) { return q.id; });
+          var fromTitle = state.poolTitle;
+          var snap = { pyq: state.isPyqMode, exam: state.pyqExam, mod: state.moduleId, sid: state.subjectId, idSet: state.idSet };
+          var backTo = function () {
+            if (snap.idSet) snap.idSet.back();
+            else if (snap.pyq) renderPYQSetup(snap.exam);
+            else if (snap.mod === 'bookmarks') renderBookmarks();
+            else if (snap.mod === 'custom') renderCustomSetup();
+            else if (snap.sid) renderModuleList(snap.sid);
+            else renderHome(true);
+          };
+          var retryOpts = {
+            kind: 'retry', title: 'Missed: ' + String(fromTitle || '').replace(/^Missed: /, ''), subjectId: state.subjectId,
+            back: backTo, again: function () { launchIdQuiz(shuffle(missedIds.slice()), retryOpts); }
+          };
+          retryMissedBtn.addEventListener('click', function () { launchIdQuiz(shuffle(missedIds.slice()), retryOpts); });
+        }
         document.getElementById('retryBtn').addEventListener('click', function () {
           if (state.idSet) state.idSet.again();
           else if (state.moduleId === 'bookmarks') practiseBookmarks(state.bookmarkOrder || []);
