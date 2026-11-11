@@ -6729,10 +6729,13 @@ window.addEventListener('error', function (ev) {
         v2WithHistory('modules', function () { renderTopicsV2(subjectId); });
       }
 
+      var bmSubjectFilter = 'all';
       function renderBookmarks() {
+        if (!quizStylesReady) { ensureQuizStyles().then(renderBookmarks); return; }
         clearTimer();
         releaseQuizPayload();
         state.screen = 'bookmarks';
+        state.idSet = null;
         scrollToPageTop();
         if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
         if (!currentUser) {
@@ -6741,110 +6744,97 @@ window.addEventListener('error', function (ev) {
           return;
         }
         trackPageView('/bookmarks', 'bookmarks');
-        app.innerHTML =
-          topBar('Back', renderHome) +
-          '<main id="mainContent" role="main">' +
-          '<div class="glass bm-wrap">' +
-          '<h1 class="bm-title">🔖 My bookmarks</h1>' +
-          '<p class="bm-hint">Questions you saved while practising. Tap one to practise it, or practise them all together.</p>' +
-          '<div class="bm-actions"><button class="btn" id="bmPractiseAll" disabled>Practise all</button><span id="bmCount" class="bm-hint"></span></div>' +
-          '<div id="bmList" class="bm-list"><p class="bm-hint">Loading…</p></div>' +
-          '</div></main>' +
-          footerHtml(); hideStaticFooter();
-        wireTopBar(renderHome);
-        wireRipples('.btn');
+        var useV2 = v2On();
+        var body = '<h1 class="v2-title">Bookmarks</h1>' +
+          '<p class="v2-sub" id="bmCount">Questions you saved while practising.</p>' +
+          '<div id="bmTop"></div>' +
+          '<div id="bmList" class="bm2-list"><p class="v2-lede" aria-busy="true">Loading your saved questions…</p></div>';
+        app.innerHTML = useV2
+          ? v2Shell('bookmarks', v2Header('Back to today', 'Bookmarks'), body, v2HaveHistory() ? v2Index(reviewData).due.length : 0)
+          : rrTopBar('Back to home', 'Home') + '<main id="mainContent" role="main" class="rr-dash v2-main bm2">' + body + '</main>' + footerHtml();
+        hideStaticFooter();
+        if (useV2) { wireV2Shell(); } else { wireTopBar(renderHome); }
         var listEl = document.getElementById('bmList');
+        var fail = function (msg) { listEl.innerHTML = '<p class="v2-lede">' + esc(msg) + ' <button class="v2-link" id="bmRetry">Try again</button></p>'; var r = document.getElementById('bmRetry'); if (r) r.onclick = renderBookmarks; };
         supabaseClient.from('user_bookmarks').select('question_id,subject_name,topic_name,created_at')
           .eq('user_id', currentUser.id).order('created_at', { ascending: false })
           .then(function (res) {
-            if (res.error) {
-              listEl.innerHTML = '<p class="bm-hint">Could not load bookmarks — please retry.</p>';
-              return;
-            }
+            if (res.error) { fail('Could not load your bookmarks.'); return; }
             var marks = res.data || [];
-            var countEl = document.getElementById('bmCount');
-            if (countEl) countEl.textContent = marks.length ? marks.length + ' saved' : '';
-            var allBtn = document.getElementById('bmPractiseAll');
-            if (allBtn) {
-              allBtn.disabled = !marks.length;
-              allBtn.onclick = function () {
-                practiseBookmarks(marks.map(function (m) { return m.question_id; }));
-              };
-            }
             if (!marks.length) {
-              listEl.innerHTML = '<p class="bm-hint">No bookmarks yet. While practising, tap 🔖 Bookmark on any question to keep it here.</p>';
+              document.getElementById('bmCount').textContent = 'Nothing saved yet.';
+              listEl.innerHTML = '<p class="v2-lede">While practising, tap the bookmark icon at the bottom of a question to keep it here for later.</p>' +
+                '<button class="v2-btn" id="bmBrowse">Practise a topic</button>';
+              document.getElementById('bmBrowse').onclick = function () { if (useV2) renderSubjectsV2(); else renderHome(); };
               return;
             }
             var ids = marks.map(function (m) { return m.question_id; });
             supabaseClient.from('questions').select('id,question_num,question_text,module_id')
               .in('id', ids).then(function (qr) {
-                if (qr.error || !qr.data) {
-                  listEl.innerHTML = '<p class="bm-hint">Could not load bookmarked questions — please retry.</p>';
-                  return;
-                }
+                if (qr.error || !qr.data) { fail('Could not load the saved questions.'); return; }
                 var byId = {};
                 qr.data.forEach(function (r) { byId[r.id] = r; });
-                // Group by subject, then topic, in first-saved order.
-                // Location resolves from the question's own module via the
-                // baked syllabus data first, then the subject/topic stored
-                // when the bookmark was saved, then 'Question bank'.
                 var modMap = bookmarkModuleMap();
-                var subjects = [];
-                var subjByName = {};
+                var subjects = [], subjByName = {};
                 marks.forEach(function (m) {
                   var r = byId[m.question_id];
                   if (!r) return;
-                  var hit = (r.module_id !== null && r.module_id !== undefined)
-                    ? modMap[r.module_id] : null;
+                  var hit = (r.module_id !== null && r.module_id !== undefined) ? modMap[r.module_id] : null;
                   var subjName = (hit && hit.subject) || m.subject_name || 'Question bank';
                   var topicName = (hit && hit.topic) || m.topic_name || '';
                   var sg = subjByName[subjName];
-                  if (!sg) {
-                    sg = { name: subjName, topics: [], topicByName: {} };
-                    subjByName[subjName] = sg;
-                    subjects.push(sg);
-                  }
+                  if (!sg) { sg = subjByName[subjName] = { name: subjName, topics: [], topicByName: {}, ids: [] }; subjects.push(sg); }
                   var tg = sg.topicByName[topicName];
-                  if (!tg) {
-                    tg = { name: topicName, rows: [] };
-                    sg.topicByName[topicName] = tg;
-                    sg.topics.push(tg);
-                  }
-                  tg.rows.push(r);
+                  if (!tg) { tg = sg.topicByName[topicName] = { name: topicName, rows: [] }; sg.topics.push(tg); }
+                  tg.rows.push({ r: r, at: m.created_at });
+                  sg.ids.push(r.id);
                 });
-                listEl.innerHTML = '';
-                subjects.forEach(function (sg) {
-                  var sh = document.createElement('div');
-                  sh.className = 'bm-subj';
-                  sh.textContent = sg.name;
-                  listEl.appendChild(sh);
-                  sg.topics.forEach(function (tg) {
-                    if (tg.name) {
-                      var th = document.createElement('div');
-                      th.className = 'bm-topic';
-                      th.textContent = tg.name;
-                      listEl.appendChild(th);
-                    }
-                    tg.rows.forEach(function (r) {
-                      var row = document.createElement('div');
-                      row.className = 'bm-item';
-                      row.innerHTML = '<div class="bm-stem">' + esc(stripHtmlPreview(r.question_text, 180)) + '</div>' +
-                        '<div class="bm-meta">Q#' + r.question_num + '</div>' +
-                        '<div class="bm-row"><button class="btn secondary bm-btn" data-act="go">Practise</button>' +
-                        '<button class="btn secondary bm-btn" data-act="del">Remove</button></div>';
-                      row.querySelector('[data-act="go"]').onclick = function () { practiseBookmarks([r.id]); };
-                      row.querySelector('[data-act="del"]').onclick = function () {
-                        supabaseClient.from('user_bookmarks').delete()
-                          .eq('user_id', currentUser.id).eq('question_id', r.id)
-                          .then(function (dr) {
-                            if (dr.error) { showToast('Could not remove bookmark — please retry.'); return; }
-                            showToast('Bookmark removed.');
-                            renderBookmarks();
-                          });
-                      };
-                      listEl.appendChild(row);
-                    });
-                  });
+                var total = subjects.reduce(function (n, sg) { return n + sg.ids.length; }, 0);
+                if (bmSubjectFilter !== 'all' && !subjByName[bmSubjectFilter]) bmSubjectFilter = 'all';
+                var shown = subjects.filter(function (sg) { return bmSubjectFilter === 'all' || sg.name === bmSubjectFilter; });
+                var shownIds = [];
+                shown.forEach(function (sg) { shownIds = shownIds.concat(sg.ids); });
+                document.getElementById('bmCount').textContent = v2Plural(total, 'question') + ' saved' + (subjects.length > 1 ? ' across ' + subjects.length + ' subjects' : '');
+                document.getElementById('bmTop').innerHTML =
+                  '<button class="v2-btn" id="bmPractiseAll">Practise ' + (bmSubjectFilter === 'all' ? 'all ' : '') + v2Plural(shownIds.length, 'question') + (bmSubjectFilter === 'all' ? '' : ' in ' + esc(bmSubjectFilter)) + '</button>' +
+                  (subjects.length > 1 ? '<div class="v2-filters" role="group" aria-label="Filter by subject">' +
+                    '<button class="v2-filter" data-bm-f="all" aria-pressed="' + (bmSubjectFilter === 'all') + '">All ' + total + '</button>' +
+                    subjects.map(function (sg) {
+                      return '<button class="v2-filter" data-bm-f="' + esc(sg.name) + '" aria-pressed="' + (bmSubjectFilter === sg.name) + '">' + esc(sg.name) + ' ' + sg.ids.length + '</button>';
+                    }).join('') + '</div>' : '');
+                var trash = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg>';
+                listEl.innerHTML = shown.map(function (sg) {
+                  return '<section class="v2-sec"><h2 class="v2-h2 v2-h2-flat"><span>' + esc(sg.name) + '</span><span>' + sg.ids.length + '</span></h2>' +
+                    sg.topics.map(function (tg) {
+                      return (tg.name ? '<p class="bm2-topic">' + esc(tg.name) + '</p>' : '') + tg.rows.map(function (x) {
+                        var when = '';
+                        try { when = new Date(x.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { }
+                        return '<div class="bm2-row">' +
+                          '<button class="bm2-q" data-bm-go="' + x.r.id + '"><span class="bm2-stem">' + esc(stripHtmlPreview(x.r.question_text, 200) || 'Image-based question') + '</span>' +
+                          '<span class="bm2-meta">Saved ' + esc(when) + ' · tap to practise</span></button>' +
+                          '<button class="bm2-del" data-bm-del="' + x.r.id + '" aria-label="Remove bookmark" title="Remove bookmark">' + trash + '</button></div>';
+                      }).join('');
+                    }).join('') + '</section>';
+                }).join('');
+                document.getElementById('bmPractiseAll').onclick = function () { practiseBookmarks(shownIds); };
+                app.querySelectorAll('[data-bm-f]').forEach(function (b) {
+                  b.onclick = function () { bmSubjectFilter = b.getAttribute('data-bm-f'); renderBookmarks(); };
+                });
+                app.querySelectorAll('[data-bm-go]').forEach(function (b) {
+                  b.onclick = function () { practiseBookmarks([Number(b.getAttribute('data-bm-go'))]); };
+                });
+                app.querySelectorAll('[data-bm-del]').forEach(function (b) {
+                  b.onclick = function () {
+                    var qid = Number(b.getAttribute('data-bm-del'));
+                    var row = b.closest('.bm2-row');
+                    if (row) row.style.opacity = '0.4';
+                    supabaseClient.from('user_bookmarks').delete().eq('user_id', currentUser.id).eq('question_id', qid)
+                      .then(function (dr) {
+                        if (dr.error) { if (row) row.style.opacity = ''; showToast('Could not remove the bookmark. Please try again.', 'error'); return; }
+                        showToast('Bookmark removed.');
+                        renderBookmarks();
+                      });
+                  };
                 });
               });
           });

@@ -2849,60 +2849,33 @@ html.ml-reading #app .rr-ladder .tick.bad { background: var(--rr-bad) !important
 html.ml-reading #app .rr-ladder .tick.cur { box-shadow: 0 0 0 2px var(--rr-ground), 0 0 0 4px var(--rr-accent) !important; }
 html.ml-reading #app .rr-ladder .tick.cur:not(.ok):not(.bad) { background: var(--rr-accent) !important; }
 
-/* ---- options as cards ---------------------------------------------------------- */
-html.ml-reading #app .options { border-bottom: 0 !important; display: flex !important; flex-direction: column !important; gap: 10px !important; }
-html.ml-reading #app .opt,
-html.ml-reading #app .opt.correct,
-html.ml-reading #app .opt.incorrect {
-  width: 100% !important; margin: 0 !important; padding: 14px 16px !important; min-height: 56px !important;
-  align-items: center !important; gap: 14px !important;
-  background: var(--rr-card) !important; border: 1.5px solid var(--rr-rule) !important; border-radius: 12px !important;
-  position: relative !important; overflow: hidden !important;
-}
-html.ml-reading #app .opt .letter {
-  flex: 0 0 30px !important; width: 30px !important; height: 30px !important; border-radius: 50% !important;
-  display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  border: 1.5px solid var(--rr-rule) !important; color: var(--rr-ink-dim) !important;
-  font-size: 13px !important; font-weight: 600 !important; position: relative !important; z-index: 1 !important;
-}
-html.ml-reading #app .opt > span:last-child { position: relative !important; z-index: 1 !important; }
+/* ---- options: the earlier ruled rows, a little tighter ------------------- */
+html.ml-reading #app .opt { padding: 12px 2px !important; min-height: 48px !important; }
+html.ml-reading #app .opt.correct, html.ml-reading #app .opt.incorrect { padding-left: 14px !important; }
+html.ml-reading #app .opt .rr-peer { top: 50% !important; transform: translateY(-50%) !important; right: 6px !important; }
+html.ml-reading #app .opt .rr-peer-bar { display: none !important; }
+html.ml-reading #app .options .opt.locked { padding-right: 52px !important; }
 @media (hover: hover) {
-  html.ml-reading #app .opt:not(.locked):hover { border-color: var(--rr-accent) !important; background: var(--rr-card) !important; }
-  html.ml-reading #app .opt:not(.locked):hover .letter { border-color: var(--rr-accent) !important; color: var(--rr-accent) !important; }
+  html.ml-reading #app .opt:not(.locked):hover .letter { color: var(--rr-accent) !important; }
 }
-html.ml-reading #app .opt:not(.locked):active { background: var(--rr-accent-soft) !important; border-color: var(--rr-accent) !important; }
-html.ml-reading #app .opt.dim { opacity: 0.6 !important; }
-html.ml-reading #app .opt.correct { background: var(--rr-ok-bg) !important; border-color: var(--rr-ok) !important; }
-html.ml-reading #app .opt.incorrect { background: var(--rr-bad-bg) !important; border-color: var(--rr-bad) !important; }
-html.ml-reading #app .opt.correct .letter { background: var(--rr-ok) !important; border-color: var(--rr-ok) !important; color: #fff !important; font-size: 0 !important; }
-html.ml-reading #app .opt.incorrect .letter { background: var(--rr-bad) !important; border-color: var(--rr-bad) !important; color: #fff !important; font-size: 0 !important; }
-html.ml-reading #app .opt.correct .letter::after { content: "\2713" !important; font-size: 15px !important; }
-html.ml-reading #app .opt.incorrect .letter::after { content: "\2715" !important; font-size: 13px !important; }
-html.ml-reading #app .opt.correct > span:last-child::after,
-html.ml-reading #app .opt.incorrect > span:last-child::after { margin-top: 3px !important; letter-spacing: 0.02em !important; font-size: 11px !important; }
-/* how others answered: a bar behind the option, the share at the right */
-html.ml-reading #app .opt .rr-peer { top: 50% !important; transform: translateY(-50%) !important; right: 16px !important; z-index: 1 !important; font-weight: 600 !important; }
-html.ml-reading #app .opt .rr-peer-bar {
-  position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 0 !important;
-  background: var(--rr-rule-soft) !important; opacity: .55 !important; pointer-events: none !important;
-}
-html.ml-reading #app .opt.correct .rr-peer-bar { background: var(--rr-ok) !important; opacity: .12 !important; }
-html.ml-reading #app .opt.incorrect .rr-peer-bar { background: var(--rr-bad) !important; opacity: .12 !important; }
+/* the option you are about to pick, while the tap lands */
+html.ml-reading #app .opt:not(.locked):active { background: var(--rr-accent-soft) !important; }
 
-/* question */
-html.ml-reading #app .rr-q:has(.opt.locked) .qtext { color: var(--rr-ink) !important; }
-
-/* rationale as its own card */
-html.ml-reading #app .rr-rationale .explain {
-  padding: 16px 18px !important; background: var(--rr-card) !important; border: 1px solid var(--rr-rule) !important; border-radius: 12px !important;
-}
+/* vertical rhythm: less air between header, question, options and rationale */
+html.ml-reading #app .rr-top { padding: 10px 0 6px !important; }
+html.ml-reading #app .rr-meta { margin-bottom: 6px !important; }
+html.ml-reading #app .rr-q { padding: 6px 0 0 !important; }
+html.ml-reading #app .qtext { margin: 0 0 14px !important; }
+html.ml-reading #app .rr-rationale { padding: 16px 0 20px !important; }
 html.ml-reading #app .rr-rationale .exlabel { color: var(--rr-accent) !important; font-weight: 600 !important; }
-
-/* bottom bar */
 html.ml-reading #app .rr-actions #nextBtn:not([disabled]) {
   background: var(--rr-accent-fill) !important; border-color: var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important; border-radius: 8px !important;
 }
 html.ml-reading #app .rr-actions #nextBtn[disabled] { border-radius: 8px !important; }
+@media (max-width: 640px) {
+  html.ml-reading #app .qtext { font-size: 19px !important; line-height: 1.4 !important; }
+  html.ml-reading #app .opt { font-size: 16px !important; }
+}
 
 /* ---- results ------------------------------------------------------------------ */
 html.ml-reading #app .rr-sum { text-align: center !important; padding: 10px 0 8px !important; }
@@ -2934,3 +2907,28 @@ html.ml-reading #app .rr-sum-note { margin: 12px 0 0 !important; color: var(--rr
 html.ml-reading #app .rr-res-actions .btn { border-radius: 8px !important; }
 html.ml-reading #app .rr-res-actions #retryMissedBtn { background: var(--rr-accent-fill) !important; border-color: var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important; }
 html.ml-reading #app .rr-miss { border-radius: 10px !important; }
+
+/* ---- bookmarks ------------------------------------------------------------- */
+html.ml-reading #app .bm2 { padding: 8px 0 48px !important; }
+html.ml-reading #app #bmTop .v2-btn { margin: 4px 0 0 !important; }
+html.ml-reading #app #bmTop .v2-filters { margin-top: 14px !important; }
+html.ml-reading #app .bm2-topic { margin: 14px 0 2px !important; color: var(--rr-ink-quiet) !important; font-size: 12.5px !important; }
+html.ml-reading #app .bm2-row { display: flex !important; align-items: stretch !important; gap: 6px !important; border-bottom: 1px solid var(--rr-rule-soft) !important; }
+html.ml-reading #app .bm2-q {
+  flex: 1 1 auto !important; min-width: 0 !important; display: block !important; margin: 0 !important; padding: 12px 0 !important;
+  background: none !important; border: 0 !important; box-shadow: none !important; text-align: left !important; cursor: pointer !important; color: var(--rr-ink) !important; font: inherit !important;
+}
+html.ml-reading #app .bm2-stem { display: block !important; font-family: var(--rr-serif) !important; font-size: 15.5px !important; line-height: 1.45 !important; }
+html.ml-reading #app .bm2-q:hover .bm2-stem { text-decoration: underline !important; text-underline-offset: 3px !important; text-decoration-thickness: 1px !important; }
+html.ml-reading #app .bm2-meta { display: block !important; margin-top: 4px !important; color: var(--rr-ink-quiet) !important; font-size: 12px !important; }
+html.ml-reading #app .bm2-del {
+  flex: 0 0 44px !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important;
+  background: none !important; border: 0 !important; box-shadow: none !important; color: var(--rr-ink-quiet) !important; cursor: pointer !important;
+}
+html.ml-reading #app .bm2-del:hover { color: var(--rr-bad) !important; }
+/* v2 parts used outside the new home (bookmarks on the classic home) */
+html.ml-reading:not(.ml-v2) { --v2-accent: var(--rr-accent-fill); --v2-accent-ink: #FFFFFF; --v2-accent-soft: var(--rr-accent-soft); --v2-card: var(--rr-card); }
+html.ml-reading #app main.rr-dash .v2-btn { background: var(--v2-accent) !important; color: var(--v2-accent-ink) !important; border: 0 !important; border-radius: 8px !important; }
+html.ml-reading #app main.rr-dash .v2-filter[aria-pressed="true"] { background: var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important; border-color: var(--rr-accent-fill) !important; }
+html.ml-reading #app main.rr-dash .v2-filter { border: 1px solid var(--rr-rule) !important; border-radius: 18px !important; }
+html.ml-reading #app main.rr-dash .bm2-q, html.ml-reading #app main.rr-dash .bm2-del { background: none !important; }
