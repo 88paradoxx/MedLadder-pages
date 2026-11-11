@@ -424,14 +424,14 @@ window.addEventListener('error', function (ev) {
           '<button class="pro-modal-close" id="proModalClose" aria-label="Close modal" title="Close modal (Esc)">✕</button>' +
           '<div class="pro-modal-badge">⭐ MEDLADDER PRO</div>' +
           '<h2 class="pro-modal-title" id="proModalTitle">Unlock Full Medical QBank</h2>' +
-          '<p class="pro-modal-sub" id="proModalSub">Free registered accounts get 8 topics per subject. Upgrade to Pro for unrestricted access to all 739 topics and 36,219 questions.</p>' +
+          '<p class="pro-modal-sub" id="proModalSub">Free registered accounts get 8 topics per subject. Upgrade to Pro for unrestricted access to all 740 topics and 36,219 questions.</p>' +
           '</div>' +
           '<div class="pro-modal-body">' +
           '<div class="pro-features-list">' +
           '<div class="pro-feature-item">' +
           '<div class="pro-feature-icon">✓</div>' +
           '<div class="pro-feature-text">' +
-          '<strong>All 739 Topics Unlocked</strong>' +
+          '<strong>All 740 Topics Unlocked</strong>' +
           '<span>Full access across all 19 preclinical, paraclinical &amp; clinical subjects.</span>' +
           '</div>' +
           '</div>' +
@@ -629,7 +629,7 @@ window.addEventListener('error', function (ev) {
 
         if (reason === 'locked_module' && context && context.moduleName) {
           titleEl.textContent = 'Unlock ' + context.moduleName;
-          subEl.innerHTML = 'Free registered accounts include the <strong>first 8 topics</strong> in this subject. Upgrade to MedLadder Pro to unlock ' + esc(context.moduleName) + ' and all 739 topics!';
+          subEl.innerHTML = 'Free registered accounts include the <strong>first 8 topics</strong> in this subject. Upgrade to MedLadder Pro to unlock ' + esc(context.moduleName) + ' and all 740 topics!';
         } else if (reason === 'all_topics') {
           titleEl.textContent = 'Full Subject Exam is Pro Only';
           subEl.innerHTML = 'The <strong>\"All topics\"</strong> cumulative grand test is a MedLadder Pro feature. Upgrade now to practice full-length multi-topic exams!';
@@ -931,7 +931,7 @@ window.addEventListener('error', function (ev) {
                     quantity: 1
                   }]
                 });
-                showToast('⭐ MedLadder Pro is now ACTIVE. All 739 modules & PYQ bank unlocked!', 'success');
+                showToast('⭐ MedLadder Pro is now ACTIVE. All 740 modules & PYQ bank unlocked!', 'success');
               } else {
                 // Verification failed — do NOT unlock Pro
                 console.warn('Server verification returned non-success for payment ' + paymentId);
@@ -1005,7 +1005,7 @@ window.addEventListener('error', function (ev) {
         updateMastheadAuth();
         updateProModalUI();
         rerenderLockedScreens();
-        showToast('⭐ Congratulations! MedLadder Pro is now ACTIVE. All 739 modules & PYQ bank are unlocked!', 'success');
+        showToast('⭐ Congratulations! MedLadder Pro is now ACTIVE. All 740 modules & PYQ bank are unlocked!', 'success');
       }
 
       // ==========================================
@@ -3604,7 +3604,7 @@ window.addEventListener('error', function (ev) {
 
           app.innerHTML =
             '<header class="masthead glass" role="banner">' +
-            '<a href="/" class="brand" style="text-decoration:none;"><span class="brand-icon" style="overflow:hidden;display:inline-flex;align-items:center;justify-content:center;"><img src="/icons/icon-72.png" alt="MedLadder" style="width:100%;height:100%;border-radius:inherit;display:block;object-fit:cover;"></span><span>MedLadder</span></a>' +
+            '<a href="/" class="brand" style="text-decoration:none;"><span class="brand-icon" style="overflow:hidden;display:inline-flex;align-items:center;justify-content:center;"><img src="/icons/icon-72.png" alt="MedLadder" width="72" height="72" style="width:100%;height:100%;border-radius:inherit;display:block;object-fit:cover;"></span><span>MedLadder</span></a>' +
             '<span class="right"><span class="stat"><span class="stat-dot"></span>' + totalQuestions().toLocaleString() + ' MCQs</span>' + proHeaderBtnHtml() + authBtnHtml() + themeBtnHtml() + '</span>' +
             '</header>' +
             '<main id="mainContent" role="main">' +
@@ -3614,7 +3614,7 @@ window.addEventListener('error', function (ev) {
             '<p class="subtitle">Your climb through FMGE, NEET PG, INICET &amp; NEET SS — ' + SUBJECT_INDEX.length + ' subjects, ' + totalQuestions().toLocaleString() + ' MCQs including Previous Year Questions. Pick a subject or launch a PYQ test.</p>' +
             '<div class="bento-bar">' +
             '<div class="bento-stat"><div class="bento-stat-num">' + SUBJECT_INDEX.length + '</div><div class="bento-stat-lbl">Subjects</div></div>' +
-            '<div class="bento-stat"><div class="bento-stat-num">739</div><div class="bento-stat-lbl">Topics</div></div>' +
+            '<div class="bento-stat"><div class="bento-stat-num">740</div><div class="bento-stat-lbl">Topics</div></div>' +
             '<div class="bento-stat"><div class="bento-stat-num">' + totalQuestions().toLocaleString() + '</div><div class="bento-stat-lbl">Total MCQs</div></div>' +
             '<div class="bento-stat"><div class="bento-stat-num">5 Exams</div><div class="bento-stat-lbl">PYQ Papers</div></div>' +
             '</div>' +
