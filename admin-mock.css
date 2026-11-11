@@ -146,3 +146,8 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .am-title { white-space: nowrap !important; }
 .am-auth { min-width: 0 !important; flex-wrap: wrap !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
 @media (max-width: 520px) { .am-auth { margin-left: 0 !important; width: 100% !important; } .am-form { grid-template-columns: 1fr !important; } }
+.am-brand::before { content: "" !important; display: inline-block !important; width: 26px !important; height: 26px !important; margin-right: 9px !important; vertical-align: -6px !important; border-radius: 7px !important; background: url(/icons/icon-72.png) center / cover !important; }
+.am-title { font-family: Archivo, system-ui, sans-serif !important; font-weight: 500 !important; color: var(--muted) !important; font-size: 14px !important; }
+.am-card, .am-test-row { border-radius: 12px !important; }
+.am-btn { border-radius: 8px !important; }
+.am-badge.published { background: var(--green-soft, rgba(22,107,69,.1)) !important; }

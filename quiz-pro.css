@@ -2801,3 +2801,136 @@ html.ml-reading #app .v2-live::before { content: "" !important; width: 8px !impo
 html.ml-reading #app .options .opt { position: relative !important; }
 html.ml-reading #app .opt .rr-peer { position: absolute !important; right: 14px !important; top: 16px !important; margin: 0 !important; padding: 0 !important; }
 html.ml-reading #app .options .opt.locked { padding-right: 56px !important; }
+
+/* ==========================================================================
+   Quiz, setup and results in a question-bank style (Nov 2026): option cards
+   with lettered circles, coloured selections, a row of answer dots, a score
+   ring with counts. Same tokens as the rest of the reading room.
+   ========================================================================== */
+html.ml-reading {
+  --rr-accent: #5B34C9; --rr-accent-fill: #5B34C9; --rr-accent-ink: #FFFFFF; --rr-accent-soft: rgba(91, 52, 201, .09);
+  --rr-card: #FFFFFF;
+}
+html.dark.ml-reading {
+  --rr-accent: #A893F5; --rr-accent-fill: #6F52D9; --rr-accent-ink: #FFFFFF; --rr-accent-soft: rgba(168, 147, 245, .13);
+  --rr-card: #141B20;
+}
+
+/* ---- setup: chosen settings carry the accent ------------------------------ */
+html.ml-reading #app .pill-choice.active,
+html.ml-reading #app .pill-choice[aria-pressed="true"] {
+  background: var(--rr-accent-fill) !important; border-color: var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important;
+}
+html.ml-reading #app .type-card.active {
+  background: var(--rr-accent-soft) !important; border: 1.5px solid var(--rr-accent) !important; box-shadow: none !important;
+}
+html.ml-reading #app .type-card.active .tname { color: var(--rr-accent) !important; }
+html.ml-reading #app .pill-choice, html.ml-reading #app .type-card { border-radius: 8px !important; }
+html.ml-reading #app .rr-setup .btn.start, html.ml-reading #app #startBtn {
+  background: var(--rr-accent-fill) !important; border-color: var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important; border-radius: 8px !important;
+}
+html.ml-reading #app .v2-filter[aria-pressed="true"] { background: var(--rr-accent-fill) !important; border-color: var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important; }
+
+/* ---- progress: one dot per question ----------------------------------------- */
+html.ml-reading #app .rr-ladder,
+html.ml-reading #app .rr-ladder-mid,
+html.ml-reading #app .rr-ladder-dense {
+  display: flex !important; flex-wrap: nowrap !important; gap: 7px !important; align-items: center !important;
+  overflow-x: auto !important; scrollbar-width: none !important; padding: 4px 2px 6px !important; margin: 0 -2px !important;
+}
+html.ml-reading #app .rr-ladder::-webkit-scrollbar { display: none !important; }
+html.ml-reading #app .rr-ladder .tick {
+  flex: 0 0 10px !important; width: 10px !important; height: 10px !important; min-width: 10px !important;
+  border-radius: 50% !important; border: 0 !important; padding: 0 !important;
+  background: var(--rr-tick) !important; color: transparent !important; font-size: 0 !important; opacity: 1 !important; cursor: pointer !important;
+}
+html.ml-reading #app .rr-ladder .tick.ok { background: var(--rr-ok) !important; }
+html.ml-reading #app .rr-ladder .tick.bad { background: var(--rr-bad) !important; }
+html.ml-reading #app .rr-ladder .tick.cur { box-shadow: 0 0 0 2px var(--rr-ground), 0 0 0 4px var(--rr-accent) !important; }
+html.ml-reading #app .rr-ladder .tick.cur:not(.ok):not(.bad) { background: var(--rr-accent) !important; }
+
+/* ---- options as cards ---------------------------------------------------------- */
+html.ml-reading #app .options { border-bottom: 0 !important; display: flex !important; flex-direction: column !important; gap: 10px !important; }
+html.ml-reading #app .opt,
+html.ml-reading #app .opt.correct,
+html.ml-reading #app .opt.incorrect {
+  width: 100% !important; margin: 0 !important; padding: 14px 16px !important; min-height: 56px !important;
+  align-items: center !important; gap: 14px !important;
+  background: var(--rr-card) !important; border: 1.5px solid var(--rr-rule) !important; border-radius: 12px !important;
+  position: relative !important; overflow: hidden !important;
+}
+html.ml-reading #app .opt .letter {
+  flex: 0 0 30px !important; width: 30px !important; height: 30px !important; border-radius: 50% !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  border: 1.5px solid var(--rr-rule) !important; color: var(--rr-ink-dim) !important;
+  font-size: 13px !important; font-weight: 600 !important; position: relative !important; z-index: 1 !important;
+}
+html.ml-reading #app .opt > span:last-child { position: relative !important; z-index: 1 !important; }
+@media (hover: hover) {
+  html.ml-reading #app .opt:not(.locked):hover { border-color: var(--rr-accent) !important; background: var(--rr-card) !important; }
+  html.ml-reading #app .opt:not(.locked):hover .letter { border-color: var(--rr-accent) !important; color: var(--rr-accent) !important; }
+}
+html.ml-reading #app .opt:not(.locked):active { background: var(--rr-accent-soft) !important; border-color: var(--rr-accent) !important; }
+html.ml-reading #app .opt.dim { opacity: 0.6 !important; }
+html.ml-reading #app .opt.correct { background: var(--rr-ok-bg) !important; border-color: var(--rr-ok) !important; }
+html.ml-reading #app .opt.incorrect { background: var(--rr-bad-bg) !important; border-color: var(--rr-bad) !important; }
+html.ml-reading #app .opt.correct .letter { background: var(--rr-ok) !important; border-color: var(--rr-ok) !important; color: #fff !important; font-size: 0 !important; }
+html.ml-reading #app .opt.incorrect .letter { background: var(--rr-bad) !important; border-color: var(--rr-bad) !important; color: #fff !important; font-size: 0 !important; }
+html.ml-reading #app .opt.correct .letter::after { content: "\2713" !important; font-size: 15px !important; }
+html.ml-reading #app .opt.incorrect .letter::after { content: "\2715" !important; font-size: 13px !important; }
+html.ml-reading #app .opt.correct > span:last-child::after,
+html.ml-reading #app .opt.incorrect > span:last-child::after { margin-top: 3px !important; letter-spacing: 0.02em !important; font-size: 11px !important; }
+/* how others answered: a bar behind the option, the share at the right */
+html.ml-reading #app .opt .rr-peer { top: 50% !important; transform: translateY(-50%) !important; right: 16px !important; z-index: 1 !important; font-weight: 600 !important; }
+html.ml-reading #app .opt .rr-peer-bar {
+  position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 0 !important;
+  background: var(--rr-rule-soft) !important; opacity: .55 !important; pointer-events: none !important;
+}
+html.ml-reading #app .opt.correct .rr-peer-bar { background: var(--rr-ok) !important; opacity: .12 !important; }
+html.ml-reading #app .opt.incorrect .rr-peer-bar { background: var(--rr-bad) !important; opacity: .12 !important; }
+
+/* question */
+html.ml-reading #app .rr-q:has(.opt.locked) .qtext { color: var(--rr-ink) !important; }
+
+/* rationale as its own card */
+html.ml-reading #app .rr-rationale .explain {
+  padding: 16px 18px !important; background: var(--rr-card) !important; border: 1px solid var(--rr-rule) !important; border-radius: 12px !important;
+}
+html.ml-reading #app .rr-rationale .exlabel { color: var(--rr-accent) !important; font-weight: 600 !important; }
+
+/* bottom bar */
+html.ml-reading #app .rr-actions #nextBtn:not([disabled]) {
+  background: var(--rr-accent-fill) !important; border-color: var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important; border-radius: 8px !important;
+}
+html.ml-reading #app .rr-actions #nextBtn[disabled] { border-radius: 8px !important; }
+
+/* ---- results ------------------------------------------------------------------ */
+html.ml-reading #app .rr-sum { text-align: center !important; padding: 10px 0 8px !important; }
+html.ml-reading #app .rr-ring { position: relative !important; width: 132px !important; height: 132px !important; margin: 6px auto 10px !important; }
+html.ml-reading #app .rr-ring svg { display: block !important; transform: rotate(-90deg) !important; }
+html.ml-reading #app .rr-ring circle { fill: none !important; stroke-width: 10 !important; }
+html.ml-reading #app .rr-ring-track { stroke: var(--rr-tick) !important; }
+html.ml-reading #app .rr-ring-ok { stroke: var(--rr-ok) !important; }
+html.ml-reading #app .rr-ring-bad { stroke: var(--rr-bad) !important; }
+html.ml-reading #app .rr-ring-label {
+  position: absolute !important; inset: 0 !important; margin: 0 !important; display: flex !important; flex-direction: column !important;
+  align-items: center !important; justify-content: center !important; background: none !important; -webkit-text-fill-color: currentColor !important;
+}
+html.ml-reading #app .rr-ring-pct { color: var(--rr-ink) !important; font-family: var(--rr-sans) !important; font-size: 30px !important; font-weight: 600 !important; line-height: 1 !important; }
+html.ml-reading #app .rr-ring-of { margin-top: 4px !important; color: var(--rr-ink-quiet) !important; font-size: 12.5px !important; font-weight: 400 !important; }
+html.ml-reading #app .rr-sum .rr-res-verdict { margin: 0 0 18px !important; text-align: center !important; }
+html.ml-reading #app .rr-counts { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 8px !important; margin: 0 !important; }
+html.ml-reading #app .rr-counts > div {
+  padding: 12px 6px !important; border: 1px solid var(--rr-rule) !important; border-radius: 12px !important; background: var(--rr-card) !important; text-align: center !important;
+}
+html.ml-reading #app .rr-counts dt { color: var(--rr-ink-quiet) !important; font-size: 12px !important; margin: 0 !important; }
+html.ml-reading #app .rr-counts dd { margin: 4px 0 0 !important; color: var(--rr-ink) !important; font-size: 20px !important; font-weight: 600 !important; }
+html.ml-reading #app .rr-counts .ok dd { color: var(--rr-ok) !important; }
+html.ml-reading #app .rr-counts .bad dd { color: var(--rr-bad) !important; }
+html.ml-reading #app .rr-counts .ok { border-top: 3px solid var(--rr-ok) !important; }
+html.ml-reading #app .rr-counts .bad { border-top: 3px solid var(--rr-bad) !important; }
+html.ml-reading #app .rr-counts .skip { border-top: 3px solid var(--rr-tick) !important; }
+html.ml-reading #app .rr-sum-note { margin: 12px 0 0 !important; color: var(--rr-ink-quiet) !important; font-size: 13px !important; text-align: center !important; }
+html.ml-reading #app .rr-res-actions .btn { border-radius: 8px !important; }
+html.ml-reading #app .rr-res-actions #retryMissedBtn { background: var(--rr-accent-fill) !important; border-color: var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important; }
+html.ml-reading #app .rr-miss { border-radius: 10px !important; }
