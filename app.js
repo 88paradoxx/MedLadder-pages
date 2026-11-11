@@ -6256,7 +6256,57 @@ window.addEventListener('error', function (ev) {
       }
       function v2Plural(n, one, many) { return n.toLocaleString() + ' ' + (n === 1 ? one : (many || one + 's')); }
 
-      // ---- home ---------------------------------------------------------------
+      // ---- home (bold) ----------------------------------------------------------
+      // One strong card for today's set, quick actions, then progress and
+      // subjects as tiles with their illustrations.
+      function v2Ring(frac, size, stroke, cls, inner) {
+        var r = (size - stroke) / 2, c = 2 * Math.PI * r;
+        var len = Math.max(0, Math.min(1, frac || 0)) * c;
+        return '<span class="v2-ring ' + (cls || '') + '" style="width:' + size + 'px;height:' + size + 'px">' +
+          '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true">' +
+          '<circle class="v2-ring-track" cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" stroke-width="' + stroke + '"/>' +
+          (len < 1 ? '' : '<circle class="v2-ring-fill" cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" stroke-width="' + stroke + '" stroke-dasharray="' + len.toFixed(1) + ' ' + c.toFixed(1) + '" style="--v2-len:' + len.toFixed(1) + ';--v2-c:' + c.toFixed(1) + '"/>') +
+          '</svg>' + (inner ? '<span class="v2-ring-in">' + inner + '</span>' : '') + '</span>';
+      }
+      function v2Icon(name) {
+        var p = {
+          review: '<path d="M20 12a8 8 0 11-2.3-5.6M20 4v5h-5"/>',
+          mock: '<path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/>',
+          papers: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+          custom: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+          bookmarks: '<path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>',
+          flame: '<path d="M12 3c1 3 4 5 4 9a4 4 0 01-8 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-8z"/>',
+          check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/>',
+          target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+          layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+          calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+        }[name] || '';
+        return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+      }
+      function v2Slug(name) { return String(name || '').toLowerCase().replace(/&/g, '-').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+      function v2SubjIcon(sx, size) {
+        return '<span class="v2-subj-ic v2-cat-' + esc(sx.cat) + '" style="width:' + size + 'px;height:' + size + 'px">' +
+          '<img src="/assets/subjects-webp/' + v2Slug(sx.name) + '.webp" alt="" width="' + Math.round(size * 0.7) + '" height="' + Math.round(size * 0.7) + '" loading="lazy"></span>';
+      }
+      function v2SubjectTile(sx, ix) {
+        var ss = v2SubjectStats(sx, ix);
+        var frac = ss.started / (ss.total || 1);
+        return '<button class="v2-tile" data-subject="' + sx.subjectId + '" data-name="' + esc(sx.name.toLowerCase()) + '" data-cat="' + esc(sx.cat) + '">' +
+          '<span class="v2-tile-top">' + v2SubjIcon(sx, 44) +
+          (ss.due ? '<span class="v2-badge">' + ss.due + ' due</span>' : v2Ring(frac, 30, 4, 'v2-ring-sm', '')) + '</span>' +
+          '<span class="v2-tile-name">' + esc(sx.name) + '</span>' +
+          '<span class="v2-tile-sub">' + ss.started + ' of ' + ss.total + ' topics' + (ss.pct != null ? ' · ' + ss.pct + '%' : '') + '</span>' +
+          '<span class="v2-tile-bar" aria-hidden="true"><span style="width:' + Math.round(frac * 100) + '%"></span></span>' +
+          '</button>';
+      }
+      function v2Greeting() {
+        var h = new Date().getHours();
+        var part = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+        var name = '';
+        try { name = currentUser ? String(getUserDisplayName(currentUser) || '').split(/[\s@]/)[0] : ''; } catch (e) { }
+        return part + (name ? ', ' + esc(name.charAt(0).toUpperCase() + name.slice(1)) : '');
+      }
+
       function renderHomeV2() {
         if (!quizStylesReady) { ensureQuizStyles().then(function () { if (state.screen === 'home') renderHomeV2(); }); return; }
         trackPageView('/', 'home');
@@ -6264,11 +6314,28 @@ window.addEventListener('error', function (ev) {
         var rd = v2HaveHistory() ? reviewData : null;
         var ix = v2Index(rd);
         var pro = isUserPro(currentUser);
-        var out = '';
+        var today = v2Day(Date.now());
+        var days = rd ? rd.days : {};
+        var streak = 0;
+        for (var s0 = (days[today] ? today : today - 1); days[s0]; s0--) streak++;
+        var doneToday = days[today] || 0;
 
-        out += v2ExamLine(ix);
+        // ---- greeting and exam chip
+        var g = v2ExamGet();
+        var examChip = '';
+        if (g) {
+          var dleft = g.date ? v2Day(Date.parse(g.date + 'T00:00:00')) - today : null;
+          examChip = '<button class="v2-chip-pill" id="v2ExamEdit">' + v2Icon('calendar') + '<span>' + esc(g.exam) +
+            (dleft != null && isFinite(dleft) ? (dleft > 0 ? ' · ' + dleft + ' days' : dleft === 0 ? ' · today' : '') : '') + '</span></button>';
+        } else if (currentUser) {
+          examChip = '<button class="v2-chip-pill v2-chip-ghost" id="v2ExamEdit">' + v2Icon('calendar') + '<span>Set your exam date</span></button>';
+        }
+        var out = '<div class="v2-hello"><h1 class="v2-hello-h">' + (currentUser ? v2Greeting() : 'Welcome to MedLadder') + '</h1>' + examChip + '</div>';
+        // The editor form from the exam line, without its text.
+        out += v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '');
 
-        // Today's set, or a way in for a visitor.
+        // ---- hero
+        var heroBody, heroBtn = '';
         if (!currentUser) {
           var guest = null;
           SUBJECT_INDEX.some(function (sx) {
@@ -6277,133 +6344,128 @@ window.addEventListener('error', function (ev) {
               return false;
             });
           });
-          out += '<section class="v2-card v2-today">' +
-            '<p class="v2-kicker">Start here</p>' +
-            '<h1 class="v2-h1">Try a topic free, no account needed</h1>' +
-            '<p class="v2-lede">' + (guest
-              ? esc(guest.m.name) + ', ' + esc(guest.sx.name) + ': ' + v2Plural(guest.m.questionCount, 'question') + ' with explanations. Every subject has one free topic like this.'
-              : 'Every subject has one free topic you can practise without signing in.') + '</p>' +
-            (guest ? '<button class="v2-btn" id="v2GuestStart" data-sid="' + guest.sx.subjectId + '" data-mod="' + esc(guest.m.moduleId) + '">Start ' + esc(guest.m.name) + '</button>' : '') +
-            '<p class="v2-note">A free account opens 8 topics in every subject and builds a daily set from your answers. <button class="v2-link" id="v2SignUp">Sign up free</button></p>' +
-            '</section>';
+          heroBody = '<p class="v2-hero-k">Start here</p><h2 class="v2-hero-h">Try a topic free</h2>' +
+            '<p class="v2-hero-p">' + (guest ? esc(guest.m.name) + ' in ' + esc(guest.sx.name) + ', ' + v2Plural(guest.m.questionCount, 'question') + ' with explanations. No account needed.' : 'Every subject has one topic you can practise without an account.') + '</p>';
+          if (guest) heroBtn = '<button class="v2-hero-btn" id="v2GuestStart" data-sid="' + guest.sx.subjectId + '" data-mod="' + esc(guest.m.moduleId) + '">Start ' + esc(guest.m.name) + '</button>';
+          heroBtn += '<button class="v2-hero-link" id="v2SignUp">Sign up free for 8 topics in every subject</button>';
+          out += '<section class="v2-hero"><div class="v2-hero-main">' + heroBody + '</div><div class="v2-hero-actions">' + heroBtn + '</div></section>';
         } else if (!rd) {
-          out += '<section class="v2-card v2-today" aria-busy="true"><p class="v2-kicker">Today’s set</p>' +
-            '<h1 class="v2-h1">Building today’s set…</h1><p class="v2-lede">Looking at what you have answered so far.</p></section>';
+          out += '<section class="v2-hero" aria-busy="true"><div class="v2-hero-main"><p class="v2-hero-k">Today’s set</p><h2 class="v2-hero-h">Building your set…</h2><p class="v2-hero-p">Looking at what you have answered so far.</p></div></section>';
         } else {
           var plan = v2TodayPlan(ix);
           var nReview = plan.reviewIds.length;
           var newFrom = plan.next.filter(function (r) { return r.x.st.total > r.x.st.seen; }).map(function (r) { return r.x.m.name; });
           var first = ix.seen === 0 && !Object.keys(progress).length;
-          var lede;
-          if (!plan.size) lede = 'Nothing is due and every open topic is finished. Pick a subject below, or unlock more topics with Pro.';
-          else if (first) lede = 'Your first set: ' + plan.newN + ' questions from ' + esc(newFrom.join(' and ')) + '. After this, questions you miss come back the next day, and the ones you get right come back later.';
+          var p2;
+          if (!plan.size) p2 = 'Nothing is due and every open topic is finished. Pick any subject below.';
+          else if (first) p2 = 'Your first set: ' + plan.newN + ' questions from ' + esc(newFrom.join(' and ')) + '.';
           else {
-            var parts = [];
-            if (nReview) parts.push(nReview + ' you answered before and are due again');
-            if (plan.newN) parts.push(plan.newN + ' new from ' + esc(newFrom.join(' and ')));
-            lede = parts.join(', and ') + '. Mixed together, the way the exam asks them.';
+            p2 = [nReview ? nReview + ' due for review' : '', plan.newN ? plan.newN + ' new' : ''].filter(Boolean).join(' · ');
+            if (plan.newN && newFrom.length) p2 += '<span class="v2-hero-from">New from ' + esc(newFrom[0]) + (newFrom.length > 1 ? ' and 1 more topic' : '') + '</span>';
           }
+          var goal = Math.max(plan.size, V2_SET_SIZE);
           var mins = Math.max(1, Math.round(plan.size * 0.75));
-          out += '<section class="v2-card v2-today">' +
-            '<p class="v2-kicker">Today’s set</p>' +
-            '<h1 class="v2-h1">' + (plan.size ? v2Plural(plan.size, 'question') + ', about ' + mins + ' minutes' : 'All caught up') + '</h1>' +
-            '<p class="v2-lede">' + lede + '</p>' +
-            (plan.size ? '<div class="v2-split" aria-hidden="true">' +
-              (nReview ? '<span class="v2-split-a" style="flex:' + nReview + ' 1 0"></span>' : '') +
-              (plan.newN ? '<span class="v2-split-b" style="flex:' + plan.newN + ' 1 0"></span>' : '') + '</div>' +
-              '<div class="v2-split-key"><span>' + (nReview ? nReview + ' review' + (plan.reviewSubjects.length ? ' · ' + esc(plan.reviewSubjects.slice(0, 3).join(', ')) : '') : 'No reviews due yet') + '</span><span>' + (plan.newN ? plan.newN + ' new' : '') + '</span></div>' +
-              '<button class="v2-btn" id="v2TodayBtn">Start today’s set</button>' : '') +
-            (ix.due.length > nReview ? '<p class="v2-note">' + v2Plural(ix.due.length, 'question') + ' due in all. <button class="v2-link" data-nav-go="review">Review more</button></p>' : '') +
+          out += '<section class="v2-hero">' +
+            '<div class="v2-hero-main">' +
+            '<p class="v2-hero-k">Today’s set' + (streak > 0 ? '<span class="v2-streak">' + v2Icon('flame') + streak + '-day streak</span>' : '') + '</p>' +
+            '<h2 class="v2-hero-h">' + (plan.size ? plan.size + ' questions <span class="v2-hero-min">about ' + mins + ' min</span>' : 'All caught up') + '</h2>' +
+            '<p class="v2-hero-p">' + p2 + '</p>' +
+            '</div>' +
+            v2Ring(doneToday / goal, 92, 9, 'v2-ring-hero', '<strong>' + Math.min(doneToday, 999) + '</strong><small>of ' + goal + ' today</small>') +
+            '<div class="v2-hero-actions">' + (plan.size ? '<button class="v2-hero-btn" id="v2TodayBtn">Start today’s set</button>' : '<button class="v2-hero-btn" data-nav-go="subjects">Browse subjects</button>') + '</div>' +
             '</section>';
         }
 
-        // Continue: the topic most recently worked on, if unfinished.
-        var cont = null;
+        // ---- quick actions
+        var mockLive = v2MockState && v2MockState.live;
+        var qa = [
+          ['review', 'Review', ix.due.length ? (ix.due.length > 99 ? '99+' : String(ix.due.length)) : '', 'data-nav-go="review"'],
+          ['mock', 'Mock tests', mockLive ? 'Live' : '', 'id="v2QaMock"'],
+          ['papers', 'Past papers', pro ? '' : 'Pro', 'id="v2QaPapers"'],
+          ['custom', 'Custom set', '', 'id="v2Custom"'],
+          ['bookmarks', 'Bookmarks', '', 'data-nav-go="bookmarks"']
+        ];
+        out += '<nav class="v2-qa" aria-label="Quick actions">' + qa.map(function (q) {
+          return '<button class="v2-qa-btn" ' + q[3] + '><span class="v2-qa-ic v2-qa-' + q[0] + '">' + v2Icon(q[0]) +
+            (q[2] ? '<span class="v2-qa-badge' + (q[2] === 'Live' ? ' live' : q[2] === 'Pro' ? ' pro' : '') + '">' + q[2] + '</span>' : '') +
+            '</span><span class="v2-qa-l">' + q[1] + '</span></button>';
+        }).join('') + '</nav>';
+
+        // ---- continue
         var active = v2ActiveSubjects(ix);
+        var cont = null;
         active.some(function (r) {
           var lastId = v2LastModuleIn(r.ss);
-          var x = r.ss.mods.find(function (y) { return y.m.id === lastId; }) ||
-            r.ss.mods.find(function (y) { return y.st.status === 'active'; });
+          var x = r.ss.mods.find(function (y) { return y.m.id === lastId; }) || r.ss.mods.find(function (y) { return y.st.status === 'active'; });
           if (x && x.st.status === 'active' && x.open) { cont = { sx: r.sx, x: x }; return true; }
           return false;
         });
-        var left = '';
+        var colA = '', colB = '';
         if (cont) {
-          var leftQ = cont.x.st.total - cont.x.st.seen;
-          left += '<section class="v2-sec"><h2 class="v2-h2">Continue</h2>' +
-            '<button class="v2-row v2-row-cont" data-sid="' + cont.sx.subjectId + '" data-mod="' + esc(cont.x.m.moduleId) + '">' +
-            '<span class="v2-row-main"><span class="v2-row-title">' + esc(cont.x.m.name) + '</span>' +
-            '<span class="v2-row-sub">' + esc(cont.sx.name) + ' · ' + v2Plural(leftQ, 'question') + ' left</span>' +
-            v2Bar(cont.x.st.seen / (cont.x.st.total || 1)) + '</span>' +
-            '<span class="v2-pill">Resume</span></button></section>';
+          var fr = cont.x.st.seen / (cont.x.st.total || 1);
+          colA += '<section class="v2-sec"><h2 class="v2-h2b">Continue</h2>' +
+            '<button class="v2-card2 v2-cont" data-sid="' + cont.sx.subjectId + '" data-mod="' + esc(cont.x.m.moduleId) + '">' +
+            v2SubjIcon(cont.sx, 48) +
+            '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(cont.x.m.name) + '</span>' +
+            '<span class="v2-cont-s">' + esc(cont.sx.name) + ' · ' + (cont.x.st.total - cont.x.st.seen) + ' left</span></span>' +
+            v2Ring(fr, 46, 5, 'v2-ring-cont', Math.round(fr * 100) + '%') + '</button></section>';
         }
 
-        // Needs work: started topics with enough answers to judge.
-        var weak = [];
-        active.forEach(function (r) {
-          r.ss.mods.forEach(function (x) {
-            if (x.open && x.st.seen >= 5 && x.st.pct != null && x.st.pct < 60) weak.push({ sx: r.sx, x: x });
-          });
-        });
-        weak.sort(function (a, b) { return a.x.st.pct - b.x.st.pct; });
-        if (weak.length) {
-          left += '<section class="v2-sec"><h2 class="v2-h2">Needs work</h2>' + weak.slice(0, 3).map(function (w) {
-            return '<button class="v2-row" data-sid="' + w.sx.subjectId + '" data-mod="' + esc(w.x.m.moduleId) + '">' +
-              '<span class="v2-row-main"><span class="v2-row-title">' + esc(w.x.m.name) + '</span>' +
-              '<span class="v2-row-sub">' + esc(w.sx.name) + ' · ' + w.x.st.pct + '% correct over ' + v2Plural(w.x.st.seen, 'question') + '</span></span>' +
-              '<span class="v2-num v2-bad">' + w.x.st.pct + '%</span></button>';
-          }).join('') + (currentUser ? '<p class="v2-note">Questions you missed here come back in your daily set.</p>' : '') + '</section>';
-        }
-
-        // This week, and the totals.
-        var right = '';
+        // ---- stats + week
         if (currentUser) {
-          var today = v2Day(Date.now());
-          var days = rd ? rd.days : {};
-          var strip = '';
-          var letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-          for (var d = 6; d >= 0; d--) {
-            var k = today - d;
-            var n = days[k] || 0;
-            var dt = new Date(Date.now() - d * 86400000);
-            strip += '<span class="v2-day' + (n ? ' on' : '') + (d === 0 ? ' today' : '') + '" title="' + esc(dt.toLocaleDateString(undefined, { weekday: 'long' })) + ': ' + v2Plural(n, 'answer') + '"><span class="v2-day-box"></span>' + letters[dt.getDay()] + '</span>';
-          }
-          var streak = 0;
-          for (var s = (days[today] ? today : today - 1); days[s]; s--) streak++;
-          var dd = dashboardData();
+          var dd = dashboardData(v2EffectiveProgress());
           var answered = Math.max(ix.seen, dd.done);
           var acc = ix.seen ? Math.round((ix.okNow / ix.seen) * 100) : (dd.done ? Math.round((dd.correct / dd.done) * 100) : null);
           var topicsStarted = 0;
           SUBJECT_INDEX.forEach(function (sx) { topicsStarted += v2SubjectStats(sx, ix).started; });
-          right += '<section class="v2-sec"><h2 class="v2-h2 v2-h2-flat"><span>This week</span><span>' + (streak > 1 ? streak + '-day streak' : '') + '</span></h2>' +
-            '<div class="v2-week">' + strip + '</div>' +
-            '<div class="v2-stats">' +
-            '<div><span>Answered</span><strong>' + answered.toLocaleString() + '</strong></div>' +
-            '<div><span>Accuracy</span><strong>' + (acc == null ? '–' : acc + '%') + '</strong></div>' +
-            '<div><span>Topics</span><strong>' + topicsStarted + '<small> / 740</small></strong></div>' +
+          var letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+          var strip = '';
+          for (var d = 6; d >= 0; d--) {
+            var n = days[today - d] || 0;
+            var dt = new Date(Date.now() - d * 86400000);
+            strip += '<span class="v2-wd' + (n ? ' on' : '') + (d === 0 ? ' now' : '') + '" title="' + esc(dt.toLocaleDateString(undefined, { weekday: 'long' })) + ': ' + v2Plural(n, 'answer') + '"><span class="v2-wd-c">' + (n ? v2Icon('flame') : '') + '</span>' + letters[dt.getDay()] + '</span>';
+          }
+          colB += '<section class="v2-sec"><h2 class="v2-h2b">Your progress</h2>' +
+            '<div class="v2-stat3">' +
+            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic ok">' + v2Icon('check') + '</span><strong>' + answered.toLocaleString() + '</strong><span>answered</span></div>' +
+            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic acc">' + v2Icon('target') + '</span><strong>' + (acc == null ? '–' : acc + '%') + '</strong><span>accuracy</span></div>' +
+            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic top">' + v2Icon('layers') + '</span><strong>' + topicsStarted + '</strong><span>of 740 topics</span></div>' +
             '</div>' +
-            '<button class="v2-link v2-more" data-nav-go="progress">View my progress</button></section>';
+            '<div class="v2-card2 v2-week2"><div class="v2-week2-h"><span>This week</span><span>' + (streak ? streak + '-day streak' : 'Start a streak today') + '</span></div><div class="v2-week2-row">' + strip + '</div></div>' +
+            '<button class="v2-link v2-more" data-nav-go="progress">See all progress</button></section>';
         }
 
-        out += (left || right) ? '<div class="v2-cols"><div>' + left + '</div><div>' + right + '</div></div>' : '';
+        // ---- needs work
+        var weak = [];
+        active.forEach(function (r) {
+          r.ss.mods.forEach(function (x) { if (x.open && x.st.seen >= 5 && x.st.pct != null && x.st.pct < 60) weak.push({ sx: r.sx, x: x }); });
+        });
+        weak.sort(function (a, b) { return a.x.st.pct - b.x.st.pct; });
+        if (weak.length) {
+          colB += '<section class="v2-sec"><h2 class="v2-h2b">Needs work</h2>' + weak.slice(0, 3).map(function (w) {
+            return '<button class="v2-card2 v2-weak" data-sid="' + w.sx.subjectId + '" data-mod="' + esc(w.x.m.moduleId) + '">' + v2SubjIcon(w.sx, 36) +
+              '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(w.x.m.name) + '</span><span class="v2-cont-s">' + esc(w.sx.name) + ' · ' + w.x.st.seen + ' answered</span></span>' +
+              '<span class="v2-pct-bad">' + w.x.st.pct + '%</span></button>';
+          }).join('') + '</section>';
+        }
 
-        // Subjects: the ones in use first.
+        // ---- subjects
         var used = active.map(function (r) { return r.sx.subjectId; });
         var shown = active.map(function (r) { return r.sx; });
         SUBJECT_INDEX.forEach(function (sx) { if (shown.length < 6 && used.indexOf(sx.subjectId) === -1) shown.push(sx); });
-        out += '<section class="v2-sec"><h2 class="v2-h2">Subjects</h2>' +
-          shown.slice(0, Math.max(6, Math.min(active.length, 8))).map(function (sx) { return v2SubjectRow(sx, ix); }).join('') +
-          '<button class="v2-row v2-row-plain" data-nav-go="subjects"><span>All ' + SUBJECT_INDEX.length + ' subjects</span><span aria-hidden="true">›</span></button></section>';
+        shown = shown.slice(0, 6);
+        colA += '<section class="v2-sec"><h2 class="v2-h2b v2-h2b-row"><span>Subjects</span><button class="v2-link" data-nav-go="subjects">All ' + SUBJECT_INDEX.length + '</button></h2>' +
+          '<div class="v2-tiles">' + shown.map(function (sx) { return v2SubjectTile(sx, ix); }).join('') + '</div></section>';
 
-        // Past papers.
-        out += '<section class="v2-sec"><h2 class="v2-h2 v2-h2-flat"><span>Past papers</span><span>' + (pro ? '' : 'Pro') + '</span></h2><div class="v2-chips">' +
+        // ---- past papers
+        colB += '<section class="v2-sec" id="v2Papers"><h2 class="v2-h2b v2-h2b-row"><span>Past papers</span>' + (pro ? '' : '<span class="v2-pro-tag">Pro</span>') + '</h2><div class="v2-chips">' +
           PYQ_EXAMS.map(function (ex) {
             return '<button class="v2-chip" data-pyq="' + esc(ex.id) + '">' + esc(ex.name) + (pro ? '' : ' <span class="v2-lock" aria-label="Pro">' + v2LockSvg() + '</span>') + '</button>';
-          }).join('') + '</div>' +
-          v2MockRow() +
-          '<button class="v2-row v2-row-plain" id="v2Custom"><span>Build a custom set from any topics</span><span aria-hidden="true">›</span></button></section>';
+          }).join('') + '</div></section>';
 
-        v2Paint('home', v2Shell('today', v2Header(), out, ix.due.length));
+        out += '<div class="v2-grid2"><div>' + colA + '</div><div>' + colB + '</div></div>';
+
+        v2Paint('home', v2Shell('today', v2Header(), '<div class="v2-bold">' + out + '</div>', ix.due.length));
         wireV2Shell();
         wireV2Common();
         wireV2Exam(function () { renderHomeV2(); });
@@ -6415,7 +6477,13 @@ window.addEventListener('error', function (ev) {
         if (su) su.onclick = function () { openAuthModal('signup', { reason: 'Create a free account to open 8 topics in every subject.' }); };
         var cu = document.getElementById('v2Custom');
         if (cu) cu.onclick = function () { setupChoice.count = 'all'; renderCustomSetup(); };
-        v2LoadMockState();
+        var qm = document.getElementById('v2QaMock');
+        if (qm) qm.onclick = function () { window.location.href = '/mock-test'; };
+        var qp = document.getElementById('v2QaPapers');
+        if (qp) qp.onclick = function () { var el = document.getElementById('v2Papers'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+        if (v2MockState === null) {
+          v2LoadMockState();
+        }
         v2WithHistory('home', renderHomeV2);
       }
 
@@ -6438,6 +6506,8 @@ window.addEventListener('error', function (ev) {
             v2MockState = res.data;
             var row = document.getElementById('v2Mock');
             if (row) row.outerHTML = v2MockRow();
+            var qa = document.getElementById('v2QaMock');
+            if (qa && v2MockState.live && !qa.querySelector('.v2-qa-badge')) qa.querySelector('.v2-qa-ic').insertAdjacentHTML('beforeend', '<span class="v2-qa-badge live">Live</span>');
           }, function () {});
         } catch (e) { }
       }
@@ -6484,7 +6554,7 @@ window.addEventListener('error', function (ev) {
           '<div class="v2-filters" role="group" aria-label="Filter subjects">' + cats.map(function (c) {
             return '<button class="v2-filter" data-cat-f="' + c[0] + '" aria-pressed="' + (v2SubjectFilter === c[0]) + '">' + c[1] + '</button>';
           }).join('') + '</div>' +
-          '<section class="v2-sec" id="v2SubjList">' + SUBJECT_INDEX.map(function (sx) { return v2SubjectRow(sx, ix); }).join('') + '</section>' +
+          '<div class="v2-tiles v2-sec" id="v2SubjList">' + SUBJECT_INDEX.map(function (sx) { return v2SubjectTile(sx, ix); }).join('') + '</div>' +
           '<p class="v2-empty" id="v2SubjNone" hidden>No subject matches.</p>' +
           '<section class="v2-sec"><h2 class="v2-h2">More ways to practise</h2>' +
           v2MockRow() +
