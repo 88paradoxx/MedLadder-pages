@@ -6256,6 +6256,213 @@ window.addEventListener('error', function (ev) {
       }
       function v2Plural(n, one, many) { return n.toLocaleString() + ' ' + (n === 1 ? one : (many || one + 's')); }
 
+      // ---- home extras: goal, search, question of the day, standing, badges ----
+      var V2_GOALS = [10, 20, 30, 50, 100];
+      function v2Goal() {
+        try { var g = parseInt(localStorage.getItem('ml_daily_goal'), 10); if (V2_GOALS.indexOf(g) !== -1) return g; } catch (e) { }
+        return 20;
+      }
+      function v2SetGoal(g) { try { localStorage.setItem('ml_daily_goal', String(g)); } catch (e) { } }
+
+      // Every topic in the bank, searchable from the home screen.
+      function v2SearchHtml() {
+        return '<div class="v2-gsearch"><label class="v2-sr" for="v2GSearch">Search all topics</label>' +
+          '<span class="v2-gsearch-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>' +
+          '<input id="v2GSearch" type="search" placeholder="Search 740 topics" autocomplete="off">' +
+          '<div class="v2-gsearch-res" id="v2GSearchRes" hidden></div></div>';
+      }
+      function wireV2Search() {
+        var input = document.getElementById('v2GSearch');
+        var box = document.getElementById('v2GSearchRes');
+        if (!input || !box) return;
+        var idx = v2ModIndex();
+        var all = Object.keys(idx).map(function (k) { return idx[k]; });
+        input.oninput = function () {
+          var q = input.value.trim().toLowerCase();
+          if (q.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
+          var hits = all.filter(function (x) {
+            return x.m.name.toLowerCase().indexOf(q) !== -1 || String(x.m.section || '').toLowerCase().indexOf(q) !== -1 || x.sx.name.toLowerCase().indexOf(q) !== -1;
+          }).sort(function (a, b) {
+            var an = a.m.name.toLowerCase().indexOf(q) === 0 ? 0 : 1, bn = b.m.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+            return an - bn;
+          }).slice(0, 8);
+          box.hidden = false;
+          box.innerHTML = hits.length ? hits.map(function (x) {
+            var locked = isModuleLocked(x.sx.subjectId, x.m.moduleId, x.index);
+            return '<button class="v2-gs-row" data-gs-sid="' + x.sx.subjectId + '" data-gs-mod="' + esc(x.m.moduleId) + '" data-gs-locked="' + locked + '">' +
+              v2SubjIcon(x.sx, 32) + '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(x.m.name) + '</span>' +
+              '<span class="v2-cont-s">' + esc(x.sx.name) + (x.m.section ? ' · ' + esc(x.m.section) : '') + ' · ' + x.m.questionCount + ' Qs</span></span>' +
+              (locked ? '<span class="v2-lock">' + v2LockSvg() + '</span>' : '') + '</button>';
+          }).join('') : '<p class="v2-gs-none">No topic matches “' + esc(input.value.trim()) + '”.</p>';
+          box.querySelectorAll('[data-gs-sid]').forEach(function (b) {
+            b.onclick = function () {
+              var sid = parseInt(b.getAttribute('data-gs-sid'), 10), mid = b.getAttribute('data-gs-mod');
+              if (b.getAttribute('data-gs-locked') === 'true') {
+                var mo = getSubjectModules(sid).find(function (m) { return String(m.moduleId) === mid; });
+                openProModal('locked_module', { subjectId: sid, moduleId: mid, moduleName: mo ? mo.name : 'This Topic' });
+                return;
+              }
+              renderSetup(sid, mid);
+            };
+          });
+        };
+        input.onkeydown = function (e) { if (e.key === 'Escape') { input.value = ''; input.oninput(); } };
+      }
+
+      // Question of the day: the same question for everyone on a given day,
+      // drawn from a topic this visitor can open, answered right on the card.
+      var v2Qotd = null;
+      function v2QotdPick() {
+        var open = [];
+        SUBJECT_INDEX.forEach(function (sx) {
+          getSubjectModules(sx.subjectId).forEach(function (m, i) {
+            if (m.questionCount > 0 && v2Accessible(sx, m, i)) open.push({ sx: sx, m: m });
+          });
+        });
+        if (!open.length) return null;
+        var day = v2Day(Date.now());
+        var pick = open[(day * 7919) % open.length];
+        return { sx: pick.sx, m: pick.m, n: (day * 104729) % Math.max(1, pick.m.questionCount), day: day };
+      }
+      function v2QotdHtml() {
+        return '<section class="v2-sec" id="v2Qotd"><h2 class="v2-h2b v2-h2b-row"><span>Question of the day</span><span class="v2-qotd-tag"></span></h2>' +
+          '<div class="v2-card2 v2-qotd" id="v2QotdCard"><p class="v2-qotd-wait">Loading today’s question…</p></div></section>';
+      }
+      function v2LoadQotd() {
+        var card = document.getElementById('v2QotdCard');
+        if (!card || !supabaseClient) return;
+        var pick = v2QotdPick();
+        if (!pick) { var sec = document.getElementById('v2Qotd'); if (sec) sec.hidden = true; return; }
+        var paint = function (q) {
+          if (!q) { var sec2 = document.getElementById('v2Qotd'); if (sec2) sec2.hidden = true; return; }
+          var key = 'ml_qotd_' + pick.day;
+          var picked = null;
+          try { picked = localStorage.getItem(key); } catch (e) { }
+          var tag = document.querySelector('#v2Qotd .v2-qotd-tag');
+          if (tag) tag.textContent = pick.sx.name;
+          var letters = ['A', 'B', 'C', 'D', 'E'].filter(function (L) { return q['option_' + L.toLowerCase()]; });
+          card.innerHTML = '<p class="v2-qotd-q">' + esc(stripHtmlPreview(q.question_text, 400)) + '</p>' +
+            '<div class="v2-qotd-opts">' + letters.map(function (L) {
+              var cls = 'v2-qotd-opt';
+              if (picked) { if (L === q.answer) cls += ' ok'; else if (L === picked) cls += ' bad'; else cls += ' dim'; }
+              return '<button class="' + cls + '" data-qotd="' + L + '"' + (picked ? ' disabled' : '') + '><span class="v2-qotd-l">' + L + '</span><span>' + esc(stripHtmlPreview(q['option_' + L.toLowerCase()], 200)) + '</span></button>';
+            }).join('') + '</div>' +
+            (picked ? '<p class="v2-qotd-res ' + (picked === q.answer ? 'ok' : 'bad') + '">' + (picked === q.answer ? 'Right. ' : 'The answer is ' + esc(q.answer) + '. ') +
+              '<span>' + esc(stripHtmlPreview(q.explanation, 260)) + '</span></p>' +
+              '<button class="v2-link" data-sid="' + pick.sx.subjectId + '" data-mod="' + esc(pick.m.moduleId) + '">Practise ' + esc(pick.m.name) + '</button>' : '');
+          card.querySelectorAll('[data-qotd]').forEach(function (b) {
+            b.onclick = function () { try { localStorage.setItem(key, b.getAttribute('data-qotd')); } catch (e) { } paint(q); };
+          });
+          card.querySelectorAll('[data-sid][data-mod]').forEach(function (b) {
+            b.onclick = function () { renderSetup(parseInt(b.getAttribute('data-sid'), 10), b.getAttribute('data-mod')); };
+          });
+        };
+        if (v2Qotd && v2Qotd.day === pick.day) { paint(v2Qotd.q); return; }
+        supabaseClient.from('questions').select('id,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,has_image')
+          .eq('module_id', pick.m.id).order('id', { ascending: true }).limit(60)
+          .then(function (res) {
+            var rows = ((res && !res.error && res.data) || []).filter(function (r) { return !r.has_image && r.question_text && r.option_a; });
+            var q = rows.length ? rows[pick.n % rows.length] : null;
+            v2Qotd = { day: pick.day, q: q };
+            paint(q);
+          }, function () { paint(null); });
+      }
+
+      // This week against other students (aggregate RPC).
+      function v2LoadStanding() {
+        var el = document.getElementById('v2Standing');
+        if (!el || !currentUser || !supabaseClient) return;
+        try {
+          supabaseClient.rpc('weekly_standing').then(function (res) {
+            var d = res && !res.error && res.data;
+            if (!d || !document.getElementById('v2Standing')) return;
+            var mine = Number(d.mine) || 0, last = Number(d.last_week) || 0, active = Number(d.active) || 0, beat = Number(d.beat) || 0;
+            var others = Math.max(0, active - (mine ? 1 : 0));
+            var pct = others ? Math.round((100 * beat) / others) : null;
+            var trend = last ? Math.round((100 * (mine - last)) / last) : null;
+            el.innerHTML = '<div class="v2-stand-main"><strong>' + mine.toLocaleString() + '</strong><span>answers this week</span>' +
+              (trend != null ? '<span class="v2-trend ' + (trend >= 0 ? 'up' : 'down') + '">' + (trend >= 0 ? '↑ ' : '↓ ') + Math.abs(trend) + '% vs last week</span>' : (mine ? '<span class="v2-trend up">New this week</span>' : '')) + '</div>' +
+              (pct != null && mine ? '<div class="v2-stand-side"><strong>' + (pct >= 50 ? 'Top ' + Math.max(1, 100 - pct) + '%' : pct + '%') + '</strong><span>' + (pct >= 50 ? 'of students practising this week' : 'of this week’s students answered less') + '</span></div>' : '');
+            el.hidden = false;
+          }, function () { });
+        } catch (e) { }
+      }
+
+      // Badges, all from the answer history.
+      function v2Badges(rd, ix) {
+        var days = rd ? rd.days : {};
+        var keys = Object.keys(days).map(Number).sort(function (a, b) { return a - b; });
+        var best = 0, run = 0, prev = null;
+        keys.forEach(function (k) { run = (prev !== null && k === prev + 1) ? run + 1 : 1; prev = k; if (run > best) best = run; });
+        var answered = ix.seen;
+        var topicsDone = 0, sharp = 0;
+        SUBJECT_INDEX.forEach(function (sx) {
+          v2SubjectStats(sx, ix).mods.forEach(function (x) {
+            if (x.st.status === 'done') topicsDone++;
+            if (x.st.seen >= 20 && x.st.pct != null && x.st.pct >= 80) sharp++;
+          });
+        });
+        var list = [
+          { id: 'first', t: 'First answer', d: 'Answer your first question', v: answered, goal: 1, ic: '✨' },
+          { id: 'c100', t: 'Century', d: '100 questions answered', v: answered, goal: 100, ic: '💯' },
+          { id: 'c1000', t: 'Thousand', d: '1,000 questions answered', v: answered, goal: 1000, ic: '🏆' },
+          { id: 's3', t: 'On a roll', d: '3 days in a row', v: best, goal: 3, ic: '🔥' },
+          { id: 's7', t: 'Full week', d: '7 days in a row', v: best, goal: 7, ic: '📅' },
+          { id: 'td1', t: 'Topic cleared', d: 'Answer every question in a topic', v: topicsDone, goal: 1, ic: '✅' },
+          { id: 'td10', t: 'Ten topics', d: 'Clear 10 topics', v: topicsDone, goal: 10, ic: '🧠' },
+          { id: 'sharp', t: 'Sharp', d: '80%+ in a topic with 20+ answers', v: sharp, goal: 1, ic: '🎯' }
+        ];
+        var earned = list.filter(function (b) { return b.v >= b.goal; });
+        var next = list.filter(function (b) { return b.v < b.goal; }).sort(function (a, b) { return (b.v / b.goal) - (a.v / a.goal); })[0];
+        return { earned: earned, next: next, total: list.length };
+      }
+      function v2BadgesHtml(rd, ix) {
+        var b = v2Badges(rd, ix);
+        return '<section class="v2-sec"><h2 class="v2-h2b v2-h2b-row"><span>Badges</span><span class="v2-qotd-tag">' + b.earned.length + ' of ' + b.total + '</span></h2>' +
+          '<div class="v2-card2 v2-badges">' +
+          (b.earned.length ? '<div class="v2-badge-row">' + b.earned.map(function (x) {
+            return '<span class="v2-bdg" title="' + esc(x.d) + '"><span class="v2-bdg-ic">' + x.ic + '</span><span>' + esc(x.t) + '</span></span>';
+          }).join('') + '</div>' : '<p class="v2-qotd-wait">Answer your first question to earn your first badge.</p>') +
+          (b.next ? '<div class="v2-bdg-next"><span class="v2-bdg-ic dim">' + b.next.ic + '</span><span class="v2-cont-main"><span class="v2-cont-t">Next: ' + esc(b.next.t) + '</span><span class="v2-cont-s">' + esc(b.next.d) + ' · ' + Math.min(b.next.v, b.next.goal).toLocaleString() + ' of ' + b.next.goal.toLocaleString() + '</span>' +
+            '<span class="v2-tile-bar"><span style="width:' + Math.round(100 * Math.min(1, b.next.v / b.next.goal)) + '%"></span></span></span></div>' : '') +
+          '</div></section>';
+      }
+
+      // Last three sessions, filled in after the page paints.
+      function v2LoadRecent() {
+        var el = document.getElementById('v2Recent');
+        if (!el || !currentUser || !supabaseClient) return;
+        try {
+          supabaseClient.from('attempts').select('id,subject_id,module_id,question_count,score_pct,started_at,finished_at,attempt_answers(count)')
+            .eq('user_id', currentUser.id).order('started_at', { ascending: false }).limit(3)
+            .then(function (res) {
+              var rows = (res && !res.error && res.data) || [];
+              if (!rows.length || !document.getElementById('v2Recent')) return;
+              var idx = v2ModIndex();
+              el.innerHTML = '<h2 class="v2-h2b">Recent sessions</h2>' + rows.map(function (r) {
+                var info = r.module_id != null ? idx[r.module_id] : null;
+                var sx = info ? info.sx : SUBJECT_INDEX.find(function (x) { return String(x.subjectId) === String(r.subject_id); });
+                var label = info ? info.m.name : (sx ? sx.name + ' mixed' : 'Mixed set');
+                var when = '';
+                try { when = new Date(r.started_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { }
+                var n = r.attempt_answers && r.attempt_answers[0] ? r.attempt_answers[0].count : null;
+                var score = (r.finished_at && r.score_pct != null) ? '<span class="v2-badge ' + (r.score_pct >= 60 ? 'ok' : 'bad') + '">' + r.score_pct + '%</span>' : '<span class="v2-cont-s">' + (n != null ? n + ' of ' + (r.question_count || '?') : 'Not finished') + '</span>';
+                return '<div class="v2-card2 v2-weak v2-recent">' + (sx ? v2SubjIcon(sx, 36) : '<span class="v2-subj-ic" style="width:36px;height:36px"></span>') +
+                  '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(label) + '</span><span class="v2-cont-s">' + esc(when) + (r.question_count ? ' · ' + r.question_count + ' questions' : '') + '</span></span>' + score + '</div>';
+              }).join('');
+              el.hidden = false;
+            }, function () { });
+        } catch (e) { }
+      }
+
+      function v2ProCardHtml() {
+        if (!currentUser || isUserPro(currentUser)) return '';
+        return '<section class="v2-sec"><div class="v2-card2 v2-pro">' +
+          '<div class="v2-cont-main"><span class="v2-pro-k">MedLadder Pro</span><span class="v2-pro-h">All 740 topics, past papers and full-subject mocks</span>' +
+          '<span class="v2-cont-s">From ₹' + PRO_CONFIG.PRICE_INR + ' a month. You are using ' + (SUBJECT_INDEX.length * PRO_CONFIG.FREE_MODULES_PER_SUBJECT) + ' free topics.</span></div>' +
+          '<button class="v2-btn v2-pro-btn" id="v2ProBtn">See plans</button></div></section>';
+      }
+
       // ---- home (bold) ----------------------------------------------------------
       // One strong card for today's set, quick actions, then progress and
       // subjects as tiles with their illustrations.
@@ -6333,6 +6540,7 @@ window.addEventListener('error', function (ev) {
         var out = '<div class="v2-hello"><h1 class="v2-hello-h">' + (currentUser ? v2Greeting() : 'Welcome to MedLadder') + '</h1>' + examChip + '</div>';
         // The editor form from the exam line, without its text.
         out += v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '');
+        out += v2SearchHtml();
 
         // ---- hero
         var heroBody, heroBtn = '';
@@ -6363,7 +6571,7 @@ window.addEventListener('error', function (ev) {
             p2 = [nReview ? nReview + ' due for review' : '', plan.newN ? plan.newN + ' new' : ''].filter(Boolean).join(' · ');
             if (plan.newN && newFrom.length) p2 += '<span class="v2-hero-from">New from ' + esc(newFrom[0]) + (newFrom.length > 1 ? ' and 1 more topic' : '') + '</span>';
           }
-          var goal = Math.max(plan.size, V2_SET_SIZE);
+          var goal = v2Goal();
           var mins = Math.max(1, Math.round(plan.size * 0.75));
           out += '<section class="v2-hero">' +
             '<div class="v2-hero-main">' +
@@ -6372,7 +6580,10 @@ window.addEventListener('error', function (ev) {
             '<p class="v2-hero-p">' + p2 + '</p>' +
             '</div>' +
             v2Ring(doneToday / goal, 92, 9, 'v2-ring-hero', '<strong>' + Math.min(doneToday, 999) + '</strong><small>of ' + goal + ' today</small>') +
-            '<div class="v2-hero-actions">' + (plan.size ? '<button class="v2-hero-btn" id="v2TodayBtn">Start today’s set</button>' : '<button class="v2-hero-btn" data-nav-go="subjects">Browse subjects</button>') + '</div>' +
+            '<div class="v2-hero-actions">' + (plan.size ? '<button class="v2-hero-btn" id="v2TodayBtn">Start today’s set</button>' : '<button class="v2-hero-btn" data-nav-go="subjects">Browse subjects</button>') +
+            '<button class="v2-hero-link" id="v2GoalBtn" aria-expanded="false">Daily goal: ' + goal + ' questions</button>' +
+            '<div class="v2-goal-pick" id="v2GoalPick" hidden>' + V2_GOALS.map(function (gv) { return '<button class="v2-goal-opt' + (gv === goal ? ' on' : '') + '" data-goal="' + gv + '">' + gv + '</button>'; }).join('') + '</div>' +
+            '</div>' +
             '</section>';
         }
 
@@ -6411,6 +6622,8 @@ window.addEventListener('error', function (ev) {
             v2Ring(fr, 46, 5, 'v2-ring-cont', Math.round(fr * 100) + '%') + '</button></section>';
         }
 
+        colA += v2QotdHtml() + v2ProCardHtml();
+
         // ---- stats + week
         if (currentUser) {
           var dd = dashboardData(v2EffectiveProgress());
@@ -6431,8 +6644,10 @@ window.addEventListener('error', function (ev) {
             '<div class="v2-card2 v2-stat"><span class="v2-stat-ic acc">' + v2Icon('target') + '</span><strong>' + (acc == null ? '–' : acc + '%') + '</strong><span>accuracy</span></div>' +
             '<div class="v2-card2 v2-stat"><span class="v2-stat-ic top">' + v2Icon('layers') + '</span><strong>' + topicsStarted + '</strong><span>of 740 topics</span></div>' +
             '</div>' +
+            '<div class="v2-card2 v2-stand" id="v2Standing" hidden></div>' +
             '<div class="v2-card2 v2-week2"><div class="v2-week2-h"><span>This week</span><span>' + (streak ? streak + '-day streak' : 'Start a streak today') + '</span></div><div class="v2-week2-row">' + strip + '</div></div>' +
             '<button class="v2-link v2-more" data-nav-go="progress">See all progress</button></section>';
+          colB += v2BadgesHtml(rd, ix);
         }
 
         // ---- needs work
@@ -6457,6 +6672,7 @@ window.addEventListener('error', function (ev) {
         colA += '<section class="v2-sec"><h2 class="v2-h2b v2-h2b-row"><span>Subjects</span><button class="v2-link" data-nav-go="subjects">All ' + SUBJECT_INDEX.length + '</button></h2>' +
           '<div class="v2-tiles">' + shown.map(function (sx) { return v2SubjectTile(sx, ix); }).join('') + '</div></section>';
 
+        colB += '<section class="v2-sec" id="v2Recent" hidden></section>';
         // ---- past papers
         colB += '<section class="v2-sec" id="v2Papers"><h2 class="v2-h2b v2-h2b-row"><span>Past papers</span>' + (pro ? '' : '<span class="v2-pro-tag">Pro</span>') + '</h2><div class="v2-chips">' +
           PYQ_EXAMS.map(function (ex) {
@@ -6483,6 +6699,19 @@ window.addEventListener('error', function (ev) {
         if (qp) qp.onclick = function () { var el = document.getElementById('v2Papers'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
         if (v2MockState === null) {
           v2LoadMockState();
+        }
+        wireV2Search();
+        v2LoadQotd();
+        v2LoadStanding();
+        v2LoadRecent();
+        var pb = document.getElementById('v2ProBtn');
+        if (pb) pb.onclick = function () { openProModal('banner', {}); };
+        var gb = document.getElementById('v2GoalBtn'), gp = document.getElementById('v2GoalPick');
+        if (gb && gp) {
+          gb.onclick = function () { gp.hidden = !gp.hidden; gb.setAttribute('aria-expanded', String(!gp.hidden)); };
+          gp.querySelectorAll('[data-goal]').forEach(function (o) {
+            o.onclick = function () { v2SetGoal(parseInt(o.getAttribute('data-goal'), 10)); renderHomeV2(); };
+          });
         }
         v2WithHistory('home', renderHomeV2);
       }
