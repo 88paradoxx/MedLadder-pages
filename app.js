@@ -5580,144 +5580,148 @@ window.addEventListener('error', function (ev) {
         clearTimer();
         releaseQuizPayload();
         state.screen = 'dashboard';
+        state.idSet = null;
         scrollToPageTop();
         if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
         trackPageView('/dashboard', 'dashboard');
 
+        var rd = v2HaveHistory() ? reviewData : null;
+        var ix = v2Index(rd);
         var ep = v2EffectiveProgress();
-        var fromHistory = v2HaveHistory() && Object.keys(reviewData.q).length > 0;
+        var fromHistory = !!(rd && Object.keys(rd.q).length);
         var totalAnswers = 0;
-        if (fromHistory) Object.keys(reviewData.q).forEach(function (k) { totalAnswers += reviewData.q[k].n; });
+        if (fromHistory) Object.keys(rd.q).forEach(function (k) { totalAnswers += rd.q[k].n; });
         var d = dashboardData(ep);
-        var started = d.subjects.filter(function (sb) { return sb.done > 0; })
-          .sort(function (a, b) { return b.pct - a.pct || b.done - a.done; });
-        var untouched = d.subjects.filter(function (sb) { return !sb.done; });
-        var ranked = started.filter(function (sb) { return sb.done >= DASH_MIN_SUBJECT; });
-        var pick = Math.min(3, Math.floor(ranked.length / 2));
-        var strongest = ranked.slice(0, pick);
-        var weakest = ranked.slice(ranked.length - pick).reverse();
         var overallPct = d.done > 0 ? Math.round((d.correct / d.done) * 100) : null;
+        var subjStats = SUBJECT_INDEX.map(function (sx) { return { sx: sx, ss: v2SubjectStats(sx, ix), dd: d.subjects.find(function (b) { return String(b.subjectId) === String(sx.subjectId); }) }; });
+        var startedSubj = subjStats.filter(function (r) { return r.dd && r.dd.done > 0; });
+        var topicsStarted = subjStats.reduce(function (n, r) { return n + r.ss.started; }, 0);
+        var topicsDone = subjStats.reduce(function (n, r) { return n + r.ss.done; }, 0);
+        var days = rd ? rd.days : {};
+        var today = v2Day(Date.now());
+        var streak = 0;
+        for (var s0 = (days[today] ? today : today - 1); days[s0]; s0--) streak++;
+        var keys = Object.keys(days).map(Number).sort(function (a, b) { return a - b; });
+        var best = 0, run = 0, prev = null;
+        keys.forEach(function (k) { run = (prev !== null && k === prev + 1) ? run + 1 : 1; prev = k; if (run > best) best = run; });
 
-        var rankList = function (list, tone) {
-          return '<ol class="rr-rank">' + list.map(function (sb) {
-            return '<li><button class="rr-rank-row" data-subject="' + esc(String(sb.subjectId)) + '">' +
-              '<span class="rr-rank-name">' + esc(sb.name) + '</span>' +
-              '<span class="rr-rank-meta">' + sb.done.toLocaleString() + ' answered</span>' +
-              '<span class="rr-rank-pct ' + tone + '">' + sb.pct + '%</span>' +
-              '</button></li>';
-          }).join('') + '</ol>';
-        };
+        var body = '<div class="v2-bold v2-dash"><h1 class="v2-hello-h">Your progress</h1>' +
+          '<p class="v2-sub">' + (fromHistory ? 'Each question counts once, scored on your latest answer to it.' : 'Counted from your most recent run of each topic.') + '</p>';
 
-        var strengthsHtml = pick > 0
-          ? '<div class="rr-dash-cols">' +
-            '<section><h2 class="rr-h2">Strongest subjects</h2>' + rankList(strongest, 'ok') + '</section>' +
-            '<section><h2 class="rr-h2">Needs work</h2>' + rankList(weakest, 'bad') + '</section>' +
-            '</div>'
-          : '<section><h2 class="rr-h2">Strongest and weakest subjects</h2>' +
-            '<p class="rr-dash-note">Answer at least ' + DASH_MIN_SUBJECT + ' questions in two subjects and they will be ranked here.</p></section>';
+        if (!d.done) {
+          body += '<section class="v2-hero v2-hero-compact"><div class="v2-hero-main"><p class="v2-hero-k">Nothing yet</p><h2 class="v2-hero-h">Answer a few questions to see your progress</h2>' +
+            '<p class="v2-hero-p">Accuracy, strong and weak subjects and topics to revisit all appear here.</p></div>' +
+            '<div class="v2-hero-actions"><button class="v2-hero-btn" id="dashBrowseBtn">Browse subjects</button></div></section></div>';
+        } else {
+          // hero: overall accuracy
+          body += '<section class="v2-hero v2-hero-compact"><div class="v2-hero-main"><p class="v2-hero-k">Overall' + (streak ? '<span class="v2-streak">' + v2Icon('flame') + streak + '-day streak</span>' : '') + '</p>' +
+            '<h2 class="v2-hero-h">' + d.done.toLocaleString() + ' questions answered</h2>' +
+            '<p class="v2-hero-p">' + d.correct.toLocaleString() + ' right on your latest answer' + (totalAnswers > d.done ? ' · ' + totalAnswers.toLocaleString() + ' answers with repeats' : '') + '</p></div>' +
+            v2Ring((overallPct || 0) / 100, 92, 9, 'v2-ring-hero', '<strong>' + overallPct + '%</strong><small>accuracy</small>') + '</section>';
 
-        var subjectRows = started.map(function (sb) {
-          return '<li><button class="rr-sub-row" data-subject="' + esc(String(sb.subjectId)) + '">' +
-            '<span class="rr-sub-name">' + esc(sb.name) + '</span>' +
-            '<span class="rr-sub-count">' + sb.correct.toLocaleString() + ' / ' + sb.done.toLocaleString() + '</span>' +
-            '<span class="rr-sub-bar" aria-hidden="true"><i style="width:' + sb.pct + '%"></i></span>' +
-            '<span class="rr-sub-pct">' + sb.pct + '%</span>' +
-            '</button></li>';
-        }).join('');
-        var untouchedHtml = untouched.length
-          ? '<p class="rr-dash-note">Not started yet: ' + untouched.map(function (sb) {
-            return '<button class="rr-inline-link" data-subject="' + esc(String(sb.subjectId)) + '">' + esc(sb.name) + '</button>';
-          }).join(', ') + '.</p>'
-          : '';
+          body += '<div class="v2-stat3 v2-stat4">' +
+            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic top">' + v2Icon('layers') + '</span><strong>' + topicsStarted + '</strong><span>topics started</span></div>' +
+            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic ok">' + v2Icon('check') + '</span><strong>' + topicsDone + '</strong><span>topics cleared</span></div>' +
+            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic acc">' + v2Icon('target') + '</span><strong>' + startedSubj.length + '<small> / 19</small></strong><span>subjects started</span></div>' +
+            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic fl">' + v2Icon('flame') + '</span><strong>' + best + '</strong><span>best streak (days)</span></div>' +
+            '</div>';
 
-        var revisit = d.topics.filter(function (t) { return t.done >= DASH_MIN_TOPIC && t.pct < 60; })
-          .sort(function (a, b) { return a.pct - b.pct || b.done - a.done; }).slice(0, 6);
-        var revisitHtml = revisit.length
-          ? '<section><h2 class="rr-h2">Topics to revisit</h2><ul class="rr-topic-list">' + revisit.map(function (t) {
-            return '<li><button class="rr-topic-row" data-subject="' + esc(String(t.subjectId)) + '" data-module="' + esc(String(t.moduleId)) + '">' +
-              '<span class="rr-topic-text"><span class="rr-topic-name">' + esc(t.name) + '</span>' +
-              '<span class="rr-topic-sub">' + esc(t.subjectName) + ' \u00b7 ' + t.correct + ' of ' + t.done + ' correct</span></span>' +
-              '<span class="rr-topic-go">Practise</span>' +
-              '</button></li>';
-          }).join('') + '</ul></section>'
-          : '';
+          // last 4 weeks
+          if (fromHistory) {
+            var cells = '', maxN = 1;
+            for (var k2 = 27; k2 >= 0; k2--) maxN = Math.max(maxN, days[today - k2] || 0);
+            for (var k = 27; k >= 0; k--) {
+              var n = days[today - k] || 0;
+              var lvl = n ? Math.min(4, 1 + Math.floor((3 * n) / maxN)) : 0;
+              var dt = new Date(Date.now() - k * 86400000);
+              cells += '<span class="v2-heat l' + lvl + (k === 0 ? ' now' : '') + '" title="' + esc(dt.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })) + ': ' + v2Plural(n, 'answer') + '"></span>';
+            }
+            body += '<section class="v2-sec"><h2 class="v2-h2b v2-h2b-row"><span>Last four weeks</span><span class="v2-qotd-tag">' + Object.keys(days).filter(function (x) { return Number(x) > today - 28; }).length + ' days practised</span></h2>' +
+              '<div class="v2-card2 v2-heatmap"><div class="v2-heat-grid">' + cells + '</div><div class="v2-heat-key"><span>Less</span><i class="v2-heat l0"></i><i class="v2-heat l1"></i><i class="v2-heat l2"></i><i class="v2-heat l3"></i><i class="v2-heat l4"></i><span>More</span></div></div></section>';
+          }
 
-        // Up next: in every subject where at least one topic has been worked
-        // through to its last question, the first topic in syllabus order
-        // that has not.
-        var upNext = [];
-        SUBJECT_INDEX.forEach(function (sx) {
-          var mods = getSubjectModules(sx.subjectId);
-          var finished = 0, next = null;
-          mods.forEach(function (m, i) {
-            if (!m.questionCount) return;
-            var p = ep[sx.subjectId + ':' + m.moduleId];
-            var doneCount = p ? Math.min(p.done || 0, m.questionCount) : 0;
-            if (doneCount >= m.questionCount) { finished++; return; }
-            if (!next) next = { subjectId: sx.subjectId, subjectName: sx.name, moduleId: m.moduleId, name: m.name, questionCount: m.questionCount, done: doneCount, locked: isModuleLocked(sx.subjectId, m.moduleId, i) };
+          // up next
+          var upNext = [];
+          subjStats.forEach(function (r) {
+            if (!r.ss.started) return;
+            var nx = v2NextIn(r.ss, v2LastModuleIn(r.ss));
+            if (nx) upNext.push({ sx: r.sx, x: nx });
           });
-          if (finished > 0 && next) { next.finished = finished; next.totalTopics = mods.length; upNext.push(next); }
-        });
-        var upNextHtml = upNext.length
-          ? '<section><h2 class="rr-h2">Up next</h2><ul class="rr-topic-list rr-next-list">' + upNext.slice(0, 8).map(function (t) {
-            return '<li><button class="rr-topic-row" data-subject="' + esc(String(t.subjectId)) + '" data-module="' + esc(String(t.moduleId)) + '">' +
-              '<span class="rr-topic-text"><span class="rr-topic-name">' + esc(t.name) + '</span>' +
-              '<span class="rr-topic-sub">' + esc(t.subjectName) + ' \u00b7 ' + t.finished + ' of ' + t.totalTopics + ' topics completed \u00b7 ' +
-              (t.done > 0 ? t.done + ' of ' + t.questionCount + ' answered' : t.questionCount + ' questions') + '</span></span>' +
-              '<span class="rr-topic-go' + (t.locked ? '' : ' rr-topic-go-primary') + '">' + (t.locked ? 'Pro' : (t.done > 0 ? 'Continue' : 'Start')) + '</span>' +
-              '</button></li>';
-          }).join('') + '</ul></section>'
-          : '';
+          if (upNext.length) {
+            body += '<section class="v2-sec"><h2 class="v2-h2b">Up next</h2>' + upNext.slice(0, 5).map(function (u) {
+              var fr = u.x.st.seen / (u.x.st.total || 1);
+              return '<button class="v2-card2 v2-weak" data-subject="' + u.sx.subjectId + '" data-module="' + esc(u.x.m.moduleId) + '">' + v2SubjIcon(u.sx, 40) +
+                '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(u.x.m.name) + '</span><span class="v2-cont-s">' + esc(u.sx.name) + ' · ' +
+                (u.x.st.seen ? (u.x.st.total - u.x.st.seen) + ' left' : v2Plural(u.x.m.questionCount, 'question')) + '</span></span>' +
+                v2Ring(fr, 40, 4, 'v2-ring-cont', Math.round(fr * 100) + '%') + '</button>';
+            }).join('') + '</section>';
+          }
 
-        var bodyHtml = d.done > 0
-          ? '<dl class="rr-stats">' +
-            '<div><dt>Questions answered</dt><dd>' + d.done.toLocaleString() + '</dd>' + (totalAnswers > d.done ? '<span class="rr-stat-foot">' + totalAnswers.toLocaleString() + ' answers with repeats</span>' : '') + '</div>' +
-            '<div><dt>Accuracy</dt><dd>' + overallPct + '%</dd><span class="rr-stat-foot">' + d.correct.toLocaleString() + ' correct</span></div>' +
-            '<div><dt>Topics started</dt><dd>' + d.topicsStarted.toLocaleString() + '</dd><span class="rr-stat-foot">in ' + started.length + ' of ' + d.subjects.length + ' subjects</span></div>' +
-            '</dl>' +
-            upNextHtml +
-            strengthsHtml +
-            '<section><h2 class="rr-h2">All subjects</h2><ul class="rr-sub-list">' + subjectRows + '</ul>' + untouchedHtml + '</section>' +
-            (d.pyqDone > 0 ? '<section><h2 class="rr-h2">Past papers</h2><p class="rr-dash-note">' + d.pyqCorrect.toLocaleString() + ' of ' + d.pyqDone.toLocaleString() + ' correct (' + Math.round((d.pyqCorrect / d.pyqDone) * 100) + '%).</p></section>' : '') +
-            revisitHtml +
-            '<section id="dashRecent"></section>'
-          : '<dl class="rr-stats">' +
-            '<div><dt>Questions answered</dt><dd>0</dd></div>' +
-            '<div><dt>Accuracy</dt><dd>\u2014</dd></div>' +
-            '<div><dt>Topics started</dt><dd>0</dd><span class="rr-stat-foot">in 0 of ' + d.subjects.length + ' subjects</span></div>' +
-            '</dl>' +
-            '<section class="rr-dash-empty"><p>Nothing to show yet. Finish a few questions in any topic and your accuracy, strongest subjects and weak spots will appear here.</p>' +
-            '<button class="btn" id="dashBrowseBtn">Browse subjects</button></section>';
+          // strong and weak subjects
+          var ranked = startedSubj.filter(function (r) { return r.dd.done >= DASH_MIN_SUBJECT; }).sort(function (a, b) { return b.dd.pct - a.dd.pct; });
+          var pick = Math.min(3, Math.floor(ranked.length / 2));
+          var rankCard = function (r, tone) {
+            return '<button class="v2-card2 v2-weak" data-subject="' + r.sx.subjectId + '">' + v2SubjIcon(r.sx, 36) +
+              '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(r.sx.name) + '</span><span class="v2-cont-s">' + r.dd.done.toLocaleString() + ' answered</span></span>' +
+              '<span class="v2-badge ' + tone + '">' + r.dd.pct + '%</span></button>';
+          };
+          body += pick > 0
+            ? '<div class="v2-cols2"><section class="v2-sec"><h2 class="v2-h2b">Strongest</h2>' + ranked.slice(0, pick).map(function (r) { return rankCard(r, 'ok'); }).join('') + '</section>' +
+              '<section class="v2-sec"><h2 class="v2-h2b">Needs work</h2>' + ranked.slice(ranked.length - pick).reverse().map(function (r) { return rankCard(r, 'bad'); }).join('') + '</section></div>'
+            : '<section class="v2-sec"><h2 class="v2-h2b">Strongest and weakest</h2><div class="v2-card2 v2-qotd"><p class="v2-qotd-wait">Answer at least ' + DASH_MIN_SUBJECT + ' questions in two subjects and they will be ranked here.</p></div></section>';
 
-        app.innerHTML =
-          rrTopBar('Back to home', 'Home') +
-          '<main id="mainContent" role="main" class="rr-dash">' +
-          '<h1 class="rr-dash-title">My progress</h1>' +
-          '<p class="rr-dash-sub">' + (fromHistory
-            ? 'Each question is counted once, scored on your latest answer to it: a question you missed and later got right counts as right.'
-            : 'Counted from your most recent run of each topic.') + '</p>' +
-          bodyHtml +
-          '</main>';
-        wireTopBar(renderHome);
-        if (!v2HaveHistory()) {
-          loadReviewData().then(function (rd) {
-            if (rd && state.screen === 'dashboard') { var y = window.scrollY; renderDashboard(); window.scrollTo(0, y); }
-          });
+          // topics to revisit
+          var revisit = d.topics.filter(function (t) { return t.done >= DASH_MIN_TOPIC && t.pct < 60; })
+            .sort(function (a, b) { return a.pct - b.pct || b.done - a.done; }).slice(0, 6);
+          if (revisit.length) {
+            body += '<section class="v2-sec"><h2 class="v2-h2b">Topics to revisit</h2>' + revisit.map(function (t) {
+              var sx = SUBJECT_INDEX.find(function (x) { return String(x.subjectId) === String(t.subjectId); });
+              return '<button class="v2-card2 v2-weak" data-subject="' + t.subjectId + '" data-module="' + esc(String(t.moduleId)) + '">' + (sx ? v2SubjIcon(sx, 36) : '') +
+                '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(t.name) + '</span><span class="v2-cont-s">' + esc(t.subjectName) + ' · ' + t.correct + ' of ' + t.done + ' right</span></span>' +
+                '<span class="v2-pct-bad">' + t.pct + '%</span></button>';
+            }).join('') + '</section>';
+          }
+
+          // every subject
+          body += '<section class="v2-sec"><h2 class="v2-h2b">All subjects</h2><div class="v2-card2 v2-subjlist">' + subjStats.map(function (r) {
+            var done = r.dd ? r.dd.done : 0;
+            var pct = r.dd && r.dd.pct != null ? r.dd.pct : null;
+            var cov = r.ss.started / (r.ss.total || 1);
+            return '<button class="v2-sl-row" data-subject="' + r.sx.subjectId + '">' + v2SubjIcon(r.sx, 34) +
+              '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(r.sx.name) + '</span>' +
+              '<span class="v2-cont-s">' + r.ss.started + ' of ' + r.ss.total + ' topics' + (done ? ' · ' + done.toLocaleString() + ' answered' : '') + '</span>' +
+              '<span class="v2-tile-bar"><span style="width:' + Math.round(cov * 100) + '%"></span></span></span>' +
+              '<span class="v2-sl-pct' + (pct == null ? ' none' : pct >= 70 ? ' ok' : pct < 50 ? ' bad' : '') + '">' + (pct == null ? '–' : pct + '%') + '</span></button>';
+          }).join('') + '</div></section>';
+
+          if (d.pyqDone > 0) {
+            body += '<section class="v2-sec"><h2 class="v2-h2b">Past papers</h2><div class="v2-card2 v2-weak" style="cursor:default"><span class="v2-qa-ic v2-qa-papers" style="width:40px;height:40px;border-radius:12px">' + v2Icon('papers') + '</span>' +
+              '<span class="v2-cont-main"><span class="v2-cont-t">' + d.pyqCorrect.toLocaleString() + ' of ' + d.pyqDone.toLocaleString() + ' right</span><span class="v2-cont-s">Across every paper you have tried</span></span>' +
+              '<span class="v2-badge">' + Math.round((d.pyqCorrect / d.pyqDone) * 100) + '%</span></div></section>';
+          }
+          body += '<section class="v2-sec" id="dashRecent"></section></div>';
         }
 
-        app.querySelectorAll('.rr-dash [data-subject]').forEach(function (btn) {
+        var useV2 = v2On();
+        app.innerHTML = useV2
+          ? v2Shell('progress', v2Header('Back to today', 'Progress'), body, ix.due.length)
+          : rrTopBar('Back to home', 'Home') + '<main id="mainContent" role="main" class="rr-dash v2-main">' + body + '</main>';
+        if (useV2) { wireV2Shell(); } else { wireTopBar(renderHome); }
+        if (!v2HaveHistory()) {
+          loadReviewData().then(function (r2) {
+            if (r2 && state.screen === 'dashboard') { var y = window.scrollY; renderDashboard(); window.scrollTo(0, y); }
+          });
+        }
+        app.querySelectorAll('.v2-dash [data-subject]').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            var sid = btn.getAttribute('data-subject');
-            var sx = SUBJECT_INDEX.find(function (x) { return String(x.subjectId) === sid; });
-            if (!sx) return;
+            var sid = parseInt(btn.getAttribute('data-subject'), 10);
             var mid = btn.getAttribute('data-module');
-            if (mid) renderSetup(sx.subjectId, mid); else renderModuleList(sx.subjectId);
+            if (mid) renderSetup(sid, mid); else renderModuleList(sid);
           });
         });
         var browseBtn = document.getElementById('dashBrowseBtn');
-        if (browseBtn) browseBtn.onclick = function () { renderHome(); };
+        if (browseBtn) browseBtn.onclick = function () { if (useV2) renderSubjectsV2(); else renderHome(); };
 
-        // Recent sessions arrive separately; the page is complete without them.
         var recentEl = document.getElementById('dashRecent');
         if (!recentEl || !supabaseClient) return;
         try {
@@ -5728,18 +5732,18 @@ window.addEventListener('error', function (ev) {
               if (state.screen !== 'dashboard' || !document.getElementById('dashRecent')) return;
               var rows = (res && !res.error && res.data) || [];
               if (!rows.length) return;
-              recentEl.innerHTML = '<h2 class="rr-h2">Recent sessions</h2><ul class="rr-recent">' + rows.map(function (r) {
-                var sx = SUBJECT_INDEX.find(function (x) { return String(x.subjectId) === String(r.subject_id); });
-                var mod = sx && r.module_id != null ? getSubjectModules(sx.subjectId).find(function (m) { return String(m.id) === String(r.module_id); }) : null;
-                var label = mod ? mod.name : (sx ? sx.name + ' \u2014 mixed topics' : 'Mixed set');
+              var idx = v2ModIndex();
+              recentEl.innerHTML = '<h2 class="v2-h2b">Recent sessions</h2>' + rows.map(function (r) {
+                var info = r.module_id != null ? idx[r.module_id] : null;
+                var sx = info ? info.sx : SUBJECT_INDEX.find(function (x) { return String(x.subjectId) === String(r.subject_id); });
+                var label = info ? info.m.name : (sx ? sx.name + ' mixed' : 'Mixed set');
                 var when = '';
-                try { when = new Date(r.started_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) {}
-                var answeredN = r.attempt_answers && r.attempt_answers[0] ? r.attempt_answers[0].count : null;
-                var result = (r.finished_at && r.score_pct != null) ? r.score_pct + '%' : (answeredN != null ? answeredN + ' of ' + (r.question_count || '?') + ' done' : 'Not finished');
-                return '<li><span class="rr-recent-text"><span class="rr-topic-name">' + esc(label) + '</span>' +
-                  '<span class="rr-topic-sub">' + esc(when) + (sx && mod ? ' \u00b7 ' + esc(sx.name) : '') + (r.question_count ? ' \u00b7 ' + r.question_count + ' questions' : '') + '</span></span>' +
-                  '<span class="rr-recent-score">' + result + '</span></li>';
-              }).join('') + '</ul>';
+                try { when = new Date(r.started_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { }
+                var n = r.attempt_answers && r.attempt_answers[0] ? r.attempt_answers[0].count : null;
+                var score = (r.finished_at && r.score_pct != null) ? '<span class="v2-badge ' + (r.score_pct >= 60 ? 'ok' : 'bad') + '">' + r.score_pct + '%</span>' : '<span class="v2-cont-s">' + (n != null ? n + ' of ' + (r.question_count || '?') + ' done' : 'Not finished') + '</span>';
+                return '<div class="v2-card2 v2-weak v2-recent">' + (sx ? v2SubjIcon(sx, 36) : '<span class="v2-subj-ic" style="width:36px;height:36px"></span>') +
+                  '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(label) + '</span><span class="v2-cont-s">' + esc(when) + (r.question_count ? ' · ' + r.question_count + ' questions' : '') + '</span></span>' + score + '</div>';
+              }).join('');
             });
         } catch (e) { console.warn('dashboard recent sessions failed:', e); }
       }
@@ -5914,13 +5918,14 @@ window.addEventListener('error', function (ev) {
 
       function v2SubjectStats(sx, ix) {
         var mods = getSubjectModules(sx.subjectId);
-        var out = { mods: [], done: 0, active: 0, fresh: 0, due: 0, seen: 0, ok: 0, last: 0, total: mods.length, questions: 0 };
+        var out = { mods: [], done: 0, active: 0, fresh: 0, due: 0, seen: 0, ok: 0, last: 0, total: mods.length, questions: 0, qseen: 0 };
         mods.forEach(function (m, i) {
           var st = v2ModuleStats(sx, m, ix);
           var open = v2Accessible(sx, m, i);
           var locked = isModuleLocked(sx.subjectId, m.moduleId, i);
           out.mods.push({ m: m, i: i, st: st, open: open, locked: locked });
           out.questions += m.questionCount || 0;
+          out.qseen += Math.min(st.seen, m.questionCount || 0);
           if (st.status === 'done') out.done++; else if (st.status === 'active') out.active++; else out.fresh++;
           out.due += st.due;
           if (st.seen && st.pct != null) { out.seen += st.seen; out.ok += Math.round(st.seen * st.pct / 100); }
@@ -6361,10 +6366,21 @@ window.addEventListener('error', function (ev) {
         supabaseClient.from('questions').select('id,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,has_image')
           .eq('module_id', pick.m.id).order('id', { ascending: true }).limit(60)
           .then(function (res) {
-            var rows = ((res && !res.error && res.data) || []).filter(function (r) { return !r.has_image && r.question_text && r.option_a; });
-            var q = rows.length ? rows[pick.n % rows.length] : null;
-            v2Qotd = { day: pick.day, q: q };
-            paint(q);
+            var IMG = /\b(image|images|picture|photo|photograph|figure|fig\.|diagram|x-?ray|radiograph|ct scan|mri|ecg|ekg|shown|marked|arrow|labelled|labeled|identify the|given below)\b|<img/i;
+            var rows = ((res && !res.error && res.data) || []).filter(function (r) {
+              return !r.has_image && r.question_text && r.option_a && r.option_b && !IMG.test(r.question_text) && !/<img/i.test(r.explanation || '');
+            });
+            if (!rows.length) { v2Qotd = { day: pick.day, q: null }; paint(null); return; }
+            // Drop any question that has rows in question_images, then pick.
+            var ids = rows.map(function (r) { return r.id; });
+            supabaseClient.from('question_images').select('question_id').in('question_id', ids).then(function (ir) {
+              var withImg = {};
+              ((ir && !ir.error && ir.data) || []).forEach(function (x) { withImg[x.question_id] = true; });
+              var clean = rows.filter(function (r) { return !withImg[r.id]; });
+              var q = clean.length ? clean[pick.n % clean.length] : null;
+              v2Qotd = { day: pick.day, q: q };
+              paint(q);
+            }, function () { var q = rows[pick.n % rows.length]; v2Qotd = { day: pick.day, q: q }; paint(q); });
           }, function () { paint(null); });
       }
 
@@ -6497,13 +6513,16 @@ window.addEventListener('error', function (ev) {
       }
       function v2SubjectTile(sx, ix) {
         var ss = v2SubjectStats(sx, ix);
-        var frac = ss.started / (ss.total || 1);
+        var comp = ss.qseen / (ss.questions || 1);
+        var compPct = Math.round(comp * 100);
+        if (comp > 0 && compPct === 0) compPct = 1;
         return '<button class="v2-tile" data-subject="' + sx.subjectId + '" data-name="' + esc(sx.name.toLowerCase()) + '" data-cat="' + esc(sx.cat) + '">' +
           '<span class="v2-tile-top">' + v2SubjIcon(sx, 44) +
-          (ss.due ? '<span class="v2-badge">' + ss.due + ' due</span>' : v2Ring(frac, 30, 4, 'v2-ring-sm', '')) + '</span>' +
+          v2Ring(comp, 44, 4.5, 'v2-ring-tile', compPct + '%') + '</span>' +
           '<span class="v2-tile-name">' + esc(sx.name) + '</span>' +
-          '<span class="v2-tile-sub">' + ss.started + ' of ' + ss.total + ' topics' + (ss.pct != null ? ' · ' + ss.pct + '%' : '') + '</span>' +
-          '<span class="v2-tile-bar" aria-hidden="true"><span style="width:' + Math.round(frac * 100) + '%"></span></span>' +
+          '<span class="v2-tile-sub">' + ss.started + ' of ' + ss.total + ' topics started</span>' +
+          '<span class="v2-tile-meta">' + (ss.pct != null ? '<span class="v2-tile-acc">' + ss.pct + '% correct</span>' : '<span class="v2-tile-acc none">Not started</span>') +
+          (ss.due ? '<span class="v2-badge">' + ss.due + ' due</span>' : '') + '</span>' +
           '</button>';
       }
       function v2Greeting() {
@@ -6958,9 +6977,11 @@ window.addEventListener('error', function (ev) {
           if ((x.m.section || null) !== section) { flush(); section = x.m.section || null; }
           var st = x.st;
           var isNext = next && next.m.id === x.m.id;
-          var icon = x.locked ? '<span class="v2-st v2-st-lock">' + v2LockSvg() + '</span>'
-            : st.status === 'active' ? v2ArcSvg(st.seen / (st.total || 1))
-            : V2_STATUS_SVG[st.status === 'done' ? 'done' : (isNext ? 'next' : 'fresh')];
+          var tPct = st.total ? Math.round((100 * st.seen) / st.total) : 0;
+          if (st.seen > 0 && tPct === 0) tPct = 1;
+          var icon = x.locked ? '<span class="v2-st v2-st-lock v2-st-box">' + v2LockSvg() + '</span>'
+            : v2Ring(st.total ? st.seen / st.total : 0, 42, 4, 'v2-ring-topic v2-rt-' + (st.status === 'done' ? 'done' : st.status === 'active' ? 'active' : (isNext ? 'next' : 'new')),
+              st.status === 'done' ? '\u2713' : tPct + '%');
           var sub;
           if (x.locked) sub = v2Plural(x.m.questionCount, 'question') + ' · Pro';
           else if (st.status === 'done') sub = v2Plural(st.total, 'question') + (st.pct != null ? ' · ' + st.pct + '% correct' : '');
