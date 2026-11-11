@@ -3289,3 +3289,35 @@ html.ml-reading #app .v2-sl-row:last-child { border-bottom: 0 !important; }
 html.ml-reading #app .v2-sl-row .v2-tile-bar { margin-top: 6px !important; }
 html.ml-reading #app .v2-sl-pct { flex: 0 0 48px !important; text-align: right !important; font: 700 14px var(--rr-sans) !important; color: var(--rr-ink) !important; }
 html.ml-reading #app .v2-sl-pct.ok { color: var(--rr-ok) !important; } html.ml-reading #app .v2-sl-pct.bad { color: var(--rr-bad) !important; } html.ml-reading #app .v2-sl-pct.none { color: var(--rr-ink-quiet) !important; font-weight: 400 !important; }
+
+/* ---- topic cards, cleaner ---------------------------------------------------- */
+html.ml-reading #app .v2-topics-bold .v2-topic,
+html.dark.ml-reading #app .v2-topics-bold .v2-topic {
+  align-items: center !important; gap: 14px !important; padding: 14px !important; min-height: 72px !important;
+  border: 1px solid var(--rr-rule-soft) !important; border-left: 1px solid var(--rr-rule-soft) !important; border-radius: 16px !important;
+  background: var(--v2-card) !important; box-shadow: var(--v2-shadow) !important;
+}
+html.dark.ml-reading #app .v2-topics-bold .v2-topic { border-color: var(--rr-rule) !important; }
+html.ml-reading #app .v2-topics-bold .v2-topic.is-next { border: 1.5px solid var(--v2-accent) !important; background: var(--v2-card) !important; }
+html.ml-reading #app .v2-topics-bold .v2-topic[data-f="locked"] { opacity: 1 !important; }
+html.ml-reading #app .v2-topics-bold .v2-topic[data-f="locked"] .v2-row-title { color: var(--rr-ink-dim) !important; }
+html.ml-reading #app .v2-topics-bold .v2-topic .v2-row-title {
+  font: 600 15px/1.3 var(--rr-sans) !important; color: var(--rr-ink) !important;
+  display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;
+}
+html.ml-reading #app .v2-topics-bold .v2-topic:hover .v2-row-title { text-decoration: none !important; }
+html.ml-reading #app .v2-topics-bold .v2-topic:hover { border-color: var(--v2-accent) !important; }
+html.ml-reading #app .v2-tchips { display: flex !important; flex-wrap: wrap !important; gap: 5px !important; margin-top: 6px !important; }
+html.ml-reading #app .v2-tc { display: inline-flex !important; align-items: center !important; min-height: 20px !important; padding: 0 7px !important; border-radius: 6px !important; background: var(--rr-rule-soft) !important; color: var(--rr-ink-dim) !important; font: 500 11.5px var(--rr-sans) !important; white-space: nowrap !important; }
+html.ml-reading #app .v2-tc.ok { background: var(--rr-ok-bg) !important; color: var(--rr-ok) !important; font-weight: 600 !important; }
+html.ml-reading #app .v2-tc.mid { background: rgba(217, 140, 30, .12) !important; color: #A35B00 !important; font-weight: 600 !important; }
+html.dark.ml-reading #app .v2-tc.mid { color: #F4BE7A !important; }
+html.ml-reading #app .v2-tc.bad { background: var(--rr-bad-bg) !important; color: var(--rr-bad) !important; font-weight: 600 !important; }
+html.ml-reading #app .v2-tc.next { background: var(--v2-accent) !important; color: var(--v2-accent-ink) !important; font-weight: 600 !important; }
+html.ml-reading #app .v2-tc.pro { background: var(--rr-ink) !important; color: var(--rr-ground) !important; font-weight: 600 !important; }
+html.ml-reading #app .v2-tchev { flex: 0 0 auto !important; color: var(--rr-ink-quiet) !important; display: inline-flex !important; }
+html.ml-reading #app .v2-topics-bold .v2-tag { border: 0 !important; padding: 4px 9px !important; border-radius: 10px !important; }
+html.ml-reading #app .v2-topics-bold .v2-st-box { background: var(--rr-rule-soft) !important; color: var(--rr-ink-quiet) !important; }
+html.ml-reading #app .v2-topics-bold .v2-topic[data-f] { border-left-color: var(--rr-rule-soft) !important; }
+html.dark.ml-reading #app .v2-topics-bold .v2-topic[data-f] { border-left-color: var(--rr-rule) !important; }
+html.ml-reading #app .v2-topics-bold .v2-topic.is-next[data-f], html.ml-reading #app .v2-topics-bold .v2-topic[data-f]:hover { border-color: var(--v2-accent) !important; }

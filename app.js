@@ -6340,7 +6340,8 @@ window.addEventListener('error', function (ev) {
         if (!pick) { var sec = document.getElementById('v2Qotd'); if (sec) sec.hidden = true; return; }
         var paint = function (q) {
           if (!q) { var sec2 = document.getElementById('v2Qotd'); if (sec2) sec2.hidden = true; return; }
-          var key = 'ml_qotd_' + pick.day;
+          // Keyed by day and question, so a changed pick starts unanswered.
+          var key = 'ml_qotd_' + pick.day + '_' + (q && q.id);
           var picked = null;
           try { picked = localStorage.getItem(key); } catch (e) { }
           var tag = document.querySelector('#v2Qotd .v2-qotd-tag');
@@ -6982,19 +6983,22 @@ window.addEventListener('error', function (ev) {
           var icon = x.locked ? '<span class="v2-st v2-st-lock v2-st-box">' + v2LockSvg() + '</span>'
             : v2Ring(st.total ? st.seen / st.total : 0, 42, 4, 'v2-ring-topic v2-rt-' + (st.status === 'done' ? 'done' : st.status === 'active' ? 'active' : (isNext ? 'next' : 'new')),
               st.status === 'done' ? '\u2713' : tPct + '%');
-          var sub;
-          if (x.locked) sub = v2Plural(x.m.questionCount, 'question') + ' · Pro';
-          else if (st.status === 'done') sub = v2Plural(st.total, 'question') + (st.pct != null ? ' · ' + st.pct + '% correct' : '');
-          else if (st.status === 'active') sub = st.seen + ' of ' + st.total + ' answered' + (st.pct != null ? ' · ' + st.pct + '% correct' : '');
-          else sub = v2Plural(x.m.questionCount, 'question') + (isNext ? ' · next up' : '') + (!currentUser ? (x.open ? ' · free to try' : ' · free account') : '');
-          var weakCls = st.pct != null && st.seen >= 5 && st.pct < 60 ? ' v2-bad' : '';
-          var end = x.locked ? '' : st.due ? '<span class="v2-tag">' + st.due + ' due</span>' : (st.status === 'active' ? '<span class="v2-row-end">Resume</span>' : '');
+          var chips = [];
+          chips.push('<span class="v2-tc">' + x.m.questionCount + ' Qs</span>');
+          if (x.locked) chips.push('<span class="v2-tc pro">Pro</span>');
+          else if (st.status === 'active') chips.push('<span class="v2-tc">' + st.seen + ' of ' + st.total + ' done</span>');
+          if (!x.locked && st.pct != null && st.seen) chips.push('<span class="v2-tc ' + (st.pct >= 70 ? 'ok' : st.pct >= 50 ? 'mid' : 'bad') + '">' + st.pct + '% correct</span>');
+          if (isNext && !x.locked) chips.push('<span class="v2-tc next">Next up</span>');
+          if (!currentUser && !x.locked) chips.push('<span class="v2-tc">' + (x.open ? 'Free to try' : 'Free account') + '</span>');
+          var sub = chips.join('');
+          var chev = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
+          var end = x.locked ? '' : st.due ? '<span class="v2-tag">' + st.due + ' due</span>' : '<span class="v2-tchev">' + chev + '</span>';
           var f = x.locked ? 'locked' : st.status === 'done' ? 'done' : st.status === 'active' ? 'active' : 'fresh';
           secRows.push({
             st: st,
             html: '<button class="v2-row v2-topic' + (x.locked ? ' is-locked' : '') + (isNext ? ' is-next' : '') + (x.m.questionCount ? '' : ' is-empty') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
               ' data-f="' + f + '" data-due="' + (st.due ? 1 : 0) + '" data-name="' + esc((x.m.name + ' ' + (x.m.section || '')).toLowerCase()) + '">' +
-              icon + '<span class="v2-row-main"><span class="v2-row-title">' + esc(x.m.name) + '</span><span class="v2-row-sub' + weakCls + '">' + sub + '</span></span>' + end + '</button>'
+              icon + '<span class="v2-row-main"><span class="v2-row-title">' + esc(x.m.name) + '</span><span class="v2-tchips">' + sub + '</span></span>' + end + '</button>'
           });
         });
         flush();
