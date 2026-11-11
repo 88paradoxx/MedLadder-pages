@@ -6562,6 +6562,7 @@ window.addEventListener('error', function (ev) {
           PYQ_EXAMS.map(function (ex) {
             return '<button class="v2-row v2-row-plain" data-pyq="' + esc(ex.id) + '"><span>' + esc(ex.name) + ' past papers</span><span class="v2-row-end">' + (isUserPro(currentUser) ? '›' : 'Pro') + '</span></button>';
           }).join('') + '</section>';
+        body = '<div class="v2-bold">' + body + '</div>';
         v2Paint('subjects', v2Shell('subjects', v2Header('Back to today', 'Subjects'), body, ix.due.length));
         wireV2Shell();
         wireV2Common();
@@ -6597,31 +6598,38 @@ window.addEventListener('error', function (ev) {
         trackPageView('/review', 'review');
         var rd = v2HaveHistory() ? reviewData : null;
         var ix = v2Index(rd);
-        var body = '<h1 class="v2-title">Review</h1>';
+        var ladder = '<div class="v2-ladder" aria-label="Review intervals">' + ['Miss', '3 days', '7 days', '16 days', '35 days'].map(function (t, k) {
+          return '<span class="v2-ladder-step' + (k === 0 ? ' miss' : '') + '"><b>' + (k === 0 ? 'Next day' : t) + '</b><small>' + (k === 0 ? 'after a miss' : k + ' right in a row') + '</small></span>';
+        }).join('') + '</div>';
+        var body = '<div class="v2-bold"><h1 class="v2-hello-h">Review</h1>';
         if (!currentUser) {
-          body += '<p class="v2-lede">Sign in and every question you answer is scheduled to come back: a miss the next day, a correct answer after 3, 7, 16 and then 35 days. Spacing the repeats out like this is one of the best-supported ways to make facts stick.</p>' +
-            '<button class="v2-btn" id="v2RevSignIn">Sign in free</button>';
+          body += '<section class="v2-hero v2-hero-compact"><div class="v2-hero-main"><p class="v2-hero-k">Spaced review</p><h2 class="v2-hero-h">Questions come back when you are about to forget them</h2>' +
+            '<p class="v2-hero-p">Sign in and every answer is scheduled for you.</p></div><div class="v2-hero-actions"><button class="v2-hero-btn" id="v2RevSignIn">Sign in free</button></div></section>' +
+            '<section class="v2-sec"><h2 class="v2-h2b">How it works</h2>' + ladder + '</section>';
         } else if (!rd) {
-          body += '<p class="v2-lede" aria-busy="true">Loading what you have answered…</p>';
+          body += '<section class="v2-hero v2-hero-compact" aria-busy="true"><div class="v2-hero-main"><p class="v2-hero-k">Spaced review</p><h2 class="v2-hero-h">Loading…</h2></div></section>';
         } else {
           var wrong = ix.due.filter(function (d) { return d.wrong; }).length;
-          body += '<p class="v2-sub">' + (ix.due.length
-            ? v2Plural(ix.due.length, 'question') + ' due' + (wrong ? ', ' + wrong + ' of them missed last time' : '')
-            : 'Nothing is due right now') + '</p>' +
-            '<p class="v2-lede">A miss comes back the next day. Each correct answer in a row pushes it further out: 3, 7, 16, then 35 days.</p>';
-          if (ix.due.length) body += '<button class="v2-btn" id="v2RevAll">Review ' + Math.min(30, ix.due.length) + ' now</button>' +
-            (ix.due.length > 30 ? '<p class="v2-note">Sets are kept to 30 so a session stays short. The rest wait for the next one.</p>' : '');
+          var nNow = Math.min(30, ix.due.length);
+          body += '<section class="v2-hero v2-hero-compact"><div class="v2-hero-main"><p class="v2-hero-k">Spaced review</p>' +
+            '<h2 class="v2-hero-h">' + (ix.due.length ? v2Plural(ix.due.length, 'question') + ' due' : 'Nothing due right now') + '</h2>' +
+            '<p class="v2-hero-p">' + (ix.due.length ? (wrong ? wrong + ' missed last time, ' + (ix.due.length - wrong) + ' right but fading' : 'All of them right last time, now fading') : (ix.seen ? 'You are up to date. New reviews appear as days pass.' : 'Answer a few questions and they start to come back here.')) + '</p></div>' +
+            (ix.due.length ? v2Ring(wrong / (ix.due.length || 1), 76, 8, 'v2-ring-hero', '<strong>' + wrong + '</strong><small>missed</small>') : '') +
+            '<div class="v2-hero-actions">' + (ix.due.length ? '<button class="v2-hero-btn" id="v2RevAll">Review ' + nNow + ' now</button>' : '<button class="v2-hero-btn" data-nav-go="today">Go to today’s set</button>') + '</div></section>' +
+            (ix.due.length > 30 ? '<p class="v2-note">Sessions are kept to 30 questions; the rest wait for the next one.</p>' : '');
           var byTopic = {};
           ix.due.forEach(function (d) { if (d.mod != null) byTopic[d.mod] = (byTopic[d.mod] || 0) + 1; });
           var idx = v2ModIndex();
           var topics = Object.keys(byTopic).map(function (k) { return { info: idx[k], n: byTopic[k], id: Number(k) }; })
             .filter(function (t) { return t.info; }).sort(function (a, b) { return b.n - a.n; });
-          if (topics.length) body += '<section class="v2-sec"><h2 class="v2-h2">Due by topic</h2>' + topics.slice(0, 25).map(function (t) {
-            return '<button class="v2-row" data-review-mod="' + t.id + '"><span class="v2-row-main"><span class="v2-row-title">' + esc(t.info.m.name) + '</span>' +
-              '<span class="v2-row-sub">' + esc(t.info.sx.name) + '</span></span><span class="v2-pill">' + t.n + ' due</span></button>';
+          if (topics.length) body += '<section class="v2-sec"><h2 class="v2-h2b">Due by topic</h2>' + topics.slice(0, 25).map(function (t) {
+            return '<button class="v2-card2 v2-weak" data-review-mod="' + t.id + '">' + v2SubjIcon(t.info.sx, 40) +
+              '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(t.info.m.name) + '</span><span class="v2-cont-s">' + esc(t.info.sx.name) + '</span></span>' +
+              '<span class="v2-badge">' + t.n + ' due</span></button>';
           }).join('') + '</section>';
-          if (!ix.seen) body += '<p class="v2-note">Answer a few questions first and they will start appearing here. <button class="v2-link" data-nav-go="today">Go to today’s set</button></p>';
+          body += '<section class="v2-sec"><h2 class="v2-h2b">How the spacing works</h2>' + ladder + '</section>';
         }
+        body += '</div>';
         v2Paint('review', v2Shell('review', v2Header('Back to today', 'Review'), body, ix.due.length));
         wireV2Shell();
         wireV2Common();
@@ -6666,22 +6674,27 @@ window.addEventListener('error', function (ev) {
         var started = ss.mods.filter(function (x) { return x.open && x.st.seen > 0; });
         var freeCount = ss.mods.filter(function (x) { return !x.locked; }).length;
 
-        var body = '<h1 class="v2-title">' + esc(sx.name) + '</h1>' +
-          '<p class="v2-sub">' + v2Plural(ss.total, 'topic') + ' · ' + v2Plural(ss.questions, 'question') + '</p>' +
-          '<div class="v2-seg" aria-hidden="true">' +
-          (ss.done ? '<span class="v2-seg-done" style="flex:' + ss.done + ' 1 0"></span>' : '') +
-          (ss.active ? '<span class="v2-seg-active" style="flex:' + ss.active + ' 1 0"></span>' : '') +
-          (ss.fresh ? '<span class="v2-seg-new" style="flex:' + ss.fresh + ' 1 0"></span>' : '') + '</div>' +
-          '<p class="v2-seg-key">' + ss.done + ' done · ' + ss.active + ' in progress · ' + ss.fresh + ' not started' + (ss.pct != null ? ' · ' + ss.pct + '% correct' : '') + '</p>';
-
+        var startedFrac = ss.started / (ss.total || 1);
+        var body = '<div class="v2-bold v2-topics-bold"><div class="v2-subj-head">' + v2SubjIcon(sx, 60) +
+          '<div class="v2-subj-head-t"><p class="v2-subj-cat">' + esc(sx.catLabel || '') + '</p><h1 class="v2-title">' + esc(sx.name) + '</h1>' +
+          '<p class="v2-sub">' + v2Plural(ss.total, 'topic') + ' · ' + v2Plural(ss.questions, 'question') + '</p></div>' +
+          v2Ring(startedFrac, 60, 6, 'v2-ring-cont', Math.round(startedFrac * 100) + '%') + '</div>' +
+          '<div class="v2-mini4">' +
+          '<div class="v2-card2"><strong>' + ss.done + '</strong><span>done</span></div>' +
+          '<div class="v2-card2"><strong>' + ss.active + '</strong><span>in progress</span></div>' +
+          '<div class="v2-card2"><strong>' + ss.fresh + '</strong><span>not started</span></div>' +
+          '<div class="v2-card2"><strong>' + (ss.pct != null ? ss.pct + '%' : '–') + '</strong><span>correct</span></div>' +
+          '</div>';
         if (next) {
           var resume = next.st.status === 'active';
-          body += '<button class="v2-next" data-sid="' + subjectId + '" data-mod="' + esc(next.m.moduleId) + '">' +
-            '<span><span class="v2-next-k">' + (resume ? 'Continue' : 'Next topic') + '</span><span class="v2-next-t">' + esc(next.m.name) + '</span></span>' +
-            '<span class="v2-next-go">' + (resume ? 'Resume · ' + (next.st.total - next.st.seen) + ' left' : 'Start · ' + next.m.questionCount + ' Qs') + '</span></button>';
+          body += '<section class="v2-hero v2-hero-compact"><div class="v2-hero-main"><p class="v2-hero-k">' + (resume ? 'Continue' : 'Next topic') + '</p>' +
+            '<h2 class="v2-hero-h">' + esc(next.m.name) + '</h2>' +
+            '<p class="v2-hero-p">' + (resume ? (next.st.total - next.st.seen) + ' of ' + next.st.total + ' questions left' : v2Plural(next.m.questionCount, 'question') + (next.m.section ? ' · ' + esc(next.m.section) : '')) + '</p></div>' +
+            (resume ? v2Ring(next.st.seen / (next.st.total || 1), 64, 7, 'v2-ring-hero', '<strong style="font-size:13px">' + Math.round(100 * next.st.seen / (next.st.total || 1)) + '%</strong>') : '') +
+            '<div class="v2-hero-actions"><button class="v2-hero-btn" data-sid="' + subjectId + '" data-mod="' + esc(next.m.moduleId) + '">' + (resume ? 'Resume' : 'Start') + '</button></div></section>';
         }
         if (currentUser && started.length >= 2) {
-          body += '<button class="v2-row v2-row-box" id="v2Mix"><span class="v2-row-main"><span class="v2-row-title v2-sans">Mixed ' + esc(sx.name) + ' set</span>' +
+          body += '<button class="v2-card2 v2-weak v2-mix" id="v2Mix"><span class="v2-qa-ic v2-qa-custom" style="width:40px;height:40px;border-radius:12px">' + v2Icon('custom') + '</span><span class="v2-cont-main"><span class="v2-cont-t">Mixed ' + esc(sx.name) + ' set</span>' +
             '<span class="v2-row-sub">20 questions from the ' + started.length + ' topics you have started' + (ss.due ? ', due ones first' : '') + '</span></span>' + RR_CHEVRON_SVG.replace('M6 9l6 6 6-6', 'M9 18l6-6-6-6') + '</button>';
         }
         if (!pro) {
@@ -6741,6 +6754,7 @@ window.addEventListener('error', function (ev) {
         body += '<section class="v2-sec"><h2 class="v2-h2">Whole subject</h2>' +
           '<button class="v2-row v2-row-plain" id="v2AllTopics"><span>' + esc(sx.name) + ' mock: all ' + v2Plural(ss.questions, 'question') + '</span><span class="v2-row-end">' + (mockLocked ? 'Pro' : '›') + '</span></button></section>';
 
+        body += '</div>';
         v2Paint('modules', v2Shell('subjects', v2Header('All subjects', 'Subjects'), body, ix.due.length));
         wireV2Shell(function () { renderSubjectsV2(); });
         wireV2Common();
