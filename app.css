@@ -1324,3 +1324,56 @@ footer.credit .footer-links-row .footer-dot { display: none !important; }
   footer.credit .footer-directory a { padding: 6px 0 !important; font-size: 14px !important; }
   footer.credit .footer-copy { margin-top: 20px !important; padding-top: 16px !important; }
 }
+
+/* ---- Admin console, reading-room look (Nov 2026) ------------------------ */
+.admin-modal-overlay {
+  --ad-ground: #F0F2F1; --ad-raised: #FFFFFF; --ad-rule: #D6DAD8; --ad-soft: #E2E5E3;
+  --ad-ink: #121715; --ad-dim: #2C3532; --ad-quiet: #5F6A66; --ad-accent: #5B34C9; --ad-ok: #166B45; --ad-bad: #A33B2E;
+  background: rgba(18, 23, 21, .45) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+html.dark .admin-modal-overlay {
+  --ad-ground: #0E1317; --ad-raised: #141B20; --ad-rule: #27313A; --ad-soft: #1C242A;
+  --ad-ink: #E7EBE8; --ad-dim: #C7CFD2; --ad-quiet: #93A1AA; --ad-accent: #6F52D9; --ad-ok: #4FA97A; --ad-bad: #D2695C;
+  background: rgba(0, 0, 0, .6) !important;
+}
+.admin-modal-overlay .admin-modal-box {
+  background: var(--ad-ground) !important; background-image: none !important; color: var(--ad-ink) !important;
+  border: 1px solid var(--ad-rule) !important; border-radius: 12px !important; box-shadow: 0 20px 60px -20px rgba(0,0,0,.35) !important;
+  font-family: Archivo, Inter, system-ui, sans-serif !important; backdrop-filter: none !important;
+}
+.admin-modal-overlay .admin-modal-header { background: none !important; border-bottom: 1px solid var(--ad-rule) !important; text-align: left !important; padding: 22px 24px 18px !important; }
+.admin-modal-overlay .admin-modal-badge {
+  display: inline-block !important; background: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 0 6px !important;
+  color: var(--ad-quiet) !important; font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+.admin-modal-overlay .admin-modal-title {
+  font-family: Literata, Georgia, serif !important; font-size: 26px !important; font-weight: 600 !important; letter-spacing: -0.012em !important;
+  color: var(--ad-ink) !important; background: none !important; -webkit-text-fill-color: currentColor !important; text-align: left !important; margin: 0 0 6px !important;
+}
+.admin-modal-overlay .admin-modal-sub { color: var(--ad-quiet) !important; font-size: 13.5px !important; text-align: left !important; }
+.admin-modal-overlay .admin-modal-close { background: none !important; border: 1px solid var(--ad-rule) !important; color: var(--ad-quiet) !important; box-shadow: none !important; }
+.admin-modal-overlay .admin-modal-body { padding: 20px 24px 24px !important; }
+.admin-modal-overlay .admin-status-card, .admin-modal-overlay .admin-stat-card {
+  background: var(--ad-raised) !important; background-image: none !important; border: 1px solid var(--ad-rule) !important; border-radius: 10px !important; box-shadow: none !important;
+}
+.admin-modal-overlay .admin-sec-title { color: var(--ad-quiet) !important; font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; border-bottom: 1px solid var(--ad-rule) !important; padding-bottom: 10px !important; }
+.admin-modal-overlay .admin-stat-num { color: var(--ad-ink) !important; background: none !important; -webkit-text-fill-color: currentColor !important; font-weight: 600 !important; }
+.admin-modal-overlay .admin-stat-label { color: var(--ad-quiet) !important; }
+.admin-modal-overlay .admin-input, .admin-modal-overlay select.admin-input {
+  background: var(--ad-raised) !important; border: 1px solid var(--ad-rule) !important; border-radius: 6px !important; color: var(--ad-ink) !important; box-shadow: none !important;
+}
+.admin-modal-overlay .admin-action-btn { background: var(--ad-accent) !important; background-image: none !important; color: #fff !important; border: 0 !important; border-radius: 6px !important; box-shadow: none !important; }
+.admin-modal-overlay .admin-signout-btn { background: none !important; color: var(--ad-bad) !important; border: 1px solid var(--ad-rule) !important; border-radius: 6px !important; box-shadow: none !important; }
+.admin-modal-overlay .admin-input-row { flex-wrap: wrap !important; }
+.admin-modal-overlay .admin-alert.success { color: var(--ad-ok) !important; }
+.admin-modal-overlay .admin-alert.error { color: var(--ad-bad) !important; }
+.admin-modal-overlay #mockAdminLink {
+  background: var(--ad-raised) !important; border: 1px solid var(--ad-rule) !important; border-radius: 10px !important;
+  color: var(--ad-ink) !important; font-weight: 500 !important;
+}
+.admin-modal-overlay .admin-status-card strong, .admin-modal-overlay .admin-status-card b { color: var(--ad-ink) !important; }
+.admin-modal-overlay .admin-stats-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important; }
+.admin-modal-overlay .admin-hard { margin: 10px 0 0 !important; padding: 0 0 0 20px !important; color: var(--ad-ink) !important; }
+.admin-modal-overlay .admin-hard li { margin: 0 0 10px !important; font-size: 13.5px !important; line-height: 1.45 !important; }
+.admin-modal-overlay .admin-hard-text { display: block !important; font-family: Literata, Georgia, serif !important; }
+.admin-modal-overlay .admin-hard-meta, .admin-modal-overlay .admin-hard-note { display: block !important; color: var(--ad-quiet) !important; font-size: 12px !important; }
