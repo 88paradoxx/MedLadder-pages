@@ -63,6 +63,7 @@ window.addEventListener('error', function (ev) {
         try {
           if (state.isPyqMode && state.pyqExam) return '/pyqs/' + pyqSlug(state.pyqExam);
           if (state.moduleId === 'bookmarks') return '/bookmarks';
+          if (state.idSet) return '/' + state.idSet.kind;
           if (state.moduleId === 'custom') return '/custom-module';
           var subj = null, mod = null;
           if (state.subjectId) {
@@ -1633,12 +1634,11 @@ window.addEventListener('error', function (ev) {
           var moduleDbId = pool && typeof pool.moduleDbId === 'number' ? pool.moduleDbId : null;
           var subjectDbId = Number(state.subjectId);
           if (!isFinite(subjectDbId) || subjectDbId <= 0) subjectDbId = subjectIdForModuleDbId(moduleDbId);
-          // subject_id is NOT NULL: multi-subject custom sets and bookmark
-          // practice have no single subject, so they are simply not logged.
-          if (!subjectDbId) return;
+          // Multi-subject sets (custom, bookmarks, today's set) have no single
+          // subject: subject_id is left null and read back as "Mixed set".
           attemptLog.meta = {
             guest_key: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-            subject_id: subjectDbId,
+            subject_id: subjectDbId || null,
             module_id: moduleDbId,
             quiz_type: state.quizType === 'timed' ? 'timed' : 'practice',
             time_limit_s: Number(state.timeLimit) || 0,
@@ -1666,7 +1666,7 @@ window.addEventListener('error', function (ev) {
           started_at: attemptLog.meta.started_at
         }).select('id').single().then(function (res) {
           attemptLog.creating = false;
-          if (res.error || !res.data) {
+          if (res.error || !res.data || !res.data.id) {
             attemptLog.failed = true;
             console.warn('attempt insert error:', res.error);
             return;
@@ -1819,6 +1819,7 @@ window.addEventListener('error', function (ev) {
                 if (state.screen === 'setup') renderSetup(state.subjectId, state.moduleId || 'all');
                 else if (state.screen === 'modules') renderModuleList(state.subjectId);
               }
+              if (!currentUser && state.screen === 'home' && v2On()) renderHomeV2();
             } catch (e) { console.warn('guest re-render failed:', e); }
           }).catch(function () { guestModulesLoading = false; guestModuleIds = {}; });
         } catch (e) { guestModulesLoading = false; guestModuleIds = {}; }
@@ -1927,6 +1928,8 @@ window.addEventListener('error', function (ev) {
         if (progressSaveTimer) { clearTimeout(progressSaveTimer); progressSaveTimer = null; }
         progress = {};
         persistProgress();
+        reviewData = currentUser ? emptyReviewData(currentUser.id) : null;
+        if (reviewData) reviewData.loaded = true;
         try { localStorage.removeItem(GUEST_ATTEMPT_KEY); } catch (e) { }
         try {
           if (attemptLog.flushTimer) clearTimeout(attemptLog.flushTimer);
@@ -3525,6 +3528,7 @@ window.addEventListener('error', function (ev) {
         // on any other document, load the real homepage instead of
         // rendering home content in place and dropping pieces of it.
         if (window.location.pathname !== '/' && window.location.pathname !== '/index.html' && window.location.pathname !== '') { goHomeFromSeo(); return; }
+        if (v2On()) { state.screen = 'home'; renderHomeV2(); return; }
         clearTimer();
         releaseQuizPayload();
         state.screen = 'home';
@@ -4138,6 +4142,7 @@ window.addEventListener('error', function (ev) {
           ensureQuizStyles().then(function () { renderModuleList(subjectId); });
           return;
         }
+        if (v2On()) { state.idSet = null; renderTopicsV2(subjectId); return; }
         clearTimer();
         releaseQuizPayload();
         state.screen = 'modules';
@@ -4349,12 +4354,16 @@ window.addEventListener('error', function (ev) {
         if (!app) return;
         var c = app.classList;
         var on = c.contains('screen-setup') || c.contains('screen-quiz');
-        var dash = false;
+        var dash = false, v2 = false;
         for (var ci = 0; ci < app.children.length; ci++) {
-          if (app.children[ci].classList && app.children[ci].classList.contains('rr-dash')) { dash = true; break; }
+          var cl = app.children[ci].classList;
+          if (!cl) continue;
+          if (cl.contains('rr-dash')) dash = true;
+          if (cl.contains('v2')) v2 = true;
         }
-        on = on || dash;
+        on = on || dash || v2;
         document.documentElement.classList.toggle('ml-dash', dash);
+        document.documentElement.classList.toggle('ml-v2', v2);
         document.documentElement.classList.toggle('ml-reading', on);
         if (on && !document.getElementById('rr-fonts')) {
           var f = document.createElement('link');
@@ -4431,6 +4440,7 @@ window.addEventListener('error', function (ev) {
       }
 
       function renderCustomSetup() {
+        state.idSet = null;
         if (!quizStylesReady) {
           ensureQuizStyles().then(renderCustomSetup);
           return;
@@ -4500,6 +4510,7 @@ window.addEventListener('error', function (ev) {
       }
 
       function renderSetup(subjectId, moduleId) {
+        state.idSet = null;
         if (!currentUser) loadGuestModules();
         if (!quizStylesReady) {
           ensureQuizStyles().then(function () { renderSetup(subjectId, moduleId); });
@@ -4984,7 +4995,7 @@ window.addEventListener('error', function (ev) {
 
         var timerHtml = state.timeLimit > 0 ? '<span class="timer-badge" id="timerBadge">--:--</span>' : '';
         var isLast = state.idx + 1 >= total;
-        var backFn = state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'bookmarks' ? function () { renderBookmarks(); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); }));
+        var backFn = state.idSet ? state.idSet.back : state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'bookmarks' ? function () { renderBookmarks(); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); }));
 
         // One tick per question. On a phone they are the thin ladder under the
         // counter; on a wide screen the same elements become the numbered grid
@@ -5095,6 +5106,7 @@ window.addEventListener('error', function (ev) {
             setTimeout(function () {
               try { saveProgress(); } catch (err) { console.warn('saveProgress failed:', err); }
               try { logAnswer(q, answer); } catch (err) { console.warn('logAnswer failed:', err); }
+              try { v2NoteLive(q, answer); } catch (err) { }
             }, 0);
           });
         });
@@ -5151,6 +5163,9 @@ window.addEventListener('error', function (ev) {
       }
 
       function saveProgress() {
+        // Sets built from question ids span topics; per-topic progress comes
+        // from the answers themselves (attempt_answers), not from this map.
+        if (state.idSet) return;
         var answered = Object.keys(state.answers).length;
         var correct = Object.values(state.answers).filter(function (a) { return a.isCorrect; }).length;
         var total = state.order.length;
@@ -5555,6 +5570,964 @@ window.addEventListener('error', function (ev) {
         } catch (e) { console.warn('dashboard recent sessions failed:', e); }
       }
 
+      // ======================================================================
+      // HOME, SUBJECTS, REVIEW AND TOPICS, VERSION 2
+      // Opt-in while it is tried live: ?ui=new turns it on for this browser,
+      // ?ui=old turns it off again. Everything below reads data the app
+      // already has (the baked syllabus, the progress map, the user's own
+      // attempt_answers rows); nothing here writes anything new.
+      // ======================================================================
+      var V2_KEY = 'ml_ui';
+      function v2On() {
+        try {
+          var m = /[?&]ui=(new|old)\b/.exec(window.location.search || '');
+          if (m) localStorage.setItem(V2_KEY, m[1]);
+          return localStorage.getItem(V2_KEY) === 'new';
+        } catch (e) { return false; }
+      }
+
+      // ---- review history ---------------------------------------------------
+      // Spaced review on a Leitner ladder: a miss comes back the next day; each
+      // correct answer in a row pushes the next showing further out.
+      var V2_INTERVALS = [1, 3, 7, 16, 35];
+      var V2_SET_SIZE = 20;
+      var V2_REVIEW_SHARE = 12;
+      var reviewData = null;
+      var reviewLoading = null;
+
+      function v2Day(ms) {
+        var d = new Date(ms);
+        return Math.floor((ms - d.getTimezoneOffset() * 60000) / 86400000);
+      }
+      function emptyReviewData(uid) { return { uid: uid, q: {}, days: {}, lastModule: null, loaded: false }; }
+
+      function noteReviewAnswer(rd, qid, moduleDbId, ok, ms) {
+        if (!qid) return;
+        var e = rd.q[qid];
+        if (!e) e = rd.q[qid] = { n: 0, streak: 0, last: 0, ok: false, mod: null };
+        if (moduleDbId != null) e.mod = moduleDbId;
+        e.n++;
+        e.last = ms;
+        e.ok = ok;
+        e.streak = ok ? e.streak + 1 : 0;
+        var k = v2Day(ms);
+        rd.days[k] = (rd.days[k] || 0) + 1;
+        if (e.mod != null) rd.lastModule = e.mod;
+      }
+
+      function loadReviewData() {
+        if (!currentUser || !supabaseClient) return Promise.resolve(null);
+        var uid = currentUser.id;
+        if (reviewData && reviewData.uid === uid && reviewData.loaded) return Promise.resolve(reviewData);
+        if (reviewLoading) return reviewLoading;
+        try {
+          reviewLoading = supabaseClient.from('attempt_answers')
+            .select('question_id,is_correct,answered_at,questions(module_id)')
+            .eq('user_id', uid).order('answered_at', { ascending: false }).limit(5000)
+            .then(function (res) {
+              reviewLoading = null;
+              if (!currentUser || currentUser.id !== uid) return null;
+              if (res && res.error) console.warn('review history:', res.error);
+              var rows = (res && !res.error && res.data) || [];
+              var rd = emptyReviewData(uid);
+              for (var i = rows.length - 1; i >= 0; i--) {
+                var r = rows[i];
+                var mod = r.questions && r.questions.module_id != null ? Number(r.questions.module_id) : null;
+                noteReviewAnswer(rd, Number(r.question_id), mod, !!r.is_correct, Date.parse(r.answered_at) || 0);
+              }
+              // Answers given while the history was loading.
+              if (reviewData && reviewData.uid === uid && reviewData.live) {
+                reviewData.live.forEach(function (a) { noteReviewAnswer(rd, a[0], a[1], a[2], a[3]); });
+              }
+              rd.loaded = true;
+              rd.failed = !!(res && res.error);
+              reviewData = rd;
+              return rd;
+            }, function (err) {
+              reviewLoading = null;
+              console.warn('review history failed:', err);
+              return null;
+            });
+        } catch (e) {
+          reviewLoading = null;
+          return Promise.resolve(null);
+        }
+        return reviewLoading;
+      }
+
+      // Called for every answer that is also being written to attempt_answers,
+      // so the home screen is current the moment a quiz ends.
+      function v2NoteLive(q, answer) {
+        if (!currentUser || !q || !q.id || !attemptLog.meta) return;
+        var uid = currentUser.id;
+        if (!reviewData || reviewData.uid !== uid) reviewData = emptyReviewData(uid);
+        var a = [Number(q.id), q.moduleId != null ? Number(q.moduleId) : null, !!(answer && answer.isCorrect), Date.now()];
+        noteReviewAnswer(reviewData, a[0], a[1], a[2], a[3]);
+        if (!reviewData.loaded) (reviewData.live = reviewData.live || []).push(a);
+      }
+
+      // ---- syllabus lookups -------------------------------------------------
+      var _v2ModIndex = null;
+      function v2ModIndex() {
+        if (_v2ModIndex) return _v2ModIndex;
+        var map = {};
+        SUBJECT_INDEX.forEach(function (sx) {
+          getSubjectModules(sx.subjectId).forEach(function (m, i) {
+            map[m.id] = { sx: sx, m: m, index: i };
+          });
+        });
+        _v2ModIndex = map;
+        return map;
+      }
+      function v2Accessible(sx, m, i) {
+        if (isModuleLocked(sx.subjectId, m.moduleId, i)) return false;
+        if (!currentUser) return isGuestModule(m.id);
+        return true;
+      }
+
+      // One pass over the history: per-module coverage, accuracy on each
+      // question's latest answer, and what is due today.
+      function v2Index(rd) {
+        var now = v2Day(Date.now());
+        var byMod = {};
+        var due = [];
+        var seen = 0, okNow = 0;
+        var idx = v2ModIndex();
+        var pro = isUserPro(currentUser);
+        if (rd) {
+          Object.keys(rd.q).forEach(function (qid) {
+            var e = rd.q[qid];
+            seen++;
+            if (e.ok) okNow++;
+            var info = e.mod != null ? idx[e.mod] : null;
+            var b = null;
+            if (info) {
+              b = byMod[e.mod] || (byMod[e.mod] = { seen: 0, ok: 0, due: 0, last: 0 });
+              b.seen++;
+              if (e.ok) b.ok++;
+              if (e.last > b.last) b.last = e.last;
+            }
+            var iv = V2_INTERVALS[Math.min(e.streak, V2_INTERVALS.length - 1)];
+            if (now - v2Day(e.last) < iv) return;
+            // Only what the student can still open: a lapsed Pro topic or a
+            // past paper is not served to a free account.
+            var open = info ? v2Accessible(info.sx, info.m, info.index) : pro;
+            if (!open) return;
+            if (b) b.due++;
+            due.push({ qid: Number(qid), mod: e.mod, wrong: e.streak === 0, last: e.last });
+          });
+        }
+        due.sort(function (a, b) { return (a.wrong === b.wrong) ? a.last - b.last : (a.wrong ? -1 : 1); });
+        return { byMod: byMod, due: due, seen: seen, okNow: okNow };
+      }
+
+      function v2ModuleStats(sx, m, ix) {
+        var total = m.questionCount || 0;
+        var b = ix && ix.byMod[m.id];
+        var seen = b ? b.seen : 0;
+        var pct = seen ? Math.round((b.ok / seen) * 100) : null;
+        var p = progress[sx.subjectId + ':' + m.moduleId];
+        if (p && p.done > seen) {
+          seen = p.done;
+          pct = Math.round((Math.min(p.correct || 0, p.done) / p.done) * 100);
+        }
+        if (total) seen = Math.min(seen, total);
+        return {
+          total: total, seen: seen, pct: pct, due: b ? b.due : 0, last: b ? b.last : 0,
+          status: total && seen >= total ? 'done' : (seen > 0 ? 'active' : 'new')
+        };
+      }
+
+      function v2SubjectStats(sx, ix) {
+        var mods = getSubjectModules(sx.subjectId);
+        var out = { mods: [], done: 0, active: 0, fresh: 0, due: 0, seen: 0, ok: 0, last: 0, total: mods.length, questions: 0 };
+        mods.forEach(function (m, i) {
+          var st = v2ModuleStats(sx, m, ix);
+          var open = v2Accessible(sx, m, i);
+          var locked = isModuleLocked(sx.subjectId, m.moduleId, i);
+          out.mods.push({ m: m, i: i, st: st, open: open, locked: locked });
+          out.questions += m.questionCount || 0;
+          if (st.status === 'done') out.done++; else if (st.status === 'active') out.active++; else out.fresh++;
+          out.due += st.due;
+          if (st.seen && st.pct != null) { out.seen += st.seen; out.ok += Math.round(st.seen * st.pct / 100); }
+          if (st.last > out.last) out.last = st.last;
+        });
+        out.started = out.done + out.active;
+        out.pct = out.seen ? Math.round((out.ok / out.seen) * 100) : null;
+        return out;
+      }
+
+      // The next topic in a subject: the one in hand if it is unfinished,
+      // otherwise the first unfinished open topic after it, in syllabus order.
+      function v2NextIn(ss, afterModDbId) {
+        var list = ss.mods.filter(function (x) { return x.open && x.m.questionCount > 0; });
+        if (!list.length) return null;
+        var at = -1;
+        if (afterModDbId != null) {
+          for (var i = 0; i < list.length; i++) if (list[i].m.id === afterModDbId) { at = i; break; }
+          if (at >= 0 && list[at].st.status === 'active') return list[at];
+        }
+        for (var j = at + 1; j < list.length; j++) if (list[j].st.status !== 'done') return list[j];
+        for (var k = 0; k <= at && k < list.length; k++) if (list[k].st.status !== 'done') return list[k];
+        return null;
+      }
+
+      // Subjects in the order the student last worked on them.
+      function v2ActiveSubjects(ix) {
+        var rows = SUBJECT_INDEX.map(function (sx) {
+          var ss = v2SubjectStats(sx, ix);
+          var last = ss.last;
+          if (!last && ss.started) last = 1;
+          return { sx: sx, ss: ss, last: last };
+        });
+        return rows.filter(function (r) { return r.last > 0; }).sort(function (a, b) { return b.last - a.last; });
+      }
+      function v2LastModuleIn(ss) {
+        var best = null;
+        ss.mods.forEach(function (x) { if (x.st.last && (!best || x.st.last > best.st.last)) best = x; });
+        return best ? best.m.id : null;
+      }
+
+      function v2TodayPlan(ix) {
+        var active = v2ActiveSubjects(ix);
+        var next = [];
+        active.slice(0, 3).forEach(function (r) {
+          if (next.length >= 2) return;
+          var n = v2NextIn(r.ss, v2LastModuleIn(r.ss));
+          if (n) next.push({ sx: r.sx, x: n });
+        });
+        if (!next.length) {
+          for (var i = 0; i < SUBJECT_INDEX.length && !next.length; i++) {
+            var ss = v2SubjectStats(SUBJECT_INDEX[i], ix);
+            var n0 = v2NextIn(ss, null);
+            if (n0) next.push({ sx: SUBJECT_INDEX[i], x: n0 });
+          }
+        }
+        var newAvail = next.reduce(function (s, r) { return s + Math.max(0, r.x.st.total - r.x.st.seen); }, 0);
+        var reviewN = Math.min(ix.due.length, newAvail > 0 ? V2_REVIEW_SHARE : V2_SET_SIZE);
+        var newN = Math.min(V2_SET_SIZE - reviewN, newAvail);
+        if (reviewN + newN < V2_SET_SIZE) reviewN = Math.min(ix.due.length, V2_SET_SIZE - newN);
+        var reviewItems = ix.due.slice(0, reviewN);
+        var subjNames = [];
+        var idx = v2ModIndex();
+        reviewItems.forEach(function (d) {
+          var info = d.mod != null ? idx[d.mod] : null;
+          var nm = info ? info.sx.name : 'Past papers';
+          if (subjNames.indexOf(nm) === -1) subjNames.push(nm);
+        });
+        return { reviewIds: reviewItems.map(function (d) { return d.qid; }), newN: newN, next: next, size: reviewN + newN, reviewSubjects: subjNames };
+      }
+
+      // ---- launching question sets -------------------------------------------
+      function v2Loading(title, line, back) {
+        clearTimer();
+        app.innerHTML =
+          topBar('Back', back) +
+          '<main id="mainContent" role="main">' +
+          '<div class="loading-screen" style="position:relative;margin:80px auto;max-width:440px;">' +
+          '<div class="loading-card glass" style="padding:36px 24px;text-align:center;">' +
+          '<div class="loading-logo">MedLadder</div>' +
+          '<div class="loading-sub">' + esc(title) + '</div>' +
+          '<div class="loading-text" style="margin-top:14px;font-weight:600;">' + esc(line) + '<span class="loading-dots"></span></div>' +
+          '<div class="loading-spinner"></div>' +
+          '</div></div></main>';
+        wireTopBar(back);
+      }
+
+      // A practice set built from question ids: today's set, a review set or a
+      // mixed subject set. Answers are logged like any other quiz, so the next
+      // home screen already knows about them.
+      function launchIdQuiz(ids, opts) {
+        if (quizLoadInFlight) return;
+        if (!ids || !ids.length) { showToast('Nothing to practise here yet.'); opts.back(); return; }
+        if (!quizStylesReady) { ensureQuizStyles().then(function () { launchIdQuiz(ids, opts); }); return; }
+        quizLoadInFlight = true;
+        v2Loading(opts.title, 'Loading your questions', opts.back);
+        supabaseClient.from('questions')
+          .select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,module_id')
+          .in('id', ids).then(function (res) {
+            quizLoadInFlight = false;
+            var byId = {};
+            ((res && !res.error && res.data) || []).forEach(function (r) { byId[r.id] = r; });
+            var rows = ids.map(function (id) { return byId[id]; }).filter(function (r) { return !!r; });
+            if (!rows.length) { showToast('Could not load these questions. Please try again.', 'error'); opts.back(); return; }
+            return loadQuestionImages(rows).then(function (imageRows) {
+              var imgs = {};
+              imageRows.forEach(function (image) {
+                var key = String(image.question_id);
+                if (!imgs[key]) imgs[key] = { question_text: [], explanation: [] };
+                if (image.content_field && imgs[key][image.content_field]) imgs[key][image.content_field].push(image);
+              });
+              var questions = rows.map(function (r) {
+                var o = {};
+                ['A', 'B', 'C', 'D', 'E'].forEach(function (L) { var v = r['option_' + L.toLowerCase()]; if (v) o[L] = v; });
+                return {
+                  id: r.id, moduleId: r.module_id, num: String(r.id || r.question_num),
+                  question: r.question_text || '', options: o, answer: r.answer || 'A',
+                  explanation: r.explanation || '',
+                  questionImages: (imgs[String(r.id)] || {}).question_text || [],
+                  explanationImages: (imgs[String(r.id)] || {}).explanation || []
+                };
+              });
+              state = {
+                screen: 'quiz', subjectId: opts.subjectId || null, moduleId: opts.kind,
+                poolTitle: opts.title, questions: questions,
+                order: questions.map(function (q, i) { return i; }),
+                idx: 0, answers: {}, quizType: 'practice', timeLimit: 0, remaining: 0,
+                timerId: null, progressKey: opts.kind, idSet: opts
+              };
+              beginAttemptLog(null);
+              trackEvent('quiz_start', { module_id: opts.kind, quiz_type: 'practice', question_count: questions.length, pool_title: opts.title });
+              scrollToPageTop();
+              renderQuiz();
+              prefetchBookmarks();
+            });
+          }).catch(function (err) {
+            quizLoadInFlight = false;
+            console.warn('id set failed:', err);
+            showToast('Could not load these questions. Please try again.', 'error');
+            opts.back();
+          });
+      }
+
+      function v2NeedAccount(reason, then) {
+        openAuthModal('signin', { reason: reason, onSuccess: then });
+      }
+
+      // Pick unseen questions from a few topics, alternating between them.
+      function v2FreshIds(modDbIds, count, rd) {
+        if (!count || !modDbIds.length) return Promise.resolve([]);
+        return supabaseClient.from('questions').select('id,module_id')
+          .in('module_id', modDbIds).order('id', { ascending: true }).limit(1000)
+          .then(function (res) {
+            var seen = (rd && rd.q) || {};
+            var buckets = modDbIds.map(function () { return []; });
+            ((res && !res.error && res.data) || []).forEach(function (r) {
+              var b = modDbIds.indexOf(Number(r.module_id));
+              if (b >= 0 && !seen[r.id]) buckets[b].push(r.id);
+            });
+            var out = [];
+            var more = true;
+            while (out.length < count && more) {
+              more = false;
+              for (var i = 0; i < buckets.length && out.length < count; i++) {
+                if (buckets[i].length) { out.push(buckets[i].shift()); more = true; }
+              }
+            }
+            return out;
+          });
+      }
+
+      function startTodaySet() {
+        if (!currentUser) { v2NeedAccount("Sign in free to get a daily set built from your own answers.", startTodaySet); return; }
+        loadReviewData().then(function (rd) {
+          var ix = v2Index(rd);
+          var plan = v2TodayPlan(ix);
+          if (!plan.size) { showToast('You are all caught up for today.'); return; }
+          var opts = { kind: 'today', title: "Today's set", back: function () { renderHome(true); }, again: startTodaySet };
+          v2Loading(opts.title, 'Building your set', opts.back);
+          v2FreshIds(plan.next.map(function (r) { return r.x.m.id; }), plan.newN, rd).then(function (fresh) {
+            launchIdQuiz(shuffle(plan.reviewIds.concat(fresh)), opts);
+          }).catch(function () { launchIdQuiz(shuffle(plan.reviewIds.slice()), opts); });
+        });
+      }
+
+      function startReviewSet(modDbId) {
+        if (!currentUser) { v2NeedAccount('Sign in to review the questions you have answered.', function () { startReviewSet(modDbId); }); return; }
+        loadReviewData().then(function (rd) {
+          var ix = v2Index(rd);
+          var list = ix.due.filter(function (d) { return modDbId == null || d.mod === modDbId; }).slice(0, 30);
+          if (!list.length) { showToast('Nothing is due for review right now.'); return; }
+          var info = modDbId != null ? v2ModIndex()[modDbId] : null;
+          launchIdQuiz(shuffle(list.map(function (d) { return d.qid; })), {
+            kind: 'review', title: info ? 'Review: ' + info.m.name : 'Review',
+            subjectId: info ? info.sx.subjectId : null,
+            back: function () { renderReviewV2(); },
+            again: function () { startReviewSet(modDbId); }
+          });
+        });
+      }
+
+      // Twenty questions from the topics already started in one subject: what
+      // is due first, then the rest at random.
+      function startSubjectMix(subjectId) {
+        var sx = SUBJECT_INDEX.find(function (s) { return s.subjectId === subjectId; });
+        if (!sx) return;
+        if (!currentUser) { v2NeedAccount('Sign in free to practise mixed sets.', function () { startSubjectMix(subjectId); }); return; }
+        loadReviewData().then(function (rd) {
+          var ix = v2Index(rd);
+          var ss = v2SubjectStats(sx, ix);
+          var mods = ss.mods.filter(function (x) { return x.open && x.st.seen > 0; }).map(function (x) { return x.m.id; });
+          var dueIds = ix.due.filter(function (d) { return mods.indexOf(d.mod) !== -1; }).slice(0, 8).map(function (d) { return d.qid; });
+          var opts = {
+            kind: 'mix', title: 'Mixed ' + sx.name + ' set', subjectId: subjectId,
+            back: function () { renderModuleList(subjectId); },
+            again: function () { startSubjectMix(subjectId); }
+          };
+          v2Loading(opts.title, 'Building your set', opts.back);
+          supabaseClient.from('questions').select('id').in('module_id', mods).limit(1000).then(function (res) {
+            var pool = ((res && !res.error && res.data) || []).map(function (r) { return r.id; })
+              .filter(function (id) { return dueIds.indexOf(id) === -1; });
+            launchIdQuiz(shuffle(dueIds.concat(shuffle(pool).slice(0, V2_SET_SIZE - dueIds.length))), opts);
+          }).catch(function () { opts.back(); });
+        });
+      }
+
+      // ---- exam date --------------------------------------------------------
+      var V2_EXAMS = ['NEET PG', 'INI-CET', 'FMGE', 'NEET SS'];
+      function v2ExamGet() {
+        try { var v = JSON.parse(localStorage.getItem('ml_exam_goal') || 'null'); return v && v.exam ? v : null; } catch (e) { return null; }
+      }
+      function v2ExamLine() {
+        var g = v2ExamGet();
+        var editor = '<form class="v2-exam-form" id="v2ExamForm" hidden>' +
+          '<label><span>Exam</span><select id="v2ExamName">' + V2_EXAMS.map(function (x) {
+            return '<option' + (g && g.exam === x ? ' selected' : '') + '>' + esc(x) + '</option>';
+          }).join('') + '</select></label>' +
+          '<label><span>Date</span><input type="date" id="v2ExamDate" value="' + esc(g && g.date ? g.date : '') + '"></label>' +
+          '<button type="submit" class="v2-btn v2-btn-quiet">Save</button>' +
+          (g ? '<button type="button" class="v2-link" id="v2ExamClear">Remove</button>' : '') +
+          '</form>';
+        if (!g) return '<p class="v2-exam">Preparing for an exam? <button class="v2-link" id="v2ExamEdit">Set your exam date</button></p>' + editor;
+        var line = esc(g.exam);
+        if (g.date) {
+          var days = v2Day(Date.parse(g.date + 'T00:00:00')) - v2Day(Date.now());
+          if (isFinite(days)) line += ' · ' + (days > 1 ? days + ' days to go' : days === 1 ? 'tomorrow' : days === 0 ? 'today' : 'date passed');
+        }
+        return '<p class="v2-exam">' + line + ' · <button class="v2-link" id="v2ExamEdit">change</button></p>' + editor;
+      }
+      function wireV2Exam(rerender) {
+        var edit = document.getElementById('v2ExamEdit');
+        var form = document.getElementById('v2ExamForm');
+        if (!edit || !form) return;
+        edit.onclick = function () { form.hidden = !form.hidden; };
+        form.onsubmit = function (e) {
+          e.preventDefault();
+          var exam = document.getElementById('v2ExamName').value;
+          var date = document.getElementById('v2ExamDate').value;
+          try { localStorage.setItem('ml_exam_goal', JSON.stringify({ exam: exam, date: date })); } catch (err) { }
+          rerender();
+        };
+        var clear = document.getElementById('v2ExamClear');
+        if (clear) clear.onclick = function () { try { localStorage.removeItem('ml_exam_goal'); } catch (err) { } rerender(); };
+      }
+
+      // ---- shell --------------------------------------------------------------
+      var V2_ICONS = {
+        today: '<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/>',
+        subjects: '<path d="M4 5h16M4 12h16M4 19h10"/>',
+        review: '<path d="M20 12a8 8 0 11-2.3-5.6M20 4v5h-5"/>',
+        bookmarks: '<path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>',
+        progress: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'
+      };
+      function v2Svg(name, size) {
+        return '<svg width="' + (size || 22) + '" height="' + (size || 22) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + V2_ICONS[name] + '</svg>';
+      }
+      function v2Nav(active, dueCount) {
+        var items = [['today', 'Today'], ['subjects', 'Subjects'], ['review', 'Review'], ['bookmarks', 'Bookmarks'], ['progress', 'Progress']];
+        return '<nav class="v2-nav" aria-label="Main">' + items.map(function (it) {
+          var badge = it[0] === 'review' && dueCount ? '<span class="v2-nav-badge">' + (dueCount > 99 ? '99+' : dueCount) + '</span>' : '';
+          return '<button class="v2-nav-item" data-nav="' + it[0] + '"' + (it[0] === active ? ' aria-current="page"' : '') + '>' +
+            '<span class="v2-nav-icon">' + v2Svg(it[0]) + badge + '</span><span>' + it[1] + '</span></button>';
+        }).join('') + '</nav>';
+      }
+      function v2Header(back, crumb) {
+        var left = back
+          ? '<button class="rr-back" id="backBtn" aria-label="' + esc(back) + '">' + RR_BACK_SVG + '</button><div class="rr-crumb">' + esc(crumb || '') + '</div>'
+          : '<a href="/" class="v2-brand"><img src="/icons/icon-72.png" alt="" width="28" height="28"><span>MedLadder</span></a>';
+        return '<header class="rr-top v2-top" role="banner">' + left +
+          '<div class="right rr-top-right">' + proHeaderBtnHtml() + authBtnHtml() + themeBtnHtml() + '</div></header>';
+      }
+      function v2Shell(active, header, body, dueCount) {
+        return '<div class="v2">' + header +
+          '<div class="v2-body">' + v2Nav(active, dueCount) +
+          '<main id="mainContent" role="main" class="v2-main">' + body + '</main></div></div>' +
+          footerHtml();
+      }
+      function v2Go(name) {
+        if (name === 'today') renderHome(true);
+        else if (name === 'subjects') renderSubjectsV2();
+        else if (name === 'review') renderReviewV2();
+        else if (name === 'bookmarks') { if (!currentUser) v2NeedAccount('Sign in to see your bookmarks.', renderBookmarks); else renderBookmarks(); }
+        else if (name === 'progress') renderDashboard();
+      }
+      function wireV2Shell(back) {
+        wireTopBar(back || function () { renderHome(true); });
+        app.querySelectorAll('.v2-nav-item[data-nav]').forEach(function (b) {
+          b.onclick = function () { v2Go(b.getAttribute('data-nav')); };
+        });
+        hideStaticFooter();
+      }
+      function v2Paint(screen, html) {
+        clearTimer();
+        releaseQuizPayload();
+        state.screen = screen;
+        state.idSet = null;
+        if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
+        app.innerHTML = html;
+      }
+      // Render now from what is in hand, then once more when the history lands.
+      function v2WithHistory(screen, again) {
+        if (!currentUser || (reviewData && reviewData.uid === currentUser.id && reviewData.loaded)) return;
+        loadReviewData().then(function (rd) {
+          if (!rd || state.screen !== screen) return;
+          var y = window.scrollY;
+          again();
+          window.scrollTo(0, y);
+        });
+      }
+      function v2HaveHistory() { return !!(currentUser && reviewData && reviewData.uid === currentUser.id && reviewData.loaded); }
+      function v2Bar(frac) {
+        return '<span class="v2-bar" aria-hidden="true"><span style="width:' + Math.max(0, Math.min(100, Math.round(frac * 100))) + '%"></span></span>';
+      }
+      function v2Plural(n, one, many) { return n.toLocaleString() + ' ' + (n === 1 ? one : (many || one + 's')); }
+
+      // ---- home ---------------------------------------------------------------
+      function renderHomeV2() {
+        if (!quizStylesReady) { ensureQuizStyles().then(function () { if (state.screen === 'home') renderHomeV2(); }); return; }
+        trackPageView('/', 'home');
+        if (!currentUser) loadGuestModules();
+        var rd = v2HaveHistory() ? reviewData : null;
+        var ix = v2Index(rd);
+        var pro = isUserPro(currentUser);
+        var out = '';
+
+        out += v2ExamLine();
+
+        // Today's set, or a way in for a visitor.
+        if (!currentUser) {
+          var guest = null;
+          SUBJECT_INDEX.some(function (sx) {
+            return getSubjectModules(sx.subjectId).some(function (m) {
+              if (isGuestModule(m.id)) { guest = { sx: sx, m: m }; return true; }
+              return false;
+            });
+          });
+          out += '<section class="v2-card v2-today">' +
+            '<p class="v2-kicker">Start here</p>' +
+            '<h1 class="v2-h1">Try a topic free, no account needed</h1>' +
+            '<p class="v2-lede">' + (guest
+              ? esc(guest.m.name) + ', ' + esc(guest.sx.name) + ': ' + v2Plural(guest.m.questionCount, 'question') + ' with explanations. Every subject has one free topic like this.'
+              : 'Every subject has one free topic you can practise without signing in.') + '</p>' +
+            (guest ? '<button class="v2-btn" id="v2GuestStart" data-sid="' + guest.sx.subjectId + '" data-mod="' + esc(guest.m.moduleId) + '">Start ' + esc(guest.m.name) + '</button>' : '') +
+            '<p class="v2-note">A free account opens 8 topics in every subject and builds a daily set from your answers. <button class="v2-link" id="v2SignUp">Sign up free</button></p>' +
+            '</section>';
+        } else if (!rd) {
+          out += '<section class="v2-card v2-today" aria-busy="true"><p class="v2-kicker">Today’s set</p>' +
+            '<h1 class="v2-h1">Building today’s set…</h1><p class="v2-lede">Looking at what you have answered so far.</p></section>';
+        } else {
+          var plan = v2TodayPlan(ix);
+          var nReview = plan.reviewIds.length;
+          var newFrom = plan.next.filter(function (r) { return r.x.st.total > r.x.st.seen; }).map(function (r) { return r.x.m.name; });
+          var first = ix.seen === 0 && !Object.keys(progress).length;
+          var lede;
+          if (!plan.size) lede = 'Nothing is due and every open topic is finished. Pick a subject below, or unlock more topics with Pro.';
+          else if (first) lede = 'Your first set: ' + plan.newN + ' questions from ' + esc(newFrom.join(' and ')) + '. After this, questions you miss come back the next day, and the ones you get right come back later.';
+          else {
+            var parts = [];
+            if (nReview) parts.push(nReview + ' you answered before and are due again');
+            if (plan.newN) parts.push(plan.newN + ' new from ' + esc(newFrom.join(' and ')));
+            lede = parts.join(', and ') + '. Mixed together, the way the exam asks them.';
+          }
+          var mins = Math.max(1, Math.round(plan.size * 0.75));
+          out += '<section class="v2-card v2-today">' +
+            '<p class="v2-kicker">Today’s set</p>' +
+            '<h1 class="v2-h1">' + (plan.size ? v2Plural(plan.size, 'question') + ', about ' + mins + ' minutes' : 'All caught up') + '</h1>' +
+            '<p class="v2-lede">' + lede + '</p>' +
+            (plan.size ? '<div class="v2-split" aria-hidden="true">' +
+              (nReview ? '<span class="v2-split-a" style="flex:' + nReview + ' 1 0"></span>' : '') +
+              (plan.newN ? '<span class="v2-split-b" style="flex:' + plan.newN + ' 1 0"></span>' : '') + '</div>' +
+              '<div class="v2-split-key"><span>' + (nReview ? nReview + ' review' + (plan.reviewSubjects.length ? ' · ' + esc(plan.reviewSubjects.slice(0, 3).join(', ')) : '') : 'No reviews due yet') + '</span><span>' + (plan.newN ? plan.newN + ' new' : '') + '</span></div>' +
+              '<button class="v2-btn" id="v2TodayBtn">Start today’s set</button>' : '') +
+            (ix.due.length > nReview ? '<p class="v2-note">' + v2Plural(ix.due.length, 'question') + ' due in all. <button class="v2-link" data-nav-go="review">Review more</button></p>' : '') +
+            '</section>';
+        }
+
+        // Continue: the topic most recently worked on, if unfinished.
+        var cont = null;
+        var active = v2ActiveSubjects(ix);
+        active.some(function (r) {
+          var lastId = v2LastModuleIn(r.ss);
+          var x = r.ss.mods.find(function (y) { return y.m.id === lastId; }) ||
+            r.ss.mods.find(function (y) { return y.st.status === 'active'; });
+          if (x && x.st.status === 'active' && x.open) { cont = { sx: r.sx, x: x }; return true; }
+          return false;
+        });
+        var left = '';
+        if (cont) {
+          var leftQ = cont.x.st.total - cont.x.st.seen;
+          left += '<section class="v2-sec"><h2 class="v2-h2">Continue</h2>' +
+            '<button class="v2-row v2-row-cont" data-sid="' + cont.sx.subjectId + '" data-mod="' + esc(cont.x.m.moduleId) + '">' +
+            '<span class="v2-row-main"><span class="v2-row-title">' + esc(cont.x.m.name) + '</span>' +
+            '<span class="v2-row-sub">' + esc(cont.sx.name) + ' · ' + v2Plural(leftQ, 'question') + ' left</span>' +
+            v2Bar(cont.x.st.seen / (cont.x.st.total || 1)) + '</span>' +
+            '<span class="v2-pill">Resume</span></button></section>';
+        }
+
+        // Needs work: started topics with enough answers to judge.
+        var weak = [];
+        active.forEach(function (r) {
+          r.ss.mods.forEach(function (x) {
+            if (x.open && x.st.seen >= 5 && x.st.pct != null && x.st.pct < 60) weak.push({ sx: r.sx, x: x });
+          });
+        });
+        weak.sort(function (a, b) { return a.x.st.pct - b.x.st.pct; });
+        if (weak.length) {
+          left += '<section class="v2-sec"><h2 class="v2-h2">Needs work</h2>' + weak.slice(0, 3).map(function (w) {
+            return '<button class="v2-row" data-sid="' + w.sx.subjectId + '" data-mod="' + esc(w.x.m.moduleId) + '">' +
+              '<span class="v2-row-main"><span class="v2-row-title">' + esc(w.x.m.name) + '</span>' +
+              '<span class="v2-row-sub">' + esc(w.sx.name) + ' · ' + w.x.st.pct + '% correct over ' + v2Plural(w.x.st.seen, 'question') + '</span></span>' +
+              '<span class="v2-num v2-bad">' + w.x.st.pct + '%</span></button>';
+          }).join('') + (currentUser ? '<p class="v2-note">Questions you missed here come back in your daily set.</p>' : '') + '</section>';
+        }
+
+        // This week, and the totals.
+        var right = '';
+        if (currentUser) {
+          var today = v2Day(Date.now());
+          var days = rd ? rd.days : {};
+          var strip = '';
+          var letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+          for (var d = 6; d >= 0; d--) {
+            var k = today - d;
+            var n = days[k] || 0;
+            var dt = new Date(Date.now() - d * 86400000);
+            strip += '<span class="v2-day' + (n ? ' on' : '') + (d === 0 ? ' today' : '') + '" title="' + esc(dt.toLocaleDateString(undefined, { weekday: 'long' })) + ': ' + v2Plural(n, 'answer') + '"><span class="v2-day-box"></span>' + letters[dt.getDay()] + '</span>';
+          }
+          var streak = 0;
+          for (var s = (days[today] ? today : today - 1); days[s]; s--) streak++;
+          var dd = dashboardData();
+          var answered = Math.max(ix.seen, dd.done);
+          var acc = ix.seen ? Math.round((ix.okNow / ix.seen) * 100) : (dd.done ? Math.round((dd.correct / dd.done) * 100) : null);
+          var topicsStarted = 0;
+          SUBJECT_INDEX.forEach(function (sx) { topicsStarted += v2SubjectStats(sx, ix).started; });
+          right += '<section class="v2-sec"><h2 class="v2-h2 v2-h2-flat"><span>This week</span><span>' + (streak > 1 ? streak + '-day streak' : '') + '</span></h2>' +
+            '<div class="v2-week">' + strip + '</div>' +
+            '<div class="v2-stats">' +
+            '<div><span>Answered</span><strong>' + answered.toLocaleString() + '</strong></div>' +
+            '<div><span>Accuracy</span><strong>' + (acc == null ? '–' : acc + '%') + '</strong></div>' +
+            '<div><span>Topics</span><strong>' + topicsStarted + '<small> / 740</small></strong></div>' +
+            '</div>' +
+            '<button class="v2-link v2-more" data-nav-go="progress">View my progress</button></section>';
+        }
+
+        out += (left || right) ? '<div class="v2-cols"><div>' + left + '</div><div>' + right + '</div></div>' : '';
+
+        // Subjects: the ones in use first.
+        var used = active.map(function (r) { return r.sx.subjectId; });
+        var shown = active.map(function (r) { return r.sx; });
+        SUBJECT_INDEX.forEach(function (sx) { if (shown.length < 6 && used.indexOf(sx.subjectId) === -1) shown.push(sx); });
+        out += '<section class="v2-sec"><h2 class="v2-h2">Subjects</h2>' +
+          shown.slice(0, Math.max(6, Math.min(active.length, 8))).map(function (sx) { return v2SubjectRow(sx, ix); }).join('') +
+          '<button class="v2-row v2-row-plain" data-nav-go="subjects"><span>All ' + SUBJECT_INDEX.length + ' subjects</span><span aria-hidden="true">›</span></button></section>';
+
+        // Past papers.
+        out += '<section class="v2-sec"><h2 class="v2-h2 v2-h2-flat"><span>Past papers</span><span>' + (pro ? '' : 'Pro') + '</span></h2><div class="v2-chips">' +
+          PYQ_EXAMS.map(function (ex) {
+            return '<button class="v2-chip" data-pyq="' + esc(ex.id) + '">' + esc(ex.name) + (pro ? '' : ' <span class="v2-lock" aria-label="Pro">' + v2LockSvg() + '</span>') + '</button>';
+          }).join('') + '</div>' +
+          '<button class="v2-row v2-row-plain" id="v2Custom"><span>Build a custom set from any topics</span><span aria-hidden="true">›</span></button></section>';
+
+        v2Paint('home', v2Shell('today', v2Header(), out, ix.due.length));
+        wireV2Shell();
+        wireV2Common();
+        wireV2Exam(function () { renderHomeV2(); });
+        var tb = document.getElementById('v2TodayBtn');
+        if (tb) tb.onclick = startTodaySet;
+        var gs = document.getElementById('v2GuestStart');
+        if (gs) gs.onclick = function () { renderSetup(parseInt(gs.getAttribute('data-sid'), 10), gs.getAttribute('data-mod')); };
+        var su = document.getElementById('v2SignUp');
+        if (su) su.onclick = function () { openAuthModal('signup', { reason: 'Create a free account to open 8 topics in every subject.' }); };
+        var cu = document.getElementById('v2Custom');
+        if (cu) cu.onclick = function () { setupChoice.count = 'all'; renderCustomSetup(); };
+        v2WithHistory('home', renderHomeV2);
+      }
+
+      function v2LockSvg() {
+        return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+      }
+      function v2SubjectRow(sx, ix) {
+        var ss = v2SubjectStats(sx, ix);
+        return '<button class="v2-row v2-subj" data-subject="' + sx.subjectId + '" data-name="' + esc(sx.name.toLowerCase()) + '" data-cat="' + esc(sx.cat) + '">' +
+          '<span class="v2-subj-name">' + esc(sx.name) + '</span>' + v2Bar(ss.started / (ss.total || 1)) +
+          '<span class="v2-subj-count">' + ss.started + ' / ' + ss.total + '</span></button>';
+      }
+
+      // Shared click wiring for rows that open a topic, a subject or a screen.
+      function wireV2Common() {
+        app.querySelectorAll('[data-sid][data-mod]').forEach(function (b) {
+          if (b.id === 'v2GuestStart') return;
+          b.onclick = function () { renderSetup(parseInt(b.getAttribute('data-sid'), 10), b.getAttribute('data-mod')); };
+        });
+        app.querySelectorAll('[data-subject]').forEach(function (b) {
+          b.onclick = function () { renderModuleList(parseInt(b.getAttribute('data-subject'), 10)); };
+        });
+        app.querySelectorAll('[data-nav-go]').forEach(function (b) {
+          b.onclick = function () { v2Go(b.getAttribute('data-nav-go')); };
+        });
+        app.querySelectorAll('[data-pyq]').forEach(function (b) {
+          b.onclick = function () { renderPYQSetup(b.getAttribute('data-pyq')); };
+        });
+      }
+
+      // ---- all subjects -----------------------------------------------------
+      var v2SubjectFilter = 'all';
+      function renderSubjectsV2() {
+        if (!quizStylesReady) { ensureQuizStyles().then(renderSubjectsV2); return; }
+        trackPageView('/subjects', 'subjects');
+        var rd = v2HaveHistory() ? reviewData : null;
+        var ix = v2Index(rd);
+        var cats = [['all', 'All'], ['pre', 'Pre-clinical'], ['para', 'Para-clinical'], ['clinical', 'Clinical']];
+        var body = '<h1 class="v2-title">Subjects</h1>' +
+          '<p class="v2-sub">' + SUBJECT_INDEX.length + ' subjects · 740 topics · ' + totalQuestions().toLocaleString() + ' questions</p>' +
+          '<label class="v2-sr" for="v2SubjSearch">Search subjects</label>' +
+          '<input id="v2SubjSearch" class="v2-search" type="search" placeholder="Search subjects" autocomplete="off">' +
+          '<div class="v2-filters" role="group" aria-label="Filter subjects">' + cats.map(function (c) {
+            return '<button class="v2-filter" data-cat-f="' + c[0] + '" aria-pressed="' + (v2SubjectFilter === c[0]) + '">' + c[1] + '</button>';
+          }).join('') + '</div>' +
+          '<section class="v2-sec" id="v2SubjList">' + SUBJECT_INDEX.map(function (sx) { return v2SubjectRow(sx, ix); }).join('') + '</section>' +
+          '<p class="v2-empty" id="v2SubjNone" hidden>No subject matches.</p>' +
+          '<section class="v2-sec"><h2 class="v2-h2">More ways to practise</h2>' +
+          '<button class="v2-row v2-row-plain" id="v2Custom"><span>Custom set from any topics</span><span aria-hidden="true">›</span></button>' +
+          PYQ_EXAMS.map(function (ex) {
+            return '<button class="v2-row v2-row-plain" data-pyq="' + esc(ex.id) + '"><span>' + esc(ex.name) + ' past papers</span><span class="v2-row-end">' + (isUserPro(currentUser) ? '›' : 'Pro') + '</span></button>';
+          }).join('') + '</section>';
+        v2Paint('subjects', v2Shell('subjects', v2Header('Back to today', 'Subjects'), body, ix.due.length));
+        wireV2Shell();
+        wireV2Common();
+        var cu = document.getElementById('v2Custom');
+        if (cu) cu.onclick = function () { setupChoice.count = 'all'; renderCustomSetup(); };
+        var input = document.getElementById('v2SubjSearch');
+        function apply() {
+          var q = (input.value || '').trim().toLowerCase();
+          var shown = 0;
+          app.querySelectorAll('#v2SubjList [data-subject]').forEach(function (r) {
+            var ok = (v2SubjectFilter === 'all' || r.getAttribute('data-cat') === v2SubjectFilter) && (!q || r.getAttribute('data-name').indexOf(q) !== -1);
+            r.hidden = !ok;
+            if (ok) shown++;
+          });
+          document.getElementById('v2SubjNone').hidden = shown > 0;
+        }
+        input.oninput = apply;
+        app.querySelectorAll('[data-cat-f]').forEach(function (b) {
+          b.onclick = function () {
+            v2SubjectFilter = b.getAttribute('data-cat-f');
+            app.querySelectorAll('[data-cat-f]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+            apply();
+          };
+        });
+        apply();
+        v2WithHistory('subjects', renderSubjectsV2);
+      }
+
+      // ---- review -------------------------------------------------------------
+      function renderReviewV2() {
+        if (!quizStylesReady) { ensureQuizStyles().then(renderReviewV2); return; }
+        trackPageView('/review', 'review');
+        var rd = v2HaveHistory() ? reviewData : null;
+        var ix = v2Index(rd);
+        var body = '<h1 class="v2-title">Review</h1>';
+        if (!currentUser) {
+          body += '<p class="v2-lede">Sign in and every question you answer is scheduled to come back: a miss the next day, a correct answer after 3, 7, 16 and then 35 days. Spacing the repeats out like this is one of the best-supported ways to make facts stick.</p>' +
+            '<button class="v2-btn" id="v2RevSignIn">Sign in free</button>';
+        } else if (!rd) {
+          body += '<p class="v2-lede" aria-busy="true">Loading what you have answered…</p>';
+        } else {
+          var wrong = ix.due.filter(function (d) { return d.wrong; }).length;
+          body += '<p class="v2-sub">' + (ix.due.length
+            ? v2Plural(ix.due.length, 'question') + ' due' + (wrong ? ', ' + wrong + ' of them missed last time' : '')
+            : 'Nothing is due right now') + '</p>' +
+            '<p class="v2-lede">A miss comes back the next day. Each correct answer in a row pushes it further out: 3, 7, 16, then 35 days.</p>';
+          if (ix.due.length) body += '<button class="v2-btn" id="v2RevAll">Review ' + Math.min(30, ix.due.length) + ' now</button>' +
+            (ix.due.length > 30 ? '<p class="v2-note">Sets are kept to 30 so a session stays short. The rest wait for the next one.</p>' : '');
+          var byTopic = {};
+          ix.due.forEach(function (d) { if (d.mod != null) byTopic[d.mod] = (byTopic[d.mod] || 0) + 1; });
+          var idx = v2ModIndex();
+          var topics = Object.keys(byTopic).map(function (k) { return { info: idx[k], n: byTopic[k], id: Number(k) }; })
+            .filter(function (t) { return t.info; }).sort(function (a, b) { return b.n - a.n; });
+          if (topics.length) body += '<section class="v2-sec"><h2 class="v2-h2">Due by topic</h2>' + topics.slice(0, 25).map(function (t) {
+            return '<button class="v2-row" data-review-mod="' + t.id + '"><span class="v2-row-main"><span class="v2-row-title">' + esc(t.info.m.name) + '</span>' +
+              '<span class="v2-row-sub">' + esc(t.info.sx.name) + '</span></span><span class="v2-pill">' + t.n + ' due</span></button>';
+          }).join('') + '</section>';
+          if (!ix.seen) body += '<p class="v2-note">Answer a few questions first and they will start appearing here. <button class="v2-link" data-nav-go="today">Go to today’s set</button></p>';
+        }
+        v2Paint('review', v2Shell('review', v2Header('Back to today', 'Review'), body, ix.due.length));
+        wireV2Shell();
+        wireV2Common();
+        var si = document.getElementById('v2RevSignIn');
+        if (si) si.onclick = function () { v2NeedAccount('Sign in to review your answers.', renderReviewV2); };
+        var all = document.getElementById('v2RevAll');
+        if (all) all.onclick = function () { startReviewSet(null); };
+        app.querySelectorAll('[data-review-mod]').forEach(function (b) {
+          b.onclick = function () { startReviewSet(Number(b.getAttribute('data-review-mod'))); };
+        });
+        v2WithHistory('review', renderReviewV2);
+      }
+
+      // ---- topics in a subject ------------------------------------------------
+      var v2TopicFilter = 'all';
+      var V2_STATUS_SVG = {
+        done: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Done" class="v2-st v2-st-done"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+        active: '<svg width="18" height="18" viewBox="0 0 24 24" role="img" aria-label="In progress" class="v2-st v2-st-active"><circle cx="12" cy="12" r="8" fill="none" stroke-width="2.4" class="v2-st-track"/><path d="M12 4a8 8 0 0 1 7.2 4.5" fill="none" stroke-width="2.4" stroke-linecap="round" class="v2-st-arc"/></svg>',
+        next: '<svg width="18" height="18" viewBox="0 0 24 24" role="img" aria-label="Next" class="v2-st v2-st-next"><circle cx="12" cy="12" r="8" fill="none" stroke-width="2.4"/></svg>',
+        fresh: '<svg width="18" height="18" viewBox="0 0 24 24" role="img" aria-label="Not started" class="v2-st v2-st-new"><circle cx="12" cy="12" r="8" fill="none" stroke-width="2.4"/></svg>'
+      };
+
+      // The in-progress ring fills with the share of the topic answered.
+      function v2ArcSvg(frac) {
+        var c = 50.27, len = Math.max(3, Math.min(c - 3, frac * c));
+        return '<svg width="18" height="18" viewBox="0 0 24 24" role="img" aria-label="In progress, ' + Math.round(frac * 100) + '% answered" class="v2-st v2-st-active">' +
+          '<circle cx="12" cy="12" r="8" fill="none" stroke-width="2.4" class="v2-st-track"/>' +
+          '<circle cx="12" cy="12" r="8" fill="none" stroke-width="2.4" stroke-linecap="round" class="v2-st-arc" stroke-dasharray="' + len.toFixed(1) + ' ' + c + '" transform="rotate(-90 12 12)"/></svg>';
+      }
+
+      function renderTopicsV2(subjectId) {
+        var sx = SUBJECT_INDEX.find(function (s) { return s.subjectId === subjectId; });
+        if (!sx) { renderSubjectsV2(); return; }
+        trackPageView(subjectPath(sx), 'modules');
+        if (!currentUser) loadGuestModules();
+        state.subjectId = subjectId;
+        var rd = v2HaveHistory() ? reviewData : null;
+        var ix = v2Index(rd);
+        var ss = v2SubjectStats(sx, ix);
+        var pro = isUserPro(currentUser);
+        var next = v2NextIn(ss, v2LastModuleIn(ss));
+        var started = ss.mods.filter(function (x) { return x.open && x.st.seen > 0; });
+        var freeCount = ss.mods.filter(function (x) { return !x.locked; }).length;
+
+        var body = '<h1 class="v2-title">' + esc(sx.name) + '</h1>' +
+          '<p class="v2-sub">' + v2Plural(ss.total, 'topic') + ' · ' + v2Plural(ss.questions, 'question') + '</p>' +
+          '<div class="v2-seg" aria-hidden="true">' +
+          (ss.done ? '<span class="v2-seg-done" style="flex:' + ss.done + ' 1 0"></span>' : '') +
+          (ss.active ? '<span class="v2-seg-active" style="flex:' + ss.active + ' 1 0"></span>' : '') +
+          (ss.fresh ? '<span class="v2-seg-new" style="flex:' + ss.fresh + ' 1 0"></span>' : '') + '</div>' +
+          '<p class="v2-seg-key">' + ss.done + ' done · ' + ss.active + ' in progress · ' + ss.fresh + ' not started' + (ss.pct != null ? ' · ' + ss.pct + '% correct' : '') + '</p>';
+
+        if (next) {
+          var resume = next.st.status === 'active';
+          body += '<button class="v2-next" data-sid="' + subjectId + '" data-mod="' + esc(next.m.moduleId) + '">' +
+            '<span><span class="v2-next-k">' + (resume ? 'Continue' : 'Next topic') + '</span><span class="v2-next-t">' + esc(next.m.name) + '</span></span>' +
+            '<span class="v2-next-go">' + (resume ? 'Resume · ' + (next.st.total - next.st.seen) + ' left' : 'Start · ' + next.m.questionCount + ' Qs') + '</span></button>';
+        }
+        if (currentUser && started.length >= 2) {
+          body += '<button class="v2-row v2-row-box" id="v2Mix"><span class="v2-row-main"><span class="v2-row-title v2-sans">Mixed ' + esc(sx.name) + ' set</span>' +
+            '<span class="v2-row-sub">20 questions from the ' + started.length + ' topics you have started' + (ss.due ? ', due ones first' : '') + '</span></span>' + RR_CHEVRON_SVG.replace('M6 9l6 6 6-6', 'M9 18l6-6-6-6') + '</button>';
+        }
+        if (!pro) {
+          body += '<p class="v2-tier">' + (currentUser
+            ? freeCount + ' of ' + ss.total + ' topics are open on the free plan.'
+            : 'One topic here is free to try without an account; a free account opens ' + Math.min(PRO_CONFIG.FREE_MODULES_PER_SUBJECT, ss.total) + '.') +
+            ' <button class="v2-link" id="v2Upgrade">' + (currentUser ? 'Unlock all ' + ss.total + ' with Pro' : 'Sign up free') + '</button></p>';
+        }
+
+        var counts = { all: ss.total, due: 0, active: ss.active, fresh: ss.fresh, done: ss.done };
+        ss.mods.forEach(function (x) { if (x.st.due) counts.due++; });
+        var filters = [['all', 'All'], ['due', 'Due'], ['active', 'In progress'], ['fresh', 'Not started'], ['done', 'Done']]
+          .filter(function (f) { return f[0] === 'all' || counts[f[0]] > 0; });
+        if (v2TopicFilter !== 'all' && !counts[v2TopicFilter]) v2TopicFilter = 'all';
+        body += '<label class="v2-sr" for="topicSearch">Search ' + esc(sx.name) + ' topics</label>' +
+          '<input id="topicSearch" class="v2-search" type="search" placeholder="Search ' + ss.total + ' topics" autocomplete="off">' +
+          '<div class="v2-filters" role="group" aria-label="Filter topics">' + filters.map(function (f) {
+            return '<button class="v2-filter" data-topic-f="' + f[0] + '" aria-pressed="' + (v2TopicFilter === f[0]) + '">' + f[1] + ' ' + counts[f[0]] + '</button>';
+          }).join('') + '</div>';
+
+        var html = '';
+        var section = null;
+        var secRows = [];
+        function flush() {
+          if (section === null && !secRows.length) return;
+          var done = secRows.filter(function (x) { return x.st.status === 'done'; }).length;
+          html += '<section class="v2-sec v2-topic-sec"><h2 class="v2-h2 v2-h2-flat"><span>' + esc(section || 'Topics') + '</span><span>' + done + ' of ' + secRows.length + ' done</span></h2>' +
+            secRows.map(function (x) { return x.html; }).join('') + '</section>';
+          secRows = [];
+        }
+        ss.mods.forEach(function (x) {
+          if ((x.m.section || null) !== section) { flush(); section = x.m.section || null; }
+          var st = x.st;
+          var isNext = next && next.m.id === x.m.id;
+          var icon = x.locked ? '<span class="v2-st v2-st-lock">' + v2LockSvg() + '</span>'
+            : st.status === 'active' ? v2ArcSvg(st.seen / (st.total || 1))
+            : V2_STATUS_SVG[st.status === 'done' ? 'done' : (isNext ? 'next' : 'fresh')];
+          var sub;
+          if (x.locked) sub = v2Plural(x.m.questionCount, 'question') + ' · Pro';
+          else if (st.status === 'done') sub = v2Plural(st.total, 'question') + (st.pct != null ? ' · ' + st.pct + '% correct' : '');
+          else if (st.status === 'active') sub = st.seen + ' of ' + st.total + ' answered' + (st.pct != null ? ' · ' + st.pct + '% correct' : '');
+          else sub = v2Plural(x.m.questionCount, 'question') + (isNext ? ' · next up' : '') + (!currentUser ? (x.open ? ' · free to try' : ' · free account') : '');
+          var weakCls = st.pct != null && st.seen >= 5 && st.pct < 60 ? ' v2-bad' : '';
+          var end = x.locked ? '' : st.due ? '<span class="v2-tag">' + st.due + ' due</span>' : (st.status === 'active' ? '<span class="v2-row-end">Resume</span>' : '');
+          var f = x.locked ? 'locked' : st.status === 'done' ? 'done' : st.status === 'active' ? 'active' : 'fresh';
+          secRows.push({
+            st: st,
+            html: '<button class="v2-row v2-topic' + (x.locked ? ' is-locked' : '') + (isNext ? ' is-next' : '') + (x.m.questionCount ? '' : ' is-empty') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
+              ' data-f="' + f + '" data-due="' + (st.due ? 1 : 0) + '" data-name="' + esc((x.m.name + ' ' + (x.m.section || '')).toLowerCase()) + '">' +
+              icon + '<span class="v2-row-main"><span class="v2-row-title">' + esc(x.m.name) + '</span><span class="v2-row-sub' + weakCls + '">' + sub + '</span></span>' + end + '</button>'
+          });
+        });
+        flush();
+        body += '<div id="v2TopicList">' + html + '</div><p class="v2-empty" id="v2TopicNone" hidden>No topics match.</p>';
+
+        var mockLocked = isModuleLocked(subjectId, 'all');
+        body += '<section class="v2-sec"><h2 class="v2-h2">Whole subject</h2>' +
+          '<button class="v2-row v2-row-plain" id="v2AllTopics"><span>' + esc(sx.name) + ' mock: all ' + v2Plural(ss.questions, 'question') + '</span><span class="v2-row-end">' + (mockLocked ? 'Pro' : '›') + '</span></button></section>';
+
+        v2Paint('modules', v2Shell('subjects', v2Header('All subjects', 'Subjects'), body, ix.due.length));
+        wireV2Shell(function () { renderSubjectsV2(); });
+        wireV2Common();
+
+        var modules = getSubjectModules(subjectId);
+        app.querySelectorAll('[data-topic]').forEach(function (b) {
+          b.onclick = function () {
+            var mid = b.getAttribute('data-topic');
+            if (b.getAttribute('data-locked') === 'true') {
+              var mo = modules.find(function (m) { return String(m.moduleId) === mid; });
+              openProModal('locked_module', { subjectId: subjectId, moduleId: mid, moduleName: mo ? mo.name : 'This Topic' });
+              return;
+            }
+            renderSetup(subjectId, mid);
+          };
+        });
+        var mix = document.getElementById('v2Mix');
+        if (mix) mix.onclick = function () { startSubjectMix(subjectId); };
+        var up = document.getElementById('v2Upgrade');
+        if (up) up.onclick = function () {
+          if (currentUser) openProModal('banner', { subjectId: subjectId });
+          else openAuthModal('signup', { reason: 'Create a free account to open 8 topics in every subject.' });
+        };
+        var all = document.getElementById('v2AllTopics');
+        if (all) all.onclick = function () {
+          if (mockLocked) openProModal('all_topics', { subjectId: subjectId, moduleId: 'all', moduleName: 'All topics' });
+          else renderSetup(subjectId, 'all');
+        };
+
+        var input = document.getElementById('topicSearch');
+        function apply() {
+          var q = (input.value || '').trim().toLowerCase();
+          var shown = 0;
+          app.querySelectorAll('#v2TopicList .v2-topic-sec').forEach(function (sec) {
+            var any = false;
+            sec.querySelectorAll('[data-topic]').forEach(function (r) {
+              var f = r.getAttribute('data-f');
+              var okF = v2TopicFilter === 'all' || (v2TopicFilter === 'due' ? r.getAttribute('data-due') === '1' : f === v2TopicFilter);
+              var ok = okF && (!q || r.getAttribute('data-name').indexOf(q) !== -1);
+              r.hidden = !ok;
+              if (ok) { any = true; shown++; }
+            });
+            sec.hidden = !any;
+          });
+          document.getElementById('v2TopicNone').hidden = shown > 0;
+        }
+        input.oninput = apply;
+        app.querySelectorAll('[data-topic-f]').forEach(function (b) {
+          b.onclick = function () {
+            v2TopicFilter = b.getAttribute('data-topic-f');
+            app.querySelectorAll('[data-topic-f]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+            apply();
+          };
+        });
+        apply();
+        v2WithHistory('modules', function () { renderTopicsV2(subjectId); });
+      }
+
       function renderBookmarks() {
         clearTimer();
         releaseQuizPayload();
@@ -5757,6 +6730,7 @@ window.addEventListener('error', function (ev) {
                 remaining: 0, timerId: null, progressKey: 'bookmarks',
                 bookmarkOrder: questionIds, bookmarkedIds: bmIds
               };
+              beginAttemptLog(null);
               scrollToPageTop();
               renderQuiz();
             });
@@ -5823,7 +6797,7 @@ window.addEventListener('error', function (ev) {
         }).join(''); };
         var reviewHtml = '';
 
-        var resBackFn = state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'bookmarks' ? function () { renderBookmarks(); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); }));
+        var resBackFn = state.idSet ? state.idSet.back : state.isPyqMode ? function () { renderPYQSetup(state.pyqExam); } : (state.moduleId === 'bookmarks' ? function () { renderBookmarks(); } : (state.moduleId === 'custom' ? function () { renderCustomSetup(); } : function () { renderModuleList(state.subjectId); }));
 
         // The questions that were missed or left unanswered, each a row that
         // opens its own review. Built lazily, like the full review.
@@ -5870,7 +6844,7 @@ window.addEventListener('error', function (ev) {
           '<div id="reviewBlock" class="hidden" data-loaded="false">' + reviewHtml + '</div>' +
           '<div class="result-actions rr-res-actions">' +
           '<button class="btn secondary" id="retryBtn">Retry</button>' +
-          '<button class="btn secondary" id="setupBtn">' + (state.isPyqMode ? 'Change paper' : 'Change setup') + '</button>' +
+          '<button class="btn secondary" id="setupBtn">' + (state.idSet ? 'Done' : state.isPyqMode ? 'Change paper' : 'Change setup') + '</button>' +
           '</div>' +
           '</main>';
 
@@ -5897,12 +6871,15 @@ window.addEventListener('error', function (ev) {
         wireRipples('.btn, .auth-btn');
 
         document.getElementById('retryBtn').addEventListener('click', function () {
-          if (state.moduleId === 'bookmarks') practiseBookmarks(state.bookmarkOrder || []);
+          if (state.idSet) state.idSet.again();
+          else if (state.moduleId === 'bookmarks') practiseBookmarks(state.bookmarkOrder || []);
           else if (state.isPyqMode) startPYQQuiz(state.pyqExam);
           else startQuiz();
         });
         document.getElementById('setupBtn').addEventListener('click', function () {
-          if (state.moduleId === 'bookmarks') {
+          if (state.idSet) {
+            state.idSet.back();
+          } else if (state.moduleId === 'bookmarks') {
             renderBookmarks();
           } else if (state.isPyqMode) {
             renderPYQSetup(state.pyqExam);
