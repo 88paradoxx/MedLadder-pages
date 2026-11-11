@@ -5760,8 +5760,9 @@ window.addEventListener('error', function (ev) {
         try {
           var m = /[?&]ui=(new|old)\b/.exec(window.location.search || '');
           if (m) localStorage.setItem(V2_KEY, m[1]);
-          return localStorage.getItem(V2_KEY) === 'new';
-        } catch (e) { return false; }
+          // The new home is the default; ?ui=old keeps the classic one.
+          return localStorage.getItem(V2_KEY) !== 'old';
+        } catch (e) { return true; }
       }
 
       // ---- review history ---------------------------------------------------
