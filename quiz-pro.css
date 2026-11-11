@@ -2749,3 +2749,15 @@ html.ml-reading #app .v2-st-active .v2-st-arc { stroke: var(--rr-ink) !important
 html.ml-reading #app .v2-st-next circle { stroke: var(--v2-accent) !important; }
 html.ml-reading #app .v2-st-new circle { stroke: var(--rr-tick) !important; }
 html.ml-reading #app .v2-st-lock { color: var(--rr-ink-quiet) !important; justify-content: center !important; }
+
+/* Subject tiles: separate cards with rounded corners. */
+html.ml-reading #app .v2-row.v2-subj {
+  margin: 0 0 10px !important;
+  padding: 14px 16px !important;
+  border: 1px solid var(--rr-rule) !important;
+  border-radius: 12px !important;
+  background: var(--v2-card) !important;
+}
+html.ml-reading #app .v2-row.v2-subj:hover { border-color: var(--rr-ink-quiet) !important; }
+html.ml-reading #app .v2-sec > .v2-h2 + .v2-subj,
+html.ml-reading #app #v2SubjList > .v2-subj:first-child { margin-top: 12px !important; }
