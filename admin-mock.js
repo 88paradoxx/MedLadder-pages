@@ -60,7 +60,7 @@
       'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
   function showView(id) {
-    ['gateView', 'testsView', 'editorView', 'bankView', 'flaggedView'].forEach(function (v) {
+    ['gateView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView'].forEach(function (v) {
       $(v).hidden = v !== id;
     });
     window.scrollTo(0, 0);
@@ -288,6 +288,14 @@
         if (r.error) { toast(rpcErr(r.error)); $('bankInfo').textContent = ''; return; }
         var num = (r.data && r.data.question_num) || '';
         toast('Added to bank (question #' + num + ').');
+        if ($('bqQotd') && $('bqQotd').checked && r.data && r.data.id && $('bqQotdDay').value) {
+          var qday = $('bqQotdDay').value;
+          sb.from('qotd').upsert({ day: qday, question_id: r.data.id }).then(function (qr) {
+            if (qr.error) toast('Added, but could not set it as question of the day: ' + rpcErr(qr.error));
+            else toast('Added and set as question of the day for ' + qotdLabel(qday) + '.');
+          });
+          $('bqQotd').checked = false;
+        }
         $('bankInfo').textContent = 'Last added: question #' + num + ' → ' +
           hit.subject + ' / ' + hit.name;
         // Keep the subject/topic: only the question fields are cleared, so the
@@ -461,6 +469,139 @@
     };
   }
 
+  /* ---------- question of the day ---------- */
+  function isoDay(d) {
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  function addDays(iso, n) { var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoDay(d); }
+  function qotdLabel(iso) {
+    var today = isoDay(new Date());
+    var d = new Date(iso + 'T12:00:00');
+    var nice = d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    return iso === today ? 'Today, ' + nice : iso === addDays(today, 1) ? 'Tomorrow, ' + nice : nice;
+  }
+  function plain(t, n) {
+    var s = String(t || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    return n && s.length > n ? s.slice(0, n - 1) + '…' : s;
+  }
+  function hasImage(q) {
+    return !!(q && (q.has_image || /<img/i.test(q.question_text || '') ||
+      /\b(image|picture|photo|figure|x-?ray|radiograph|ecg|shown|marked|arrow|identify the)\b/i.test(q.question_text || '')));
+  }
+  function populateQdSubjects() {
+    var subjSel = $('qdSubj'), topicSel = $('qdTopic');
+    var idx = bulkBuildIndex();
+    subjSel.innerHTML = '<option value="">Any subject</option>' + idx.subjects.map(function (s) {
+      return '<option>' + esc(s.name) + '</option>';
+    }).join('');
+    var rebuild = function () {
+      var subj = idx.bySubject[(subjSel.value || '').toLowerCase()];
+      topicSel.innerHTML = '<option value="">Any topic</option>' + (subj ? subj.modules.map(function (m) {
+        return '<option value="' + m.id + '">' + esc(m.name) + '</option>';
+      }).join('') : '');
+      topicSel.disabled = !subj;
+    };
+    subjSel.onchange = rebuild;
+    rebuild();
+  }
+  function moduleName(id) {
+    var idx = bulkBuildIndex(), hit = null;
+    idx.subjects.some(function (s) {
+      return s.modules.some(function (m) { if (m.id === id) { hit = s.name + ' / ' + m.name; return true; } return false; });
+    });
+    return hit || '';
+  }
+  function loadQotd() {
+    showView('qotdView');
+    if (!$('qdSubj').options.length) populateQdSubjects();
+    var today = isoDay(new Date());
+    if (!$('qdDay').value) $('qdDay').value = today;
+    $('qdDay').min = today;
+    var box = $('qotdSchedule');
+    sb.rpc('admin_qotd_schedule', { p_from: today, p_to: addDays(today, 13) }).then(function (res) {
+      if (res.error) { box.innerHTML = '<p class="am-hint">' + esc(rpcErr(res.error)) + '</p>'; return; }
+      var byDay = {};
+      (res.data || []).forEach(function (r) { byDay[r.day] = r; });
+      var rows = '';
+      for (var i = 0; i < 14; i++) {
+        var day = addDays(today, i), r = byDay[day];
+        rows += '<div class="am-q qd-day' + (r ? ' set' : '') + '"><div class="qd-day-head"><strong>' + esc(qotdLabel(day)) + '</strong>' +
+          (r ? '<span class="am-badge published">Chosen</span>' : '<span class="am-badge draft">Keeps previous</span>') + '</div>' +
+          (r ? '<div class="qt">' + esc(plain(r.question_text, 180)) + '</div><div class="am-hint">#' + r.question_id + ' · ' + esc((r.subject || '') + (r.topic ? ' / ' + r.topic : '')) + ' · answer ' + esc(r.answer || '') + '</div>'
+             : '<div class="am-hint">Shows the last question you chose before this day.</div>') +
+          '<div class="am-row" style="margin:8px 0 0"><button class="am-btn" data-qd-pick="' + day + '">' + (r ? 'Change' : 'Choose') + '</button>' +
+          (r ? '<button class="am-btn am-btn-danger" data-qd-clear="' + day + '">Clear</button>' : '') + '</div></div>';
+      }
+      box.innerHTML = rows;
+      Array.prototype.forEach.call(box.querySelectorAll('[data-qd-pick]'), function (b) {
+        b.onclick = function () {
+          $('qdDay').value = b.getAttribute('data-qd-pick');
+          $('qotdPickTitle').textContent = 'Choose a question for ' + qotdLabel($('qdDay').value);
+          $('qotdPickTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          $('qdSearch').focus();
+        };
+      });
+      Array.prototype.forEach.call(box.querySelectorAll('[data-qd-clear]'), function (b) {
+        b.onclick = function () {
+          var day2 = b.getAttribute('data-qd-clear');
+          sb.from('qotd').delete().eq('day', day2).then(function (r2) {
+            if (r2.error) { toast(rpcErr(r2.error)); return; }
+            toast(qotdLabel(day2) + ' cleared: it will show the last question chosen before it.');
+            loadQotd();
+          });
+        };
+      });
+    });
+  }
+  function searchQotd(recent) {
+    var term = recent === true ? '' : ($('qdSearch').value || '').trim();
+    var topic = $('qdTopic').value ? parseInt($('qdTopic').value, 10) : null;
+    var subjName = $('qdSubj').value;
+    var out = $('qdResults');
+    var q = sb.from('questions').select('id,question_num,module_id,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,has_image,is_pyq');
+    if (recent === true) q = q.eq('is_pyq', false);
+    else if (/^\d+$/.test(term)) q = q.eq('id', parseInt(term, 10));
+    else {
+      if (term.length < 3 && !topic) { $('qdInfo').textContent = 'Type at least 3 letters, or pick a topic.'; return; }
+      if (term) q = q.ilike('question_text', '%' + term.replace(/[%_]/g, '') + '%');
+      if (topic) q = q.eq('module_id', topic);
+      else if (subjName) {
+        var subj = bulkBuildIndex().bySubject[subjName.toLowerCase()];
+        if (subj) q = q.in('module_id', subj.modules.map(function (m) { return m.id; }));
+      }
+    }
+    $('qdInfo').textContent = 'Searching…';
+    q.order('id', { ascending: recent !== true }).limit(25).then(function (res) {
+      if (res.error) { $('qdInfo').textContent = rpcErr(res.error); return; }
+      var rows = res.data || [];
+      $('qdInfo').textContent = recent === true ? 'The ' + rows.length + ' questions added to the bank most recently, newest first.'
+        : (rows.length ? rows.length + (rows.length === 25 ? '+' : '') + ' found' : 'No questions found.');
+      var dayLabel = qotdLabel($('qdDay').value || isoDay(new Date()));
+      out.innerHTML = rows.map(function (r) {
+        var opts = ['a', 'b', 'c', 'd', 'e'].filter(function (L) { return r['option_' + L]; }).map(function (L) {
+          var right = String(r.answer || '').toLowerCase() === L;
+          return '<div>' + (right ? '<b>' : '') + L.toUpperCase() + '. ' + esc(plain(r['option_' + L], 120)) + (right ? '</b>' : '') + '</div>';
+        }).join('');
+        return '<div class="am-q"><div class="am-hint">#' + r.id + ' · ' + esc(moduleName(r.module_id) || (r.is_pyq ? 'Past paper' : '')) +
+          (hasImage(r) ? ' · <span style="color:var(--red)">needs an image</span>' : '') + '</div>' +
+          '<div class="qt">' + esc(plain(r.question_text, 400)) + '</div><div class="opts">' + opts + '</div>' +
+          '<details><summary class="am-hint">Explanation</summary><div class="expl">' + esc(plain(r.explanation, 600)) + '</div></details>' +
+          '<div class="am-row" style="margin:8px 0 0"><button class="am-btn am-btn-primary" data-qd-use="' + r.id + '">Use for ' + esc(dayLabel) + '</button></div></div>';
+      }).join('');
+      Array.prototype.forEach.call(out.querySelectorAll('[data-qd-use]'), function (b) {
+        b.onclick = function () {
+          var day = $('qdDay').value || isoDay(new Date());
+          sb.from('qotd').upsert({ day: day, question_id: parseInt(b.getAttribute('data-qd-use'), 10) }).then(function (r2) {
+            if (r2.error) { toast(rpcErr(r2.error)); return; }
+            toast('Set as question of the day for ' + qotdLabel(day) + '.');
+            loadQotd();
+          });
+        };
+      });
+    });
+  }
+
   function wireEditor() {
     $('backBtn').onclick = loadTests;
     $('newTestBtn').onclick = function () { openEditor(null); };
@@ -471,6 +612,17 @@
       b.onclick = function () { loadFlags(b.getAttribute('data-status')); };
     });
     $('bankBackBtn').onclick = loadTests;
+    $('qotdBtn').onclick = loadQotd;
+    $('qotdBackBtn').onclick = loadTests;
+    $('qdSearchBtn').onclick = function () { searchQotd(false); };
+    $('qdRecentBtn').onclick = function () { searchQotd(true); };
+    $('qdSearch').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); searchQotd(false); } };
+    $('qdDay').onchange = function () { $('qotdPickTitle').textContent = 'Choose a question for ' + qotdLabel($('qdDay').value); };
+    $('qotdToBank').onclick = function (e) {
+      e.preventDefault(); showView('bankView');
+      if ($('bqQotd')) { $('bqQotd').checked = true; $('bqQotdDay').value = $('qdDay').value || isoDay(new Date()); }
+    };
+    if ($('bqQotdDay')) $('bqQotdDay').value = isoDay(new Date());
     $('bankQForm').onsubmit = submitBankQuestion;
     wireBankImageInput('bqQImg', 'bqQImgPrev', 'bqQImgClear');
     wireBankImageInput('bqEImg', 'bqEImgPrev', 'bqEImgClear');
