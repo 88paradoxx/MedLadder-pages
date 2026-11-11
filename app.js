@@ -5026,6 +5026,7 @@ window.addEventListener('error', function (ev) {
         }
 
         state.screen = 'quiz';
+        if (!state.startedAt) state.startedAt = Date.now();
         setTimeout(function () { try { applyPeerStats(); } catch (e) { } }, 0);
         trackPageView(practiceBasePath() + '/quiz', 'quiz');
         if (app) {
@@ -5081,7 +5082,7 @@ window.addEventListener('error', function (ev) {
         var ticksHtml = state.order.map(function (qi, i) {
           var tq = state.questions[qi];
           var ta = tq ? state.answers[String(tq.id || tq.num)] : null;
-          return '<i class="tick' + (ta ? (ta.isCorrect ? ' ok' : ' bad') : '') + (i === state.idx ? ' cur' : '') + '">' + (i + 1) + '</i>';
+          return '<i class="tick' + (ta ? (ta.isCorrect ? ' ok' : ' bad') : '') + (i === state.idx ? ' cur' : '') + '" data-jump="' + i + '" role="button" tabindex="-1" aria-label="Question ' + (i + 1) + (ta ? (ta.isCorrect ? ', correct' : ', wrong') : '') + '">' + (i + 1) + '</i>';
         }).join('');
         var ladderDensity = total <= 40 ? 'sparse' : (total <= 110 ? 'mid' : 'dense');
         var quizCrumb = String(state.poolTitle || '').replace(' \u2014 ', ' / ');
@@ -5119,6 +5120,15 @@ window.addEventListener('error', function (ev) {
           '</main>';
 
         wireTopBar(backFn);
+        app.querySelectorAll('#rrLadder .tick[data-jump]').forEach(function (t) {
+          t.addEventListener('click', function () {
+            var to = parseInt(t.getAttribute('data-jump'), 10);
+            if (!isFinite(to) || to === state.idx) return;
+            state.idx = to;
+            scrollToPageTop();
+            renderQuiz();
+          });
+        });
         if (state.timeLimit > 0) updateTimerBadge();
 
         var explainBox = app.querySelector('.explain');
@@ -5350,9 +5360,15 @@ window.addEventListener('error', function (ev) {
         if (!opts.length) return;
         opts.forEach(function (b) {
           if (b.querySelector('.rr-peer')) return;
+          var share = Math.round((100 * (st.by[b.getAttribute('data-letter')] || 0)) / st.total);
+          var bar = document.createElement('span');
+          bar.className = 'rr-peer-bar';
+          bar.setAttribute('aria-hidden', 'true');
+          bar.style.width = share + '%';
+          b.insertBefore(bar, b.firstChild);
           var sp = document.createElement('span');
           sp.className = 'rr-peer';
-          sp.textContent = Math.round((100 * (st.by[b.getAttribute('data-letter')] || 0)) / st.total) + '%';
+          sp.textContent = share + '%';
           // Before the text span: the CORRECT / YOUR ANSWER label hangs off
           // the option's last span.
           b.insertBefore(sp, b.lastElementChild);
@@ -6923,6 +6939,42 @@ window.addEventListener('error', function (ev) {
         return 'This topic needs another round.';
       }
 
+      // Score ring and the four counts, the way question banks report a test.
+      function rrResultSummary(correct, total, pct, timedOut) {
+        var answered = 0, wrong = 0;
+        Object.keys(state.answers).forEach(function (k) {
+          var a = state.answers[k];
+          if (!a || a.skipped) return;
+          answered++;
+          if (!a.isCorrect) wrong++;
+        });
+        var skipped = Math.max(0, total - correct - wrong);
+        if (!state.finishedAt) state.finishedAt = Date.now();
+        var secs = state.startedAt ? Math.max(0, Math.round((state.finishedAt - state.startedAt) / 1000)) : 0;
+        var fmt = function (t) { var m = Math.floor(t / 60), s2 = t % 60; return m >= 60 ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : (m ? m + 'm ' : '') + s2 + 's'; };
+        var acc = answered ? Math.round((correct / answered) * 100) : 0;
+        var C = 2 * Math.PI * 52;
+        var okLen = total ? (correct / total) * C : 0, badLen = total ? (wrong / total) * C : 0;
+        return '<section class="rr-sum" aria-label="Result">' +
+          '<div class="rr-ring">' +
+          '<svg viewBox="0 0 120 120" width="132" height="132" aria-hidden="true">' +
+          '<circle cx="60" cy="60" r="52" class="rr-ring-track"/>' +
+          (badLen ? '<circle cx="60" cy="60" r="52" class="rr-ring-bad" stroke-dasharray="' + badLen.toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-okLen).toFixed(2) + '"/>' : '') +
+          (okLen ? '<circle cx="60" cy="60" r="52" class="rr-ring-ok" stroke-dasharray="' + okLen.toFixed(2) + ' ' + C.toFixed(2) + '"/>' : '') +
+          '</svg>' +
+          '<h1 class="rr-ring-label"><span class="rr-ring-pct">' + pct + '%</span><span class="rr-ring-of">' + correct + ' of ' + total + '</span></h1>' +
+          '</div>' +
+          '<p class="rr-res-verdict">' + verdictFor(pct) + (timedOut ? ' Time ran out.' : '') + '</p>' +
+          '<dl class="rr-counts">' +
+          '<div class="ok"><dt>Correct</dt><dd>' + correct + '</dd></div>' +
+          '<div class="bad"><dt>Wrong</dt><dd>' + wrong + '</dd></div>' +
+          '<div class="skip"><dt>Skipped</dt><dd>' + skipped + '</dd></div>' +
+          '<div><dt>Time</dt><dd>' + (secs ? fmt(secs) : '\u2013') + '</dd></div>' +
+          '</dl>' +
+          (answered ? '<p class="rr-sum-note">Accuracy on the ' + answered + ' you answered: ' + acc + '%' + (secs && answered ? ' \u00b7 about ' + Math.max(1, Math.round(secs / answered)) + 's a question' : '') + '</p>' : '') +
+          '</section>';
+      }
+
       function renderResults(timedOut) {
         if (!quizStylesReady) { ensureQuizStyles().then(function () { renderResults(timedOut); }); return; }
         clearTimer();
@@ -7006,9 +7058,7 @@ window.addEventListener('error', function (ev) {
         app.innerHTML =
           rrTopBar('Back', resCrumb) +
           '<main id="mainContent" role="main" class="rr-results">' +
-          '<h1 class="rr-res-score"><span class="rr-res-num">' + correct + '</span>' +
-          '<span class="rr-res-of">of ' + total + ' correct \u00b7 ' + pct + '%' + (timedOut ? ' \u00b7 time ran out' : '') + '</span></h1>' +
-          '<p class="rr-res-verdict">' + verdictFor(pct) + '</p>' +
+          rrResultSummary(correct, total, pct, timedOut) +
           (currentUser ? '' :
             '<div class="rr-res-guest">' +
             '<p>You answered these without an account. Sign in to keep this result' +

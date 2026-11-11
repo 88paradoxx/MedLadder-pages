@@ -671,3 +671,27 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .mt-brand, .am-brand { font-family: Literata, Georgia, serif !important; font-weight: 600 !important; }
 .am-title, .mt-title { color: var(--accent-2) !important; }
 .theme-toggle { background: transparent !important; }
+/* Header like the app's: brand on the left, a quiet way home, account and theme on the right. */
+.mt-brand::after { content: none !important; }
+.mt-brand::before { content: "" !important; display: inline-block !important; width: 26px !important; height: 26px !important; margin-right: 9px !important; vertical-align: -6px !important; border-radius: 7px !important; background: url(/icons/icon-72.png) center / cover !important; }
+.mt-topbar { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 8px 12px !important; padding: 14px 0 12px !important; border-bottom: 1px solid var(--border) !important; }
+.mt-nav { gap: 10px !important; margin-right: auto !important; }
+.mt-nav a { font-weight: 500 !important; }
+.mt-nav a.active { color: var(--text) !important; }
+.mt-home-btn { padding: 0 !important; border: 0 !important; background: none !important; color: var(--muted) !important; }
+.mt-home-btn:hover { color: var(--text) !important; }
+.theme-toggle { width: 38px !important; height: 38px !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
+.mt-auth .auth-btn, .mt-auth .auth-user-btn { border-radius: 8px !important; box-shadow: none !important; background: none !important; border: 1px solid var(--border) !important; color: var(--text) !important; }
+.mt-hero { text-align: left !important; padding: 22px 0 8px !important; background: none !important; }
+.mt-hero h1 { font-size: clamp(26px, 5vw, 34px) !important; font-weight: 600 !important; margin: 0 0 8px !important; }
+.mt-hero p { color: var(--muted) !important; font-family: Literata, Georgia, serif !important; font-size: 16.5px !important; }
+.mt-seo h2, .mt-seo h3 { font-weight: 600 !important; }
+.mt-seo p, .mt-seo li { font-family: Literata, Georgia, serif !important; line-height: 1.7 !important; }
+.mt-test-card { border-left-width: 1px !important; }
+.mt-opt.selected, .mt-opt.active, .mt-opt[aria-pressed="true"] { border-color: var(--accent) !important; background: var(--accent-soft) !important; }
+.mt-pal-btn { border-radius: 50% !important; }
+.mt-topbar .mt-auth { margin: 0 !important; width: auto !important; flex: 0 0 auto !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
+.mt-topbar .theme-toggle { order: 3 !important; }
+.mt-topbar .mt-auth { order: 2 !important; }
+.mt-topbar .mt-auth { position: static !important; transform: none !important; justify-content: flex-end !important; }
+.mt-topbar .mt-auth { margin-left: auto !important; }

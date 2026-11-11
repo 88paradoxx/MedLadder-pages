@@ -94,7 +94,7 @@ html:has(.seo-main) .ml-reviewed { margin: 16px 0 0 !important; text-align: left
 
 /* stats: a ruled row, like the app's */
 html:has(.seo-main) .bento-bar {
-  display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 0 !important;
+  display: grid !important; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important; gap: 0 !important;
   max-width: none !important; margin: 18px 0 22px !important; padding: 0 !important;
   background: none !important; border: 0 !important; border-top: 1px solid var(--sr-rule) !important; border-bottom: 1px solid var(--sr-rule) !important;
   border-radius: 0 !important; box-shadow: none !important;
