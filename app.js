@@ -5376,14 +5376,35 @@ window.addEventListener('error', function (ev) {
       var DASH_MIN_SUBJECT = 10;  // answers before a subject is ranked
       var DASH_MIN_TOPIC = 5;     // answers before a topic can be flagged
 
-      function dashboardData() {
+      // The progress map holds each topic's most recent run only, so an
+      // unfinished retry hides everything answered before it. Where the
+      // answer history is loaded, count from it instead: each question once,
+      // scored on the latest answer to it.
+      function v2EffectiveProgress() {
+        var ep = Object.assign({}, progress);
+        if (!v2HaveHistory()) return ep;
+        var ix = v2Index(reviewData);
+        var idx = v2ModIndex();
+        Object.keys(ix.byMod).forEach(function (mid) {
+          var info = idx[mid];
+          var b = ix.byMod[mid];
+          if (!info || !b.seen) return;
+          var key = info.sx.subjectId + ':' + info.m.moduleId;
+          var p = ep[key];
+          if (!p || b.seen >= (p.done || 0)) ep[key] = { done: b.seen, correct: b.ok, total: info.m.questionCount };
+        });
+        return ep;
+      }
+
+      function dashboardData(src) {
+        src = src || progress;
         var subjects = {};
         SUBJECT_INDEX.forEach(function (sx) {
           subjects[String(sx.subjectId)] = { subjectId: sx.subjectId, name: sx.name, done: 0, correct: 0, topics: 0 };
         });
         var out = { done: 0, correct: 0, topicsStarted: 0, pyqDone: 0, pyqCorrect: 0, topics: [] };
-        Object.keys(progress).forEach(function (k) {
-          var p = progress[k];
+        Object.keys(src).forEach(function (k) {
+          var p = src[k];
           if (!p || !p.done) return;
           var done = p.done || 0;
           var correct = Math.min(p.correct || 0, done);
@@ -5422,7 +5443,11 @@ window.addEventListener('error', function (ev) {
         if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
         trackPageView('/dashboard', 'dashboard');
 
-        var d = dashboardData();
+        var ep = v2EffectiveProgress();
+        var fromHistory = v2HaveHistory() && Object.keys(reviewData.q).length > 0;
+        var totalAnswers = 0;
+        if (fromHistory) Object.keys(reviewData.q).forEach(function (k) { totalAnswers += reviewData.q[k].n; });
+        var d = dashboardData(ep);
         var started = d.subjects.filter(function (sb) { return sb.done > 0; })
           .sort(function (a, b) { return b.pct - a.pct || b.done - a.done; });
         var untouched = d.subjects.filter(function (sb) { return !sb.done; });
@@ -5485,8 +5510,8 @@ window.addEventListener('error', function (ev) {
           var finished = 0, next = null;
           mods.forEach(function (m, i) {
             if (!m.questionCount) return;
-            var p = progress[sx.subjectId + ':' + m.moduleId];
-            var doneCount = p ? (p.done || 0) : 0;
+            var p = ep[sx.subjectId + ':' + m.moduleId];
+            var doneCount = p ? Math.min(p.done || 0, m.questionCount) : 0;
             if (doneCount >= m.questionCount) { finished++; return; }
             if (!next) next = { subjectId: sx.subjectId, subjectName: sx.name, moduleId: m.moduleId, name: m.name, questionCount: m.questionCount, done: doneCount, locked: isModuleLocked(sx.subjectId, m.moduleId, i) };
           });
@@ -5505,7 +5530,7 @@ window.addEventListener('error', function (ev) {
 
         var bodyHtml = d.done > 0
           ? '<dl class="rr-stats">' +
-            '<div><dt>Questions answered</dt><dd>' + d.done.toLocaleString() + '</dd></div>' +
+            '<div><dt>Questions answered</dt><dd>' + d.done.toLocaleString() + '</dd>' + (totalAnswers > d.done ? '<span class="rr-stat-foot">' + totalAnswers.toLocaleString() + ' answers with repeats</span>' : '') + '</div>' +
             '<div><dt>Accuracy</dt><dd>' + overallPct + '%</dd><span class="rr-stat-foot">' + d.correct.toLocaleString() + ' correct</span></div>' +
             '<div><dt>Topics started</dt><dd>' + d.topicsStarted.toLocaleString() + '</dd><span class="rr-stat-foot">in ' + started.length + ' of ' + d.subjects.length + ' subjects</span></div>' +
             '</dl>' +
@@ -5527,10 +5552,17 @@ window.addEventListener('error', function (ev) {
           rrTopBar('Back to home', 'Home') +
           '<main id="mainContent" role="main" class="rr-dash">' +
           '<h1 class="rr-dash-title">My progress</h1>' +
-          '<p class="rr-dash-sub">Counted from your most recent run of each topic.</p>' +
+          '<p class="rr-dash-sub">' + (fromHistory
+            ? 'Each question is counted once, scored on your latest answer to it: a question you missed and later got right counts as right.'
+            : 'Counted from your most recent run of each topic.') + '</p>' +
           bodyHtml +
           '</main>';
         wireTopBar(renderHome);
+        if (!v2HaveHistory()) {
+          loadReviewData().then(function (rd) {
+            if (rd && state.screen === 'dashboard') { var y = window.scrollY; renderDashboard(); window.scrollTo(0, y); }
+          });
+        }
 
         app.querySelectorAll('.rr-dash [data-subject]').forEach(function (btn) {
           btn.addEventListener('click', function () {
@@ -5549,7 +5581,7 @@ window.addEventListener('error', function (ev) {
         if (!recentEl || !supabaseClient) return;
         try {
           supabaseClient.from('attempts')
-            .select('id,subject_id,module_id,question_count,score_pct,started_at,finished_at')
+            .select('id,subject_id,module_id,question_count,score_pct,started_at,finished_at,attempt_answers(count)')
             .eq('user_id', currentUser.id).order('started_at', { ascending: false }).limit(8)
             .then(function (res) {
               if (state.screen !== 'dashboard' || !document.getElementById('dashRecent')) return;
@@ -5561,7 +5593,8 @@ window.addEventListener('error', function (ev) {
                 var label = mod ? mod.name : (sx ? sx.name + ' \u2014 mixed topics' : 'Mixed set');
                 var when = '';
                 try { when = new Date(r.started_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) {}
-                var result = (r.finished_at && r.score_pct != null) ? r.score_pct + '%' : 'Not finished';
+                var answeredN = r.attempt_answers && r.attempt_answers[0] ? r.attempt_answers[0].count : null;
+                var result = (r.finished_at && r.score_pct != null) ? r.score_pct + '%' : (answeredN != null ? answeredN + ' of ' + (r.question_count || '?') + ' done' : 'Not finished');
                 return '<li><span class="rr-recent-text"><span class="rr-topic-name">' + esc(label) + '</span>' +
                   '<span class="rr-topic-sub">' + esc(when) + (sx && mod ? ' \u00b7 ' + esc(sx.name) : '') + (r.question_count ? ' \u00b7 ' + r.question_count + ' questions' : '') + '</span></span>' +
                   '<span class="rr-recent-score">' + result + '</span></li>';
