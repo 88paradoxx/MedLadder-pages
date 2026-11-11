@@ -151,3 +151,8 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .am-card, .am-test-row { border-radius: 12px !important; }
 .am-btn { border-radius: 8px !important; }
 .am-badge.published { background: var(--green-soft, rgba(22,107,69,.1)) !important; }
+.qd-day-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.qd-day.set { border-color: var(--accent) !important; }
+.am-inline { display: flex !important; align-items: center; gap: 8px; flex-wrap: wrap; }
+.am-inline input[type="checkbox"] { width: auto !important; }
+#qotdSchedule { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }

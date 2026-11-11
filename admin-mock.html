@@ -40,6 +40,7 @@
         <div class="am-row">
           <h1>Mock tests</h1>
           <button id="bankBtn" class="am-btn">Question bank</button>
+          <button id="qotdBtn" class="am-btn">Question of the day</button>
           <button id="flaggedBtn" class="am-btn">🚩 Flagged questions</button>
           <button id="newTestBtn" class="am-btn am-btn-primary">+ New test</button>
         </div>
@@ -74,6 +75,8 @@
           <label class="am-wide">Explanation image <input type="file" id="bqEImg" accept="image/*">
             <img id="bqEImgPrev" hidden alt="Explanation image preview" style="max-width:160px;max-height:120px;display:block;margin-top:6px;border-radius:6px">
             <button type="button" id="bqEImgClear" class="am-btn" hidden>Remove image</button></label>
+          <label class="am-wide am-inline"><input type="checkbox" id="bqQotd"> Make it the question of the day on
+            <input type="date" id="bqQotdDay" style="width:auto;margin-left:6px"></label>
           <div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Add to bank</button>
             <span id="bankInfo" class="am-hint"></span></div>
         </form>
@@ -110,6 +113,36 @@ Q: Next question…</pre></p>
         </div>
       </section>
 
+
+      <!-- question of the day schedule -->
+      <section id="qotdView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="qotdBackBtn" class="am-btn">← All tests</button>
+          <h1>Question of the day</h1>
+        </div>
+        <p class="am-hint">Pick the question every student sees on the home screen for a given date.
+          Nothing is picked automatically: a day you leave empty keeps showing the last question
+          you chose, and until you choose one the card is hidden. Avoid questions that need an
+          image: the home card shows text only.</p>
+        <h3>Next 14 days</h3>
+        <div id="qotdSchedule" class="am-list"><p class="am-hint">Loading…</p></div>
+        <h3 id="qotdPickTitle">Choose a question</h3>
+        <div class="am-card">
+          <div class="am-form">
+            <label>Date <input type="date" id="qdDay"></label>
+            <label>Subject <select id="qdSubj"></select></label>
+            <label>Topic <select id="qdTopic"></select></label>
+            <label class="am-wide">Search the question text, or type a question ID
+              <input id="qdSearch" placeholder="e.g. primary oocyte, or 1234"></label>
+            <div class="am-wide"><button id="qdSearchBtn" class="am-btn am-btn-primary" type="button">Search</button>
+              <button id="qdRecentBtn" class="am-btn" type="button">Questions I added recently</button>
+              <span id="qdInfo" class="am-hint"></span></div>
+          </div>
+          <div id="qdResults" class="am-list" style="margin-top:12px"></div>
+        </div>
+        <p class="am-hint">To write a brand-new question for a day, add it in the
+          <a href="#" id="qotdToBank">Question bank</a> and tick “Make it the question of the day”.</p>
+      </section>
       <!-- flagged questions review queue -->
       <section id="flaggedView" class="am-view" hidden>
         <div class="am-row">

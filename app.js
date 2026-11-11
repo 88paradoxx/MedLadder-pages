@@ -6336,16 +6336,19 @@ window.addEventListener('error', function (ev) {
       function v2LoadQotd() {
         var card = document.getElementById('v2QotdCard');
         if (!card || !supabaseClient) return;
-        var pick = v2QotdPick();
-        if (!pick) { var sec = document.getElementById('v2Qotd'); if (sec) sec.hidden = true; return; }
+        // Only questions an admin chose: today's, or the last one chosen
+        // before today. With none chosen yet the card stays hidden.
+        var today = v2Day(Date.now());
+        var pick = { day: today };
         var paint = function (q) {
           if (!q) { var sec2 = document.getElementById('v2Qotd'); if (sec2) sec2.hidden = true; return; }
-          // Keyed by day and question, so a changed pick starts unanswered.
-          var key = 'ml_qotd_' + pick.day + '_' + (q && q.id);
+          // Keyed by question, so a question kept over several days stays
+          // answered and a new one starts fresh.
+          var key = 'ml_qotd_q' + (q && q.id);
           var picked = null;
           try { picked = localStorage.getItem(key); } catch (e) { }
           var tag = document.querySelector('#v2Qotd .v2-qotd-tag');
-          if (tag) tag.textContent = pick.sx.name;
+          if (tag) tag.textContent = pick.sx ? pick.sx.name : (pick.subj || '');
           var letters = ['A', 'B', 'C', 'D', 'E'].filter(function (L) { return q['option_' + L.toLowerCase()]; });
           card.innerHTML = '<p class="v2-qotd-q">' + esc(stripHtmlPreview(q.question_text, 400)) + '</p>' +
             '<div class="v2-qotd-opts">' + letters.map(function (L) {
@@ -6355,7 +6358,7 @@ window.addEventListener('error', function (ev) {
             }).join('') + '</div>' +
             (picked ? '<p class="v2-qotd-res ' + (picked === q.answer ? 'ok' : 'bad') + '">' + (picked === q.answer ? 'Right. ' : 'The answer is ' + esc(q.answer) + '. ') +
               '<span>' + esc(stripHtmlPreview(q.explanation, 260)) + '</span></p>' +
-              '<button class="v2-link" data-sid="' + pick.sx.subjectId + '" data-mod="' + esc(pick.m.moduleId) + '">Practise ' + esc(pick.m.name) + '</button>' : '');
+              (pick.sx && pick.m ? '<button class="v2-link" data-sid="' + pick.sx.subjectId + '" data-mod="' + esc(pick.m.moduleId) + '">Practise ' + esc(pick.m.name) + '</button>' : '') : '');
           card.querySelectorAll('[data-qotd]').forEach(function (b) {
             b.onclick = function () { try { localStorage.setItem(key, b.getAttribute('data-qotd')); } catch (e) { } paint(q); };
           });
@@ -6363,26 +6366,22 @@ window.addEventListener('error', function (ev) {
             b.onclick = function () { renderSetup(parseInt(b.getAttribute('data-sid'), 10), b.getAttribute('data-mod')); };
           });
         };
-        if (v2Qotd && v2Qotd.day === pick.day) { paint(v2Qotd.q); return; }
-        supabaseClient.from('questions').select('id,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,has_image')
-          .eq('module_id', pick.m.id).order('id', { ascending: true }).limit(60)
-          .then(function (res) {
-            var IMG = /\b(image|images|picture|photo|photograph|figure|fig\.|diagram|x-?ray|radiograph|ct scan|mri|ecg|ekg|shown|marked|arrow|labelled|labeled|identify the|given below)\b|<img/i;
-            var rows = ((res && !res.error && res.data) || []).filter(function (r) {
-              return !r.has_image && r.question_text && r.option_a && r.option_b && !IMG.test(r.question_text) && !/<img/i.test(r.explanation || '');
-            });
-            if (!rows.length) { v2Qotd = { day: pick.day, q: null }; paint(null); return; }
-            // Drop any question that has rows in question_images, then pick.
-            var ids = rows.map(function (r) { return r.id; });
-            supabaseClient.from('question_images').select('question_id').in('question_id', ids).then(function (ir) {
-              var withImg = {};
-              ((ir && !ir.error && ir.data) || []).forEach(function (x) { withImg[x.question_id] = true; });
-              var clean = rows.filter(function (r) { return !withImg[r.id]; });
-              var q = clean.length ? clean[pick.n % clean.length] : null;
-              v2Qotd = { day: pick.day, q: q };
-              paint(q);
-            }, function () { var q = rows[pick.n % rows.length]; v2Qotd = { day: pick.day, q: q }; paint(q); });
-          }, function () { paint(null); });
+        if (v2Qotd && v2Qotd.day === today) { if (v2Qotd.pick) pick = v2Qotd.pick; paint(v2Qotd.q); return; }
+        // An admin's choice for today wins; otherwise the automatic pick.
+        var dt = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
+        var iso = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
+        var autoLoad = function () { v2Qotd = { day: today, q: null }; paint(null); };
+        try {
+          supabaseClient.rpc('question_of_the_day', { p_day: iso }).then(function (res) {
+            var row = res && !res.error && res.data && res.data[0];
+            if (!row) { autoLoad(); return; }
+            row.answer = String(row.answer || '').toUpperCase();
+            var info = row.module_id != null ? v2ModIndex()[row.module_id] : null;
+            pick = { day: today, sx: info ? info.sx : null, m: info ? info.m : null, subj: row.subject || '' };
+            v2Qotd = { day: today, q: row, pick: pick };
+            paint(row);
+          }, autoLoad);
+        } catch (e) { autoLoad(); }
       }
 
       // This week against other students (aggregate RPC).
