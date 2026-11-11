@@ -1,10 +1,13 @@
 // Apply the saved theme before stylesheets paint, without an inline script.
 (function () {
   try {
-    if (localStorage.getItem('medladder_theme') === 'light') {
+    // Light by default; dark only for someone who chose it.
+    if (localStorage.getItem('medladder_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
       document.documentElement.classList.remove('dark');
     }
-  } catch (_) {}
+  } catch (_) { document.documentElement.classList.remove('dark'); }
 
   window.medladderToggleTheme = function () {
     document.documentElement.classList.add('theme-switching');
