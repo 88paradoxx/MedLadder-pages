@@ -1,0 +1,261 @@
+/* ==========================================================================
+   Static pages (topics, subjects, past papers, exam hubs, comparisons) in
+   the reading-room design used by the app: calm ground, Literata headings,
+   Archivo text, one MedLadder violet for the main action.
+   Everything is keyed on .seo-main being on the page, so the moment the app
+   takes over #app (a quiz starts) these rules stop applying.
+   ========================================================================== */
+html:has(.seo-main) {
+  --sr-ground: #F0F2F1; --sr-raised: #FFFFFF; --sr-rule: #D6DAD8; --sr-soft: #E2E5E3; --sr-tick: #D3D8D5;
+  --sr-ink: #121715; --sr-dim: #2C3532; --sr-quiet: #5F6A66;
+  --sr-accent: #5B34C9; --sr-accent-ink: #FFFFFF; --sr-accent-soft: rgba(91, 52, 201, .08);
+  --sr-ok: #166B45; --sr-ok-bg: rgba(22, 107, 69, .08); --sr-bad: #A33B2E; --sr-bad-bg: rgba(163, 59, 46, .07);
+  --sr-serif: Literata, "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sr-sans: Archivo, Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* The app's own tokens, which the pages' inline styles read. */
+  --ink: var(--sr-ink); --ink-soft: var(--sr-dim); --ink-muted: var(--sr-quiet);
+  --paper: var(--sr-raised); --paper-raised: var(--sr-raised); --surface: var(--sr-raised);
+  --line: var(--sr-rule); --line-strong: var(--sr-rule); --border: var(--sr-rule);
+  --accent: var(--sr-accent); --accent-deep: var(--sr-accent);
+  color-scheme: light;
+  background: var(--sr-ground) !important;
+}
+html.dark:has(.seo-main) {
+  --sr-ground: #0E1317; --sr-raised: #141B20; --sr-rule: #27313A; --sr-soft: #1C242A; --sr-tick: #26303A;
+  --sr-ink: #E7EBE8; --sr-dim: #C7CFD2; --sr-quiet: #93A1AA;
+  --sr-accent: #6F52D9; --sr-accent-ink: #FFFFFF; --sr-accent-soft: rgba(168, 147, 245, .12);
+  --sr-ok: #4FA97A; --sr-ok-bg: rgba(79, 169, 122, .10); --sr-bad: #D2695C; --sr-bad-bg: rgba(210, 105, 92, .10);
+  color-scheme: dark;
+}
+html:has(.seo-main) body {
+  background: var(--sr-ground) !important; background-image: none !important;
+  color: var(--sr-ink) !important; font-family: var(--sr-sans) !important;
+  -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums;
+}
+html:has(.seo-main) body::before, html:has(.seo-main) body::after { display: none !important; }
+html:has(.seo-main) #app { max-width: 760px !important; margin: 0 auto !important; padding: 0 20px !important; background: none !important; animation: none !important; }
+html:has(.seo-main) a { color: var(--sr-ink); text-underline-offset: 3px; }
+
+/* ---- header -------------------------------------------------------------- */
+html:has(.seo-main) .masthead {
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  margin: 0 !important; padding: 16px 0 8px !important; min-height: 0 !important;
+  background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important; position: static !important;
+}
+html:has(.seo-main) .masthead::before, html:has(.seo-main) .masthead::after { display: none !important; }
+html:has(.seo-main) .masthead .brand {
+  display: inline-flex !important; align-items: center !important; gap: 10px !important; color: var(--sr-ink) !important;
+  font-family: var(--sr-serif) !important; font-size: 20px !important; font-weight: 600 !important; letter-spacing: -0.01em !important;
+  background: none !important; -webkit-text-fill-color: currentColor !important;
+}
+html:has(.seo-main) .masthead .brand-icon { width: 28px !important; height: 28px !important; border-radius: 7px !important; box-shadow: none !important; background: none !important; }
+html:has(.seo-main) .masthead .stat { background: none !important; border: 0 !important; box-shadow: none !important; color: var(--sr-quiet) !important; font-size: 12.5px !important; font-weight: 500 !important; padding: 0 !important; }
+html:has(.seo-main) .masthead .stat-dot { display: none !important; }
+html:has(.seo-main) .masthead .right { display: flex !important; align-items: center !important; gap: 8px !important; }
+html:has(.seo-main) .masthead .right > * { border-radius: 6px !important; box-shadow: none !important; }
+html:has(.seo-main) .theme-toggle, html:has(.seo-main) .masthead .auth-btn, html:has(.seo-main) .masthead .auth-user-btn {
+  background: none !important; border: 1px solid var(--sr-rule) !important; color: var(--sr-dim) !important; box-shadow: none !important;
+}
+html:has(.seo-main) .masthead .btn-go-pro, html:has(.seo-main) .masthead .pro-badge-header, html:has(.seo-main) .masthead .admin-badge-header {
+  background: none !important; border: 1px solid var(--sr-rule) !important; color: var(--sr-dim) !important; box-shadow: none !important; animation: none !important;
+}
+
+/* ---- main column ----------------------------------------------------------- */
+html:has(.seo-main) .seo-main { padding: 0 0 48px !important; text-align: left !important; }
+html:has(.seo-main) .seo-breadcrumb { margin: 10px 0 0 !important; font-size: 13px !important; color: var(--sr-quiet) !important; background: none !important; padding: 0 !important; border: 0 !important; }
+html:has(.seo-main) .seo-breadcrumb a { color: var(--sr-quiet) !important; text-decoration: none !important; font-weight: 400 !important; }
+html:has(.seo-main) .seo-breadcrumb a:hover { color: var(--sr-ink) !important; text-decoration: underline !important; }
+
+html:has(.seo-main) .hero-wrap {
+  text-align: left !important; padding: 18px 0 8px !important; margin: 0 0 8px !important;
+  background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+}
+html:has(.seo-main) .hero-wrap::before, html:has(.seo-main) .hero-wrap::after { display: none !important; }
+html:has(.seo-main) .hero-eyebrow {
+  display: block !important; margin: 0 0 8px !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important;
+  color: var(--sr-quiet) !important; font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+html:has(.seo-main) .hero-wrap h1, html:has(.seo-main) .hero-wrap .title {
+  margin: 0 0 12px !important; text-align: left !important; color: var(--sr-ink) !important;
+  background: none !important; -webkit-text-fill-color: currentColor !important; filter: none !important;
+  font-family: var(--sr-serif) !important; font-size: clamp(28px, 5vw, 36px) !important; line-height: 1.2 !important; font-weight: 600 !important; letter-spacing: -0.015em !important;
+}
+html:has(.seo-main) .brand-gradient, html:has(.seo-main) .hero-wrap .brand-gradient {
+  background: none !important; -webkit-text-fill-color: currentColor !important; color: inherit !important;
+}
+html:has(.seo-main) .brand-gradient::after { display: none !important; }
+html:has(.seo-main) .hero-wrap .subtitle, html:has(.seo-main) .hero-wrap > p:not(.ml-reviewed) {
+  max-width: none !important; margin: 0 0 18px !important; text-align: left !important; color: var(--sr-dim) !important;
+  font-family: var(--sr-serif) !important; font-size: 16.5px !important; line-height: 1.6 !important; font-weight: 400 !important;
+}
+html:has(.seo-main) .hero-wrap > div[style*="justify-content:center"] { justify-content: flex-start !important; }
+html:has(.seo-main) .ml-reviewed { margin: 16px 0 0 !important; text-align: left !important; color: var(--sr-quiet) !important; opacity: 1 !important; }
+
+/* stats: a ruled row, like the app's */
+html:has(.seo-main) .bento-bar {
+  display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 0 !important;
+  max-width: none !important; margin: 18px 0 22px !important; padding: 0 !important;
+  background: none !important; border: 0 !important; border-top: 1px solid var(--sr-rule) !important; border-bottom: 1px solid var(--sr-rule) !important;
+  border-radius: 0 !important; box-shadow: none !important;
+}
+html:has(.seo-main) .bento-stat {
+  padding: 12px 10px 12px 12px !important; margin: 0 !important; text-align: left !important;
+  background: none !important; border: 0 !important; border-left: 1px solid var(--sr-soft) !important; border-radius: 0 !important; box-shadow: none !important;
+}
+html:has(.seo-main) .bento-stat:first-child { border-left: 0 !important; padding-left: 0 !important; }
+html:has(.seo-main) .bento-stat::before, html:has(.seo-main) .bento-stat::after { display: none !important; }
+html:has(.seo-main) .bento-stat-num {
+  color: var(--sr-ink) !important; background: none !important; -webkit-text-fill-color: currentColor !important;
+  font-family: var(--sr-sans) !important; font-size: 20px !important; font-weight: 600 !important; line-height: 1.2 !important;
+}
+html:has(.seo-main) .bento-stat-lbl { margin-top: 3px !important; color: var(--sr-quiet) !important; font-size: 11.5px !important; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; line-height: 1.35 !important; }
+@media (max-width: 520px) {
+  html:has(.seo-main) .bento-bar { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  html:has(.seo-main) .bento-stat:nth-child(3) { border-left: 0 !important; padding-left: 0 !important; }
+  html:has(.seo-main) .bento-stat:nth-child(n+3) { border-top: 1px solid var(--sr-soft) !important; }
+}
+
+/* buttons */
+html:has(.seo-main) .seo-main .btn, html:has(.seo-main) .seo-main a.btn, html:has(.seo-main) .pyq-subject-bank-primary {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  min-height: 48px !important; padding: 0 20px !important; border-radius: 6px !important;
+  background: var(--sr-accent) !important; background-image: none !important; color: var(--sr-accent-ink) !important;
+  border: 1px solid var(--sr-accent) !important; box-shadow: none !important; animation: none !important;
+  font-family: var(--sr-sans) !important; font-size: 15px !important; font-weight: 600 !important; text-decoration: none !important; transform: none !important;
+}
+html:has(.seo-main) .seo-main .btn.secondary, html:has(.seo-main) .seo-main a.btn.secondary {
+  background: none !important; color: var(--sr-ink) !important; border: 1px solid var(--sr-rule) !important;
+}
+html:has(.seo-main) .seo-main .btn:hover { filter: brightness(1.06) !important; }
+html:has(.seo-main) .seo-main .btn::before, html:has(.seo-main) .seo-main .btn::after { display: none !important; }
+
+/* sections */
+html:has(.seo-main) .seo-divider { height: 0 !important; margin: 30px 0 0 !important; background: none !important; border: 0 !important; border-top: 1px solid var(--sr-rule) !important; opacity: 1 !important; box-shadow: none !important; }
+html:has(.seo-main) .seo-divider::before, html:has(.seo-main) .seo-divider::after { display: none !important; }
+html:has(.seo-main) .seo-main section { margin-top: 26px !important; }
+html:has(.seo-main) .seo-section-title, html:has(.seo-main) .seo-main h2 {
+  margin: 0 0 12px !important; padding: 0 !important; text-align: left !important;
+  color: var(--sr-ink) !important; background: none !important; -webkit-text-fill-color: currentColor !important;
+  font-family: var(--sr-serif) !important; font-size: 22px !important; line-height: 1.3 !important; font-weight: 600 !important; letter-spacing: -0.01em !important;
+}
+html:has(.seo-main) .seo-section-title::before, html:has(.seo-main) .seo-section-title::after { display: none !important; }
+html:has(.seo-main) .seo-main h3 { font-family: var(--sr-serif) !important; color: var(--sr-ink) !important; font-weight: 600 !important; }
+html:has(.seo-main) .seo-main p, html:has(.seo-main) .seo-main li { color: var(--sr-dim) !important; }
+html:has(.seo-main) .seo-main section > p { font-family: var(--sr-serif) !important; font-size: 16px !important; line-height: 1.7 !important; }
+html:has(.seo-main) .seo-main strong { color: var(--sr-ink) !important; }
+
+/* link cards (related topics, exam hubs, subject topic lists) */
+html:has(.seo-main) .seo-card, html:has(.seo-main) .pyq-card {
+  display: block !important; padding: 14px 16px !important; border-radius: 12px !important;
+  background: var(--sr-raised) !important; background-image: none !important; border: 1px solid var(--sr-rule) !important; box-shadow: none !important;
+  color: var(--sr-ink) !important; transform: none !important; transition: border-color .15s !important;
+}
+html:has(.seo-main) .seo-card:hover, html:has(.seo-main) .pyq-card:hover { border-color: var(--sr-quiet) !important; }
+html:has(.seo-main) .seo-card::before, html:has(.seo-main) .seo-card::after { display: none !important; }
+html:has(.seo-main) .seo-card strong { font-family: var(--sr-serif) !important; font-weight: 500 !important; font-size: 16px !important; }
+html:has(.seo-main) .seo-card span, html:has(.seo-main) .seo-card small, html:has(.seo-main) .pyq-card p { color: var(--sr-quiet) !important; }
+html:has(.seo-main) .pyq-card-grid { gap: 10px !important; }
+
+/* sample questions */
+html:has(.seo-main) .seo-qcard, html:has(.seo-main) .pyq-q {
+  margin: 14px 0 !important; padding: 18px 18px 16px !important; border-radius: 12px !important;
+  background: var(--sr-raised) !important; background-image: none !important; border: 1px solid var(--sr-rule) !important; box-shadow: none !important;
+}
+html:has(.seo-main) .qnum-eyebrow, html:has(.seo-main) .pyq-qnum {
+  margin: 0 0 8px !important; padding: 0 !important; background: none !important; border: 0 !important;
+  color: var(--sr-quiet) !important; font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+html:has(.seo-main) .seo-qcard h3, html:has(.seo-main) .seo-qcard .qtext, html:has(.seo-main) .pyq-qtext {
+  margin: 0 0 14px !important; color: var(--sr-ink) !important;
+  font-family: var(--sr-serif) !important; font-size: 17px !important; line-height: 1.5 !important; font-weight: 400 !important;
+}
+html:has(.seo-main) .seo-opt, html:has(.seo-main) .pyq-opt {
+  display: flex !important; gap: 12px !important; align-items: baseline !important; width: 100% !important;
+  margin: 0 !important; padding: 11px 12px !important; border-radius: 6px !important;
+  background: none !important; border: 1px solid var(--sr-soft) !important; box-shadow: none !important;
+  color: var(--sr-ink) !important; font-family: var(--sr-serif) !important; font-size: 15.5px !important; line-height: 1.45 !important; text-align: left !important;
+}
+html:has(.seo-main) .seo-opt + .seo-opt { margin-top: 6px !important; }
+html:has(.seo-main) .pyq-opts { gap: 6px !important; }
+html:has(.seo-main) .pyq-opt:hover { border-color: var(--sr-quiet) !important; }
+html:has(.seo-main) .seo-opt .letter, html:has(.seo-main) .pyq-letter {
+  flex: 0 0 auto !important; min-width: 16px !important; width: auto !important; height: auto !important;
+  background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  color: var(--sr-quiet) !important; font-family: var(--sr-sans) !important; font-size: 12.5px !important; font-weight: 600 !important;
+}
+html:has(.seo-main) .seo-opt.correct, html:has(.seo-main) .pyq-opt.is-correct { border-color: var(--sr-ok) !important; background: var(--sr-ok-bg) !important; }
+html:has(.seo-main) .seo-opt.correct .letter, html:has(.seo-main) .pyq-opt.is-correct .pyq-letter { color: var(--sr-ok) !important; }
+html:has(.seo-main) .pyq-opt.is-wrong { border-color: var(--sr-bad) !important; background: var(--sr-bad-bg) !important; }
+html:has(.seo-main) .seo-qcard .explain, html:has(.seo-main) .pyq-feedback {
+  margin: 14px 0 0 !important; padding: 12px 0 0 !important; background: none !important; border: 0 !important; border-top: 1px solid var(--sr-soft) !important; border-radius: 0 !important; box-shadow: none !important;
+  color: var(--sr-dim) !important; font-family: var(--sr-serif) !important; font-size: 15px !important; line-height: 1.6 !important;
+}
+html:has(.seo-main) .exlabel { display: block !important; margin: 0 0 6px !important; background: none !important; padding: 0 !important; color: var(--sr-quiet) !important; font-family: var(--sr-sans) !important; font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+html:has(.seo-main) .pyq-feedback summary { color: var(--sr-dim) !important; font-family: var(--sr-sans) !important; font-size: 14px !important; font-weight: 500 !important; }
+html:has(.seo-main) .pyq-correct { color: var(--sr-ok) !important; font-family: var(--sr-sans) !important; font-size: 14px !important; }
+html:has(.seo-main) .pyq-expl { color: var(--sr-dim) !important; }
+
+/* past-paper practice tools */
+html:has(.seo-main) .pyq-note {
+  margin: 18px 0 !important; padding: 12px 16px !important; border-radius: 0 6px 6px 0 !important;
+  background: var(--sr-accent-soft) !important; border: 0 !important; border-left: 3px solid var(--sr-accent) !important; color: var(--sr-dim) !important;
+}
+html:has(.seo-main) .pyq-progress, html:has(.seo-main) .pyq-preview-notice {
+  background: var(--sr-ground) !important; border: 1px solid var(--sr-rule) !important; border-radius: 10px !important; box-shadow: none !important; color: var(--sr-dim) !important;
+}
+html:has(.seo-main) .pyq-bar-wrap { height: 3px !important; background: var(--sr-tick) !important; border-radius: 2px !important; }
+html:has(.seo-main) .pyq-bar { background: var(--sr-ink) !important; background-image: none !important; }
+html:has(.seo-main) .pyq-tools button {
+  min-height: 36px !important; padding: 0 14px !important; border-radius: 18px !important;
+  background: none !important; border: 1px solid var(--sr-rule) !important; color: var(--sr-dim) !important; font-family: var(--sr-sans) !important; font-weight: 500 !important;
+}
+html:has(.seo-main) .pyq-subject-bank-cta {
+  padding: 18px !important; border-radius: 12px !important; background: var(--sr-raised) !important; background-image: none !important;
+  border: 1px solid var(--sr-rule) !important; box-shadow: none !important;
+}
+html:has(.seo-main) .pyq-subject-bank-eyebrow { color: var(--sr-quiet) !important; letter-spacing: 0 !important; text-transform: none !important; font-weight: 500 !important; }
+
+/* FAQ */
+html:has(.seo-main) .seo-faq-card {
+  margin: 0 !important; padding: 0 !important; border-radius: 0 !important;
+  background: none !important; border: 0 !important; border-bottom: 1px solid var(--sr-soft) !important; box-shadow: none !important;
+}
+html:has(.seo-main) .seo-faq-card summary {
+  padding: 14px 0 !important; color: var(--sr-ink) !important; cursor: pointer !important;
+  font-family: var(--sr-serif) !important; font-size: 16px !important; font-weight: 500 !important; line-height: 1.4 !important;
+}
+html:has(.seo-main) .seo-faq-card p { margin: 0 0 14px !important; color: var(--sr-dim) !important; font-family: var(--sr-serif) !important; font-size: 15px !important; line-height: 1.65 !important; }
+
+/* tables on comparison and syllabus pages */
+html:has(.seo-main) .kw-table, html:has(.seo-main) .seo-main table { width: 100% !important; border-collapse: collapse !important; background: none !important; font-size: 14px !important; }
+html:has(.seo-main) .seo-main th, html:has(.seo-main) .seo-main td { padding: 10px 8px !important; border: 0 !important; border-bottom: 1px solid var(--sr-soft) !important; background: none !important; color: var(--sr-dim) !important; text-align: left !important; }
+html:has(.seo-main) .seo-main th { color: var(--sr-quiet) !important; font-weight: 500 !important; border-bottom-color: var(--sr-rule) !important; }
+html:has(.seo-main) .seo-static, html:has(.seo-main) .seo-static-note { background: none !important; border: 0 !important; box-shadow: none !important; color: var(--sr-dim) !important; }
+
+/* prev / next topic links and the plain link row after the footer */
+html:has(.seo-main) nav[aria-label="Previous and next topic"] a {
+  flex: 1 1 200px !important; padding: 12px 14px !important; border: 1px solid var(--sr-rule) !important; border-radius: 10px !important;
+  background: var(--sr-raised) !important; color: var(--sr-ink) !important; text-decoration: none !important; box-shadow: none !important;
+}
+html:has(.seo-main) nav[aria-label="Browse MedLadder"] { color: var(--sr-quiet) !important; }
+html:has(.seo-main) nav[aria-label="Browse MedLadder"] a { color: var(--sr-dim) !important; }
+
+/* the theme switch and app-injected boxes */
+html:has(.seo-main) #themeToggle, html:has(.seo-main) .masthead .theme-toggle {
+  width: 40px !important; height: 40px !important; background: none !important; background-image: none !important;
+  border: 1px solid var(--sr-rule) !important; box-shadow: none !important; filter: none !important; animation: none !important;
+}
+html:has(.seo-main) .seo-full-bank-cta, html:has(.seo-main) section[aria-label="Bank counts and free tier"] > div {
+  display: block !important; width: auto !important; margin: 20px 0 !important; padding: 18px !important;
+  background: var(--sr-raised) !important; background-image: none !important; color: var(--sr-dim) !important;
+  border: 1px solid var(--sr-rule) !important; border-radius: 12px !important; box-shadow: none !important;
+}
+html:has(.seo-main) .seo-full-bank-cta::before, html:has(.seo-main) .seo-full-bank-cta::after { display: none !important; }
+html:has(.seo-main) .seo-full-bank-eyebrow { display: block !important; margin: 0 0 6px !important; color: var(--sr-quiet) !important; font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+html:has(.seo-main) .seo-full-bank-cta h2 { font-size: 19px !important; margin: 0 0 6px !important; }
+html:has(.seo-main) .seo-full-bank-cta p { margin: 0 0 14px !important; font-family: var(--sr-serif) !important; font-size: 15px !important; line-height: 1.6 !important; }
+html:has(.seo-main) section[aria-label="Bank counts and free tier"] > div { line-height: 1.7 !important; font-size: 14.5px !important; }
+html:has(.seo-main) section[aria-label="Bank counts and free tier"] a { color: var(--sr-ink) !important; }
+html:has(.seo-main) .seo-qcard { border-left-width: 1px !important; }
+html:has(.seo-main) .seo-qcard::before, html:has(.seo-main) .seo-qcard::after { display: none !important; }

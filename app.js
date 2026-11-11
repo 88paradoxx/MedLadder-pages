@@ -7479,7 +7479,7 @@ window.addEventListener('error', function (ev) {
             bankCta.className = 'seo-full-bank-cta';
             bankCta.setAttribute('aria-label', 'Explore the complete subject question bank');
             bankCta.innerHTML =
-              '<div class="seo-full-bank-copy"><span class="seo-full-bank-eyebrow">MORE TO PRACTISE</span>' +
+              '<div class="seo-full-bank-copy"><span class="seo-full-bank-eyebrow">More to practise</span>' +
               '<h2>Explore the complete ' + esc(subj.name) + ' question bank</h2>' +
               '<p>This is one topic from a larger bank of <strong>' + Number(subj.questionCount || 0).toLocaleString() +
               ' MCQs across ' + Number(subj.moduleCount || (Array.isArray(subj.modules) ? subj.modules.length : 0)).toLocaleString() +
