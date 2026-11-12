@@ -6218,6 +6218,7 @@ window.addEventListener('error', function (ev) {
         home: '<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/>',
         qbank: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5"/>',
         pyq: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+        mock: '<path d="M9 2.5h6M12 2.5v3"/><circle cx="12" cy="14" r="7.5"/><path d="M12 10v4.2l2.8 1.8M18.5 6.5l1.5-1.5"/>',
         bookmarks: '<path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>',
         profile: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
         today: '<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/>',
@@ -6232,9 +6233,10 @@ window.addEventListener('error', function (ev) {
       var V2_TAB_OF = { today: 'home', home: 'home', review: 'home', subjects: 'qbank', qbank: 'qbank', pyq: 'pyq', bookmarks: 'bookmarks', progress: 'profile', profile: 'profile' };
       function v2Nav(active, dueCount) {
         var tab = V2_TAB_OF[active] || active;
-        var items = [['home', 'Home'], ['qbank', 'QBank'], ['pyq', 'PYQ'], ['bookmarks', 'Bookmarks'], ['profile', 'Profile']];
+        var items = [['home', 'Home'], ['qbank', 'QBank'], ['mock', 'Mock'], ['pyq', 'PYQ'], ['bookmarks', 'Bookmarks'], ['profile', 'Profile']];
         return '<nav class="v2-nav v3-nav" aria-label="Main">' + items.map(function (it) {
-          var badge = it[0] === 'home' && dueCount && tab !== 'home' ? '<span class="v2-nav-badge">' + (dueCount > 99 ? '99+' : dueCount) + '</span>' : '';
+          var badge = it[0] === 'home' && dueCount && tab !== 'home' ? '<span class="v2-nav-badge">' + (dueCount > 99 ? '99+' : dueCount) + '</span>'
+            : it[0] === 'mock' && v2MockState && v2MockState.live ? '<span class="v3-nav-live" title="A mock test is live"></span>' : '';
           return '<button class="v2-nav-item" data-nav="' + it[0] + '"' + (it[0] === tab ? ' aria-current="page"' : '') + '>' +
             '<span class="v2-nav-icon">' + v2Svg(it[0]) + badge + '</span><span>' + it[1] + '</span></button>';
         }).join('') + '</nav>';
@@ -6257,6 +6259,7 @@ window.addEventListener('error', function (ev) {
         else if (name === 'subjects' || name === 'qbank') renderSubjectsV2();
         else if (name === 'review') renderReviewV2();
         else if (name === 'pyq') renderPyqV2();
+        else if (name === 'mock') window.location.href = '/mock-test';
         else if (name === 'profile') renderProfileV2();
         else if (name === 'bookmarks') { if (!currentUser) v2NeedAccount('Sign in to see your bookmarks.', renderBookmarks); else renderBookmarks(); }
         else if (name === 'progress') renderDashboard();

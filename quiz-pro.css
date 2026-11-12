@@ -3995,3 +3995,11 @@ html.ml-reading #app .v3 .v3-li .v3-art-svg { width: 30px !important; height: 30
   html.ml-reading #app .v3 .v3-li .v3-thumb { width: 36px !important; height: 36px !important; flex-basis: 36px !important; }
   html.ml-reading #app .v3 .v3-li .v3-art-svg { width: 27px !important; height: 27px !important; }
 }
+
+/* six tabs: Home, QBank, Mock, PYQ, Bookmarks, Profile */
+html.ml-reading #app .v3 .v3-nav { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 2px !important; }
+html.ml-reading #app .v3 .v3-nav-live { position: absolute !important; top: -2px !important; right: -4px !important; width: 9px !important; height: 9px !important; border-radius: 50% !important; background: #22C55E !important; box-shadow: 0 0 0 2px var(--x-card) !important; }
+@media (max-width: 420px) {
+  html.ml-reading #app .v3 .v3-nav { left: 8px !important; right: 8px !important; padding: 5px !important; }
+  html.ml-reading #app .v3 .v3-nav .v2-nav-item { font-size: 10.5px !important; letter-spacing: -0.01em !important; border-radius: 16px !important; }
+}
