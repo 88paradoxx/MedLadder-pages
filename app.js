@@ -6338,8 +6338,8 @@ window.addEventListener('error', function (ev) {
         var tab = V2_TAB_OF[active] || active;
         var items = [['home', 'Home'], ['qbank', 'QBank'], ['mock', 'Mock'], ['pyq', 'PYQ'], ['bookmarks', 'Bookmarks'], ['profile', 'Profile']];
         return '<nav class="v2-nav v3-nav" aria-label="Main">' + items.map(function (it) {
-          var badge = it[0] === 'home' && dueCount && tab !== 'home' ? '<span class="v2-nav-badge" title="' + dueCount + ' questions due for revision" aria-label="' + dueCount + ' questions due for revision">' + (dueCount > 99 ? '99+' : dueCount) + '</span>'
-            : it[0] === 'mock' && v2MockState && v2MockState.live ? '<span class="v3-nav-live" title="A mock test is live"></span>' : '';
+          // The revision count lives on a Review card (v3DueCard), not on the bar.
+          var badge = it[0] === 'mock' && v2MockState && v2MockState.live ? '<span class="v3-nav-live" title="A mock test is live"></span>' : '';
           var inner = '<span class="v2-nav-icon">' + v2Svg(it[0]) + badge + '</span><span>' + it[1] + '</span>';
           // Mock is a separate page: a real link lets the browser start loading
           // it the moment a finger touches it (speculation rules, _headers).
@@ -7121,6 +7121,7 @@ window.addEventListener('error', function (ev) {
           '<p>' + (currentUser ? 'Ready for today’s learning?' : totalQuestions().toLocaleString() + ' questions with explanations, free to start.') + '</p>' + examChip + '</div>' +
           v3Art(['physiology', 'pathology', 'pharmacology']) + '</section>';
         colA += v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '');
+        colA += v3DueCard(ix);
 
         // ---- today's mission
         var goal = v2Goal();
@@ -7338,6 +7339,18 @@ window.addEventListener('error', function (ev) {
 
       // ---- QBank: all subjects ---------------------------------------------
       var v2SubjectFilter = 'all';
+      // "Revision due" card: questions answered before that are due to come
+      // back (spaced review). Shown on Home and QBank when there are any.
+      function v3DueCard(ix) {
+        var n = ix && ix.due ? ix.due.length : 0;
+        if (!currentUser || !n) return '';
+        var wrong = ix.due.filter(function (d) { return d.wrong; }).length;
+        return '<button class="v3-card v3-duecard" data-nav-go="review">' +
+          '<span class="v3-duecard-ic">' + v3Ic('refresh', 22) + '</span>' +
+          '<span class="v3-duecard-t"><b>' + n.toLocaleString() + ' question' + (n === 1 ? '' : 's') + ' due for revision</b>' +
+          '<small>' + (wrong ? wrong + ' missed last time' + (n - wrong ? ', ' + (n - wrong) + ' fading' : '') : 'Right last time, now fading') + '</small></span>' +
+          '<span class="v3-duecard-go">Review ' + v3Ic('chev', 16) + '</span></button>';
+      }
       function renderSubjectsV2() {
         if (!quizStylesReady) { ensureQuizStyles().then(renderSubjectsV2); return; }
         trackPageView('/subjects', 'subjects');
@@ -7346,7 +7359,7 @@ window.addEventListener('error', function (ev) {
         var cats = [['all', 'All', ''], ['pre', 'Pre-clinical', 'layers'], ['para', 'Para-clinical', 'flask'], ['clinical', 'Clinical', 'steth']];
         var body = '<section class="v3-pagehead"><div class="v3-pagehead-t"><span class="v3-chip">' + v3Ic('layers', 16) + 'QBank</span>' +
           '<h1>Subjects</h1><p>' + SUBJECT_INDEX.length + ' subjects · ' + totalTopics() + ' topics · ' + totalQuestions().toLocaleString() + ' questions</p></div>' +
-          v3Art(['anatomy', 'medicine', 'pharmacology']) + '</section>' +
+          v3Art(['anatomy', 'medicine', 'pharmacology']) + '</section>' + v3DueCard(ix) +
           '<div class="v2-gsearch v3-search"><label class="v2-sr" for="v2GSearch">Search subjects or topics</label>' +
           '<span class="v2-gsearch-ic" aria-hidden="true">' + v3Ic('search', 20) + '</span>' +
           '<input id="v2GSearch" type="search" placeholder="Search subjects or topics…" autocomplete="off">' +
