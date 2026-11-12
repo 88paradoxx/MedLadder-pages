@@ -3376,6 +3376,14 @@ html.ml-reading #app .v3 .rr-top-right .pro-badge-header {
   height: 36px !important; padding: 0 14px !important; border-radius: 999px !important; border: 1px solid var(--x-line2) !important;
   background: var(--x-card) !important; color: var(--x-ink) !important; font: 600 14px var(--rr-sans) !important; box-shadow: none !important;
 }
+/* Signed out: Sign in is the one filled button in the header, so it reads clearly in both themes. */
+html.ml-reading #app .v3 .rr-top-right .auth-btn {
+  height: 36px !important; min-height: 36px !important; padding: 0 14px !important; gap: 6px !important; border-radius: 999px !important; border: 0 !important;
+  background: linear-gradient(140deg, #8B5CF6, #6A3BEF) !important; color: #fff !important; font: 700 14px var(--rr-sans) !important;
+  box-shadow: 0 6px 16px -8px rgba(106, 59, 239, .8) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; transform: none !important;
+}
+html.ml-reading #app .v3 .rr-top-right .auth-btn:hover { filter: brightness(1.08) !important; }
+html.ml-reading #app .v3 .rr-top-right .auth-btn svg { color: #fff !important; stroke: #fff !important; }
 html.ml-reading #app .v3 .rr-top-right .auth-user-btn { padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; min-height: 0 !important; }
 html.ml-reading #app .v3 .rr-top-right .auth-user-name,
 html.ml-reading #app .v3 .rr-top-right .auth-caret { display: none !important; }
@@ -3783,6 +3791,7 @@ html.ml-reading #app .v3 .v3-search .v2-gsearch-ic { top: 17px !important; }
   html.ml-reading #app .v3 .rr-top-right .btn-go-pro,
   html.ml-reading #app .v3 .rr-top-right .pro-badge-header { height: 34px !important; padding: 0 10px !important; font-size: 13px !important; }
   html.ml-reading #app .v3 .rr-top-right .auth-avatar, html.ml-reading #app .v3 .rr-top-right .theme-toggle { width: 38px !important; height: 38px !important; }
+  html.ml-reading #app .v3 .rr-top-right .auth-btn { height: 34px !important; min-height: 34px !important; padding: 0 12px !important; font-size: 13px !important; }
   html.ml-reading #app .v3 .v3-hello { min-height: 120px !important; }
   html.ml-reading #app .v3 .v3-hello h1 { font-size: 26px !important; }
   html.ml-reading #app .v3 .v3-hello p { font-size: 15px !important; }
