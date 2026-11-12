@@ -156,3 +156,11 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .am-inline { display: flex !important; align-items: center; gap: 8px; flex-wrap: wrap; }
 .am-inline input[type="checkbox"] { width: auto !important; }
 #qotdSchedule { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+/* Edit questions view */
+#editQView .am-row label { flex: 1 1 220px; min-width: 0; }
+#editQView select, #editQView input, #editQView textarea { width: 100%; max-width: 100%; box-sizing: border-box; }
+#editQView .eq-row .qhead { flex-wrap: wrap; gap: 6px; }
+#editQView .eq-open { margin-top: 8px; }
+#editQView .eq-edit { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line, rgba(127,127,127,.25)); }
+#editQView .eq-form textarea[name="ex"] { min-height: 180px; }

@@ -695,3 +695,28 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .mt-topbar .mt-auth { order: 2 !important; }
 .mt-topbar .mt-auth { position: static !important; transform: none !important; justify-content: flex-end !important; }
 .mt-topbar .mt-auth { margin-left: auto !important; }
+
+/* Bottom bar shared with the app (hidden while a test is running). */
+.ml-tabbar {
+  position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 60;
+  max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px;
+  padding: 7px; border-radius: 26px; border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--panel-solid) 90%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px -18px rgba(20, 10, 60, .55);
+}
+.ml-tabbar a {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 56px;
+  border-radius: 18px; color: var(--muted); font: 500 12px/1.1 "Archivo", system-ui, sans-serif; text-decoration: none;
+}
+.ml-tabbar a:hover { color: var(--text); background: var(--panel-2); }
+.ml-tabbar a[aria-current="page"] { color: #fff; font-weight: 700; background: linear-gradient(160deg, var(--accent-2), var(--accent)); }
+html:not(.dark) .ml-tabbar a[aria-current="page"] { color: var(--accent-2); background: var(--accent-soft); }
+.ml-tabbar svg { width: 24px; height: 24px; }
+body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+body:has(#testView:not([hidden])) .ml-tabbar { display: none; }
+body:has(#testView:not([hidden])) { padding-bottom: 0; }
+@media (max-width: 420px) {
+  .ml-tabbar { left: 8px; right: 8px; padding: 5px; }
+  .ml-tabbar a { font-size: 10.5px; min-height: 52px; border-radius: 16px; }
+  .ml-tabbar svg { width: 22px; height: 22px; }
+}
