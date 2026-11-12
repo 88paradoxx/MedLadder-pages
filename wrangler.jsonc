@@ -2,6 +2,13 @@
   "name": "medladder-pages",
   "compatibility_date": "2026-10-25",
   "main": "worker.js",
+  // Run the site build on every `wrangler deploy`, whatever the dashboard's
+  // build command does first. build.mjs empties dist/ and refills it with
+  // only the public site (no build scripts, worker source, docs or audit
+  // files), minified, with source maps.
+  "build": {
+    "command": "npm run build"
+  },
   "assets": {
     "directory": "./dist",
     "html_handling": "drop-trailing-slash",
