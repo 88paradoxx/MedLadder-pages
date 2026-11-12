@@ -43,6 +43,8 @@ const EXCLUDE_ENTRIES = new Set([
   'build.mjs',
   // Read by worker.js at bundle time; not a page asset.
   'count-map.json',
+  // Repo tools (count map, SEO audits), not part of the site.
+  'scripts',
   'build-stamp.json',
   // Node build script (require('fs')), referenced by no page — was being
   // served publicly. sw.js stays: it is registered from app.js, not via <script src>.
