@@ -1457,6 +1457,18 @@ window.addEventListener('error', function (ev) {
       } catch (e) {
         console.warn('Supabase client failed to initialize:', e);
       }
+      // Paint signed-in straight away: supabase-js keeps the session in
+      // localStorage, so read its user now instead of showing a signed-out
+      // screen until getSession() answers (that flash showed whenever a page
+      // loaded on a tab, e.g. coming back from the mock-test page). The
+      // network check below still decides; if it finds no session the
+      // provisional user is dropped and the screen redrawn.
+      var provisionalUser = false;
+      try {
+        var tokRaw = window.localStorage.getItem('sb-' + (SUPABASE_URL.match(/\/\/([^.]+)\./) || [])[1] + '-auth-token');
+        var tok = tokRaw ? JSON.parse(tokRaw) : null;
+        if (tok && tok.user && tok.user.id && tok.refresh_token) { currentUser = tok.user; provisionalUser = true; }
+      } catch (e) { /* storage blocked or unreadable: wait for getSession */ }
 
       function resetAuthModalButtons() {
         var gIcon = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>';
@@ -3277,6 +3289,7 @@ window.addEventListener('error', function (ev) {
         loadSiteCounts();
         supabaseClient.auth.getSession().then(function (res) {
           if (res && res.data && res.data.session && res.data.session.user) {
+            provisionalUser = false;
             currentUser = res.data.session.user;
             loadUserProgress(currentUser.id);
             updateMastheadAuth();
@@ -3285,6 +3298,11 @@ window.addEventListener('error', function (ev) {
             if (recoveryMode) { cleanAuthReturnUrl(); openAuthModal('reset'); }
             launchPendingPyqDeepLink();
           } else {
+            if (provisionalUser) {
+              provisionalUser = false;
+              currentUser = null;
+              if (state.screen === 'home' || /^(subjects|modules|pyq|profile|mock|bookmarks)$/.test(state.screen || '')) renderHome(true);
+            }
             // No session: still render the masthead auth controls, so the
             // signed-out Sign In pill also appears on the pre-rendered SEO
             // pages (subject/topic hubs), whose static header markup has no
@@ -3921,6 +3939,7 @@ window.addEventListener('error', function (ev) {
 
       // ---------- PYQ SETUP: configure and launch a PYQ quiz ----------
       async function renderPYQSetup(examId) {
+        if (v2On()) return renderPyqSetupV3(examId);
         if (!quizStylesReady) {
           await ensureQuizStyles();
           return renderPYQSetup(examId);
@@ -6341,9 +6360,6 @@ window.addEventListener('error', function (ev) {
           // The revision count lives on a Review card (v3DueCard), not on the bar.
           var badge = it[0] === 'mock' && v2MockState && v2MockState.live ? '<span class="v3-nav-live" title="A mock test is live"></span>' : '';
           var inner = '<span class="v2-nav-icon">' + v2Svg(it[0]) + badge + '</span><span>' + it[1] + '</span>';
-          // Mock is a separate page: a real link lets the browser start loading
-          // it the moment a finger touches it (speculation rules, _headers).
-          if (it[0] === 'mock') return '<a class="v2-nav-item" href="/mock-test" data-nav="mock">' + inner + '</a>';
           return '<button class="v2-nav-item" data-nav="' + it[0] + '"' + (it[0] === tab ? ' aria-current="page"' : '') + '>' + inner + '</button>';
         }).join('') + '</nav>';
       }
@@ -6365,7 +6381,7 @@ window.addEventListener('error', function (ev) {
         else if (name === 'subjects' || name === 'qbank') renderSubjectsV2();
         else if (name === 'review') renderReviewV2();
         else if (name === 'pyq') renderPyqV2();
-        else if (name === 'mock') window.location.href = '/mock-test';
+        else if (name === 'mock') renderMockV2();
         else if (name === 'profile') renderProfileV2();
         else if (name === 'bookmarks') { if (!currentUser) v2NeedAccount('Sign in to see your bookmarks.', renderBookmarks); else renderBookmarks(); }
         else if (name === 'progress') renderDashboard();
@@ -7082,7 +7098,7 @@ window.addEventListener('error', function (ev) {
       // Links from other pages (e.g. the mock-test bottom bar) open a tab with ?go=.
       var v3PendingGo = (function () {
         try {
-          var m = /[?&]go=(qbank|pyq|bookmarks|profile)\b/.exec(window.location.search || '');
+          var m = /[?&]go=(qbank|pyq|bookmarks|profile|mock)\b/.exec(window.location.search || '');
           if (!m) return null;
           history.replaceState(null, '', window.location.pathname + window.location.hash);
           return m[1];
@@ -7417,10 +7433,13 @@ window.addEventListener('error', function (ev) {
           '<div class="v3-pyqs">' + PYQ_EXAMS.map(function (ex) {
             var years = (ex.years || []).filter(function (y) { return !/^All /.test(y); });
             var span = String(ex.coverage || '').split('·')[0].replace(/ – /g, '–').replace(/\s*(Recalls|Exam Question Papers)\s*$/i, '').trim();
-            return '<button class="v3-card v3-pyq" data-pyq="' + esc(ex.id) + '"><span class="v3-pyq-ic" aria-hidden="true">' + esc(ex.icon || '📄') + '</span>' +
-              '<span class="v3-pyq-t"><b>' + esc(ex.name) + '</b><small>' + esc(ex.label || '') + '</small>' +
-              '<span class="v3-tchips"><span class="v3-tc">' + v3Ic('calendar', 14) + esc(span) + '</span>' + (years.length ? '<span class="v3-tc">' + v2Plural(years.length, /Sessions/.test(ex.coverage || '') ? 'session' : 'paper') + '</span>' : '') +
-              (pro ? '' : '<span class="v3-tc pro">' + v3Ic('lock', 13) + 'Pro</span>') + '</span></span>' + v3Ic('chev', 20) + '</button>';
+            var show = years.slice(0, 4);
+            return '<div class="v3-card v3-pyq2"><button class="v3-pyq" data-pyq="' + esc(ex.id) + '"><span class="v3-pyq-ic" aria-hidden="true">' + esc(ex.icon || '📄') + '</span>' +
+              '<span class="v3-pyq-t"><b>' + esc(ex.name) + (pro ? '' : ' <span class="v3-tc pro">' + v3Ic('lock', 13) + 'Pro</span>') + '</b><small>' + esc(span) + (years.length ? ' · ' + v2Plural(years.length, /Sessions/.test(ex.coverage || '') ? 'session' : 'paper') : '') + '</small></span>' + v3Ic('chev', 20) + '</button>' +
+              (show.length ? '<div class="v3-pyq-years">' + show.map(function (y) {
+                return '<button class="v3-pyq-y" data-pyq-ex="' + esc(ex.id) + '" data-pyq-year="' + esc(y) + '">' + esc(y) + '</button>';
+              }).join('') + (years.length > show.length ? '<button class="v3-pyq-y more" data-pyq="' + esc(ex.id) + '">+' + (years.length - show.length) + ' more</button>' : '') + '</div>' : '') +
+              '</div>';
           }).join('') + '</div>' +
           (pro ? '' : '<button class="v3-pro" id="v2ProBtn"><span class="v3-pro-ic" aria-hidden="true">👑</span><span class="v3-pro-t"><b>Unlock past papers</b><small>Every year of NEET PG, INI-CET, FMGE and more with Pro.</small></span>' + v3Ic('chev', 20) + '</button>');
         v2Paint('pyq', v2Shell('pyq', v2Header(), '<div class="v2-bold v3-page">' + body + '</div>', ix.due.length));
@@ -7428,6 +7447,272 @@ window.addEventListener('error', function (ev) {
         wireV2Common();
         var pb = document.getElementById('v2ProBtn');
         if (pb) pb.onclick = function () { if (currentUser) openProModal('banner', {}); else openAuthModal('signup', { reason: 'Create a free account, then go Pro for past papers.' }); };
+        app.querySelectorAll('[data-pyq-year]').forEach(function (b) {
+          b.onclick = function () { setupChoice.pyqYear = b.getAttribute('data-pyq-year'); renderPYQSetup(b.getAttribute('data-pyq-ex')); };
+        });
+      }
+
+
+      // ---- Mock tests, inside the app -------------------------------------
+      // The list of live / upcoming / past mocks and your results renders
+      // here like any other tab (instant, from a short cache). Only taking a
+      // test, its leaderboard or a past result opens the mock-test page.
+      var v3MockCache = null; // { at, uid, tests, mine }
+      function v3MockFetch(force) {
+        var uid = currentUser ? currentUser.id : null;
+        if (!force && v3MockCache && v3MockCache.uid === uid && Date.now() - v3MockCache.at < 60000) return Promise.resolve(v3MockCache);
+        if (!supabaseClient) return Promise.resolve(v3MockCache);
+        var tq = supabaseClient.from('mock_tests')
+          .select('id,title,exam,description,starts_at,ends_at,duration_minutes,total_questions,positive_marks,negative_marks,is_free')
+          .eq('status', 'published').order('starts_at', { ascending: false }).limit(20);
+        var mq = uid ? supabaseClient.rpc('get_my_mock_attempts', { p_limit: 20 }) : Promise.resolve({ data: [] });
+        return Promise.all([tq, mq]).then(function (r) {
+          if (r[0].error) throw r[0].error;
+          v3MockCache = { at: Date.now(), uid: uid, tests: r[0].data || [], mine: (r[1] && !r[1].error && r[1].data) || [] };
+          return v3MockCache;
+        });
+      }
+      function v3MockPhase(t) {
+        var now = Date.now(), st = new Date(t.starts_at).getTime(), en = new Date(t.ends_at).getTime();
+        return now < st ? 'upcoming' : now > en ? 'ended' : 'live';
+      }
+      function v3Rel(ms) {
+        var m = Math.max(1, Math.round(Math.abs(ms) / 60000));
+        if (m < 60) return m + ' min';
+        var h = Math.round(m / 60);
+        if (h < 48) return h + ' h';
+        return Math.round(h / 24) + ' days';
+      }
+      function v3When(iso) {
+        try { return new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; }
+      }
+      function v3MockCard(t) {
+        var ph = v3MockPhase(t);
+        var now = Date.now();
+        var meta = '<span class="v3-tc">' + v3Ic('layers', 14) + t.total_questions + ' Qs</span>' +
+          '<span class="v3-tc">' + v3Ic('clock', 14) + t.duration_minutes + ' min</span>' +
+          '<span class="v3-tc">+' + t.positive_marks + ' / −' + t.negative_marks + '</span>' +
+          (t.is_free ? '<span class="v3-tc ok">Free</span>' : '<span class="v3-tc pro">' + v3Ic('lock', 13) + 'Pro</span>');
+        var when = ph === 'live' ? 'Ends in ' + v3Rel(new Date(t.ends_at).getTime() - now)
+          : ph === 'upcoming' ? 'Starts in ' + v3Rel(new Date(t.starts_at).getTime() - now) + ' · ' + v3When(t.starts_at)
+            : 'Ended ' + v3When(t.ends_at);
+        var acts = ph === 'live'
+          ? '<a class="v3-mbtn primary" href="/mock-test?id=' + encodeURIComponent(t.id) + '">' + v3Ic('play', 16) + 'Start test</a>'
+          : ph === 'ended'
+            ? '<a class="v3-mbtn" href="/mock-test?id=' + encodeURIComponent(t.id) + '">' + v3Ic('trophy', 16) + 'Leaderboard</a>' +
+              '<a class="v3-mbtn" href="/mock-test?id=' + encodeURIComponent(t.id) + '&practice=1">' + v3Ic('refresh', 16) + 'Practise</a>'
+            : '<button class="v3-mbtn" data-mock-share="' + esc(t.id) + '" data-mock-title="' + esc(t.title) + '">' + v3Ic('calendar', 16) + 'Share</button>';
+        return '<article class="v3-card v3-mock v3-mock-' + ph + '">' +
+          '<div class="v3-mock-top"><span class="v3-mock-badge ' + ph + '">' + (ph === 'live' ? '● Live now' : ph === 'upcoming' ? 'Upcoming' : 'Ended') + '</span>' +
+          '<span class="v3-mock-exam">' + esc(t.exam || '') + '</span></div>' +
+          '<h3>' + esc(t.title) + '</h3>' +
+          (t.description ? '<p class="v3-mock-desc">' + esc(t.description) + '</p>' : '') +
+          '<span class="v3-tchips">' + meta + '</span>' +
+          '<p class="v3-mock-when">' + esc(when) + '</p>' +
+          '<div class="v3-mock-acts">' + acts + '</div></article>';
+      }
+      function renderMockV2() {
+        if (!quizStylesReady) { ensureQuizStyles().then(renderMockV2); return; }
+        trackPageView('/mock-test', 'mock');
+        var ix = v2Index(v2HaveHistory() ? reviewData : null);
+        var c = v3MockCache && v3MockCache.uid === (currentUser ? currentUser.id : null) ? v3MockCache : null;
+        var body = '<section class="v3-pagehead"><div class="v3-pagehead-t"><span class="v3-chip">' + v3Ic('clock', 16) + 'Mock</span>' +
+          '<h1>Mock tests</h1><p>All-India mocks in the real exam pattern, with live ranks</p></div>' +
+          v3Art(['psm', 'pharmacology', 'anatomy']) + '</section>';
+        if (!c) {
+          body += '<div class="v3-mock-skel" aria-busy="true"><div class="v3-card"></div><div class="v3-card"></div></div>';
+        } else {
+          var live = c.tests.filter(function (t) { return v3MockPhase(t) === 'live'; });
+          var up = c.tests.filter(function (t) { return v3MockPhase(t) === 'upcoming'; }).reverse();
+          var past = c.tests.filter(function (t) { return v3MockPhase(t) === 'ended'; });
+          if (!c.tests.length) body += '<div class="v3-card v3-empty"><b>No mock tests yet</b><p>The next All-India mock is coming soon. Check back here.</p></div>';
+          if (live.length) body += '<section class="v3-sec">' + v3Head('', 'Live now', '') + '<div class="v3-mocks">' + live.map(v3MockCard).join('') + '</div></section>';
+          if (up.length) body += '<section class="v3-sec">' + v3Head('', 'Coming up', '') + '<div class="v3-mocks">' + up.map(v3MockCard).join('') + '</div></section>';
+          if (c.mine.length) {
+            body += '<section class="v3-sec">' + v3Head('', 'Your results', '') + '<div class="v3-card v3-list">' + c.mine.slice(0, 8).map(function (a) {
+              var d = ''; try { d = new Date(a.submitted_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { }
+              return '<a class="v3-li v3-set" href="/mock-test?id=' + encodeURIComponent(a.mock_test_id) + '&attempt=' + encodeURIComponent(a.attempt_id) + '">' +
+                '<span class="v3-set-ic">' + v3Ic('trophy', 20) + '</span><span class="v3-li-t"><b>' + esc(a.test_title) + '</b><small>' + esc((a.exam || '') + (d ? ' · ' + d : '')) + '</small></span>' +
+                '<span class="v3-mock-rank"><b>' + (a.rank == null ? 'Practice' : '#' + a.rank) + '</b><small>' + a.score + ' pts</small></span></a>';
+            }).join('') + '</div></section>';
+          }
+          if (past.length) body += '<section class="v3-sec">' + v3Head('', 'Past mocks', '') + '<div class="v3-mocks">' + past.map(v3MockCard).join('') + '</div></section>';
+          if (!currentUser) body += '<button class="v3-pro" id="v3MockSignIn"><span class="v3-pro-ic" aria-hidden="true">🏁</span><span class="v3-pro-t"><b>Sign in to take mocks</b><small>Free account: write live mocks and get your All-India rank.</small></span>' + v3Ic('chev', 20) + '</button>';
+        }
+        v2Paint('mock', v2Shell('mock', v2Header(), '<div class="v2-bold v3-page">' + body + '</div>', ix.due.length));
+        wireV2Shell();
+        wireV2Common();
+        app.querySelectorAll('[data-mock-share]').forEach(function (b) {
+          b.onclick = function () {
+            var url = 'https://medladder.top/mock-test?id=' + encodeURIComponent(b.getAttribute('data-mock-share'));
+            var title = b.getAttribute('data-mock-title');
+            if (navigator.share) navigator.share({ title: title, text: 'Join this free mock test on MedLadder: ' + title, url: url }).catch(function () {});
+            else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { showToast('Link copied.'); });
+          };
+        });
+        var si = document.getElementById('v3MockSignIn');
+        if (si) si.onclick = function () { openAuthModal('signin', { reason: 'Sign in to take mock tests.' }); };
+        if (!c || Date.now() - c.at > 60000) {
+          v3MockFetch(!c ? false : true).then(function () { if (state.screen === 'mock') renderMockV2(); }, function () {
+            if (state.screen === 'mock' && !v3MockCache) {
+              var sk = app.querySelector('.v3-mock-skel');
+              if (sk) sk.outerHTML = '<div class="v3-card v3-empty"><b>Could not load mock tests</b><p>Check your connection.</p><button class="v3-mbtn" id="v3MockRetry">Try again</button></div>';
+              var rb = document.getElementById('v3MockRetry'); if (rb) rb.onclick = function () { v3MockFetch(true).then(renderMockV2); };
+            }
+          });
+        }
+      }
+
+      // ---- Past papers: exam + session picker (v3) -------------------------
+      function v3PyqSessions(exam) {
+        var list = LIVE_COUNTS && Array.isArray(LIVE_COUNTS.pyq_sessions) ? LIVE_COUNTS.pyq_sessions : [];
+        var counts = {};
+        list.forEach(function (r) { if (r.exam === exam.id) counts[r.year] = r.n; });
+        return (exam.years || []).map(function (y) { return { y: y, all: /^All /.test(y), n: counts[y] || 0 }; });
+      }
+      async function renderPyqSetupV3(examId) {
+        if (!quizStylesReady) { await ensureQuizStyles(); return renderPyqSetupV3(examId); }
+        if (!currentUser) {
+          openAuthModal('signin', { reason: 'Sign in to open past papers.', onSuccess: function () { renderPyqSetupV3(examId); } });
+          return;
+        }
+        if (!isUserPro(currentUser)) {
+          if (_proStatusPromise) { try { await _proStatusPromise; } catch (e) { } }
+          else { refreshProStatus(); if (_proStatusPromise) { try { await _proStatusPromise; } catch (e) { } } }
+          if (!isUserPro(currentUser)) { openProModal('pyq_bank', { examId: examId }); return; }
+        }
+        clearTimer(); releaseQuizPayload();
+        var exam = PYQ_EXAMS.find(function (e) { return e.id === examId; }) || { id: examId, icon: '📝', name: examId, label: examId, years: ['All Years'] };
+        state.isPyqMode = true; state.pyqExam = examId; state.subjectId = null; state.moduleId = 'pyq_' + examId;
+        trackPageView('/pyqs/' + pyqSlug(examId), 'pyq');
+        var sess = v3PyqSessions(exam);
+        var years = sess.map(function (x) { return x.y; });
+        if (!setupChoice.pyqYear || years.indexOf(setupChoice.pyqYear) === -1) setupChoice.pyqYear = years[1] || years[0];
+        setupChoice.count = 'all';
+        if ([7200, 10800, 0].indexOf(setupChoice.timeLimit) === -1) setupChoice.timeLimit = (/inicet/i.test(examId) ? 7200 : 10800);
+        if (setupChoice.quizType !== 'timed') setupChoice.quizType = 'practice';
+        setupChoice.pool = { title: exam.name + ' — ' + setupChoice.pyqYear, isPyq: true, pyqExam: examId, pyqYear: setupChoice.pyqYear, questionCount: 0, key: 'pyq:' + examId + ':' + setupChoice.pyqYear };
+        var sel = setupChoice.pyqYear;
+        var selN = (sess.filter(function (x) { return x.y === sel; })[0] || {}).n;
+        var seg = function (name, opts, cur) {
+          return '<div class="v3-seg" role="group">' + opts.map(function (o) {
+            return '<button class="v3-seg-b" data-' + name + '="' + o[0] + '" aria-pressed="' + (String(cur) === String(o[0])) + '">' + o[1] + '</button>';
+          }).join('') + '</div>';
+        };
+        var body = '<section class="v3-pagehead"><div class="v3-pagehead-t"><span class="v3-chip">' + v3Ic('doc', 16) + 'PYQ</span>' +
+          '<h1>' + esc(exam.name) + '</h1><p>' + esc(exam.label || '') + '. Each session is one full paper with answers and explanations.</p></div>' +
+          '<span class="v3-pyq-big" aria-hidden="true">' + esc(exam.icon || '📄') + '</span></section>' +
+          '<section class="v3-sec">' + v3Head('', 'Choose a paper', '') + '<div class="v3-papers">' + sess.map(function (x) {
+            return '<button class="v3-paper' + (x.y === sel ? ' on' : '') + (x.all ? ' all' : '') + '" data-year="' + esc(x.y) + '" aria-pressed="' + (x.y === sel) + '">' +
+              '<b>' + esc(x.all ? 'All sessions' : x.y) + '</b><small>' + (x.all ? 'Every paper, mixed' : x.n ? x.n + ' questions' : 'Full paper') + '</small></button>';
+          }).join('') + '</div></section>' +
+          '<section class="v3-sec">' + v3Head('', 'How to practise', '') + '<div class="v3-card v3-pyq-opts">' +
+          '<div class="v3-opt"><span>Mode</span>' + seg('mode', [['practice', 'Practice'], ['timed', 'Exam simulation']], setupChoice.quizType) + '</div>' +
+          '<div class="v3-opt"><span>Time</span>' + seg('time', [[7200, '2 h'], [10800, '3 h'], [0, 'No limit']], setupChoice.timeLimit) + '</div>' +
+          '<div class="v3-opt"><span>Order</span>' + seg('order', [['structured', 'Paper order'], ['shuffled', 'Shuffled']], setupChoice.orderMode === 'shuffled' ? 'shuffled' : 'structured') + '</div>' +
+          '<p class="v3-opt-note">' + (setupChoice.quizType === 'timed' ? 'Answers and explanations show at the end, like the real exam.' : 'See the answer and explanation after each question.') + '</p>' +
+          '</div></section>' +
+          '<button class="v3-start" id="startBtn">' + v3Ic('play', 20) + 'Start ' + esc(exam.name) + ' ' + esc(/^All /.test(sel) ? '· all sessions' : sel) + (selN ? '<small>' + selN + ' questions</small>' : '') + '</button>';
+        v2Paint('pyq-setup', v2Shell('pyq', v2Header('Past papers'), '<div class="v2-bold v3-page v3-pyqsetup">' + body + '</div>', 0));
+        state.screen = 'setup';
+        wireV2Shell(function () { renderPyqV2(); });
+        wireV2Common();
+        app.querySelectorAll('[data-year]').forEach(function (b) { b.onclick = function () { setupChoice.pyqYear = b.getAttribute('data-year'); renderPyqSetupV3(examId); }; });
+        app.querySelectorAll('[data-mode]').forEach(function (b) { b.onclick = function () { setupChoice.quizType = b.getAttribute('data-mode'); renderPyqSetupV3(examId); }; });
+        app.querySelectorAll('[data-time]').forEach(function (b) { b.onclick = function () { setupChoice.timeLimit = parseInt(b.getAttribute('data-time'), 10); renderPyqSetupV3(examId); }; });
+        app.querySelectorAll('[data-order]').forEach(function (b) { b.onclick = function () { setupChoice.orderMode = b.getAttribute('data-order'); renderPyqSetupV3(examId); }; });
+        document.getElementById('startBtn').onclick = function () { setupChoice.timeLimit = resolveSetupTime(); startPYQQuiz(examId); };
+      }
+
+      // ---- Bookmarks (v3), drawn from a cache so the tab opens at once ----
+      var v3BmCache = null; // { uid, at, marks, byId }
+      function v3BmFetch() {
+        var uid = currentUser.id;
+        return supabaseClient.from('user_bookmarks').select('question_id,subject_name,topic_name,created_at')
+          .eq('user_id', uid).order('created_at', { ascending: false }).then(function (res) {
+            if (res.error) throw res.error;
+            var marks = res.data || [];
+            if (!marks.length) return (v3BmCache = { uid: uid, at: Date.now(), marks: [], byId: {} });
+            return supabaseClient.from('questions').select('id,question_num,question_text,module_id').in('id', marks.map(function (m) { return m.question_id; }))
+              .then(function (qr) {
+                if (qr.error) throw qr.error;
+                var byId = {};
+                (qr.data || []).forEach(function (r) { byId[r.id] = r; });
+                return (v3BmCache = { uid: uid, at: Date.now(), marks: marks, byId: byId });
+              });
+          });
+      }
+      function renderBookmarksV3() {
+        if (!quizStylesReady) { ensureQuizStyles().then(renderBookmarksV3); return; }
+        clearTimer(); releaseQuizPayload();
+        state.idSet = null;
+        if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
+        trackPageView('/bookmarks', 'bookmarks');
+        var ix = v2Index(v2HaveHistory() ? reviewData : null);
+        var c = v3BmCache && v3BmCache.uid === currentUser.id ? v3BmCache : null;
+        var head = '<section class="v3-pagehead"><div class="v3-pagehead-t"><span class="v3-chip">' + v3Ic('bookmark', 16) + 'Saved</span>' +
+          '<h1>Bookmarks</h1><p id="bmCount">' + (c ? '' : 'Questions you saved while practising') + '</p></div>' + v3Art(['medicine', 'pathology', 'microbiology']) + '</section>';
+        var body = head;
+        var subjects = [], shownIds = [], total = 0;
+        if (!c) {
+          body += '<div class="v3-mock-skel" aria-busy="true"><div class="v3-card"></div><div class="v3-card"></div></div>';
+        } else if (!c.marks.length) {
+          body += '<div class="v3-card v3-empty"><b>Nothing saved yet</b><p>While practising, tap the bookmark icon under a question to keep it here.</p>' +
+            '<button class="v3-mbtn primary" data-nav-go="qbank">' + v3Ic('layers', 16) + 'Practise a topic</button></div>';
+        } else {
+          var modMap = bookmarkModuleMap(), byName = {};
+          c.marks.forEach(function (m) {
+            var r = c.byId[m.question_id]; if (!r) return;
+            var hit = r.module_id != null ? modMap[r.module_id] : null;
+            var sn = (hit && hit.subject) || m.subject_name || 'Question bank';
+            var tn = (hit && hit.topic) || m.topic_name || '';
+            var sg = byName[sn]; if (!sg) { sg = byName[sn] = { name: sn, rows: [], ids: [] }; subjects.push(sg); }
+            sg.rows.push({ r: r, at: m.created_at, topic: tn }); sg.ids.push(r.id); total++;
+          });
+          if (bmSubjectFilter !== 'all' && !byName[bmSubjectFilter]) bmSubjectFilter = 'all';
+          var shown = subjects.filter(function (sg) { return bmSubjectFilter === 'all' || sg.name === bmSubjectFilter; });
+          shown.forEach(function (sg) { shownIds = shownIds.concat(sg.ids); });
+          body = body.replace('<p id="bmCount"></p>', '<p id="bmCount">' + v2Plural(total, 'question') + ' saved' + (subjects.length > 1 ? ' across ' + subjects.length + ' subjects' : '') + '</p>');
+          body += '<button class="v3-start" id="bmPractiseAll">' + v3Ic('play', 20) + 'Practise ' + (bmSubjectFilter === 'all' ? 'all ' : '') + v2Plural(shownIds.length, 'question') + (bmSubjectFilter === 'all' ? '' : '<small>' + esc(bmSubjectFilter) + '</small>') + '</button>';
+          if (subjects.length > 1) body += '<div class="v3-filters" role="group" aria-label="Filter by subject"><button class="v3-filter" data-bm-f="all" aria-pressed="' + (bmSubjectFilter === 'all') + '">All (' + total + ')</button>' +
+            subjects.map(function (sg) { return '<button class="v3-filter" data-bm-f="' + esc(sg.name) + '" aria-pressed="' + (bmSubjectFilter === sg.name) + '">' + esc(sg.name) + ' (' + sg.ids.length + ')</button>'; }).join('') + '</div>';
+          var trash = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg>';
+          body += shown.map(function (sg) {
+            return '<section class="v3-sec">' + v3Head('', esc(sg.name), '<span class="v3-bm-n">' + sg.ids.length + '</span>') + '<div class="v3-card v3-bms">' + sg.rows.map(function (x) {
+              var when = ''; try { when = new Date(x.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { }
+              var img = /<img/i.test(x.r.question_text || '');
+              return '<div class="v3-bm"><button class="v3-bm-q" data-bm-go="' + x.r.id + '"><span class="v3-bm-stem">' + esc(stripHtmlPreview(x.r.question_text, 180) || 'Image-based question') + '</span>' +
+                '<span class="v3-tchips">' + (x.topic ? '<span class="v3-tc">' + esc(x.topic) + '</span>' : '') + (img ? '<span class="v3-tc">Image</span>' : '') + '<span class="v3-tc">' + v3Ic('calendar', 13) + esc(when) + '</span></span></button>' +
+                '<button class="v3-bm-del" data-bm-del="' + x.r.id + '" aria-label="Remove bookmark" title="Remove bookmark">' + trash + '</button></div>';
+            }).join('') + '</div></section>';
+          }).join('');
+        }
+        v2Paint('bookmarks', v2Shell('bookmarks', v2Header(), '<div class="v2-bold v3-page">' + body + '</div>', ix.due.length));
+        wireV2Shell();
+        wireV2Common();
+        var pa = document.getElementById('bmPractiseAll');
+        if (pa) pa.onclick = function () { practiseBookmarks(shownIds); };
+        app.querySelectorAll('[data-bm-f]').forEach(function (b) { b.onclick = function () { bmSubjectFilter = b.getAttribute('data-bm-f'); renderBookmarksV3(); }; });
+        app.querySelectorAll('[data-bm-go]').forEach(function (b) { b.onclick = function () { practiseBookmarks([Number(b.getAttribute('data-bm-go'))]); }; });
+        app.querySelectorAll('[data-bm-del]').forEach(function (b) {
+          b.onclick = function () {
+            var qid = Number(b.getAttribute('data-bm-del'));
+            var row = b.closest('.v3-bm'); if (row) row.style.opacity = '0.4';
+            supabaseClient.from('user_bookmarks').delete().eq('user_id', currentUser.id).eq('question_id', qid).then(function (dr) {
+              if (dr.error) { if (row) row.style.opacity = ''; showToast('Could not remove the bookmark. Please try again.', 'error'); return; }
+              if (v3BmCache) v3BmCache.marks = v3BmCache.marks.filter(function (m) { return m.question_id !== qid; });
+              showToast('Bookmark removed.');
+              renderBookmarksV3();
+            });
+          };
+        });
+        if (!c || Date.now() - c.at > 30000) {
+          v3BmFetch().then(function () { if (state.screen === 'bookmarks') renderBookmarksV3(); }, function () {
+            var sk = app.querySelector('.v3-mock-skel');
+            if (sk && state.screen === 'bookmarks') sk.outerHTML = '<div class="v3-card v3-empty"><b>Could not load your bookmarks</b><button class="v3-mbtn" id="bmRetry">Try again</button></div>';
+            var rb = document.getElementById('bmRetry'); if (rb) rb.onclick = function () { v3BmFetch().then(renderBookmarksV3); };
+          });
+        }
       }
 
       // ---- Profile ---------------------------------------------------------
@@ -7719,6 +8004,7 @@ window.addEventListener('error', function (ev) {
           renderHome();
           return;
         }
+        if (v2On()) { state.screen = 'bookmarks'; renderBookmarksV3(); return; }
         trackPageView('/bookmarks', 'bookmarks');
         var useV2 = v2On();
         var body = '<h1 class="v2-title">Bookmarks</h1>' +
