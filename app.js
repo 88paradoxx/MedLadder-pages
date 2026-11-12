@@ -6553,6 +6553,288 @@ window.addEventListener('error', function (ev) {
           (ss.due ? '<span class="v2-badge">' + ss.due + ' due</span>' : '') + '</span>' +
           '</button>';
       }
+      // ---- topic illustrations ------------------------------------------------
+      // Each picture: [tile tone, SVG body on a 64x64 grid]. Topics are matched to
+      // a picture by keywords in their name, then section, then subject.
+      var V3_ART = {
+        heart: ['red', '<path d="M27 15v-7M34 14V6M41 16l3-7" stroke="#B42335" stroke-width="4" stroke-linecap="round"/><path d="M32 56C17 45 9 37 9 26a11.5 11.5 0 0123-3.5A11.5 11.5 0 0155 26c0 11-8 19-23 30z" fill="#E5484D"/><path d="M33 26c4 5 4 12 0 18" stroke="#B42335" stroke-width="2.5" fill="none" stroke-linecap="round"/><ellipse cx="20" cy="25" rx="5" ry="3.5" fill="#fff" opacity=".35"/>'],
+        lungs: ['pink', '<path d="M32 5v18M32 23c-2 4-6 7-6 7M32 23c2 4 6 7 6 7" stroke="#CBD5E1" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M27 21c-9-2-17 9-18 23-1 8 4 13 10 12 6-1 9-5 9-12V24z" fill="#F17C8E"/><path d="M37 21c9-2 17 9 18 23 1 8-4 13-10 12-6-1-9-5-9-12V24z" fill="#EC6A7F"/><path d="M15 40c3-1 6 0 8 3M49 40c-3-1-6 0-8 3" stroke="#C94A60" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="17" cy="33" rx="3" ry="5" fill="#fff" opacity=".3"/>'],
+        brain: ['pink', '<path d="M31 12c-4-4-12-3-14 2-6 0-9 6-7 11-4 4-3 11 2 13 0 6 6 9 11 7 3 4 8 3 8-1z" fill="#F4A3C0"/><path d="M33 12c4-4 12-3 14 2 6 0 9 6 7 11 4 4 3 11-2 13 0 6-6 9-11 7-3 4-8 3-8-1z" fill="#EE8DB0"/><path d="M20 20c3 1 4 4 3 7M14 30c4-1 7 1 8 4M24 40c0-3 3-5 6-4M44 20c-3 1-4 4-3 7M50 30c-4-1-7 1-8 4M40 40c0-3-3-5-6-4" fill="none" stroke="#C2557F" stroke-width="2.2" stroke-linecap="round"/><path d="M32 13v34" stroke="#C2557F" stroke-width="1.6"/>'],
+        neuron: ['violet', '<path d="M24 30L8 18M24 30L6 38M24 30L14 52M29 25L27 7M34 34l22 18" stroke="#A78BFA" stroke-width="3" stroke-linecap="round"/><path d="M38 38l4 3.2M45 43.5l4 3.2" stroke="#FCD34D" stroke-width="5" stroke-linecap="round"/><circle cx="28" cy="30" r="9" fill="#8B5CF6"/><circle cx="28" cy="30" r="3.5" fill="#EDE9FE"/><circle cx="56" cy="52" r="3" fill="#F59E0B"/>'],
+        kidney: ['red', '<path d="M30 8c-12 0-20 11-20 24s8 24 20 24c9 0 12-7 9-13-2-4-7-6-7-11s5-7 7-11c3-7-1-13-9-13z" fill="#C8564F"/><path d="M34 32h9c4 0 6 3 6 7v18" fill="none" stroke="#F2C14E" stroke-width="4" stroke-linecap="round"/><path d="M32 26c-3 2-3 10 0 12" stroke="#9E3A34" stroke-width="2.5" fill="none"/><ellipse cx="19" cy="22" rx="4" ry="6" fill="#fff" opacity=".3"/>'],
+        adrenal: ['blue', '<path d="M30 16c-11 0-18 10-18 21s7 21 18 21c8 0 11-6 8-12-2-4-6-5-6-10s4-6 6-10c3-6-1-10-8-10z" fill="#C8564F"/><path d="M14 18l10-12 14 8c-2 4-8 6-14 6-4 0-8-1-10-2z" fill="#F59E0B"/><ellipse cx="21" cy="30" rx="3.5" ry="5" fill="#fff" opacity=".3"/><path d="M40 36h6c3 0 5 3 5 6v14" fill="none" stroke="#F2C14E" stroke-width="4" stroke-linecap="round"/>'],
+        liver: ['red', '<path d="M8 22c6-8 20-10 34-9 8 0 14 3 14 8 0 6-6 9-14 14-8 6-14 13-20 13-8 0-16-12-14-26z" fill="#B5473F"/><ellipse cx="36" cy="44" rx="4" ry="6" fill="#3FB37F"/><path d="M36 26c-4 4-6 8-8 14" stroke="#8E342E" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="22" cy="21" rx="8" ry="3.5" fill="#fff" opacity=".28"/>'],
+        gallbladder: ['green', '<path d="M32 6v14" stroke="#2F9E6B" stroke-width="4" stroke-linecap="round"/><path d="M32 18c-8 0-14 10-14 20 0 9 6 16 14 16s14-7 14-16c0-10-6-20-14-20z" fill="#3FB37F"/><circle cx="27" cy="40" r="3.4" fill="#FDE68A"/><circle cx="36" cy="44" r="4" fill="#FCD34D"/><circle cx="33" cy="33" r="2.6" fill="#FDE68A"/><ellipse cx="24" cy="30" rx="2.5" ry="5" fill="#fff" opacity=".3"/>'],
+        pancreas: ['violet', '<path d="M8 38c4-10 14-8 22-12 10-5 18-12 26-6 5 4 2 12-6 14-10 3-16 10-26 12C14 48 6 44 8 38z" fill="#F6C177"/><path d="M14 40c10-2 20-8 34-16" stroke="#D99A3F" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="22" cy="38" r="1.8" fill="#D99A3F"/><circle cx="34" cy="32" r="1.8" fill="#D99A3F"/><circle cx="44" cy="25" r="1.8" fill="#D99A3F"/>'],
+        spleen: ['violet', '<path d="M18 14c10-8 30-6 36 6 6 12-2 28-16 30-12 2-26-6-26-18 0-8 2-14 6-18z" fill="#9D4A7A"/><path d="M26 24c4 6 4 14 0 18" stroke="#7A2E5C" stroke-width="2.5" fill="none" stroke-linecap="round"/><ellipse cx="22" cy="22" rx="5" ry="3" fill="#fff" opacity=".3"/>'],
+        stomach: ['orange', '<path d="M24 6v9c0 6-12 8-12 22 0 10 8 19 20 19 14 0 22-10 22-22 0-8-6-12-12-10-6 2-6 8-10 8s-4-6-4-12V6z" fill="#F08A7E"/><path d="M44 54c2 3 6 4 9 2" stroke="#E06A5E" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M20 30c-2 6 0 14 6 18" stroke="#D95F53" stroke-width="2.2" fill="none" stroke-linecap="round"/><ellipse cx="21" cy="36" rx="3.5" ry="7" fill="#fff" opacity=".3"/>'],
+        intestine: ['orange', '<rect x="8" y="10" width="48" height="44" rx="16" fill="none" stroke="#E3836A" stroke-width="7"/><path d="M20 23h24c4.5 0 4.5 7 0 7H22c-4.5 0-4.5 7 0 7h20c4.5 0 4.5 7 0 7H26" fill="none" stroke="#F4A68A" stroke-width="5.5" stroke-linecap="round"/>'],
+        eye: ['blue', '<path d="M4 32c8-12 18-18 28-18s20 6 28 18c-8 12-18 18-28 18S12 44 4 32z" fill="#fff" stroke="#CBD5E1" stroke-width="2"/><circle cx="32" cy="32" r="12" fill="#3B82F6"/><circle cx="32" cy="32" r="12" fill="none" stroke="#1D4ED8" stroke-width="2"/><circle cx="32" cy="32" r="5.5" fill="#0F172A"/><circle cx="36" cy="28" r="2.6" fill="#fff"/>'],
+        glasses: ['blue', '<circle cx="18" cy="36" r="11" fill="#E0F2FE" stroke="#1E293B" stroke-width="4"/><circle cx="46" cy="36" r="11" fill="#E0F2FE" stroke="#1E293B" stroke-width="4"/><path d="M29 34c2-2 4-2 6 0M7.5 33L4 21M56.5 33L60 21" stroke="#1E293B" stroke-width="3.5" stroke-linecap="round" fill="none"/><path d="M13 32l5-4M41 32l5-4" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>'],
+        ear: ['orange', '<path d="M36 6c-12 0-20 9-20 20 0 6 2 9 4 12 2 4 1 8 2 12 1 6 6 8 10 8 6 0 8-5 8-9 0-6 10-10 12-18 3-13-5-25-16-25z" fill="#F2B49A"/><path d="M28 26c0-6 4-10 9-10s9 4 9 9c0 6-6 7-8 12-1 3-4 3-5 0" fill="none" stroke="#C9786A" stroke-width="3" stroke-linecap="round"/><ellipse cx="26" cy="18" rx="3" ry="5" fill="#fff" opacity=".3"/>'],
+        nose: ['orange', '<path d="M28 6c0 14 4 22 14 30 6 5 3 14-6 13-3 0-4-3-8-3s-6 4-10 3c-8-2-8-10-3-14 6-5 7-14 7-29z" fill="#F2B49A"/><ellipse cx="25" cy="46" rx="3.2" ry="2" fill="#A35D52"/><ellipse cx="37" cy="46" rx="3.2" ry="2" fill="#A35D52"/><path d="M31 10c0 10 2 16 6 22" stroke="#fff" stroke-width="2.5" opacity=".4" fill="none" stroke-linecap="round"/>'],
+        mouth: ['pink', '<path d="M8 26c8-8 40-8 48 0-4 17-14 26-24 26S12 43 8 26z" fill="#9F1239"/><path d="M8 26c8-5 40-5 48 0" stroke="#FFE4E6" stroke-width="5" fill="none"/><path d="M19 44c4-9 22-9 26 0-4 4-8 6-13 6s-9-2-13-6z" fill="#FB7185"/><path d="M32 39v8" stroke="#E11D48" stroke-width="2" stroke-linecap="round"/>'],
+        larynx: ['pink', '<rect x="12" y="6" width="18" height="52" rx="9" fill="#F4A3A8"/><path d="M12 18h18M12 27h18M12 36h18M12 45h18" stroke="#D66A75" stroke-width="3"/><path d="M40 22c4 3 4 9 0 12M46 17c7 5 7 16 0 21M52 12c10 7 10 24 0 31" fill="none" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round"/>'],
+        tooth: ['blue', '<path d="M20 10c-8 0-12 8-10 16 2 6 4 8 5 16 1 10 4 14 7 14 4 0 4-12 10-12s6 12 10 12c3 0 6-4 7-14 1-8 3-10 5-16 2-8-2-16-10-16-6 0-8 3-12 3s-6-3-12-3z" fill="#fff" stroke="#CBD5E1" stroke-width="2"/><path d="M18 18c2-3 6-3 8-1" stroke="#BFDBFE" stroke-width="3" fill="none" stroke-linecap="round"/>'],
+        bone: ['blue', '<g transform="rotate(-45 32 32)"><rect x="14" y="27" width="36" height="10" rx="5" fill="#EFE2C4"/><circle cx="14" cy="26" r="7" fill="#EFE2C4"/><circle cx="14" cy="38" r="7" fill="#EFE2C4"/><circle cx="50" cy="26" r="7" fill="#EFE2C4"/><circle cx="50" cy="38" r="7" fill="#EFE2C4"/><path d="M18 30h28" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g>'],
+        fracture: ['blue', '<g transform="rotate(-45 32 32)"><path d="M14 27h14l2 3-3 2 2 3-1 2H14z" fill="#EFE2C4"/><circle cx="12" cy="26" r="7" fill="#EFE2C4"/><circle cx="12" cy="38" r="7" fill="#EFE2C4"/><path d="M52 27H38l-1 2 2 3-2 3 1 2h14z" fill="#EFE2C4"/><circle cx="54" cy="26" r="7" fill="#EFE2C4"/><circle cx="54" cy="38" r="7" fill="#EFE2C4"/></g><path d="M30 20l-4 6M38 40l4 6M24 34l-6 2" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/>'],
+        joint: ['blue', '<rect x="25" y="4" width="14" height="20" rx="5" fill="#EFE2C4"/><path d="M18 24c0-4 4-6 8-6h12c4 0 8 2 8 6s-4 6-8 6H26c-4 0-8-2-8-6z" fill="#EFE2C4"/><path d="M19 38c0-3 3-4 6-4h14c3 0 6 1 6 4s-3 4-6 4H25c-3 0-6-1-6-4z" fill="#EFE2C4"/><rect x="26" y="40" width="12" height="20" rx="5" fill="#EFE2C4"/><path d="M21 32h22" stroke="#7DD3FC" stroke-width="3.5" stroke-linecap="round"/><circle cx="49" cy="31" r="5.5" fill="#E7D9BB"/>'],
+        spine: ['blue', '<g fill="#EFE2C4"><rect x="20" y="5" width="20" height="8" rx="3"/><rect x="20" y="17" width="20" height="8" rx="3"/><rect x="20" y="29" width="20" height="8" rx="3"/><rect x="20" y="41" width="20" height="8" rx="3"/><rect x="20" y="53" width="20" height="7" rx="3"/><path d="M40 7l8 3-8 1zM40 19l8 3-8 1zM40 31l8 3-8 1zM40 43l8 3-8 1z"/></g><g fill="#60A5FA"><rect x="23" y="13.5" width="14" height="3" rx="1.5"/><rect x="23" y="25.5" width="14" height="3" rx="1.5"/><rect x="23" y="37.5" width="14" height="3" rx="1.5"/><rect x="23" y="49.5" width="14" height="3" rx="1.5"/></g>'],
+        pelvis: ['blue', '<path d="M8 16c8-4 15 0 19 7h10c4-7 11-11 19-7 4 11 0 23-10 27l-4 11H22l-4-11C8 39 4 27 8 16z" fill="#EFE2C4"/><circle cx="21" cy="34" r="5" fill="#E2D3B0"/><circle cx="43" cy="34" r="5" fill="#E2D3B0"/><ellipse cx="32" cy="42" rx="5" ry="4" fill="#E2D3B0"/>'],
+        skull: ['slate', '<path d="M32 7c-13 0-22 9-22 21 0 7 3 12 8 15v8c0 2 2 4 4 4h20c2 0 4-2 4-4v-8c5-3 8-8 8-15 0-12-9-21-22-21z" fill="#EFE2C4"/><circle cx="23" cy="30" r="6" fill="#3F3A52"/><circle cx="41" cy="30" r="6" fill="#3F3A52"/><path d="M32 36l-3 6h6z" fill="#3F3A52"/><path d="M26 49v6M32 49v6M38 49v6" stroke="#C9BB9A" stroke-width="2"/>'],
+        hand: ['orange', '<path d="M19 36V18a3.5 3.5 0 017 0v12V11a3.5 3.5 0 017 0v19V13a3.5 3.5 0 017 0v19-9a3.5 3.5 0 017 0v19c0 12-7 18-16 18-6 0-10-3-13-8l-7-11a3.5 3.5 0 016-3.5z" fill="#F2B49A"/><path d="M26 30v6M33 30v6M40 31v6" stroke="#D48E78" stroke-width="2" stroke-linecap="round"/>'],
+        muscle: ['red', '<path d="M2 32h9M53 32h9" stroke="#EFE2C4" stroke-width="5" stroke-linecap="round"/><path d="M8 32c8-15 40-15 48 0-8 15-40 15-48 0z" fill="#E5484D"/><path d="M14 32c10-6 26-6 36 0M16 26.5c10-4 22-4 32 0M16 37.5c10 4 22 4 32 0" stroke="#FCA5A5" stroke-width="2" fill="none"/>'],
+        skin: ['orange', '<rect x="8" y="14" width="48" height="10" rx="3" fill="#E9A07E"/><rect x="8" y="24" width="48" height="14" fill="#F7C9B5"/><rect x="8" y="38" width="48" height="14" rx="3" fill="#FDE68A"/><circle cx="18" cy="45" r="3" fill="#FCD34D"/><circle cx="30" cy="46" r="3.5" fill="#FCD34D"/><circle cx="44" cy="45" r="3" fill="#FCD34D"/><path d="M24 36l3-30M40 36l-2-30" stroke="#5B3A29" stroke-width="2" stroke-linecap="round"/><circle cx="24" cy="36" r="2.6" fill="#B45309"/><circle cx="40" cy="36" r="2.6" fill="#B45309"/>'],
+        uterus: ['pink', '<path d="M24 20c-4-3-9-3-11 1-1 3 1 6 4 6M40 20c4-3 9-3 11 1 1 3-1 6-4 6" fill="none" stroke="#F472B6" stroke-width="3.5" stroke-linecap="round"/><circle cx="13" cy="28" r="4.5" fill="#FBCFE8"/><circle cx="51" cy="28" r="4.5" fill="#FBCFE8"/><path d="M23 20c0-6 4-8 9-8s9 2 9 8c0 9-5 13-5 19v8h-8v-8c0-6-5-10-5-19z" fill="#F472B6"/><path d="M28 46h8v8h-8z" fill="#EC4899"/><ellipse cx="28" cy="22" rx="2.5" ry="4" fill="#fff" opacity=".35"/>'],
+        fetus: ['pink', '<circle cx="32" cy="32" r="25" fill="#FDE2EF"/><circle cx="32" cy="32" r="25" fill="none" stroke="#F472B6" stroke-width="3"/><path d="M29 29c-7 4-9 13-4 18 5 5 13 4 15-2 2-5-2-8-6-7" fill="none" stroke="#F9A8C9" stroke-width="8" stroke-linecap="round"/><circle cx="36" cy="22" r="8" fill="#F9A8C9"/><path d="M14 44c2 5 6 8 10 9" stroke="#EC4899" stroke-width="2.5" fill="none" stroke-linecap="round"/>'],
+        egg: ['amber', '<circle cx="39" cy="35" r="17" fill="#FDE68A"/><circle cx="39" cy="35" r="17" fill="none" stroke="#F59E0B" stroke-width="3"/><circle cx="41" cy="33" r="5.5" fill="#F59E0B"/><path d="M5 12c3 3 6 0 8 3s5 2 7 5" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/><ellipse cx="22" cy="22" rx="4.5" ry="3.5" fill="#3B82F6" transform="rotate(35 22 22)"/><path d="M6 30c3 2 5-1 8 1" fill="none" stroke="#60A5FA" stroke-width="2" stroke-linecap="round"/><ellipse cx="18" cy="33" rx="3.5" ry="2.8" fill="#60A5FA"/>'],
+        baby: ['blue', '<circle cx="12" cy="35" r="4" fill="#F5C39B"/><circle cx="52" cy="35" r="4" fill="#F5C39B"/><circle cx="32" cy="35" r="20" fill="#FCD9B8"/><circle cx="25" cy="33" r="2.6" fill="#3F3A52"/><circle cx="39" cy="33" r="2.6" fill="#3F3A52"/><path d="M27 42c3 3 7 3 10 0" stroke="#C2410C" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="20" cy="40" r="3" fill="#F9A8A8" opacity=".7"/><circle cx="44" cy="40" r="3" fill="#F9A8A8" opacity=".7"/><path d="M29 15c0-5 7-5 7 0" stroke="#B45309" stroke-width="3" fill="none" stroke-linecap="round"/>'],
+        bottle: ['blue', '<path d="M28 4h8v7h-8z" fill="#FCA5A5"/><path d="M25 11h14l3 7H22z" fill="#F9A8D4"/><rect x="19" y="18" width="26" height="40" rx="9" fill="#E0F2FE" stroke="#93C5FD" stroke-width="2"/><rect x="21" y="32" width="22" height="24" rx="7" fill="#fff"/><path d="M25 26h7M25 34h7M25 42h7" stroke="#93C5FD" stroke-width="2" stroke-linecap="round"/>'],
+        breast: ['pink', '<path d="M32 10c-6 0-10 4-10 10 0 8 6 14 10 20 4-6 10-12 10-20 0-6-4-10-10-10z" fill="none" stroke="#EC4899" stroke-width="6.5"/><path d="M27 34L16 54l7-1 3 6 10-21M37 34l11 20-7-1-3 6-10-21" fill="#EC4899"/>'],
+        thyroid: ['pink', '<rect x="28" y="4" width="8" height="56" rx="4" fill="#CBD5E1"/><path d="M30 30c-2-10-10-18-16-16-6 2-6 14-2 22 4 8 14 8 18 2z" fill="#E879A6"/><path d="M34 30c2-10 10-18 16-16 6 2 6 14 2 22-4 8-14 8-18 2z" fill="#E879A6"/><rect x="27" y="29" width="10" height="9" rx="3" fill="#D9558A"/><ellipse cx="17" cy="22" rx="2.5" ry="4" fill="#fff" opacity=".35"/>'],
+        glucose: ['violet', '<rect x="12" y="8" width="28" height="44" rx="8" fill="#6366F1"/><rect x="16" y="14" width="20" height="14" rx="3" fill="#E0E7FF"/><path d="M20 21h4l2-3 3 6 2-3h2" stroke="#6366F1" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="26" cy="39" r="4.5" fill="#A5B4FC"/><path d="M34 52v8" stroke="#CBD5E1" stroke-width="5"/><path d="M50 28c3.5 5.5 6.5 9 6.5 13a6.5 6.5 0 01-13 0c0-4 3-7.5 6.5-13z" fill="#EF4444"/>'],
+        bladder: ['blue', '<path d="M14 6c4 8 6 14 10 18M50 6c-4 8-6 14-10 18" stroke="#E0A82E" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M32 22c-12 0-18 8-18 16 0 10 8 16 18 16s18-6 18-16c0-8-6-16-18-16z" fill="#F2C14E"/><path d="M30 53h4v7h-4z" fill="#E0A82E"/><ellipse cx="23" cy="34" rx="3" ry="5" fill="#fff" opacity=".35"/>'],
+        male: ['blue', '<circle cx="26" cy="38" r="14" fill="#DBEAFE" stroke="#3B82F6" stroke-width="6"/><path d="M36 28l14-14M38 14h12v12" fill="none" stroke="#3B82F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'],
+        dna: ['violet', '<path d="M24 12h16M28 20h8M28 44h8M24 52h16M30 32h4" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/><path d="M20 4c0 14 24 14 24 28S20 46 20 60" fill="none" stroke="#8B5CF6" stroke-width="5" stroke-linecap="round"/><path d="M44 4c0 14-24 14-24 28s24 14 24 28" fill="none" stroke="#22C3A6" stroke-width="5" stroke-linecap="round"/>'],
+        chromosome: ['violet', '<path d="M18 7c4 0 10 16 14 24 4-8 10-24 14-24s4 6 0 12c-4 6-8 10-10 13 2 2 6 6 10 12 4 6 4 12 0 12s-10-16-14-24c-4 8-10 24-14 24s-4-6 0-12c4-6 8-10 10-12-2-3-6-7-10-13-4-6-4-12 0-12z" fill="#A78BFA"/><circle cx="32" cy="32" r="4.5" fill="#7C3AED"/><path d="M16 12l6 6M48 12l-6 6" stroke="#EDE9FE" stroke-width="2" stroke-linecap="round"/>'],
+        cell: ['violet', '<circle cx="32" cy="32" r="24" fill="#C4B5FD"/><circle cx="32" cy="32" r="24" fill="none" stroke="#8B5CF6" stroke-width="2.5"/><circle cx="34" cy="30" r="9" fill="#7C3AED"/><circle cx="36" cy="28" r="3" fill="#C4B5FD"/><ellipse cx="18" cy="39" rx="5" ry="2.5" fill="#F59E0B" transform="rotate(-30 18 39)"/><ellipse cx="44" cy="45" rx="5" ry="2.5" fill="#F59E0B" transform="rotate(20 44 45)"/><circle cx="21" cy="21" r="2" fill="#22C3A6"/><circle cx="47" cy="22" r="2" fill="#22C3A6"/><circle cx="26" cy="49" r="2" fill="#22C3A6"/>'],
+        celldead: ['slate', '<path d="M9 34a23 23 0 0144-8l-11 4 7 9-13-3-4 11-6-9-9 6z" fill="#C4B5FD"/><path d="M10 40c2 6 7 11 13 13l3-8z" fill="#DDD6FE"/><circle cx="30" cy="27" r="4" fill="#6D28D9"/><circle cx="38" cy="33" r="2.5" fill="#6D28D9"/><circle cx="26" cy="35" r="2" fill="#6D28D9"/><circle cx="50" cy="48" r="3" fill="#A78BFA"/><circle cx="44" cy="54" r="2" fill="#A78BFA"/>'],
+        inflam: ['red', '<path d="M32 4v8M13 12l5 6M51 12l-5 6M5 30h8M51 30h8" stroke="#F97316" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="38" r="19" fill="#FCA5A5"/><circle cx="32" cy="38" r="19" fill="none" stroke="#EF4444" stroke-width="2.5"/><circle cx="32" cy="38" r="7.5" fill="#DC2626"/><circle cx="21" cy="30" r="2.5" fill="#fff" opacity=".7"/>'],
+        rbc: ['red', '<ellipse cx="24" cy="25" rx="17" ry="14" fill="#E5484D"/><ellipse cx="24" cy="25" rx="7" ry="5.5" fill="#B91C1C"/><ellipse cx="43" cy="43" rx="15" ry="12" fill="#F05252"/><ellipse cx="43" cy="43" rx="6" ry="4.5" fill="#C81E1E"/><ellipse cx="15" cy="20" rx="3" ry="2" fill="#fff" opacity=".4"/>'],
+        wbc: ['violet', '<circle cx="32" cy="32" r="23" fill="#EDE9FE"/><circle cx="32" cy="32" r="23" fill="none" stroke="#A78BFA" stroke-width="2.5"/><path d="M21 30c0-6 6-8 9-5 3-4 10-3 10 3 4 2 4 9-1 10-2 5-9 5-11 1-5 1-8-4-7-9z" fill="#7C3AED"/><circle cx="20" cy="46" r="1.8" fill="#C4B5FD"/><circle cx="44" cy="20" r="1.8" fill="#C4B5FD"/><circle cx="46" cy="42" r="1.8" fill="#C4B5FD"/>'],
+        drop: ['red', '<path d="M32 5c8 12 18 22 18 33a18 18 0 01-36 0c0-11 10-21 18-33z" fill="#DC2626"/><ellipse cx="25" cy="38" rx="4" ry="7" fill="#fff" opacity=".35"/><path d="M38 46c3-2 5-5 5-9" stroke="#fff" stroke-width="2.5" opacity=".5" fill="none" stroke-linecap="round"/>'],
+        antibody: ['blue', '<path d="M32 58V34M32 34L17 13M32 34l15-21" stroke="#3B82F6" stroke-width="7" stroke-linecap="round"/><path d="M23 31L11 15M41 31l12-16" stroke="#93C5FD" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="34" r="4" fill="#1D4ED8"/>'],
+        bacteria: ['green', '<path d="M6 18c-3 3-2 6 1 8M58 46c3-3 2-6-1-8M24 6c-3 0-5 3-4 6" stroke="#16A34A" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="8" y="14" width="32" height="14" rx="7" fill="#22C55E" transform="rotate(-20 24 21)"/><rect x="24" y="34" width="32" height="14" rx="7" fill="#16A34A" transform="rotate(15 40 41)"/><circle cx="18" cy="21" r="2" fill="#BBF7D0"/><circle cx="29" cy="18" r="2" fill="#BBF7D0"/><circle cx="36" cy="39" r="2" fill="#BBF7D0"/><circle cx="46" cy="42" r="2" fill="#BBF7D0"/>'],
+        rodred: ['red', '<rect x="6" y="18" width="30" height="10" rx="5" fill="#E11D48" transform="rotate(-25 21 23)"/><rect x="26" y="20" width="30" height="10" rx="5" fill="#F43F5E" transform="rotate(30 41 25)"/><rect x="14" y="40" width="34" height="10" rx="5" fill="#BE123C" transform="rotate(-8 31 45)"/><circle cx="20" cy="22" r="1.6" fill="#FFE4E6"/><circle cx="40" cy="25" r="1.6" fill="#FFE4E6"/><circle cx="30" cy="45" r="1.6" fill="#FFE4E6"/>'],
+        cocci: ['violet', '<circle cx="12" cy="42" r="7" fill="#A855F7"/><circle cx="24" cy="34" r="7" fill="#9333EA"/><circle cx="36" cy="27" r="7" fill="#A855F7"/><circle cx="49" cy="22" r="7" fill="#9333EA"/><circle cx="22" cy="53" r="6" fill="#C084FC"/><circle cx="34" cy="49" r="6" fill="#C084FC"/><circle cx="46" cy="44" r="6" fill="#C084FC"/><circle cx="10" cy="40" r="2" fill="#F3E8FF"/><circle cx="34" cy="25" r="2" fill="#F3E8FF"/>'],
+        spiral: ['orange', '<path d="M5 32c4-9 8-9 10 0s6 9 10 0 6-9 10 0 6 9 10 0 6-9 10 0" fill="none" stroke="#F97316" stroke-width="5.5" stroke-linecap="round"/><path d="M10 50c3-5 6-5 8 0s5 5 8 0 5-5 8 0" fill="none" stroke="#FDBA74" stroke-width="4" stroke-linecap="round"/>'],
+        virus: ['red', '<g stroke="#B91C1C" stroke-width="3" stroke-linecap="round"><path d="M47 32h8M42.6 42.6l5.7 5.7M32 47v8M21.4 42.6l-5.7 5.7M17 32H9M21.4 21.4l-5.7-5.7M32 17V9M42.6 21.4l5.7-5.7"/></g><g fill="#F59E0B"><circle cx="56" cy="32" r="3.5"/><circle cx="49" cy="49" r="3.5"/><circle cx="32" cy="56" r="3.5"/><circle cx="15" cy="49" r="3.5"/><circle cx="8" cy="32" r="3.5"/><circle cx="15" cy="15" r="3.5"/><circle cx="32" cy="8" r="3.5"/><circle cx="49" cy="15" r="3.5"/></g><circle cx="32" cy="32" r="16" fill="#EF4444"/><circle cx="27" cy="28" r="3" fill="#FCA5A5"/><circle cx="37" cy="36" r="2.5" fill="#FCA5A5"/><circle cx="36" cy="25" r="1.8" fill="#FCA5A5"/>'],
+        fungus: ['red', '<rect x="25" y="30" width="14" height="26" rx="5" fill="#FDE68A"/><path d="M6 32c0-13 12-22 26-22s26 9 26 22z" fill="#EF4444"/><circle cx="19" cy="23" r="3.5" fill="#fff"/><circle cx="33" cy="17" r="3.5" fill="#fff"/><circle cx="45" cy="25" r="3" fill="#fff"/><circle cx="28" cy="27" r="2" fill="#fff"/>'],
+        worm: ['pink', '<path d="M8 44c6-11 12-11 16-2s10 9 14-2 12-15 18-6" fill="none" stroke="#F0A6A0" stroke-width="10" stroke-linecap="round"/><path d="M14 38v4M22 40v4M30 44v4M38 38v4M46 30v4" stroke="#D97B73" stroke-width="2" stroke-linecap="round"/><circle cx="56" cy="34" r="2" fill="#7C2D12"/>'],
+        amoeba: ['green', '<path d="M14 30c-4-10 6-18 14-14 6-8 20-6 22 4 8 2 10 14 2 18 0 10-12 14-18 8-8 6-20 0-18-8-6-2-6-6-2-8z" fill="#86EFAC"/><path d="M14 30c-4-10 6-18 14-14 6-8 20-6 22 4 8 2 10 14 2 18 0 10-12 14-18 8-8 6-20 0-18-8-6-2-6-6-2-8z" fill="none" stroke="#22C55E" stroke-width="2"/><circle cx="34" cy="32" r="7" fill="#15803D"/><circle cx="22" cy="40" r="3" fill="#4ADE80"/><circle cx="44" cy="22" r="2.5" fill="#4ADE80"/>'],
+        mosquito: ['cyan', '<ellipse cx="22" cy="22" rx="13" ry="5" fill="#BAE6FD" opacity=".95" transform="rotate(-40 22 22)"/><ellipse cx="45" cy="39" rx="13" ry="5" fill="#BAE6FD" opacity=".95" transform="rotate(30 45 39)"/><ellipse cx="31" cy="37" rx="4.5" ry="15" fill="#475569" transform="rotate(-30 31 37)"/><circle cx="40" cy="22" r="5" fill="#334155"/><path d="M43 19l11-11M27 43l-10 14M31 45l-4 14M35 43l6 14" stroke="#334155" stroke-width="2" stroke-linecap="round"/>'],
+        bug: ['green', '<path d="M18 28l-10-6M18 36l-12 0M20 44l-10 8M46 28l10-6M46 36h12M44 44l10 8" stroke="#78350F" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="32" cy="38" rx="15" ry="17" fill="#92400E"/><circle cx="32" cy="19" r="6.5" fill="#78350F"/><path d="M32 23v30" stroke="#B45309" stroke-width="2"/><ellipse cx="25" cy="32" rx="3" ry="5" fill="#fff" opacity=".25"/>'],
+        pill: ['blue', '<g transform="rotate(-40 30 28)"><rect x="8" y="18" width="44" height="20" rx="10" fill="#fff" stroke="#CBD5E1" stroke-width="2"/><path d="M30 18h12a10 10 0 010 20H30z" fill="#EF4444"/><path d="M14 24h8" stroke="#E2E8F0" stroke-width="3" stroke-linecap="round"/></g><circle cx="46" cy="48" r="9" fill="#60A5FA"/><path d="M39 48h14" stroke="#fff" stroke-width="2.5"/>'],
+        syringe: ['cyan', '<g transform="rotate(45 32 32)"><rect x="24" y="12" width="16" height="32" rx="3" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2"/><rect x="26" y="26" width="12" height="16" fill="#38BDF8"/><path d="M32 44v14M23 7h18M32 7v5" stroke="#64748B" stroke-width="3" stroke-linecap="round"/><path d="M28 18h5M28 23h5" stroke="#38BDF8" stroke-width="2"/></g>'],
+        drip: ['cyan', '<path d="M26 4h12" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/><path d="M20 8h24v30c0 6-4 10-12 10s-12-4-12-10z" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2"/><path d="M21 24h22v14c0 5-4 9-11 9s-11-4-11-9z" fill="#38BDF8" opacity=".7"/><path d="M32 48v12" stroke="#38BDF8" stroke-width="3"/><circle cx="32" cy="54" r="2.6" fill="#0EA5E9"/>'],
+        flask: ['violet', '<path d="M26 6h12M28 6v16L14 50c-2 4 1 8 5 8h26c4 0 7-4 5-8L36 22V6" fill="#fff" stroke="#94A3B8" stroke-width="2.5" stroke-linejoin="round"/><path d="M19 41h26l4.5 9c1 3-1 5-4 5H18.5c-3 0-5-2-4-5z" fill="#A78BFA"/><circle cx="28" cy="33" r="2.6" fill="#C4B5FD"/><circle cx="35" cy="27" r="1.8" fill="#C4B5FD"/>'],
+        molecule: ['blue', '<path d="M20 20l12 12 14-8M32 32l-4 16M32 32l14 14" stroke="#94A3B8" stroke-width="3"/><circle cx="20" cy="20" r="7" fill="#EF4444"/><circle cx="32" cy="32" r="8" fill="#3B82F6"/><circle cx="46" cy="24" r="6" fill="#F59E0B"/><circle cx="28" cy="50" r="6" fill="#22C55E"/><circle cx="47" cy="47" r="5" fill="#E2E8F0"/><circle cx="29" cy="29" r="2.5" fill="#fff" opacity=".5"/>'],
+        sugar: ['amber', '<path d="M50 20l8-4M14 40l-8 4M50 40l8 4M14 20l-8-4" stroke="#FBBF24" stroke-width="3" stroke-linecap="round"/><path d="M32 10l18 10v20L32 50 14 40V20z" fill="#FEF3C7" stroke="#F59E0B" stroke-width="5" stroke-linejoin="round"/><circle cx="32" cy="10" r="5" fill="#EF4444"/><path d="M26 30h12M32 24v12" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>'],
+        cycle: ['green', '<path d="M50 24a19 19 0 00-31-7" fill="none" stroke="#22C3A6" stroke-width="5" stroke-linecap="round"/><path d="M14 40a19 19 0 0031 7" fill="none" stroke="#8B5CF6" stroke-width="5" stroke-linecap="round"/><path d="M13 9l5 9 9-3" fill="none" stroke="#22C3A6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M51 55l-5-9-9 3" fill="none" stroke="#8B5CF6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="32" r="6" fill="#F59E0B"/>'],
+        lipid: ['blue', '<circle cx="26" cy="30" r="16" fill="#FCD34D"/><circle cx="44" cy="45" r="10" fill="#FBBF24"/><circle cx="46" cy="18" r="6" fill="#FDE68A"/><ellipse cx="20" cy="24" rx="5" ry="3" fill="#fff" opacity=".55"/><ellipse cx="41" cy="41" rx="3" ry="2" fill="#fff" opacity=".55"/>'],
+        vitamin: ['orange', '<circle cx="32" cy="32" r="25" fill="#FB923C"/><circle cx="32" cy="32" r="20" fill="#FED7AA"/><g stroke="#FB923C" stroke-width="2.5"><path d="M32 12v40M12 32h40M18 18l28 28M46 18L18 46"/></g><circle cx="32" cy="32" r="4" fill="#FB923C"/>'],
+        apple: ['red', '<path d="M32 18c0-6 2-10 6-12" stroke="#78350F" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M32 18c-10-6-22 0-22 14 0 14 10 26 22 22 12 4 22-8 22-22 0-14-12-20-22-14z" fill="#EF4444"/><path d="M34 14c6-6 12-4 14 0-6 4-10 4-14 0z" fill="#22C55E"/><ellipse cx="21" cy="30" rx="4" ry="7" fill="#fff" opacity=".3"/>'],
+        microscope: ['violet', '<path d="M18 57h30M24 49h18" stroke="#475569" stroke-width="5" stroke-linecap="round"/><path d="M46 31c8 6 6 20-4 22" fill="none" stroke="#475569" stroke-width="5" stroke-linecap="round"/><path d="M23 9l10-4 13 26-10 4z" fill="#6366F1"/><rect x="29" y="34" width="12" height="6" rx="2" fill="#475569"/><circle cx="35" cy="45" r="3" fill="#A5B4FC"/>'],
+        scale: ['blue', '<path d="M32 9v43M18 56h28M13 16h38" stroke="#B45309" stroke-width="4" stroke-linecap="round"/><path d="M14 16L6 34M14 16l8 18M50 16l-8 18M50 16l8 18" stroke="#B45309" stroke-width="2" stroke-linecap="round"/><path d="M5 34a9 5 0 0018 0zM41 34a9 5 0 0018 0z" fill="#F59E0B"/><circle cx="32" cy="8" r="4.5" fill="#F59E0B"/>'],
+        fingerprint: ['violet', '<g fill="none" stroke="#6366F1" stroke-width="3" stroke-linecap="round"><path d="M18 18a17 17 0 0128 0"/><path d="M12 32c0-12 9-21 20-21s20 9 20 21"/><path d="M20 50c-2-4-4-10-4-16 0-9 7-15 16-15s16 6 16 15c0 4 0 8-2 12"/><path d="M27 55c-2-6-4-13-4-21 0-5 4-8 9-8s9 3 9 8c0 6 0 12-2 17"/><path d="M32 34c0 8 0 14 2 21"/></g>'],
+        poison: ['green', '<rect x="27" y="4" width="10" height="8" rx="2" fill="#78350F"/><path d="M24 12h16v6l6 8v26c0 4-3 6-6 6H24c-3 0-6-2-6-6V26l6-8z" fill="#4ADE80"/><circle cx="32" cy="35" r="8" fill="#fff"/><circle cx="29" cy="34" r="2" fill="#14532D"/><circle cx="35" cy="34" r="2" fill="#14532D"/><path d="M24 51l16-6M24 45l16 6" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>'],
+        bandage: ['orange', '<g transform="rotate(-40 32 32)"><rect x="5" y="22" width="54" height="20" rx="10" fill="#F5C9A3"/><rect x="22" y="22" width="20" height="20" fill="#FDE6CF"/><g fill="#D6A27A"><circle cx="27" cy="27.5" r="1.6"/><circle cx="37" cy="27.5" r="1.6"/><circle cx="27" cy="36.5" r="1.6"/><circle cx="37" cy="36.5" r="1.6"/><circle cx="32" cy="32" r="1.6"/></g></g>'],
+        fire: ['orange', '<path d="M32 4c4 10 16 16 16 32a16 16 0 01-32 0c0-8 4-12 8-16 0 6 3 9 6 9-3-9 0-17 2-25z" fill="#F97316"/><path d="M32 30c2 6 8 8 8 16a8 8 0 01-16 0c0-4 2-6 4-8 0 3 2 4 3 4-1-5 0-9 1-12z" fill="#FCD34D"/>'],
+        blast: ['orange', '<path d="M32 4l5 14 13-8-5 14 15 3-14 6 9 12-15-4-1 15-8-12-8 12-1-15-15 4 9-12-14-6 15-3-5-14 13 8z" fill="#F97316"/><circle cx="32" cy="32" r="9" fill="#FCD34D"/>'],
+        water: ['cyan', '<path d="M32 5c7 10 14 18 14 26a14 14 0 01-28 0c0-8 7-16 14-26z" fill="#38BDF8"/><path d="M5 50c5-4 9-4 13 0s9 4 13 0 9-4 13 0 9 4 13 0" fill="none" stroke="#0EA5E9" stroke-width="4" stroke-linecap="round"/><ellipse cx="27" cy="31" rx="3" ry="5" fill="#fff" opacity=".5"/>'],
+        ecg: ['green', '<rect x="6" y="11" width="52" height="38" rx="8" fill="#0F172A"/><path d="M10 31h10l4-10 6 20 5-14 3 4h16" fill="none" stroke="#22C55E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 56h16" stroke="#64748B" stroke-width="4" stroke-linecap="round"/>'],
+        bp: ['red', '<circle cx="32" cy="34" r="23" fill="#fff" stroke="#94A3B8" stroke-width="3"/><path d="M14 40a18.5 18.5 0 0137 0" fill="none" stroke="#FECACA" stroke-width="5"/><path d="M38 23a18.5 18.5 0 0113 17" fill="none" stroke="#EF4444" stroke-width="5"/><path d="M32 34l10-12" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="34" r="3.5" fill="#0F172A"/>'],
+        vessel: ['red', '<path d="M4 22h56v20H4z" fill="#FCA5A5"/><path d="M4 22h56M4 42h56" stroke="#DC2626" stroke-width="4"/><ellipse cx="36" cy="25.5" rx="11" ry="4" fill="#FDE68A"/><ellipse cx="14" cy="34" rx="4.5" ry="3" fill="#DC2626"/><ellipse cx="27" cy="36" rx="4.5" ry="3" fill="#DC2626"/><ellipse cx="48" cy="34" rx="4.5" ry="3" fill="#DC2626"/>'],
+        steth: ['blue', '<path d="M16 6v14a12 12 0 0024 0V6" fill="none" stroke="#475569" stroke-width="4" stroke-linecap="round"/><path d="M28 32v8a12 12 0 0024 0v-6" fill="none" stroke="#475569" stroke-width="4" stroke-linecap="round"/><circle cx="52" cy="30" r="6.5" fill="#3B82F6" stroke="#475569" stroke-width="3"/><circle cx="16" cy="6" r="3" fill="#94A3B8"/><circle cx="40" cy="6" r="3" fill="#94A3B8"/>'],
+        mask: ['teal', '<path d="M8 30l12 2M56 30l-12 2" stroke="#64748B" stroke-width="2.5"/><path d="M20 22c0-8 6-12 12-12s12 4 12 12l4 14c2 8-6 16-16 16s-18-8-16-16z" fill="#A7F3D0" stroke="#10B981" stroke-width="2.5"/><ellipse cx="32" cy="34" rx="6" ry="8" fill="#6EE7B7"/><path d="M32 52v8" stroke="#10B981" stroke-width="4"/>'],
+        tube: ['cyan', '<path d="M14 8h8c10 0 18 8 18 18v28" fill="none" stroke="#7DD3FC" stroke-width="7" stroke-linecap="round"/><ellipse cx="40" cy="45" rx="8" ry="5" fill="#BAE6FD" stroke="#38BDF8" stroke-width="2"/><circle cx="12" cy="8" r="5" fill="#0EA5E9"/><path d="M40 54v6" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>'],
+        scalpel: ['slate', '<path d="M8 56L35 29" stroke="#475569" stroke-width="7" stroke-linecap="round"/><path d="M33 31L52 8c4 2 6 6 4 10L40 35z" fill="#E2E8F0" stroke="#94A3B8" stroke-width="2" stroke-linejoin="round"/>'],
+        needle: ['violet', '<path d="M14 44a20 20 0 0136-20" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/><circle cx="50" cy="24" r="2.5" fill="#64748B"/><path d="M14 44c4 10 14 14 22 10s14-2 18 4" fill="none" stroke="#8B5CF6" stroke-width="2.6" stroke-dasharray="4 3" stroke-linecap="round"/>'],
+        xray: ['slate', '<rect x="8" y="6" width="48" height="52" rx="6" fill="#0F172A"/><path d="M32 12v40" stroke="#E2E8F0" stroke-width="3"/><path d="M30 18c-8 0-14 3-16 6M30 25c-8 0-14 3-16 6M30 32c-8 0-14 3-15 6M34 18c8 0 14 3 16 6M34 25c8 0 14 3 16 6M34 32c8 0 14 3 15 6" fill="none" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>'],
+        mri: ['slate', '<circle cx="32" cy="28" r="22" fill="#E2E8F0"/><circle cx="32" cy="28" r="22" fill="none" stroke="#94A3B8" stroke-width="2"/><circle cx="32" cy="28" r="11" fill="#1E293B"/><rect x="8" y="46" width="48" height="9" rx="3" fill="#94A3B8"/><rect x="18" y="26" width="32" height="5" rx="2.5" fill="#60A5FA"/>'],
+        radiation: ['slate', '<circle cx="32" cy="32" r="26" fill="#FACC15"/><g fill="#1F2937"><path d="M28 25.07L22 14.68A20 20 0 0142 14.68L36 25.07A8 8 0 0028 25.07z"/><path d="M28 25.07L22 14.68A20 20 0 0142 14.68L36 25.07A8 8 0 0028 25.07z" transform="rotate(120 32 32)"/><path d="M28 25.07L22 14.68A20 20 0 0142 14.68L36 25.07A8 8 0 0028 25.07z" transform="rotate(240 32 32)"/></g><circle cx="32" cy="32" r="4.5" fill="#1F2937"/>'],
+        chart: ['violet', '<rect x="7" y="7" width="50" height="50" rx="9" fill="#fff" stroke="#E2E8F0" stroke-width="2"/><rect x="15" y="34" width="8" height="16" rx="2" fill="#8B5CF6"/><rect x="28" y="24" width="8" height="26" rx="2" fill="#22C3A6"/><rect x="41" y="15" width="8" height="35" rx="2" fill="#F59E0B"/><path d="M13 29l13-10 10 4 15-12" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'],
+        bell: ['violet', '<path d="M6 50c10 0 14-36 26-36s16 36 26 36z" fill="#C4B5FD"/><path d="M6 50c10 0 14-36 26-36s16 36 26 36" fill="none" stroke="#7C3AED" stroke-width="3"/><path d="M6 51h52M32 14v37" stroke="#94A3B8" stroke-width="2" stroke-dasharray="3 3"/>'],
+        people: ['teal', '<circle cx="16" cy="26" r="5.5" fill="#22C3A6"/><path d="M6 48c0-7 4-12 10-12s10 5 10 12z" fill="#22C3A6"/><circle cx="48" cy="26" r="5.5" fill="#F59E0B"/><path d="M38 48c0-7 4-12 10-12s10 5 10 12z" fill="#F59E0B"/><circle cx="32" cy="20" r="7" fill="#8B5CF6"/><path d="M20 48c0-9 5-15 12-15s12 6 12 15z" fill="#8B5CF6"/>'],
+        globe: ['blue', '<circle cx="32" cy="32" r="24" fill="#38BDF8"/><path d="M20 14c6 2 4 8 10 10 4 2 2 8-2 8-6 0-8 6-4 10-6-2-12-10-10-18 0-4 2-8 6-10zM40 12c6 2 12 8 14 16-4 0-6-4-10-2-4 2-2 8-6 8-4 0-4-6-2-10s-2-6 4-12zM40 44c4-2 10 0 12-2-2 6-8 12-14 12 0-4 0-8 2-10z" fill="#22C55E"/><ellipse cx="22" cy="20" rx="4" ry="2.5" fill="#fff" opacity=".35"/>'],
+        shield: ['teal', '<path d="M32 6l20 7v16c0 14-9 22-20 28-11-6-20-14-20-28V13z" fill="#22C3A6"/><path d="M32 12l14 5v12c0 10-6 16-14 21z" fill="#fff" opacity=".18"/><path d="M32 19v20M22 29h20" stroke="#fff" stroke-width="6" stroke-linecap="round"/>'],
+        house: ['orange', '<path d="M14 28v26h36V28L32 13z" fill="#FED7AA"/><path d="M7 30L32 9l25 21" fill="none" stroke="#F97316" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="27" y="38" width="10" height="16" rx="2" fill="#F97316"/><rect x="18" y="33" width="6" height="6" rx="1" fill="#38BDF8"/><rect x="40" y="33" width="6" height="6" rx="1" fill="#38BDF8"/>'],
+        bin: ['red', '<path d="M26 8h12" stroke="#B91C1C" stroke-width="4" stroke-linecap="round"/><rect x="12" y="12" width="40" height="7" rx="3" fill="#B91C1C"/><path d="M16 19h32l-3 37H19z" fill="#EF4444"/><path d="M32 26l8 13H24z" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/>'],
+        alert: ['slate', '<path d="M32 6L60 54H4z" fill="#FACC15" stroke="#CA8A04" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 22v16" stroke="#1F2937" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="46" r="3" fill="#1F2937"/>'],
+        factory: ['slate', '<path d="M50 10c0-4 4-4 4-8" stroke="#CBD5E1" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M6 56V30l14 8v-8l14 8v-8l14 8V14h10v42z" fill="#94A3B8"/><g fill="#FACC15"><rect x="12" y="44" width="6" height="6"/><rect x="26" y="44" width="6" height="6"/><rect x="40" y="44" width="6" height="6"/></g>'],
+        megaphone: ['violet', '<path d="M10 26h10l22-12v36L20 38H10z" fill="#8B5CF6"/><rect x="14" y="38" width="8" height="14" rx="2" fill="#6D28D9"/><path d="M48 24c4 4 4 12 0 16M53 18c7 7 7 21 0 28" fill="none" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>'],
+        scroll: ['violet', '<rect x="14" y="10" width="36" height="44" rx="3" fill="#FDE68A"/><path d="M10 14a4 4 0 018 0v40a4 4 0 01-8 0zM46 10a4 4 0 018 0v40a4 4 0 01-8 0z" fill="#F59E0B"/><path d="M23 22h18M23 30h18M23 38h12" stroke="#B45309" stroke-width="2.5" stroke-linecap="round"/>'],
+        clipboard: ['violet', '<rect x="12" y="10" width="40" height="48" rx="6" fill="#fff" stroke="#94A3B8" stroke-width="2.5"/><rect x="22" y="6" width="20" height="9" rx="3" fill="#8B5CF6"/><path d="M19 28l3.5 3.5L29 25M19 43l3.5 3.5L29 40" stroke="#22C55E" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M34 28h12M34 43h12" stroke="#CBD5E1" stroke-width="3" stroke-linecap="round"/>'],
+        mind: ['violet', '<path d="M36 8c-12 0-22 8-22 20 0 6 2 10 2 14l-6 8 6 2v6c0 3 3 4 6 4h8v4h18V44c6-4 10-10 10-18 0-10-9-18-22-18z" fill="#C4B5FD"/><path d="M40 30a4 4 0 10-4-4 8 8 0 108-8" fill="none" stroke="#7C3AED" stroke-width="3" stroke-linecap="round"/>'],
+        cloud: ['blue', '<path d="M18 38a10 10 0 012-20 14 14 0 0126 4 8 8 0 014 16z" fill="#94A3B8"/><path d="M22 46l-3 8M32 46l-3 8M42 46l-3 8" stroke="#38BDF8" stroke-width="3.5" stroke-linecap="round"/><ellipse cx="28" cy="24" rx="5" ry="3" fill="#fff" opacity=".4"/>'],
+        moon: ['violet', '<path d="M40 8a24 24 0 1016 40A20 20 0 0140 8z" fill="#FACC15"/><path d="M48 14l2 4 4 1-4 2-1 4-2-4-4-1 4-2z" fill="#FDE68A"/><circle cx="22" cy="36" r="3" fill="#EAB308" opacity=".6"/><circle cx="30" cy="46" r="2" fill="#EAB308" opacity=".6"/>'],
+        bolt: ['violet', '<path d="M36 4L14 36h14l-4 24 26-34H34z" fill="#FACC15" stroke="#CA8A04" stroke-width="2" stroke-linejoin="round"/>'],
+        tumor: ['pink', '<circle cx="25" cy="28" r="12" fill="#F472B6"/><circle cx="40" cy="24" r="10" fill="#EC4899"/><circle cx="37" cy="41" r="13" fill="#DB2777"/><circle cx="21" cy="43" r="8" fill="#F9A8D4"/><g fill="#831843"><circle cx="25" cy="28" r="3.5"/><circle cx="41" cy="24" r="3"/><circle cx="37" cy="41" r="4"/><circle cx="21" cy="43" r="2.5"/></g>'],
+        spore: ['green', '<rect x="6" y="14" width="40" height="16" rx="8" fill="#22C55E"/><ellipse cx="40" cy="22" rx="5.5" ry="6.5" fill="#FEF9C3" stroke="#15803D" stroke-width="2"/><rect x="18" y="36" width="40" height="16" rx="8" fill="#16A34A"/><ellipse cx="52" cy="44" rx="5.5" ry="6.5" fill="#FEF9C3" stroke="#14532D" stroke-width="2"/><circle cx="14" cy="22" r="2" fill="#BBF7D0"/><circle cx="26" cy="44" r="2" fill="#BBF7D0"/>'],
+        flagella: ['pink', '<path d="M16 26c-4-4-8-2-10-6M14 36c-5 2-6 6-10 6M48 24c4-4 8-2 10-7M50 38c4 3 5 7 9 8M24 22c-1-5-4-7-3-12M40 42c1 5 4 8 3 13" fill="none" stroke="#DB2777" stroke-width="2" stroke-linecap="round"/><rect x="14" y="22" width="36" height="20" rx="10" fill="#EC4899"/><circle cx="24" cy="30" r="2.2" fill="#FCE7F3"/><circle cx="36" cy="34" r="2.2" fill="#FCE7F3"/><circle cx="41" cy="28" r="1.6" fill="#FCE7F3"/>'],
+        polar: ['blue', '<path d="M44 32c4-6 8 0 12-6" fill="none" stroke="#1D4ED8" stroke-width="2.5" stroke-linecap="round"/><rect x="6" y="24" width="38" height="16" rx="8" fill="#3B82F6"/><path d="M34 50c4-6 8 0 12-6" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"/><rect x="6" y="44" width="28" height="12" rx="6" fill="#60A5FA"/><circle cx="16" cy="32" r="2" fill="#DBEAFE"/><circle cx="28" cy="32" r="2" fill="#DBEAFE"/>'],
+        coccobac: ['amber', '<g fill="#F59E0B"><ellipse cx="16" cy="18" rx="6" ry="4.5"/><ellipse cx="32" cy="14" rx="6" ry="4.5"/><ellipse cx="46" cy="22" rx="6" ry="4.5"/><ellipse cx="22" cy="32" rx="6" ry="4.5"/><ellipse cx="38" cy="34" rx="6" ry="4.5"/></g><g fill="#D97706"><ellipse cx="14" cy="46" rx="6" ry="4.5"/><ellipse cx="30" cy="48" rx="6" ry="4.5"/><ellipse cx="48" cy="44" rx="6" ry="4.5"/><ellipse cx="52" cy="32" rx="5" ry="4"/></g>'],
+        club: ['teal', '<path d="M10 40l16-22a5 5 0 017 4L19 46a4 4 0 01-9-6z" fill="#14B8A6"/><path d="M54 40L38 18a5 5 0 00-7 4l14 24a4 4 0 009-6z" fill="#0D9488"/><path d="M22 54l20-4a4 4 0 011 8l-22 2a3 3 0 011-6z" fill="#2DD4BF"/><circle cx="29" cy="21" r="2.4" fill="#CCFBF1"/><circle cx="35" cy="21" r="2.4" fill="#CCFBF1"/>'],
+        tuningfork: ['cyan', '<path d="M24 6v22a8 8 0 0016 0V6" stroke="#64748B" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M32 36v22" stroke="#475569" stroke-width="5" stroke-linecap="round"/><path d="M12 14c-4 4-4 10 0 14M6 10c-7 7-7 18 0 24M52 14c4 4 4 10 0 14M58 10c7 7 7 18 0 24" fill="none" stroke="#0EA5E9" stroke-width="2.6" stroke-linecap="round"/>'],
+        cataract: ['blue', '<path d="M4 32c8-12 18-18 28-18s20 6 28 18c-8 12-18 18-28 18S12 44 4 32z" fill="#fff" stroke="#CBD5E1" stroke-width="2"/><circle cx="32" cy="32" r="12" fill="#60A5FA"/><circle cx="32" cy="32" r="7" fill="#E2E8F0"/><circle cx="32" cy="32" r="7" fill="none" stroke="#94A3B8" stroke-width="1.5"/><ellipse cx="30" cy="30" rx="3" ry="2" fill="#fff"/>'],
+        retina: ['red', '<circle cx="32" cy="32" r="25" fill="#F97316"/><circle cx="32" cy="32" r="25" fill="none" stroke="#C2410C" stroke-width="2"/><path d="M22 30c-6-6-8-12-6-18M22 30c-8 2-12 8-12 12M22 30c10-8 22-8 32-2M22 30c10 6 20 12 26 18M22 30c0 10 4 18 8 22" fill="none" stroke="#B91C1C" stroke-width="2" stroke-linecap="round"/><circle cx="22" cy="30" r="5.5" fill="#FDE68A"/><circle cx="40" cy="34" r="3.5" fill="#9A3412"/>'],
+        eyelid: ['blue', '<path d="M6 28c8 10 18 14 26 14s18-4 26-14" fill="#F2B49A"/><path d="M6 28c8 10 18 14 26 14s18-4 26-14" fill="none" stroke="#1E293B" stroke-width="4" stroke-linecap="round"/><path d="M14 37l-4 6M23 41l-2 7M32 42v7M41 41l2 7M50 37l4 6" stroke="#1E293B" stroke-width="3" stroke-linecap="round"/><path d="M42 20c2 2 4 2 6 0" stroke="#0EA5E9" stroke-width="0"/><path d="M48 46c0 4 3 7 3 9a3 3 0 01-6 0c0-2 3-5 3-9z" fill="#38BDF8"/>'],
+        rash: ['orange', '<circle cx="32" cy="32" r="25" fill="#F7C9B5"/><g fill="#EF4444"><circle cx="22" cy="22" r="4.5"/><circle cx="38" cy="18" r="3"/><circle cx="44" cy="32" r="5"/><circle cx="28" cy="36" r="3.5"/><circle cx="18" cy="42" r="3"/><circle cx="36" cy="48" r="4"/></g><g fill="#FCA5A5"><circle cx="30" cy="26" r="2"/><circle cx="48" cy="44" r="2.5"/><circle cx="14" cy="30" r="2"/></g>'],
+        hairnail: ['pink', '<rect x="20" y="12" width="24" height="48" rx="12" fill="#F2B49A"/><rect x="24" y="16" width="16" height="19" rx="7.5" fill="#FDE2E4" stroke="#E8A3A8" stroke-width="2"/><path d="M27 20c2-1 6-1 8 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M8 50c4-14 2-28 8-40M54 52c-2-12 2-26-4-42" fill="none" stroke="#7C2D12" stroke-width="2.6" stroke-linecap="round"/>'],
+        ovary: ['pink', '<path d="M6 20c6-6 14-4 18 2" fill="none" stroke="#F472B6" stroke-width="3.5" stroke-linecap="round"/><ellipse cx="34" cy="36" rx="23" ry="17" fill="#F9A8D4"/><circle cx="24" cy="32" r="6" fill="#FDF2F8" stroke="#EC4899" stroke-width="2"/><circle cx="40" cy="28" r="4" fill="#FDF2F8" stroke="#EC4899" stroke-width="2"/><circle cx="42" cy="42" r="7" fill="#FDF2F8" stroke="#EC4899" stroke-width="2"/><circle cx="42" cy="42" r="2.5" fill="#F59E0B"/><circle cx="28" cy="45" r="3" fill="#FDF2F8" stroke="#EC4899" stroke-width="1.5"/>'],
+        gas: ['green', '<rect x="26" y="5" width="12" height="10" rx="2" fill="#64748B"/><rect x="21" y="14" width="22" height="45" rx="11" fill="#22C55E"/><rect x="21" y="26" width="22" height="9" fill="#fff" opacity=".85"/><ellipse cx="27" cy="44" rx="2.5" ry="7" fill="#fff" opacity=".3"/>']
+      };
+      var V3_ART_RULES = [
+        ['ear', /embryology of ear/],
+        ['cell', /cell structure|epitheli/],
+        ['skull', /osteology, scalp/],
+        ['thyroid', /glands of the head/],
+        ['pelvis', /genitalia|pelvic organs/],
+        ['poison', /corrosive|poisoning|organophosph/],
+        ['scale', /sexual offences/],
+        ['liver', /portal hypertension/],
+        ['bandage', /^trauma -|wound/],
+        ['bone', /paget/],
+        ['spine', /regional conditions of neck/],
+        ['mind', /eating disorders/],
+        ['eye', /special senses/],
+        ['gas', /workstation|gases/],
+        ['rbc', /hemoly/],
+        ['kidney', /tubulointerstitial|glomerul/],
+        ['brain', /cns pathology/],
+        ['mri', /neuroimaging|\bmri\b|ct brain|imaging modalities|fundamentals of imaging|obstetrical imaging/],
+        ['xray', /imaging|x-?ray|radiograph|contrast media/],
+        ['radiation', /radiation|radiotherap|radionuclide|light, sound/],
+        ['tooth', /dental|teeth|tooth/],
+        ['fingerprint', /fingerprint|identification|stature|race, sex/],
+        ['egg', /gameto|conception|infertil|fertiliz|reproductive|sexual development|puberty/],
+        ['fetus', /pregnan|fetal|fetus|placenta|labou?r\b|caesarean|vaginal delivery|antenatal|obstetric|abortion|trophoblast|twinning|multifetal|ectopic|partum|rhesus|puerper|preterm|postterm|embryo/],
+        ['bottle', /breastfeed|malnutrition/],
+        ['baby', /neonat|newborn|apgar|infant|milestone|growth and development|autism|intellectual disab|attention-deficit|childhood violence/],
+        ['breast', /breast/],
+        ['male', /prostate|testes|scrot|penis|urethra|\bmale genital|androgen|erectile/],
+        ['ovary', /ovar/],
+        ['uterus', /uter|menstru|fibroid|endometri|adenomyosis|ovar|vulv|vagin|cervix|prolapse|female genital|female pelvic|pelvic inflammatory|menopaus|female reproductive|gynaec|contracep|family planning/],
+        ['glasses', /myopia|hypermetropia|astigmat|optics|accom+odation|physiology of vision/],
+        ['cataract', /cataract|\blens\b/],
+        ['retina', /retina|macula|vitre/],
+        ['eyelid', /eyelid|lacrimal/],
+        ['eye', /\beye|retina|cornea|conjunctiv|sclera|\blens\b|cataract|glaucoma|uveitis|lacrimal|orbit|strabism|optic|pupil|gaze|ophthal|blindness|visual/],
+        ['tuningfork', /tuning fork|audiometr|hearing/],
+        ['ear', /\bear\b|mastoid|cholesteatoma|csom|otoscler|meniere|hearing|tuning fork|audiometr|eustachian|facial nerve/],
+        ['nose', /\bnose\b|nasal|paranasal|sinusitis|\bpns\b|epistaxis|rhinitis|septum|polyposis|nasopharyn/],
+        ['tube', /airway|intubation|breathing system|ventilation and o2/],
+        ['mouth', /tongue|palate|oral cavity|salivary|tonsil|adenoid|\bpharynx/],
+        ['larynx', /laryn|voice|speech|stridor/],
+        ['bolt', /seizure|epilep/],
+        ['moon', /sleep/],
+        ['virus', /viru|viral|\bhiv\b|\baids\b|antiretroviral|polio|measles|covid|\barbo|picorna|hepatitis/],
+        ['rodred', /tubercul|mycobact|lepro/],
+        ['spiral', /spirochet|syphilis|vibrio|campylobact/],
+        ['cocci', /cocc/],
+        ['spore', /clostrid|bacill/],
+        ['flagella', /escherichia|proteus|klebsiella|shigella|salmonella/],
+        ['polar', /pseudomonas|burkholder/],
+        ['coccobac', /haemophilus|yersinia|brucella|rickettsia|chlamydia|mycoplasma/],
+        ['club', /corynebact|listeria|actinomyc/],
+        ['bacteria', /bacter|bacill|clostrid|salmonella|shigella|escherichia|klebsiella|pseudomonas|haemophilus|yersinia|rickettsia|chlamydia|listeria|corynebact|antimicrob|penicillin|cephalospor|sulfonamide|30s subunit|\bstds?\b|sexually transmitted/],
+        ['fungus', /fung|mycos/],
+        ['bug', /tick|flea|mite/],
+        ['mosquito', /mosquito|arthropod|entomolog|nvbdcp|vector|pest control/],
+        ['worm', /helminth|nematode|cestode|trematode|anthelmint|parasit/],
+        ['amoeba', /protozo|amoeb|sporozoa|malaria/],
+        ['ecg', /arrhythm|electrophysiology|monitoring|acls|heart block/],
+        ['bp', /blood pressure|hypertens|shock|renin|portal hypertension/],
+        ['heart', /heart|cardi|coronary|angina|myocard|pericard|valv|endocarditis|rheumatic fever|fetal circulation|cyanotic/],
+        ['vessel', /vascul|vessel|aneurysm|dissection|atheroscler|arterial|\bvenous|dvt|embolism|hypolipidemic|lymphatic/],
+        ['vitamin', /vitamin|micronutrient/],
+        ['water', /water|drowning/],
+        ['lungs', /lung|pulmonary|pleura|respirat|alveol|asthma|copd|pneumon|bronch|ards|thorax|thoracic|mediastin|hypoxia|asphyx/],
+        ['adrenal', /adrenal|cushing|corticosteroid|aldosterone/],
+        ['kidney', /kidney|renal|nephr|glomerul|tubul|kub\b|diuretic|urinary calculi|micturition|acid-base|body fluids|diabetes insipidus|\badh\b/],
+        ['gallbladder', /gall ?bladder|bile duct|biliary|bile pigments|jaundice|hyperbilirubin/],
+        ['bladder', /bladder|ureter|urinary/],
+        ['thyroid', /thyroid|calcium homeostasis|calcium metabolism|parathyroid|endocrin/],
+        ['glucose', /diabet|insulin|endocrine pancreas|the pancreas$/],
+        ['pancreas', /pancrea/],
+        ['liver', /liver|hepat|cirrhosis|wilson|hemochromatosis/],
+        ['spleen', /spleen/],
+        ['stomach', /stomach|gastr|peptic|esophag|duoden|emetic|bariatric|upper gi/],
+        ['intestine', /intestin|bowel|colon|colorectal|rectum|\banus|anal canal|appendix|malabsorption|digest|gi tract|alimentary|hernia|peritone|abdomen|abdominal|lower gi|motility/],
+        ['neuron', /nerve|sympathomim|cholinergic|synap|neurotransmit|sensory|somatosensory|motor physiology|spinal cord|myasthen|guillain|demyelin|multiple sclerosis|plexus|cranial|neuropath|movement disorders|extrapyramidal|nervous system/],
+        ['brain', /brain|cerebr|cerebell|diencephal|basal ganglia|limbic|hypothalam|pituitary|ventricular system|meninges|white matter|dementia|coma|\bcns\b|neuro|headache|migraine|higher mental|encephal|delirium|amnestic|sheehan/],
+        ['fire', /burn|thermal/],
+        ['blast', /firearm|blast/],
+        ['fracture', /fractur|injuries of|dislocation|amputation|sports injury/],
+        ['spine', /spine|vertebra|spondyl|ivdp/],
+        ['pelvis', /pelvis|perineum|\bhip\b/],
+        ['joint', /joint|arthrit|knee|cartilage|ctev|genu|perthes|scfe|rheumat|gout|sjogren|scleroderma|connective tissue/],
+        ['muscle', /muscle|muscular|tendon|relaxant|dermatomyositis|exercise/],
+        ['hand', /\bhand\b|upper limb|forearm|elbow|shoulder|clavicle/],
+        ['bone', /bone|osteo|skeletal|limb|femur|\bleg\b|foot|paget|avn|osteoporosis/],
+        ['hairnail', /\bhair|\bnails?\b/],
+        ['rash', /dermatitis|urticaria|eruption|papulosquamous|psoria|vesiculobullous|acne|rosacea|lesions/],
+        ['skin', /skin|derma|epiderm|acne|rosacea|pigment|urticaria|psoria|papulosquamous|vesiculobullous|genoderm|hair|nail|tattoo/],
+        ['syringe', /vaccin|immunization|local anaesthetic|regional anaesthesia|intravenous anaesth|nerve block/],
+        ['rbc', /anemi|anaemi|hemoly|g6pd/],
+        ['wbc', /\bleuk|lymphom|myelom|plasma cell|myelodysplast|myeloprolif|histiocyt|lymphadenitis/],
+        ['drop', /blood|hemo|haemo|platelet|coagul|transfusion|bleeding|hemorrhage|anticoag|fibrinoly/],
+        ['tumor', /tumou?r|neoplas|cancer|carcinom|malignan|oncolog|carcinogen|angiofibroma|cytotoxic|targeted therap/],
+        ['antibody', /immun|antibod|hypersensitiv|graft|amyloid|monoclonal|antiphospholipid|interleukin/],
+        ['inflam', /inflamm|tissue repair/],
+        ['celldead', /cell death|cellular adaptations|intracellular accumulations|ageing/],
+        ['chromosome', /chromosom|inheritance|genetic disorders|genetic diseases/],
+        ['sugar', /carbohydr|glycoly|gluconeo|glycogen|fructose|galactose|hmp/],
+        ['dna', /\bdna\b|\brna\b|\bgenes?\b|genetic|nucleotide|genomic|molecular/],
+        ['cycle', /krebs|urea cycle/],
+        ['lipid', /lipid|fatty|cholesterol|ketogen|eicosanoid|sphingo|acylglycerol|obesity/],
+        ['molecule', /amino acid|protein|enzyme|porphyrin|metabolic disorder|metabolism|kinetics/],
+        ['drip', /fluid|electrolyte/],
+        ['vitamin', /vitamin|antioxidant|mineral|micronutrient|trace element/],
+        ['apple', /food|nutrition|eating/],
+        ['cell', /\bcell|membrane|homeostasis|histolog|epitheli|receptor|messenger|lysosom|storage disease/],
+        ['poison', /poison|toxic|organophosph|corrosive|irritant|alcohol|substance/],
+        ['scale', /jurisprud|\bbns\b|forensic|criminal|sexual offences|malinger|factitious/],
+        ['skull', /skelet|death|post-mortem|autopsy|osteology|infanticide/],
+        ['bandage', /injur|scar|reconstructive/],
+        ['cloud', /depress|mood|bipolar|manic/],
+        ['mind', /psych|schizo|anxiety|obsessive|stress|personality|somatoform|dissociat|impulse|sexual|\bmental|defense mechanism/],
+        ['bell', /dispersion|measures of location|significance|probability/],
+        ['chart', /statistic|epidemiolog|indicators|screening|correlat|demograph|clinical research|clinical trial|pharmacokinetic/],
+        ['shield', /prevent|concepts of disease|health determinants|sterilization and disinfection/],
+        ['globe', /international|environment|zoonotic|communicable/],
+        ['house', /housing|ventilation/],
+        ['bin', /waste|sewage/],
+        ['alert', /disaster|emergenc|complications of anaesthesia/],
+        ['factory', /occupational/],
+        ['megaphone', /communication|education/],
+        ['people', /population|community|social|sociolog|health planning|healthcare|geriatric|health programme/],
+        ['scroll', /history|theories/],
+        ['clipboard', /assessment|evaluation|diagnosis|investigation|hypothes|clinical features|practical|preoperative|symptoms/],
+        ['mask', /anaesthe|anesthe|inhaled|halothane|workstation|gases/],
+        ['needle', /suture/],
+        ['scalpel', /surg|instrument/],
+        ['pill', /drug|pharmac|agonist|sympathomim|opioid|\banti|nsaid|ocp|estrogen|progestin|mimetic/],
+        ['microscope', /microbiolog|dermatopath/],
+        ['flask', /chemistr|biochem/]
+      ];
+      var V3_ART_SUBJECT = {
+        anatomy: 'bone', physiology: 'ecg', biochemistry: 'flask', pathology: 'cell', microbiology: 'microscope', pharmacology: 'pill',
+        'forensic medicine': 'scale', ent: 'ear', ophthalmology: 'eye', psm: 'people', medicine: 'steth', surgery: 'scalpel',
+        'ob & g': 'uterus', pediatrics: 'baby', anaesthesia: 'mask', dermatology: 'skin', orthopaedics: 'bone', psychiatry: 'mind', radiology: 'xray'
+      };
+      var v3ArtCache = {};
+      function v3ArtKey(subjectName, section, name) {
+        var ck = subjectName + '|' + section + '|' + name;
+        if (v3ArtCache[ck]) return v3ArtCache[ck];
+        var tries = [String(name || '').toLowerCase(), String(section || '').toLowerCase()];
+        var hit = null;
+        for (var t = 0; t < tries.length && !hit; t++) {
+          if (!tries[t] || /^mixed/.test(tries[t])) continue;
+          for (var i = 0; i < V3_ART_RULES.length; i++) {
+            if (V3_ART_RULES[i][1].test(tries[t])) { hit = V3_ART_RULES[i][0]; break; }
+          }
+        }
+        hit = hit || V3_ART_SUBJECT[String(subjectName || '').toLowerCase()] || 'cell';
+        v3ArtCache[ck] = hit;
+        return hit;
+      }
+      function v3ArtSvg(key, size) {
+        var a = V3_ART[key] || V3_ART.cell;
+        return '<svg class="v3-art-svg" viewBox="0 0 64 64" width="' + (size || 44) + '" height="' + (size || 44) + '" aria-hidden="true" fill="none">' + a[1] + '</svg>';
+      }
+      function v3ArtTone(key) { return (V3_ART[key] || V3_ART.cell)[0]; }
+
       // ---- v3 pieces: icons, art, subject tiles ------------------------------
       var V3_IC = {
         target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
@@ -6595,6 +6877,10 @@ window.addEventListener('error', function (ev) {
         var p = Math.round(frac * 100);
         if (frac > 0 && p === 0) p = 1;
         return p;
+      }
+      function v3TopicThumb(sx, m, n) {
+        var k = v3ArtKey(sx.name, m.section, m.name);
+        return '<span class="v3-thumb v3-tone-' + v3ArtTone(k) + '">' + v3ArtSvg(k, 50) + (n ? '<span class="v3-thumb-n">' + n + '</span>' : '') + '</span>';
       }
       function v3SubjTile(sx, ix) {
         var ss = v2SubjectStats(sx, ix);
@@ -6774,7 +7060,7 @@ window.addEventListener('error', function (ev) {
           var fr = cont.x.st.seen / (cont.x.st.total || 1);
           colA += '<section class="v3-sec">' + v3Head('<span class="v3-hi v3-hi-play">' + v3Ic('play', 14) + '</span>', 'Continue learning', v3More('View all', 'data-nav-go="subjects"')) +
             '<button class="v3-card v3-cont" data-sid="' + cont.sx.subjectId + '" data-mod="' + esc(cont.x.m.moduleId) + '">' +
-            '<span class="v3-cont-ic">' + v2SubjIcon(cont.sx, 52) + '</span>' +
+            '<span class="v3-cont-ic">' + v3TopicThumb(cont.sx, cont.x.m) + '</span>' +
             '<span class="v3-cont-main"><b>' + esc(cont.x.m.name) + '</b><small>' + esc(cont.sx.name) + ' · ' + v2Plural(cont.x.st.total - cont.x.st.seen, 'question') + ' left</small>' +
             '<span class="v3-bar"><span style="width:' + Math.max(3, v3Pct(fr)) + '%"></span></span></span>' +
             '<span class="v3-cont-end"><span class="v3-play">' + v3Ic('play', 16) + '</span><span>' + v3Pct(fr) + '%</span></span></button></section>';
@@ -6822,7 +7108,7 @@ window.addEventListener('error', function (ev) {
         if (weak.length) {
           colB += '<section class="v3-sec">' + v3Head('<span class="v3-hi v3-hi-target">' + v3Ic('target') + '</span>', 'Needs work', '<span class="v3-muted">Focus on these topics</span>') +
             '<div class="v3-card v3-list">' + weak.slice(0, 3).map(function (w) {
-              return '<button class="v3-li" data-sid="' + w.sx.subjectId + '" data-mod="' + esc(w.x.m.moduleId) + '">' + v2SubjIcon(w.sx, 40) +
+              return '<button class="v3-li" data-sid="' + w.sx.subjectId + '" data-mod="' + esc(w.x.m.moduleId) + '">' + v3TopicThumb(w.sx, w.x.m) +
                 '<span class="v3-li-t"><b>' + esc(w.x.m.name) + '</b><small>' + esc(w.sx.name) + ' · ' + w.x.st.seen + ' answered</small></span>' +
                 '<span class="v3-pill bad">' + w.x.st.pct + '%</span></button>';
             }).join('') + '</div></section>';
@@ -7206,7 +7492,7 @@ window.addEventListener('error', function (ev) {
           var end = isNext ? '<span class="v3-nextbtn">' + (st.status === 'active' ? 'Next up' : 'Start') + v3Ic('chev', 16) + '</span>' : '<span class="v3-tchev">' + v3Ic('chev', 18) + '</span>';
           secRows.push('<button class="v3-topic' + (x.locked ? ' is-locked' : '') + (isNext ? ' is-next' : '') + (x.m.questionCount ? '' : ' is-empty') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
             ' data-f="' + r.f + '" data-due="' + (st.due ? 1 : 0) + '" data-name="' + esc((x.m.name + ' ' + (x.m.section || '')).toLowerCase()) + '">' +
-            '<span class="v3-thumb v3-thumb-' + (x.i % 6) + '"><img src="/assets/subjects-webp/' + slug + '.webp" alt="" width="44" height="44" loading="lazy"><span class="v3-thumb-n">' + (x.i + 1) + '</span></span>' +
+            v3TopicThumb(sx, x.m, x.i + 1) +
             '<span class="v3-topic-t"><b>' + esc(x.m.name) + '</b><span class="v3-tchips">' + chips.join('') + '</span></span>' +
             ring + end + '</button>');
         });
