@@ -25,3 +25,7 @@
 /speculation-rules.json
   Content-Type: application/speculationrules+json
   Cache-Control: public, max-age=3600
+
+# Self-hosted supabase-js (versioned file name): cache for a year.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
