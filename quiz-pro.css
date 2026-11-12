@@ -4195,3 +4195,5 @@ html.ml-reading #app .v3 .v3-bm-stem { font: 500 15px/1.45 var(--rr-sans) !impor
 html.ml-reading #app .v3 .v3-bm .v3-tc { font-size: 12px !important; padding: 3px 8px !important; }
 html.ml-reading #app .v3 .v3-bm-del { flex-shrink: 0 !important; margin-top: 10px !important; width: 40px !important; height: 40px !important; border-radius: 12px !important; border: 0 !important; background: none !important; color: var(--x-ink3) !important; cursor: pointer !important; display: inline-grid !important; place-items: center !important; }
 html.ml-reading #app .v3 .v3-bm-del:hover { color: var(--x-bad) !important; background: var(--x-badb) !important; }
+/* Footer legal links: underlined so they are not told apart by colour alone. */
+html.ml-reading #app .v3-foot .v3f-copy a { text-decoration: underline !important; text-underline-offset: 3px !important; text-decoration-thickness: 1px !important; }

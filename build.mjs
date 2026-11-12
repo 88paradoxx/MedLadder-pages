@@ -67,6 +67,40 @@ function keep(absPath) {
   return true;
 }
 
+/* Minify the site's own top-level scripts and stylesheets in dist/ (the
+ * repo keeps the readable source) and write source maps next to them.
+ * esbuild is a dev dependency; if it is missing the build still succeeds
+ * and ships the files as they are. */
+async function minifyAssets() {
+  let esbuild;
+  try { esbuild = await import('esbuild'); } catch (e) {
+    console.warn('build.mjs: esbuild not installed, skipping minification');
+    return;
+  }
+  const { readFile, writeFile } = await import('node:fs/promises');
+  let before = 0, after = 0, n = 0;
+  for (const e of await readdir(DIST, { withFileTypes: true })) {
+    if (!e.isFile()) continue;
+    const isJs = e.name.endsWith('.js') && e.name !== 'sw.js' && !e.name.endsWith('.min.js');
+    const isCss = e.name.endsWith('.css') && !e.name.endsWith('.min.css');
+    if (!isJs && !isCss) continue;
+    const file = join(DIST, e.name);
+    const code = await readFile(file, 'utf8');
+    try {
+      const out = await esbuild.transform(code, {
+        loader: isJs ? 'js' : 'css', minify: true, sourcemap: 'external',
+        sourcefile: e.name, legalComments: 'none', ...(isJs ? { target: 'es2017' } : {})
+      });
+      await writeFile(file, out.code + (isJs ? '\n//# sourceMappingURL=' : '\n/*# sourceMappingURL=') + e.name + '.map' + (isJs ? '\n' : ' */\n'));
+      await writeFile(file + '.map', out.map);
+      before += code.length; after += out.code.length; n++;
+    } catch (err) {
+      console.warn(`build.mjs: could not minify ${e.name}, shipping it as is: ${err.message}`);
+    }
+  }
+  console.log(`build.mjs: minified ${n} files, ${(before / 1024).toFixed(0)} KB -> ${(after / 1024).toFixed(0)} KB`);
+}
+
 async function main() {
   if (existsSync(DIST)) await rm(DIST, { recursive: true, force: true });
   await mkdir(DIST, { recursive: true });
@@ -82,6 +116,8 @@ async function main() {
     await cp(src, dest, { recursive: true, filter: keep });
     if (e.isDirectory()) dirs++; else files++;
   }
+
+  await minifyAssets();
 
   // Sanity-check the files Cloudflare needs to find.
   const required = ['index.html', '404.html', '_headers', '_redirects',

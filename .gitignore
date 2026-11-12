@@ -3,3 +3,4 @@ Thumbs.db
 .wrangler/
 *.log
 dist/
+node_modules/
