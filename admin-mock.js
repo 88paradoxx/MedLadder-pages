@@ -47,7 +47,7 @@
     if (m.indexOf('BAD_EXAM') !== -1) return 'Pick NEET PG, INICET or FMGE.';
     if (m.indexOf('BAD_SESSION') !== -1) return 'Session must look like 2026 or May 2026.';
     if (m.indexOf('NO_ROWS') !== -1) return 'There are no questions to save.';
-    if (m.indexOf('TOO_MANY_ROWS') !== -1) return 'Save at most 500 questions at a time.';
+    if (m.indexOf('TOO_MANY_ROWS') !== -1) return 'One save takes at most 300 questions.';
     if (m.indexOf('FLAG_NOT_FOUND') !== -1) return 'Flag not found — it may have been handled already.';
     if (m.indexOf('FLAG_CLOSED') !== -1) return 'This flag is already resolved or dismissed.';
     if (m.indexOf('QUESTION_NOT_FOUND') !== -1) return 'Bank question not found.';
@@ -2018,7 +2018,8 @@
    * pictures in the question and the explanation. "Save" sends the whole
    * set to admin_add_pyq_questions in one transaction. */
   var PA_KEY = 'ml_admin_pyq_draft';
-  var pa = { rows: [], exam: 'NEET PG', year: '', mode: 'paste', wired: false, open: -1 };
+  var pa = { rows: [], exam: 'NEET PG', year: '', mode: 'paste', wired: false, open: -1, show: 100 };
+  var PA_PAGE = 100, PA_MAX = 300, PA_BATCH = PA_MAX;
 
   function paLoadDraft() {
     try {
@@ -2149,7 +2150,8 @@
       return;
     }
     pa.done = null;
-    list.innerHTML = pa.rows.map(function (r, i) {
+    var shown = Math.min(n, Math.max(pa.show, PA_PAGE));
+    list.innerHTML = pa.rows.slice(0, shown).map(function (r, i) {
       var probs = paProblems(r), warns = paWarnings(r);
       var opts = ['a', 'b', 'c', 'd', 'e'].filter(function (L) { return r[L]; }).map(function (L) {
         var ok = r.ans === L.toUpperCase();
@@ -2168,7 +2170,14 @@
         '<button type="button" class="am-btn" data-act="down" ' + (i < n - 1 ? '' : 'disabled') + ' aria-label="Move down">↓</button>' +
         '<button type="button" class="am-btn am-btn-danger" data-act="del">Remove</button></div>' +
         '<div class="pa-edit" hidden></div></div>';
-    }).join('');
+    }).join('') + (shown < n
+      ? '<div class="am-row pa-more"><button type="button" class="am-btn" data-more="1">Show next ' + Math.min(PA_PAGE, n - shown) + ' (' + (n - shown) + ' more)</button>' +
+        '<button type="button" class="am-btn" data-more="all">Show all ' + n + '</button></div>'
+      : '');
+  }
+  function paReveal(i) {
+    if (i >= pa.show) { pa.show = Math.ceil((i + 1) / PA_PAGE) * PA_PAGE; paRender(); }
+    var el = $('pa-' + i); if (el) el.scrollIntoView({ block: 'center' });
   }
 
   function paEdit(card, i) {
@@ -2246,24 +2255,44 @@
       return { question_text: r.q, option_a: r.a, option_b: r.b, option_c: r.c, option_d: r.d, option_e: r.e,
         answer: r.ans, explanation: r.ex, subject: r.subject || '' };
     });
-    sb.rpc('admin_add_pyq_questions', { p_exam: pa.exam, p_year: year, p_rows: rows }).then(function (res) {
-      if (res.error) {
-        var m = (res.error.message || '').match(/BAD_ROW:(\d+):(\w+)/);
-        if (m) {
-          $('paSaveInfo').textContent = 'Q' + m[1] + ': ' + rpcErr({ message: m[2] }) + ' Nothing was saved.';
-          var el = $('pa-' + (Number(m[1]) - 1)); if (el) el.scrollIntoView({ block: 'center' });
-        } else $('paSaveInfo').textContent = rpcErr(res.error) + ' Nothing was saved.';
-        btn.disabled = false;
-        return;
-      }
-      var added = res.data && res.data.added;
+    /* Up to PA_MAX (300) questions per save, the server's limit too, so
+       this is one request. Every row was checked above with the same rules
+       the server uses; if the save still fails, nothing is saved. */
+    var exam = pa.exam, saved = 0, total = rows.length;
+    function next() {
+      if (saved >= total) return done();
+      $('paSaveInfo').textContent = total > PA_BATCH ? 'Saving… ' + saved + ' of ' + total : 'Saving…';
+      var chunk = rows.slice(saved, saved + PA_BATCH);
+      sb.rpc('admin_add_pyq_questions', { p_exam: exam, p_year: year, p_rows: chunk }).then(function (res) {
+        if (res.error) return fail(res.error);
+        saved += (res.data && res.data.added) || chunk.length;
+        next();
+      }, fail);
+    }
+    function fail(err) {
+      var m = ((err && err.message) || '').match(/BAD_ROW:(\d+):(\w+)/);
+      var badIdx = m ? Number(m[1]) - 1 : -1;
+      pa.rows = pa.rows.slice(saved);
+      paSaveDraft();
+      pyqSessions = null;
+      loadPyqSessions(true);
+      paRender();
+      var why = m ? 'Q' + (badIdx + 1) + ': ' + rpcErr({ message: m[2] }) : rpcErr(err || {}) || 'Could not save.';
+      $('paSaveInfo').textContent = (saved ? saved + ' saved. ' : 'Nothing was saved. ') + why + ' The rest are still here; fix and save again.';
+      btn.disabled = false;
+      if (badIdx >= 0) paReveal(badIdx);
+    }
+    function done() {
       pa.rows = []; paSaveDraft();
-      pa.done = { added: added, exam: pa.exam, year: year };
+      pa.show = PA_PAGE;
+      pa.done = { added: saved, exam: exam, year: year };
       paRender();
       pyqSessions = null;
       loadPyqSessions(true).then(function () { paFillYears(year); });
-      toast('Saved ' + added + ' questions.');
-    });
+      $('paSaveInfo').textContent = '';
+      toast('Saved ' + saved + ' questions.');
+    }
+    next();
   }
 
   function openAddView(src) {
@@ -2284,11 +2313,15 @@
       $('paParseBtn').onclick = function () {
         var got = paParse($('paText').value);
         if (!got.length) { $('paParseInfo').textContent = 'No questions found in that text.'; return; }
+        var room = PA_MAX - pa.rows.length;
+        if (room <= 0) { $('paParseInfo').textContent = 'The preview already has ' + PA_MAX + ' questions, the most one save can take. Save these first.'; return; }
         var start = pa.rows.length;
-        pa.rows = pa.rows.concat(got);
+        var take = got.slice(0, room), left = got.length - take.length;
+        pa.rows = pa.rows.concat(take);
         paSaveDraft(); paRender();
-        var bad = got.filter(function (r) { return paProblems(r).length; }).length;
-        $('paParseInfo').textContent = got.length + ' added to the preview' + (bad ? ', ' + bad + ' need fixing' : '') + '.';
+        var bad = take.filter(function (r) { return paProblems(r).length; }).length;
+        $('paParseInfo').textContent = take.length + ' added to the preview' + (bad ? ', ' + bad + ' need fixing' : '') + '.' +
+          (left ? ' ' + left + ' more were found but one save takes at most ' + PA_MAX + ': save these, then paste the rest.' : '');
         $('paText').value = '';
         var el = $('pa-' + start); if (el) el.scrollIntoView({ block: 'start' });
       };
@@ -2297,6 +2330,7 @@
         var f = $('paOneForm');
         var r = { q: f.q.value.trim(), a: f.a.value.trim(), b: f.b.value.trim(), c: f.c.value.trim(), d: f.d.value.trim(), e: f.e.value.trim(), ans: f.ans.value, ex: f.ex.value.trim(), subject: '' };
         var probs = paProblems(r);
+        if (pa.rows.length >= PA_MAX) probs = ['The preview already has ' + PA_MAX + ' questions; save them first'];
         if (probs.length) { $('paOneInfo').textContent = probs.join(' · '); return; }
         pa.rows.push(r); paSaveDraft(); paRender();
         f.reset(); f.q.value = ''; f.ex.value = '';
@@ -2311,9 +2345,11 @@
       $('paSaveBtn').onclick = paSave;
       $('paIssues').onclick = function (e) {
         var b = e.target.closest('[data-jump]'); if (!b) return;
-        var el = $('pa-' + b.getAttribute('data-jump')); if (el) el.scrollIntoView({ block: 'center' });
+        paReveal(Number(b.getAttribute('data-jump')));
       };
       $('paList').onclick = function (e) {
+        var mb = e.target.closest('[data-more]');
+        if (mb) { pa.show = mb.getAttribute('data-more') === 'all' ? pa.rows.length : pa.show + PA_PAGE; paRender(); return; }
         var b = e.target.closest('[data-act]'); if (!b) return;
         var card = b.closest('[data-pa]'); if (!card || b.closest('.pa-edit')) return;
         var i = Number(card.getAttribute('data-pa')), act = b.getAttribute('data-act');
