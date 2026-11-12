@@ -7121,7 +7121,6 @@ window.addEventListener('error', function (ev) {
           '<p>' + (currentUser ? 'Ready for today’s learning?' : totalQuestions().toLocaleString() + ' questions with explanations, free to start.') + '</p>' + examChip + '</div>' +
           v3Art(['physiology', 'pathology', 'pharmacology']) + '</section>';
         colA += v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '');
-        colA += v3DueCard(ix);
 
         // ---- today's mission
         var goal = v2Goal();
@@ -7149,7 +7148,7 @@ window.addEventListener('error', function (ev) {
           var mins = Math.max(1, Math.round(plan.size * 0.75));
           var items = '';
           if (plan.size) items += '<li>' + v3Ic('clock', 18) + 'About ' + mins + ' min</li>';
-          if (ix.due.length) items += '<li><button class="v3-mission-due" data-nav-go="review">' + v3Ic('refresh', 18) + ix.due.length + ' due for revision' + (nReview && nReview < ix.due.length ? ' (' + nReview + ' in this set)' : '') + ' ›</button></li>';
+          if (nReview) items += '<li>' + v3Ic('refresh', 18) + '<span>' + nReview + ' revision question' + (nReview === 1 ? '' : 's') + '</span></li>';
           if (plan.newN) items += '<li>' + v3Ic('sparkle', 18) + '<span>' + plan.newN + ' new question' + (plan.newN === 1 ? '' : 's') + '</span></li>';
           if (!plan.size) items += '<li>' + v3Ic('check', 18) + 'Nothing due, every open topic finished</li>';
           var gp = Math.min(1, doneToday / goal);
@@ -7340,7 +7339,7 @@ window.addEventListener('error', function (ev) {
       // ---- QBank: all subjects ---------------------------------------------
       var v2SubjectFilter = 'all';
       // "Revision due" card: questions answered before that are due to come
-      // back (spaced review). Shown on Home and QBank when there are any.
+      // back (spaced review). Shown on QBank (not Home) when there are any.
       function v3DueCard(ix) {
         var n = ix && ix.due ? ix.due.length : 0;
         if (!currentUser || !n) return '';
