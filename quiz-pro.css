@@ -3532,7 +3532,7 @@ html.ml-reading #app .v3 .v3-qt-trophy .v3-qt-ic svg { fill: rgba(245, 180, 40, 
 html.ml-reading #app .v3 .v3-qt-layers .v3-qt-ic { color: #8B5CF6 !important; }
 html.ml-reading #app .v3 .v3-qt-chart .v3-qt-ic { color: #6D3DF0 !important; }
 html.ml-reading #app .v3 .v3-qt-chart .v3-qt-ic svg { stroke-width: 3.2 !important; }
-html.ml-reading #app .v3 .v3-qt-badge { position: absolute !important; top: -8px !important; right: -22px !important; padding: 1px 7px !important; border-radius: 99px !important; background: #E5484D !important; color: #fff !important; font: 700 10.5px/16px var(--rr-sans) !important; }
+html.ml-reading #app .v3 .v3-qt-badge { position: absolute !important; top: -8px !important; right: -22px !important; padding: 1px 7px !important; border-radius: 99px !important; background: #C62828 !important; color: #fff !important; font: 700 10.5px/16px var(--rr-sans) !important; }
 
 /* ---- continue ---- */
 html.ml-reading #app .v3 .v3-cont { display: flex !important; align-items: center !important; gap: 14px !important; width: 100% !important; margin: 0 !important; padding: 14px 16px !important; color: var(--x-ink) !important; text-align: left !important; cursor: pointer !important; }
