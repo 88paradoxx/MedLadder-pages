@@ -4200,11 +4200,10 @@ html.ml-reading #app .v3-foot .v3f-copy a { text-decoration: underline !importan
 
 /* ---- Question of the day: fixed-size stem and options, plus a skeleton of
    the same size, so the card does not change height when it loads ---- */
-html.ml-reading #app .v3 .v2-qotd-q {
-  display: -webkit-box !important; -webkit-box-orient: vertical !important; -webkit-line-clamp: 3 !important; overflow: hidden !important;
-  min-height: calc(3 * 1.45em) !important;
-}
-html.ml-reading #app .v3 .v2-qotd-opt > span:last-child { display: -webkit-box !important; -webkit-box-orient: vertical !important; -webkit-line-clamp: 2 !important; overflow: hidden !important; }
+/* Full question text (no clamping): the Worker sends today's question with
+   the page, so the card is drawn complete on the first render. The skeleton
+   below only shows if that data is missing. */
+html.ml-reading #app .v3 .v2-qotd-q.v3-skel { min-height: calc(3 * 1.45em) !important; }
 html.ml-reading #app .v3 .v2-qotd-opt.v3-skel, html.ml-reading #app .v3 .v2-qotd-q.v3-skel {
   border-color: transparent !important; background: linear-gradient(90deg, var(--x-card2) 0%, var(--x-line) 50%, var(--x-card2) 100%) !important;
   background-size: 200% 100% !important; animation: v3skel 1.2s linear infinite !important; border-radius: 12px !important;
