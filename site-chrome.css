@@ -34,3 +34,4 @@
   .ml-tabbar a { font-size: 10.5px; min-height: 52px; border-radius: 16px; }
   .ml-tabbar svg { width: 22px; height: 22px; }
 }
+.ml-foot .f-copy a { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
