@@ -83,6 +83,38 @@ async function getCounts(ctx) {
   return fresh;
 }
 
+/* Today's question of the day, fetched once per India day like the counts
+   and written into the home page (see servePage), so the app can draw it
+   on its first render instead of after app.js + supabase-js + an RPC.
+   That card is the page's largest text, so this is what sets LCP. */
+var memQotd = null;
+async function getQotd(ctx) {
+  var now = Date.now();
+  var day = istDay(now);
+  if (memQotd && memQotd.day === day) return memQotd.data;
+  var cache = caches.default;
+  var key = new Request('https://medladder.top/__qotd/' + day);
+  var hit = await cache.match(key);
+  if (hit) {
+    var cached = await hit.json();
+    memQotd = { day: day, data: cached };
+    return cached;
+  }
+  var r = await fetch(SUPABASE_URL + '/rest/v1/rpc/question_of_the_day', {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_day: day })
+  });
+  if (!r.ok) throw new Error('question_of_the_day ' + r.status);
+  var rows = await r.json();
+  var data = { date: day, q: Array.isArray(rows) && rows[0] ? rows[0] : null };
+  memQotd = { day: day, data: data };
+  ctx.waitUntil(cache.put(key, new Response(JSON.stringify(data), {
+    headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=' + secondsToIstMidnight(now) }
+  })));
+  return data;
+}
+
 function fmt(n) { return Number(n).toLocaleString('en-US'); }
 
 function liveFor(entry, counts) {
@@ -124,7 +156,20 @@ function swapGlobals(text, counts) {
   return text;
 }
 
-function rewriteCounts(response, path, counts) {
+function qotdHandler(qotd) {
+  return {
+    element: function (el) {
+      if (!qotd) return;
+      // Non-executable JSON: needs no CSP hash. "<" escaped so no text in a
+      // question can close the script element.
+      el.append('<script type="application/json" id="ml-qotd">' +
+        JSON.stringify(qotd).replace(/</g, '\\u003c') + '</script>', { html: true });
+    }
+  };
+}
+
+function rewriteCounts(response, path, counts, qotd) {
+  if (!counts) return new HTMLRewriter().on('body', qotdHandler(qotd)).transform(response);
   var page = entryFor(path);
   var pageLive = liveFor(page, counts);
   var link = null, linkLive = null, rowLink = null, rowLive = null, inRow = false;
@@ -163,6 +208,7 @@ function rewriteCounts(response, path, counts) {
   };
 
   return new HTMLRewriter()
+    .on('body', qotdHandler(qotd))
     .on('script, style', {
       element: function (el) {
         var type = el.getAttribute('type') || '';
@@ -204,14 +250,13 @@ async function servePage(request, env, ctx) {
   var res = await env.ASSETS.fetch(request);
   var type = res.headers.get('content-type') || '';
   if (request.method !== 'GET' || res.status !== 200 || type.indexOf('text/html') === -1) return res;
-  var counts;
-  try {
-    counts = await getCounts(ctx);
-  } catch (e) {
-    return res;
-  }
   var path = new URL(request.url).pathname;
-  var out = rewriteCounts(res, path, counts);
+  var isHome = path === '/' || path === '/index.html';
+  var results = await Promise.allSettled([getCounts(ctx), isHome ? getQotd(ctx) : Promise.resolve(null)]);
+  var counts = results[0].status === 'fulfilled' ? results[0].value : null;
+  var qotd = results[1].status === 'fulfilled' ? results[1].value : null;
+  if (!counts && !qotd) return res;
+  var out = rewriteCounts(res, path, counts, qotd);
   var h = new Headers(out.headers);
   h.delete('etag');
   h.delete('content-length');

@@ -74,8 +74,19 @@ function keep(absPath) {
 async function minifyAssets() {
   let esbuild;
   try { esbuild = await import('esbuild'); } catch (e) {
-    console.warn('build.mjs: esbuild not installed, skipping minification');
-    return;
+    // The deploy may run without installing dev dependencies: install the
+    // pinned version here, once, and carry on without it if that fails.
+    try {
+      const { execSync } = await import('node:child_process');
+      const pkg = JSON.parse(await (await import('node:fs/promises')).readFile(join(ROOT, 'package.json'), 'utf8'));
+      const ver = (pkg.devDependencies && pkg.devDependencies.esbuild) || 'latest';
+      console.log('build.mjs: installing esbuild@' + ver + ' for minification');
+      execSync('npm install --no-save --no-audit --no-fund esbuild@' + ver, { cwd: ROOT, stdio: 'inherit' });
+      esbuild = await import('esbuild');
+    } catch (e2) {
+      console.warn('build.mjs: esbuild unavailable, skipping minification: ' + e2.message);
+      return;
+    }
   }
   const { readFile, writeFile } = await import('node:fs/promises');
   let before = 0, after = 0, n = 0;
@@ -99,6 +110,7 @@ async function minifyAssets() {
     }
   }
   console.log(`build.mjs: minified ${n} files, ${(before / 1024).toFixed(0)} KB -> ${(after / 1024).toFixed(0)} KB`);
+  await writeFile(join(DIST, 'build-info.json'), JSON.stringify({ minified: n, kb_before: Math.round(before / 1024), kb_after: Math.round(after / 1024), built: new Date().toISOString() }) + '\n');
 }
 
 async function main() {

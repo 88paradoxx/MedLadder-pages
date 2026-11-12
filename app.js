@@ -6507,6 +6507,7 @@ window.addEventListener('error', function (ev) {
           var tag = document.querySelector('#v2Qotd .v2-qotd-tag');
           if (tag) tag.textContent = pick.sx ? pick.sx.name : (pick.subj || '');
           var letters = ['A', 'B', 'C', 'D', 'E'].filter(function (L) { return q['option_' + L.toLowerCase()]; });
+          card.removeAttribute('aria-busy');
           card.innerHTML = '<p class="v2-qotd-q">' + esc(stripHtmlPreview(q.question_text, 400)) + '</p>' +
             '<div class="v2-qotd-opts">' + letters.map(function (L) {
               var cls = 'v2-qotd-opt';
@@ -6524,19 +6525,36 @@ window.addEventListener('error', function (ev) {
           });
         };
         if (v2Qotd && v2Qotd.day === today) { if (v2Qotd.pick) pick = v2Qotd.pick; paint(v2Qotd.q); return; }
+        // Today's question from the last visit: paint it at once, then check
+        // for a change in the background.
+        var cached = v2QotdCacheGet();
+        var cachedId = cached ? (cached.q ? cached.q.id : 0) : null;
+        var pickFor = function (row) {
+          var info = row && row.module_id != null ? v2ModIndex()[row.module_id] : null;
+          return { day: today, sx: info ? info.sx : null, m: info ? info.m : null, subj: (row && row.subject) || '' };
+        };
+        if (cached) {
+          pick = pickFor(cached.q);
+          v2Qotd = { day: today, q: cached.q, pick: pick };
+          paint(cached.q);
+        }
+        var store = function (row) { try { localStorage.setItem('ml_qotd', JSON.stringify({ day: today, q: row || null })); } catch (e) { } };
         // An admin's choice for today wins; otherwise the automatic pick.
         var dt = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
         var iso = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
-        var autoLoad = function () { v2Qotd = { day: today, q: null }; paint(null); };
+        // Nothing chosen (or the request failed): keep a question already on
+        // screen rather than removing it and shifting the page.
+        var autoLoad = function () { if (cachedId !== null) return; store(null); v2Qotd = { day: today, q: null }; paint(null); };
         try {
           supabaseClient.rpc('question_of_the_day', { p_day: iso }).then(function (res) {
             var row = res && !res.error && res.data && res.data[0];
             if (!row) { autoLoad(); return; }
             row.answer = String(row.answer || '').toUpperCase();
-            var info = row.module_id != null ? v2ModIndex()[row.module_id] : null;
-            pick = { day: today, sx: info ? info.sx : null, m: info ? info.m : null, subj: row.subject || '' };
+            store(row);
+            if (cachedId === row.id) return;
+            pick = pickFor(row);
             v2Qotd = { day: today, q: row, pick: pick };
-            paint(row);
+            if (document.getElementById('v2QotdCard')) paint(row);
           }, autoLoad);
         } catch (e) { autoLoad(); }
       }
@@ -7030,9 +7048,33 @@ window.addEventListener('error', function (ev) {
         return '<button class="v3-more" ' + attrs + '>' + label + v3Ic('chev', 15) + '</button>';
       }
 
+      // The card is drawn at its final size before the question arrives (a
+      // skeleton with the same stem and option rows), so loading it does not
+      // push the rest of the page down (PageSpeed counts that as layout shift).
+      function v2QotdCacheGet() {
+        var today = v2Day(Date.now());
+        try { var c = JSON.parse(localStorage.getItem('ml_qotd') || 'null'); if (c && c.day === today) return c; } catch (e) { }
+        // First visit today: the Worker writes today's question into the home
+        // page (#ml-qotd), so the card can be drawn without waiting for the API.
+        try {
+          var el = document.getElementById('ml-qotd');
+          var d = el ? JSON.parse(el.textContent) : null;
+          var dt = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
+          var iso = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
+          if (d && d.date === iso) {
+            if (d.q) d.q.answer = String(d.q.answer || '').toUpperCase();
+            return { day: today, q: d.q || null };
+          }
+        } catch (e) { }
+        return null;
+      }
       function v2QotdHtml() {
+        var c = v2QotdCacheGet();
+        if (c && !c.q && !(v2Qotd && v2Qotd.q)) return '';
         return '<section class="v3-card v3-qotd-card" id="v2Qotd">' + v3Head('<span class="v3-hi v3-hi-bolt">' + v3Ic('bolt') + '</span>', 'Question of the day', '<span class="v2-qotd-tag v3-tag"></span>') +
-          '<div class="v2-qotd" id="v2QotdCard"><p class="v2-qotd-wait">Loading today’s question…</p></div></section>';
+          '<div class="v2-qotd" id="v2QotdCard" aria-busy="true"><p class="v2-qotd-q v3-skel" aria-hidden="true"></p><div class="v2-qotd-opts" aria-hidden="true">' +
+          '<span class="v2-qotd-opt v3-skel"></span><span class="v2-qotd-opt v3-skel"></span><span class="v2-qotd-opt v3-skel"></span><span class="v2-qotd-opt v3-skel"></span>' +
+          '</div><span class="v2-sr">Loading today’s question</span></div></section>';
       }
 
       // Medal artwork for each badge: shape, two gradient stops, glyph.
