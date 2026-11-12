@@ -24,7 +24,7 @@
     var html = esc(t);
     return html.replace(/&lt;img\s+src=&quot;(https?:\/\/[^&\s"]+)&quot;(\s+alt=&quot;([^&]*?)&quot;)?\s*\/?&gt;/gi,
       function (m, src, _a, alt) {
-        return '<img class="am-qimg" loading="lazy" src="' + src +
+        return '<img class="am-qimg" loading="lazy" src="' + esc(adminImgUrl(src.replace(/&amp;/g, '&'))) +
           '" alt="' + (alt || 'Clinical exhibit') + '">';
       });
   }
@@ -44,6 +44,10 @@
     if (m.indexOf('BAD_QUESTION') !== -1) return 'Please enter the question text.';
     if (m.indexOf('BAD_OPTION') !== -1) return 'Options A–D are required.';
     if (m.indexOf('BAD_EXPLANATION') !== -1) return 'Please add an explanation.';
+    if (m.indexOf('BAD_EXAM') !== -1) return 'Pick NEET PG, INICET or FMGE.';
+    if (m.indexOf('BAD_SESSION') !== -1) return 'Session must look like 2026 or May 2026.';
+    if (m.indexOf('NO_ROWS') !== -1) return 'There are no questions to save.';
+    if (m.indexOf('TOO_MANY_ROWS') !== -1) return 'Save at most 500 questions at a time.';
     if (m.indexOf('FLAG_NOT_FOUND') !== -1) return 'Flag not found — it may have been handled already.';
     if (m.indexOf('FLAG_CLOSED') !== -1) return 'This flag is already resolved or dismissed.';
     if (m.indexOf('QUESTION_NOT_FOUND') !== -1) return 'Bank question not found.';
@@ -235,6 +239,20 @@
   var RF_KEEP = { BR: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, S: 1, SUB: 1, SUP: 1, SMALL: 1, SPAN: 1, P: 1, DIV: 1, IMG: 1 };
   var RF_DROP = { SCRIPT: 1, STYLE: 1, IFRAME: 1, OBJECT: 1, EMBED: 1, LINK: 1, META: 1, FORM: 1, INPUT: 1, BUTTON: 1, SELECT: 1, TEXTAREA: 1, SVG: 1, MATH: 1, TEMPLATE: 1 };
 
+  /* Question images moved from Supabase storage to R2; old Supabase links in
+     question HTML no longer load, so point them at R2 (same as app.js). */
+  var R2_IMAGES_BASE = 'https://pub-5e62ac2b4d1c43fcb7fb6b025a52e189.r2.dev';
+  function adminImgUrl(src) {
+    try {
+      var u = new URL(String(src), location.href);
+      if (/\.supabase\.co$/i.test(u.hostname)) {
+        var m = u.pathname.match(/^\/storage\/v1\/(?:object|render\/image)\/public\/question-images\/(.+)$/);
+        if (m) return R2_IMAGES_BASE + '/' + m[1];
+      }
+      return u.toString();
+    } catch (e) { return String(src || ''); }
+  }
+
   function rfIsHtml(s) { return /<\/?[a-z][^>]*>/i.test(s || ''); }
 
   function rfClean(html, forEditor) {
@@ -257,7 +275,7 @@
           if (!/^https?:\/\//i.test(src)) { n.remove(); return; }
           var alt = n.getAttribute('alt') || '';
           Array.prototype.slice.call(n.attributes).forEach(function (a) { n.removeAttribute(a.name); });
-          n.setAttribute('src', src);
+          n.setAttribute('src', adminImgUrl(src));
           if (alt) n.setAttribute('alt', alt);
           if (forEditor) n.setAttribute('contenteditable', 'false');
           return;
@@ -484,7 +502,7 @@
     function show() {
       var v = input.value.trim();
       prev.hidden = !/^https?:\/\//i.test(v);
-      if (!prev.hidden) prev.src = v;
+      if (!prev.hidden) prev.src = adminImgUrl(v);
       clear.hidden = !v;
     }
     prev.onerror = function () { prev.hidden = true; st.textContent = 'This link does not open as an image.'; };
@@ -1487,7 +1505,7 @@
   }
   function homeGo(k) {
     if (k === 'tests') loadTests();
-    else if (k === 'add') showView('bankView');
+    else if (k === 'add') openAddView();
     else if (k === 'edit') { openEditQ(); $('eqFilter').value = 'all'; }
     else if (k === 'review') { openEditQ(); $('eqSubj').value = ''; $('eqSubj').onchange(); $('eqFilter').value = 'review'; $('eqSearch').value = ''; eqLoad(0); }
     else if (k === 'reports') loadFlags('open');
@@ -1557,7 +1575,51 @@
   /* ---------- edit any bank question ----------
    * Browse the bank by subject / topic (or search), open a question, and
    * change its text, options, key, explanation, image or topic, or delete it. */
-  var eqState = { offset: 0, total: 0, limit: 50 };
+  var eqState = { offset: 0, total: 0, limit: 50, source: 'bank' };
+
+  /* Past-paper sessions (exam + year/session) with question counts. */
+  var pyqSessions = null;
+  var PYQ_EXAM_IDS = ['NEET PG', 'INICET', 'FMGE'];
+  var PYQ_MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+  function pyqKey(y) {
+    var m = String(y || '').match(/^([A-Za-z]+)?\s*(\d{4})$/);
+    return m ? Number(m[2]) * 100 + (m[1] ? PYQ_MON[m[1].toLowerCase().slice(0, 3)] || 0 : 0) : 0;
+  }
+  function loadPyqSessions(force) {
+    if (pyqSessions && !force) return Promise.resolve(pyqSessions);
+    return sb.rpc('admin_pyq_sessions').then(function (res) {
+      if (res.error) { toast(rpcErr(res.error)); return pyqSessions || []; }
+      pyqSessions = res.data || [];
+      return pyqSessions;
+    });
+  }
+  function pyqYearsFor(exam) {
+    return (pyqSessions || []).filter(function (r) { return r.pyq_exam === exam; })
+      .sort(function (a, b) { return pyqKey(b.pyq_year) - pyqKey(a.pyq_year); });
+  }
+  function fillPyqYearSelect(sel, exam, opts) {
+    opts = opts || {};
+    var cur = sel.value;
+    var rows = pyqYearsFor(exam);
+    sel.innerHTML = (opts.all ? '<option value="">All sessions</option>' : '') +
+      rows.map(function (r) {
+        return '<option value="' + esc(r.pyq_year) + '">' + esc(r.pyq_year) + (opts.counts !== false ? ' · ' + r.n + ' questions' : '') + '</option>';
+      }).join('') +
+      (opts.extra || []).filter(function (y) { return !rows.some(function (r) { return r.pyq_year === y; }); })
+        .map(function (y) { return '<option value="' + esc(y) + '">' + esc(y) + ' · new</option>'; }).join('') +
+      (opts.allowNew ? '<option value="__new">＋ New session…</option>' : '');
+    if (opts.value != null) sel.value = opts.value;
+    else if (cur && Array.prototype.some.call(sel.options, function (o) { return o.value === cur; })) sel.value = cur;
+  }
+  function eqSetSource(src) {
+    eqState.source = src;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-eqsrc]'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-eqsrc') === src));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#editQView .eq-bank'), function (el) { el.hidden = src !== 'bank'; });
+    Array.prototype.forEach.call(document.querySelectorAll('#editQView .eq-pyq'), function (el) { el.hidden = src !== 'pyq'; });
+    if (src === 'pyq') loadPyqSessions().then(function () { fillPyqYearSelect($('eqYear'), $('eqExam').value, { all: true }); });
+  }
 
   function eqFillSubjects() {
     var subjSel = $('eqSubj'), topicSel = $('eqTopic');
@@ -1577,6 +1639,24 @@
   function openEditQ() {
     showView('editQView');
     if (!$('eqSubj').options.length) eqFillSubjects();
+    if (!$('editQView')._wired) {
+      $('editQView')._wired = true;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-eqsrc]'), function (b) {
+        b.onclick = function () { eqSetSource(b.getAttribute('data-eqsrc')); $('eqList').innerHTML = ''; $('eqInfo').textContent = ''; $('eqPager').hidden = true; };
+      });
+      $('eqExam').onchange = function () { fillPyqYearSelect($('eqYear'), $('eqExam').value, { all: true, value: '' }); };
+    }
+  }
+  /* Open Edit questions on one past-paper session (used after adding PYQs). */
+  function openEditPyq(exam, year) {
+    openEditQ();
+    eqSetSource('pyq');
+    $('eqExam').value = exam;
+    loadPyqSessions(true).then(function () {
+      fillPyqYearSelect($('eqYear'), exam, { all: true, value: year });
+      $('eqFilter').value = 'all'; $('eqSearch').value = '';
+      eqLoad(0);
+    });
   }
 
   function eqModuleIds() {
@@ -1592,9 +1672,11 @@
     var term = ($('eqSearch').value || '').trim();
     $('eqInfo').textContent = 'Loading…';
     list.innerHTML = '';
-    sb.rpc('admin_bank_questions', {
-      p_module_ids: eqModuleIds(), p_search: term || null, p_filter: $('eqFilter').value,
-      p_limit: eqState.limit, p_offset: eqState.offset
+    var pyq = eqState.source === 'pyq';
+    sb.rpc('admin_list_questions', {
+      p_module_ids: pyq ? null : eqModuleIds(), p_search: term || null, p_filter: $('eqFilter').value,
+      p_limit: eqState.limit, p_offset: eqState.offset, p_source: eqState.source,
+      p_pyq_exam: pyq ? $('eqExam').value : null, p_pyq_year: pyq ? ($('eqYear').value || null) : null
     }).then(function (res) {
       if (res.error) { $('eqInfo').textContent = rpcErr(res.error); return; }
       var rows = res.data || [];
@@ -1609,7 +1691,7 @@
         var t = plain(r.question_text, 170);
         return '<div class="am-q eq-row" data-eq="' + r.id + '"><div class="qhead">' +
           '<span class="n">#' + r.id + '</span>' +
-          '<span class="am-hint">' + esc((r.subject || '?') + ' / ' + (r.topic || '?')) + (r.is_pyq ? ' · PYQ' : '') + '</span>' +
+          '<span class="am-hint">' + esc(r.is_pyq ? (r.pyq_exam || 'PYQ') + ' · ' + (r.pyq_year || '?') : (r.subject || '?') + ' / ' + (r.topic || '?')) + '</span>' +
           '<span class="sp"></span>' +
           (r.review_reason ? '<span class="am-badge draft">Needs review</span>' : '') +
           (r.has_image ? '<span class="am-badge">Has image</span>' : '') +
@@ -1644,9 +1726,11 @@
         return '<option' + (L === ans ? ' selected' : '') + '>' + L + '</option>';
       }).join('') + '</select></label>' +
       '<label class="am-wide">Explanation <textarea name="ex" rows="8"></textarea></label>' +
-      '<label class="am-wide">Picture shown with the question (optional) <input name="img" placeholder="https://…"></label>' +
-      '<label>Subject <select name="subj">' + subjOpts + '</select></label>' +
-      '<label>Topic <select name="topic"></select></label>' +
+      (r.is_pyq
+        ? '<label>Exam <select name="exam">' + PYQ_EXAM_IDS.map(function (x) { return '<option' + (x === r.pyq_exam ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></label>' +
+          '<label>Session <select name="year"></select></label>'
+        : '<label>Subject <select name="subj">' + subjOpts + '</select></label>' +
+          '<label>Topic <select name="topic"></select></label>') +
       '<div class="am-wide am-row">' +
       '<button class="am-btn am-btn-primary" type="submit">Save changes</button>' +
       (r.review_reason ? '<button class="am-btn" type="button" data-act="reviewed">Mark reviewed</button>' : '') +
@@ -1658,31 +1742,37 @@
     f.q.value = r.question_text || '';
     ['a', 'b', 'c', 'd', 'e'].forEach(function (L) { f[L].value = r['option_' + L] || ''; });
     f.ex.value = r.explanation || '';
-    f.img.value = r.image_url || '';
     richField(f.q, { alt: 'Question image', placeholder: 'Question text' });
     richField(f.ex, { alt: 'Explanation image', placeholder: 'Write the explanation…' });
-    imageUrlField(f.img);
+    if (r.is_pyq) {
+      var fillYears = function (val) { fillPyqYearSelect(f.year, f.exam.value, { counts: false, value: val }); };
+      loadPyqSessions().then(function () { fillYears(r.pyq_year); });
+      f.exam.onchange = function () { fillYears(null); };
+    }
     var fillTopics = function () {
+      if (r.is_pyq) return;
       var subj = idx.bySubject[(f.subj.value || '').toLowerCase()];
       f.topic.innerHTML = subj ? subj.modules.map(function (m) {
         return '<option value="' + m.id + '"' + (m.id === r.module_id ? ' selected' : '') + '>' + esc(m.name) + '</option>';
       }).join('') : '';
     };
-    f.subj.onchange = fillTopics;
+    if (f.subj) f.subj.onchange = fillTopics;
     fillTopics();
     f.onsubmit = function (ev) {
       ev.preventDefault();
-      var newMod = parseInt(f.topic.value, 10) || null;
-      var img = f.img.value.trim();
-      var imgArg = img ? img : (r.image_url ? '' : null);
-      if (newMod && newMod !== r.module_id && !window.confirm('Move this question to ' + f.subj.value + ' / ' + f.topic.options[f.topic.selectedIndex].text + '?')) return;
-      sb.rpc('admin_save_bank_question', {
+      var newMod = r.is_pyq ? null : (parseInt(f.topic.value, 10) || null);
+      var exam = r.is_pyq ? f.exam.value : null, year = r.is_pyq ? f.year.value : null;
+      var moved = r.is_pyq ? (exam !== r.pyq_exam || year !== r.pyq_year) : (newMod && newMod !== r.module_id);
+      if (moved && !window.confirm('Move this question to ' + (r.is_pyq ? exam + ' ' + year : f.subj.value + ' / ' + f.topic.options[f.topic.selectedIndex].text) + '?')) return;
+      sb.rpc('admin_save_question', {
         p_question_id: r.id, p_question_text: f.q.value, p_option_a: f.a.value, p_option_b: f.b.value,
         p_option_c: f.c.value, p_option_d: f.d.value, p_option_e: f.e.value,
-        p_answer: f.ans.value, p_explanation: f.ex.value, p_module_id: newMod, p_image_url: imgArg
+        p_answer: f.ans.value, p_explanation: f.ex.value, p_module_id: newMod,
+        p_pyq_exam: exam, p_pyq_year: year
       }).then(function (res) {
         if (res.error) { toast(rpcErr(res.error)); return; }
-        toast('Question #' + r.id + ' saved' + (newMod && newMod !== r.module_id ? ' and moved.' : '.'));
+        toast('Question #' + r.id + ' saved' + (moved ? ' and moved.' : '.'));
+        if (moved && r.is_pyq) pyqSessions = null;
         eqLoad(eqState.offset);
       });
     };
@@ -1921,6 +2011,336 @@
   }
 
   /* ---------- init ---------- */
+  /* ---------- add past-paper (PYQ) questions ----------
+   * Pick exam + session, then paste a whole paper or add questions one at a
+   * time. Everything lands in a preview first (kept in localStorage so a
+   * 200-question paste survives a reload); each card can be edited, with
+   * pictures in the question and the explanation. "Save" sends the whole
+   * set to admin_add_pyq_questions in one transaction. */
+  var PA_KEY = 'ml_admin_pyq_draft';
+  var pa = { rows: [], exam: 'NEET PG', year: '', mode: 'paste', wired: false, open: -1 };
+
+  function paLoadDraft() {
+    try {
+      var d = JSON.parse(localStorage.getItem(PA_KEY) || 'null');
+      if (d && Array.isArray(d.rows)) { pa.rows = d.rows; pa.exam = d.exam || pa.exam; pa.year = d.year || ''; }
+    } catch (e) { /* ignore */ }
+  }
+  function paSaveDraft() {
+    try {
+      if (pa.rows.length) localStorage.setItem(PA_KEY, JSON.stringify({ exam: pa.exam, year: pa.year, rows: pa.rows }));
+      else localStorage.removeItem(PA_KEY);
+    } catch (e) { /* storage full or blocked: preview still works this session */ }
+  }
+
+  function paHtml(text) {
+    text = String(text || '').trim();
+    return rfIsHtml(text) ? text : esc(text).replace(/\n/g, '<br>');
+  }
+
+  var PA_QSTART = /^\s*(?:(?:Q(?:uestion)?|Que?s?)\s*(?:no\.?\s*)?\.?\s*(\d{1,3})?\s*[.):\-]|(\d{1,3})\s*[.)])\s*/i;
+  var PA_OPT = /^\s*\(?([A-Ea-e])\s*[).:\]]\s+(.*)$/;
+  var PA_ANS = /^\s*(?:Ans(?:wer)?|Correct\s*(?:answer|option|ans)?|Key|Right\s*answer)\s*(?:is)?\s*[:.\-–)]?\s*(?:option)?\s*\(?\s*([A-Ea-e])\s*\)?(?:\s*[.:)\-–]\s*|\s+|$)(.*)$/i;
+  var PA_EXP = /^\s*(?:Explanation|Expl?n?|Solution|Rationale|Reason|Discussion)\s*[:.\-–]\s*(.*)$/i;
+  var PA_SUBJ = /^\s*Subject\s*:\s*(.*)$/i;
+
+  function paParse(text) {
+    text = String(text || '').replace(/\r/g, '').replace(/ /g, ' ');
+    var keyMap = {};
+    var km = text.match(/^\s*answer\s*key\s*:?\s*$/im);
+    if (km) {
+      var keyPart = text.slice(km.index + km[0].length);
+      text = text.slice(0, km.index);
+      keyPart.replace(/(\d{1,3})\s*[-.):=]\s*\(?([A-Ea-e])\)?/g, function (_m, n, L) { keyMap[n] = L.toUpperCase(); return _m; });
+    }
+    var lines = text.split('\n');
+    var blocks = [], cur = [];
+    var sepMode = /^\s*-{3,}\s*$/m.test(text);
+    function hasOpts(arr) { return arr.some(function (l) { return PA_OPT.test(l); }); }
+    lines.forEach(function (line) {
+      if (sepMode) {
+        if (/^\s*-{3,}\s*$/.test(line)) { blocks.push(cur); cur = []; return; }
+      } else if (PA_QSTART.test(line) && !PA_OPT.test(line) && !PA_ANS.test(line) && hasOpts(cur)) {
+        blocks.push(cur); cur = [];
+      }
+      cur.push(line);
+    });
+    blocks.push(cur);
+    var out = [];
+    blocks.forEach(function (bl) {
+      if (!bl.join('').trim()) return;
+      var r = { num: '', q: '', a: '', b: '', c: '', d: '', e: '', ans: '', ex: '', subject: '' };
+      var state = 'q', lastOpt = null;
+      bl.forEach(function (line, i) {
+        var m;
+        if (state !== 'ex' && (m = line.match(PA_SUBJ))) { r.subject = m[1].trim(); return; }
+        if (state === 'q' && !r.q.trim()) {
+          m = line.match(PA_QSTART);
+          if (m) { r.num = m[1] || m[2] || ''; line = line.slice(m[0].length); }
+          if (/^\s*Q\s*:\s*/i.test(line)) line = line.replace(/^\s*Q\s*:\s*/i, '');
+        }
+        if (state !== 'ex' && (m = line.match(PA_ANS))) {
+          r.ans = m[1].toUpperCase(); state = 'ex';
+          if (m[2] && m[2].trim()) r.ex += m[2].trim() + '\n';
+          return;
+        }
+        if ((m = line.match(PA_EXP))) { state = 'ex'; r.ex += m[1] + '\n'; return; }
+        if (state === 'ex') { r.ex += line + '\n'; return; }
+        // Several options on one line: "(a) X (b) Y (c) Z (d) W"
+        var inl = line.match(/\(([a-eA-E])\)\s*[^()]+/g);
+        if (inl && inl.length >= 2 && /^\s*\(/.test(line)) {
+          inl.forEach(function (part) { var mm = part.match(/\(([a-eA-E])\)\s*(.*)$/); r[mm[1].toLowerCase()] = mm[2].trim(); });
+          state = 'opt'; return;
+        }
+        if ((m = line.match(PA_OPT)) && (state === 'opt' || r.q.trim())) {
+          lastOpt = m[1].toLowerCase(); r[lastOpt] = m[2].trim(); state = 'opt'; return;
+        }
+        if (state === 'opt') {
+          if (line.trim() && lastOpt) r[lastOpt] += ' ' + line.trim();
+          return;
+        }
+        r.q += line + '\n';
+      });
+      if (!r.ans && r.num && keyMap[r.num]) r.ans = keyMap[r.num];
+      var row = { q: paHtml(r.q), a: r.a, b: r.b, c: r.c, d: r.d, e: r.e, ans: r.ans, ex: paHtml(r.ex), subject: r.subject };
+      out.push(row);
+    });
+    return out;
+  }
+
+  function paProblems(r) {
+    var p = [];
+    if (!String(r.q || '').replace(/<(?!img)[^>]*>/gi, '').trim()) p.push('No question text');
+    if (!r.a || !r.b) p.push('Needs at least options A and B');
+    if (!/^[A-E]$/.test(r.ans || '')) p.push('No correct answer');
+    else if (!r[r.ans.toLowerCase()]) p.push('Answer ' + r.ans + ' has no option text');
+    return p;
+  }
+  function paWarnings(r) {
+    var w = [];
+    if (!r.c || !r.d) w.push('Fewer than 4 options');
+    if (!String(r.ex || '').replace(/<(?!img)[^>]*>/gi, '').trim()) w.push('No explanation');
+    return w;
+  }
+  function paView(html) { return rfToEditor(html).replace(/ contenteditable="false"/g, ''); }
+
+  function paRender() {
+    var list = $('paList');
+    var n = pa.rows.length, bad = 0, warn = 0;
+    pa.rows.forEach(function (r) { if (paProblems(r).length) bad++; else if (paWarnings(r).length) warn++; });
+    $('paCount').textContent = n ? n + (n === 1 ? ' question' : ' questions') : 'empty';
+    $('paClearBtn').hidden = !n;
+    var year = paYearValue();
+    var btn = $('paSaveBtn');
+    btn.disabled = !n || bad > 0 || !year;
+    btn.textContent = n ? 'Save ' + n + ' to ' + pa.exam + (year ? ' ' + year : '') : 'Save';
+    $('paSaveInfo').textContent = !n ? '' : bad ? bad + ' need fixing before you can save.' : !year ? 'Pick or type the session first.' : warn ? warn + ' have a warning (you can still save).' : 'All good.';
+    var iss = $('paIssues');
+    iss.hidden = !bad;
+    iss.innerHTML = bad ? '<b>' + bad + ' to fix:</b> ' + pa.rows.map(function (r, i) {
+      return paProblems(r).length ? '<button type="button" class="pa-jump" data-jump="' + i + '">Q' + (i + 1) + '</button>' : '';
+    }).join('') : '';
+    if (!n) {
+      list.innerHTML = pa.done
+        ? '<div class="am-card pa-done"><b>Saved ' + pa.done.added + ' questions to ' + esc(pa.done.exam + ' ' + pa.done.year) + '.</b> They are live in the app now.' +
+          '<div class="am-row" style="margin-top:10px"><button type="button" class="am-btn am-btn-primary" id="paOpenEdit">Open them in Edit questions</button></div></div>'
+        : '<p class="am-hint">Nothing here yet. Paste questions or add one above.</p>';
+      if (pa.done) { var d = pa.done; $('paOpenEdit').onclick = function () { openEditPyq(d.exam, d.year); }; }
+      return;
+    }
+    pa.done = null;
+    list.innerHTML = pa.rows.map(function (r, i) {
+      var probs = paProblems(r), warns = paWarnings(r);
+      var opts = ['a', 'b', 'c', 'd', 'e'].filter(function (L) { return r[L]; }).map(function (L) {
+        var ok = r.ans === L.toUpperCase();
+        return '<li class="' + (ok ? 'ok' : '') + '"><b>' + L.toUpperCase() + '</b> ' + esc(r[L]) + (ok ? ' <span class="pa-tick">✓ answer</span>' : '') + '</li>';
+      }).join('');
+      return '<div class="am-q pa-card' + (probs.length ? ' bad' : '') + '" data-pa="' + i + '" id="pa-' + i + '">' +
+        '<div class="qhead"><span class="n">Q' + (i + 1) + '</span>' +
+        (r.subject ? '<span class="am-hint">' + esc(r.subject) + '</span>' : '') + '<span class="sp"></span>' +
+        probs.map(function (t) { return '<span class="am-badge pa-bad">' + esc(t) + '</span>'; }).join('') +
+        warns.map(function (t) { return '<span class="am-badge pa-warn">' + esc(t) + '</span>'; }).join('') + '</div>' +
+        '<div class="qt rf-view">' + paView(r.q) + '</div>' +
+        '<ol class="pa-opts">' + opts + '</ol>' +
+        (String(r.ex || '').trim() ? '<details class="pa-ex"><summary>Explanation</summary><div class="rf-view">' + paView(r.ex) + '</div></details>' : '') +
+        '<div class="am-row pa-acts"><button type="button" class="am-btn" data-act="edit">Edit</button>' +
+        '<button type="button" class="am-btn" data-act="up" ' + (i ? '' : 'disabled') + ' aria-label="Move up">↑</button>' +
+        '<button type="button" class="am-btn" data-act="down" ' + (i < n - 1 ? '' : 'disabled') + ' aria-label="Move down">↓</button>' +
+        '<button type="button" class="am-btn am-btn-danger" data-act="del">Remove</button></div>' +
+        '<div class="pa-edit" hidden></div></div>';
+    }).join('');
+  }
+
+  function paEdit(card, i) {
+    var box = card.querySelector('.pa-edit');
+    if (!box.hidden) { box.hidden = true; box.innerHTML = ''; return; }
+    var r = pa.rows[i];
+    box.innerHTML = '<form class="am-form">' +
+      '<label class="am-wide">Question <textarea name="q" rows="3"></textarea></label>' +
+      ['a', 'b', 'c', 'd', 'e'].map(function (L) { return '<label>' + L.toUpperCase() + ' <input name="' + L + '"></label>'; }).join('') +
+      '<label>Correct answer <select name="ans"><option value="">Pick…</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></label>' +
+      '<label class="am-wide">Explanation <textarea name="ex" rows="4"></textarea></label>' +
+      '<div class="am-wide am-row"><button class="am-btn am-btn-primary" type="submit">Done</button>' +
+      '<button class="am-btn" type="button" data-act="cancel">Cancel</button></div></form>';
+    box.hidden = false;
+    var f = box.querySelector('form');
+    f.q.value = r.q; f.ex.value = r.ex; f.ans.value = r.ans || '';
+    ['a', 'b', 'c', 'd', 'e'].forEach(function (L) { f[L].value = r[L] || ''; });
+    richField(f.q, { alt: 'Question image', placeholder: 'Question text' });
+    richField(f.ex, { alt: 'Explanation image', placeholder: 'Write the explanation…' });
+    f.onsubmit = function (ev) {
+      ev.preventDefault();
+      r.q = f.q.value.trim(); r.ex = f.ex.value.trim(); r.ans = f.ans.value;
+      ['a', 'b', 'c', 'd', 'e'].forEach(function (L) { r[L] = f[L].value.trim(); });
+      paSaveDraft(); paRender();
+      var el = $('pa-' + i); if (el) el.scrollIntoView({ block: 'center' });
+    };
+    box.querySelector('[data-act="cancel"]').onclick = function () { box.hidden = true; box.innerHTML = ''; };
+  }
+
+  function paYearValue() {
+    var v = $('paYear').value;
+    if (v === '__new') v = ($('paNew').value || '').trim().replace(/\s+/g, ' ');
+    if (v && /^[a-z]/.test(v)) v = v.charAt(0).toUpperCase() + v.slice(1);
+    return /^([A-Z][a-z]{2,8} )?(19|20)\d\d$/.test(v) ? v : '';
+  }
+  function paFillYears(value) {
+    fillPyqYearSelect($('paYear'), pa.exam, { allowNew: true, value: value, extra: [] });
+    if (!$('paYear').value && $('paYear').options.length) $('paYear').selectedIndex = 0;
+    paYearChanged();
+  }
+  function paYearChanged() {
+    var isNew = $('paYear').value === '__new';
+    $('paNewWrap').hidden = !isNew;
+    var y = paYearValue();
+    var hit = (pyqSessions || []).filter(function (r) { return r.pyq_exam === pa.exam && r.pyq_year === y; })[0];
+    $('paSessInfo').textContent = isNew && !y
+      ? 'Type the session the way the app lists it: a year (2026) or month and year (May 2026).'
+      : hit ? pa.exam + ' ' + y + ' already has ' + hit.n + ' questions; new ones are added after them.'
+        : y ? pa.exam + ' ' + y + ' is a new session. It appears in the app once you save.' : '';
+    pa.year = y;
+    paSaveDraft();
+    paRender();
+  }
+
+  function paSetMode(m) {
+    pa.mode = m;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pamode]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-pamode') === m)); });
+    $('paPastePane').hidden = m !== 'paste';
+    $('paOneForm').hidden = m !== 'one';
+    if (m === 'one' && !$('paOneForm')._rf) {
+      $('paOneForm')._rf = true;
+      richField($('paOneForm').q, { alt: 'Question image', placeholder: 'Question text' });
+      richField($('paOneForm').ex, { alt: 'Explanation image', placeholder: 'Write the explanation…' });
+    }
+  }
+
+  function paSave() {
+    var year = paYearValue();
+    if (!year || !pa.rows.length) return;
+    if (!window.confirm('Save ' + pa.rows.length + ' questions to ' + pa.exam + ' ' + year + '? They go live in the app straight away.')) return;
+    var btn = $('paSaveBtn');
+    btn.disabled = true;
+    $('paSaveInfo').textContent = 'Saving…';
+    var rows = pa.rows.map(function (r) {
+      return { question_text: r.q, option_a: r.a, option_b: r.b, option_c: r.c, option_d: r.d, option_e: r.e,
+        answer: r.ans, explanation: r.ex, subject: r.subject || '' };
+    });
+    sb.rpc('admin_add_pyq_questions', { p_exam: pa.exam, p_year: year, p_rows: rows }).then(function (res) {
+      if (res.error) {
+        var m = (res.error.message || '').match(/BAD_ROW:(\d+):(\w+)/);
+        if (m) {
+          $('paSaveInfo').textContent = 'Q' + m[1] + ': ' + rpcErr({ message: m[2] }) + ' Nothing was saved.';
+          var el = $('pa-' + (Number(m[1]) - 1)); if (el) el.scrollIntoView({ block: 'center' });
+        } else $('paSaveInfo').textContent = rpcErr(res.error) + ' Nothing was saved.';
+        btn.disabled = false;
+        return;
+      }
+      var added = res.data && res.data.added;
+      pa.rows = []; paSaveDraft();
+      pa.done = { added: added, exam: pa.exam, year: year };
+      paRender();
+      pyqSessions = null;
+      loadPyqSessions(true).then(function () { paFillYears(year); });
+      toast('Saved ' + added + ' questions.');
+    });
+  }
+
+  function openAddView(src) {
+    showView('bankView');
+    if (!pa.wired) {
+      pa.wired = true;
+      paLoadDraft();
+      Array.prototype.forEach.call(document.querySelectorAll('[data-addsrc]'), function (b) {
+        b.onclick = function () { paShowSrc(b.getAttribute('data-addsrc')); };
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-pamode]'), function (b) {
+        b.onclick = function () { paSetMode(b.getAttribute('data-pamode')); };
+      });
+      $('paExam').value = pa.exam;
+      $('paExam').onchange = function () { pa.exam = $('paExam').value; paFillYears(null); };
+      $('paYear').onchange = paYearChanged;
+      $('paNew').oninput = paYearChanged;
+      $('paParseBtn').onclick = function () {
+        var got = paParse($('paText').value);
+        if (!got.length) { $('paParseInfo').textContent = 'No questions found in that text.'; return; }
+        var start = pa.rows.length;
+        pa.rows = pa.rows.concat(got);
+        paSaveDraft(); paRender();
+        var bad = got.filter(function (r) { return paProblems(r).length; }).length;
+        $('paParseInfo').textContent = got.length + ' added to the preview' + (bad ? ', ' + bad + ' need fixing' : '') + '.';
+        $('paText').value = '';
+        var el = $('pa-' + start); if (el) el.scrollIntoView({ block: 'start' });
+      };
+      $('paOneForm').onsubmit = function (ev) {
+        ev.preventDefault();
+        var f = $('paOneForm');
+        var r = { q: f.q.value.trim(), a: f.a.value.trim(), b: f.b.value.trim(), c: f.c.value.trim(), d: f.d.value.trim(), e: f.e.value.trim(), ans: f.ans.value, ex: f.ex.value.trim(), subject: '' };
+        var probs = paProblems(r);
+        if (probs.length) { $('paOneInfo').textContent = probs.join(' · '); return; }
+        pa.rows.push(r); paSaveDraft(); paRender();
+        f.reset(); f.q.value = ''; f.ex.value = '';
+        if (f.q._rf) f.q._rf.refresh();
+        if (f.ex._rf) f.ex._rf.refresh();
+        $('paOneInfo').textContent = 'Added as Q' + pa.rows.length + '. Add the next one.';
+      };
+      $('paClearBtn').onclick = function () {
+        if (!window.confirm('Remove all ' + pa.rows.length + ' questions from the preview? Nothing has been saved yet.')) return;
+        pa.rows = []; paSaveDraft(); paRender();
+      };
+      $('paSaveBtn').onclick = paSave;
+      $('paIssues').onclick = function (e) {
+        var b = e.target.closest('[data-jump]'); if (!b) return;
+        var el = $('pa-' + b.getAttribute('data-jump')); if (el) el.scrollIntoView({ block: 'center' });
+      };
+      $('paList').onclick = function (e) {
+        var b = e.target.closest('[data-act]'); if (!b) return;
+        var card = b.closest('[data-pa]'); if (!card || b.closest('.pa-edit')) return;
+        var i = Number(card.getAttribute('data-pa')), act = b.getAttribute('data-act');
+        if (act === 'edit') paEdit(card, i);
+        else if (act === 'del') { pa.rows.splice(i, 1); paSaveDraft(); paRender(); }
+        else if (act === 'up' && i > 0) { var t = pa.rows[i - 1]; pa.rows[i - 1] = pa.rows[i]; pa.rows[i] = t; paSaveDraft(); paRender(); }
+        else if (act === 'down' && i < pa.rows.length - 1) { var t2 = pa.rows[i + 1]; pa.rows[i + 1] = pa.rows[i]; pa.rows[i] = t2; paSaveDraft(); paRender(); }
+      };
+    }
+    paShowSrc(src || (pa.rows.length ? 'pyq' : 'bank'));
+  }
+  function paShowSrc(src) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-addsrc]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-addsrc') === src)); });
+    $('pyqAddPanel').hidden = src !== 'pyq';
+    $('bankAddPanel').hidden = src !== 'bank';
+    if (src === 'pyq') {
+      $('paExam').value = pa.exam;
+      paSetMode(pa.mode);
+      loadPyqSessions().then(function () {
+        var known = pyqYearsFor(pa.exam).some(function (r) { return r.pyq_year === pa.year; });
+        paFillYears(known ? pa.year : null);
+        if (pa.year && !known) { $('paYear').value = '__new'; $('paNew').value = pa.year; paYearChanged(); }
+      });
+      paRender();
+    }
+  }
+
   function init() {
     if (!window.supabase) {
       $('gateMsg').textContent = 'Failed to load. Check your connection and refresh.';

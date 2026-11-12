@@ -720,3 +720,7 @@ body:has(#testView:not([hidden])) { padding-bottom: 0; }
   .ml-tabbar a { font-size: 10.5px; min-height: 52px; border-radius: 16px; }
   .ml-tabbar svg { width: 22px; height: 22px; }
 }
+/* Solid bar on phones: a blurred backdrop repaints on every scroll frame. */
+@media (max-width: 1023px) {
+  .ml-tabbar { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--panel-solid); }
+}

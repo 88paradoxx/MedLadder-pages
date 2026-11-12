@@ -1,0 +1,14 @@
+{
+  "prerender": [
+    {
+      "where": {
+        "and": [
+          { "href_matches": "/*" },
+          { "not": { "href_matches": ["/admin-mock*", "/api/*", "/*.apk", "/download-apk", "/*.pdf"] } },
+          { "not": { "selector_matches": "[href^='#'], [download], .admin-footer-link" } }
+        ]
+      },
+      "eagerness": "moderate"
+    }
+  ]
+}
