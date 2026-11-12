@@ -60,7 +60,7 @@
       'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
   function showView(id) {
-    ['gateView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView', 'editQView'].forEach(function (v) {
+    ['gateView', 'homeView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView', 'editQView', 'proView', 'usageView'].forEach(function (v) {
       $(v).hidden = v !== id;
     });
     window.scrollTo(0, 0);
@@ -608,18 +608,26 @@
     $('bankBtn').onclick = function () { showView('bankView'); };
     $('flaggedBtn').onclick = function () { loadFlags('open'); };
     $('editQBtn').onclick = openEditQ;
-    $('editQBackBtn').onclick = loadTests;
+    $('testsBackBtn').onclick = loadHome;
+    $('proBackBtn').onclick = loadHome;
+    $('usageBackBtn').onclick = loadHome;
+    $('proGrantBtn').onclick = function () { proCall('grant'); };
+    $('proRevokeBtn').onclick = function () { proCall('revoke'); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-go]'), function (b) {
+      b.onclick = function () { homeGo(b.getAttribute('data-go')); };
+    });
+    $('editQBackBtn').onclick = loadHome;
     $('eqLoadBtn').onclick = function () { eqLoad(0); };
     $('eqSearch').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); eqLoad(0); } };
     $('eqPrev').onclick = function () { eqLoad(Math.max(0, eqState.offset - eqState.limit)); };
     $('eqNext').onclick = function () { eqLoad(eqState.offset + eqState.limit); };
-    $('flaggedBackBtn').onclick = loadTests;
+    $('flaggedBackBtn').onclick = loadHome;
     Array.prototype.forEach.call(document.querySelectorAll('.flag-filter'), function (b) {
       b.onclick = function () { loadFlags(b.getAttribute('data-status')); };
     });
-    $('bankBackBtn').onclick = loadTests;
+    $('bankBackBtn').onclick = loadHome;
     $('qotdBtn').onclick = loadQotd;
-    $('qotdBackBtn').onclick = loadTests;
+    $('qotdBackBtn').onclick = loadHome;
     $('qdSearchBtn').onclick = function () { searchQotd(false); };
     $('qdRecentBtn').onclick = function () { searchQotd(true); };
     $('qdSearch').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); searchQotd(false); } };
@@ -1159,6 +1167,110 @@
     next();
   }
 
+  /* ---------- admin home: one card per function ---------- */
+  var EDGE_ADMIN_GRANT_URL = SUPABASE_URL + '/functions/v1/admin-grant-pro';
+  function fmt(n) { return Number(n || 0).toLocaleString(); }
+  function setChip(k, text, tone) {
+    var c = $('ahChip-' + k);
+    if (!c) return;
+    c.textContent = text;
+    c.className = 'ah-chip' + (tone ? ' ' + tone : '');
+  }
+  function loadHome() {
+    showView('homeView');
+    var h = new Date().getHours();
+    $('ahHello').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening');
+    sb.rpc('admin_overview').then(function (res) {
+      var d = res && !res.error && res.data;
+      if (!d) return;
+      $('ahStats').innerHTML =
+        '<div class="ah-stat"><strong>' + fmt(d.students) + '</strong><span>Accounts · +' + fmt(d.new_7d) + ' this week</span></div>' +
+        '<div class="ah-stat"><strong>' + fmt(d.active_7d) + '</strong><span>Active this week · ' + fmt(d.active_1d) + ' today</span></div>' +
+        '<div class="ah-stat"><strong>' + fmt(d.answers_7d) + '</strong><span>Answers this week' + (d.accuracy_7d != null ? ' · ' + d.accuracy_7d + '% right' : '') + '</span></div>' +
+        '<div class="ah-stat"><strong>' + fmt(d.pro_active) + '</strong><span>Pro students</span></div>';
+      setChip('pro', fmt(d.pro_active) + ' active');
+      setChip('usage', fmt(d.active_7d) + ' active this week');
+    });
+    sb.rpc('admin_home_counts').then(function (res) {
+      var c = res && !res.error && res.data;
+      if (!c) return;
+      setChip('tests', fmt(c.tests_total) + ' test' + (c.tests_total === 1 ? '' : 's') + (c.tests_live ? ' · ' + c.tests_live + ' live' : ''), c.tests_live ? 'live' : '');
+      setChip('add', fmt(c.bank) + ' questions');
+      setChip('edit', fmt(c.short_expl) + ' thin explanations', c.short_expl ? 'warn' : '');
+      setChip('review', c.review ? fmt(c.review) + ' to fix' : 'All clear', c.review ? 'bad' : 'ok');
+      setChip('reports', c.open_flags ? fmt(c.open_flags) + ' open' : 'None open', c.open_flags ? 'bad' : 'ok');
+      setChip('qotd', (c.qotd_today ? 'Today set' : 'Today not set') + (c.qotd_days_ahead ? ' · +' + c.qotd_days_ahead : ''), c.qotd_today ? 'ok' : 'warn');
+    });
+  }
+  function homeGo(k) {
+    if (k === 'tests') loadTests();
+    else if (k === 'add') showView('bankView');
+    else if (k === 'edit') { openEditQ(); $('eqFilter').value = 'all'; }
+    else if (k === 'review') { openEditQ(); $('eqSubj').value = ''; $('eqSubj').onchange(); $('eqFilter').value = 'review'; $('eqSearch').value = ''; eqLoad(0); }
+    else if (k === 'reports') loadFlags('open');
+    else if (k === 'qotd') loadQotd();
+    else if (k === 'pro') { showView('proView'); $('proMsg').textContent = ''; }
+    else if (k === 'usage') loadUsage();
+  }
+  function proCall(action) {
+    var email = ($('proEmail').value || '').trim().toLowerCase();
+    var days = parseInt($('proDays').value, 10) || 365;
+    if (!email || email.indexOf('@') === -1) { $('proMsg').textContent = 'Enter the student’s email address.'; return; }
+    if (action === 'revoke' && !window.confirm('Cancel all active Pro access for ' + email + '?')) return;
+    $('proGrantBtn').disabled = $('proRevokeBtn').disabled = true;
+    $('proMsg').textContent = action === 'revoke' ? 'Revoking…' : 'Granting…';
+    sb.auth.getSession().then(function (s) {
+      var token = s && s.data && s.data.session ? s.data.session.access_token : null;
+      if (!token) throw new Error('Session expired, sign in again.');
+      return fetch(EDGE_ADMIN_GRANT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: action, target_email: email, days: days })
+      });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, status: r.status, d: d }; });
+    }).then(function (x) {
+      if (!x.ok || !x.d.success) { $('proMsg').textContent = (action === 'revoke' ? 'Revoke' : 'Grant') + ' failed: ' + (x.d.error || x.status); return; }
+      $('proMsg').textContent = action === 'revoke' ? 'Pro access cancelled for ' + email + '.'
+        : 'Pro granted to ' + email + (x.d.expires_at ? ' until ' + new Date(x.d.expires_at).toLocaleDateString() : '') + '.';
+      $('proEmail').value = '';
+    }).catch(function (e) {
+      $('proMsg').textContent = 'Request failed: ' + e.message;
+    }).then(function () {
+      $('proGrantBtn').disabled = $('proRevokeBtn').disabled = false;
+    });
+  }
+  function loadUsage() {
+    showView('usageView');
+    $('usageStats').innerHTML = '<p class="am-hint">Loading…</p>';
+    $('usageHard').innerHTML = '';
+    sb.rpc('admin_overview').then(function (res) {
+      var d = res && !res.error && res.data;
+      if (!d) { $('usageStats').innerHTML = '<p class="am-hint">' + esc(res && res.error ? rpcErr(res.error) : 'Could not load.') + '</p>'; return; }
+      var t = function (num, label, sub) { return '<div class="ah-u"><strong>' + num + '</strong><span>' + label + '</span>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; };
+      $('usageStats').innerHTML =
+        t(fmt(d.students), 'Accounts', '+' + fmt(d.new_7d) + ' in the last 7 days') +
+        t(fmt(d.active_7d), 'Practised this week', fmt(d.active_1d) + ' today') +
+        t(fmt(d.answers_7d), 'Answers this week', fmt(d.answers_1d) + ' today' + (d.accuracy_7d != null ? ' · ' + d.accuracy_7d + '% correct' : '')) +
+        t(fmt(d.pro_active), 'Active Pro students', '') +
+        t(fmt(d.questions), 'Bank questions', fmt(d.pyq_questions) + ' past-paper questions besides') +
+        t(fmt(d.flags_open), 'Open student reports', '');
+      var hard = d.hard_questions || [];
+      $('usageHard').innerHTML = hard.length ? hard.map(function (h) {
+        return '<div class="am-q"><div class="qhead"><span class="n">#' + h.id + '</span><span class="am-hint">' + esc(h.topic || '') + '</span><span class="sp"></span>' +
+          '<span class="am-badge draft">' + h.pct + '% of ' + h.n + ' correct</span></div>' +
+          '<div class="qt">' + esc(h.text || '') + '</div>' +
+          '<button class="am-btn" type="button" data-hard="' + h.id + '">Open in editor</button></div>';
+      }).join('') : '<div class="am-card">Not enough answers yet.</div>';
+      Array.prototype.forEach.call($('usageHard').querySelectorAll('[data-hard]'), function (b) {
+        b.onclick = function () {
+          openEditQ(); $('eqSubj').value = ''; $('eqSubj').onchange(); $('eqFilter').value = 'all';
+          $('eqSearch').value = b.getAttribute('data-hard'); eqLoad(0);
+        };
+      });
+    });
+  }
+
   /* ---------- edit any bank question ----------
    * Browse the bank by subject / topic (or search), open a question, and
    * change its text, options, key, explanation, image or topic, or delete it. */
@@ -1541,7 +1653,7 @@
         showView('gateView');
         return;
       }
-      loadTests();
+      loadHome();
     });
     sb.auth.onAuthStateChange(function (_ev, session) {
       var u = session ? session.user : null;

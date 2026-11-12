@@ -146,6 +146,44 @@ window.addEventListener('error', function (ev) {
         throw e;
       }
 
+      // ---- live question counts (site_counts RPC) ---------------------------
+      // syllabus.js carries the counts from the last build. Once the database
+      // answers, every topic, subject and total in the app uses live numbers.
+      var LIVE_COUNTS = null;
+      function applySiteCounts(c) {
+        if (!c || !c.modules) return false;
+        var changed = false;
+        SYLLABUS.forEach(function (sub, si) {
+          var sum = 0;
+          (sub.modules || []).forEach(function (m) {
+            var n = Number(c.modules[m.id] || 0);
+            if (m.questionCount !== n) { m.questionCount = n; changed = true; }
+            sum += n;
+          });
+          if (sub.questionCount !== sum) { sub.questionCount = sum; changed = true; }
+          if (SUBJECT_INDEX[si]) SUBJECT_INDEX[si].questionCount = sum;
+        });
+        if (!LIVE_COUNTS || LIVE_COUNTS.total !== c.total) changed = true;
+        LIVE_COUNTS = c;
+        return changed;
+      }
+      function loadSiteCounts() {
+        try {
+          var cached = JSON.parse(localStorage.getItem('ml_site_counts') || 'null');
+          if (cached && cached.c && Date.now() - cached.at < 6 * 3600e3) { applySiteCounts(cached.c); return; }
+        } catch (e) { }
+        if (!supabaseClient) return;
+        supabaseClient.rpc('site_counts').then(function (res) {
+          if (!res || res.error || !res.data) return;
+          var changed = applySiteCounts(res.data);
+          try { localStorage.setItem('ml_site_counts', JSON.stringify({ at: Date.now(), c: res.data })); } catch (e) { }
+          if (!changed || !state) return;
+          if (state.screen === 'home') renderHome(true);
+          else if (state.screen === 'subjects' && typeof renderSubjectsV2 === 'function') renderSubjectsV2();
+          else if (state.screen === 'modules' && state.subjectId && v2On()) renderTopicsV2(state.subjectId);
+        }, function () { });
+      }
+
       function getSubjectModules(subjectId) {
         var subj = SYLLABUS.find(function (s) { return s.subjectId === subjectId; });
         return subj ? subj.modules : [];
@@ -2457,7 +2495,7 @@ window.addEventListener('error', function (ev) {
         if (headerAdminBtn) {
           headerAdminBtn.onclick = function (e) {
             e.stopPropagation();
-            openAdminModal();
+            window.location.href = '/admin-mock';
           };
         }
         var headerProBadge = document.getElementById('headerProBadge');
@@ -3179,6 +3217,7 @@ window.addEventListener('error', function (ev) {
 
         if (recoveryTokenHash) { cleanAuthReturnUrl(); openAuthModal('reset'); }
 
+        loadSiteCounts();
         supabaseClient.auth.getSession().then(function (res) {
           if (res && res.data && res.data.session && res.data.session.user) {
             currentUser = res.data.session.user;
@@ -3553,8 +3592,11 @@ window.addEventListener('error', function (ev) {
       }
 
       function totalQuestions() {
-        // Live Supabase inventory: 29,282 subject/module questions + 6,937 PYQs.
-        return 36219;
+        // Live count once site_counts has loaded; the build-time figure until then.
+        return LIVE_COUNTS && LIVE_COUNTS.total ? LIVE_COUNTS.total : 36219;
+      }
+      function totalTopics() {
+        return LIVE_COUNTS && LIVE_COUNTS.topics ? LIVE_COUNTS.topics : 740;
       }
 
       var activeHomeCategory = 'all';
@@ -7101,7 +7143,7 @@ window.addEventListener('error', function (ev) {
             '<div class="v3-stat3">' +
             '<div class="v3-stat s-ok">' + v3Ic('check', 30) + '<strong>' + answered.toLocaleString() + '</strong><span>Answered</span></div>' +
             '<div class="v3-stat s-acc">' + v3Ic('target', 30) + '<strong>' + (acc == null ? '–' : acc + '%') + '</strong><span>Accuracy</span></div>' +
-            '<div class="v3-stat s-top">' + v3Ic('layers', 30) + '<strong>' + topicsStarted + '</strong><span>of 740 topics</span></div>' +
+            '<div class="v3-stat s-top">' + v3Ic('layers', 30) + '<strong>' + topicsStarted + '</strong><span>of ' + totalTopics() + ' topics</span></div>' +
             '</div></section>';
           var letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
           var strip = '';
@@ -7137,7 +7179,7 @@ window.addEventListener('error', function (ev) {
         if (currentUser) colB += v3BadgesHtml(rd, ix);
         if (currentUser && !pro) {
           colB += '<button class="v3-pro" id="v2ProBtn"><span class="v3-pro-ic" aria-hidden="true">👑</span><span class="v3-pro-t"><b>Go Pro with MedLadder</b>' +
-            '<small>All 740 topics, past papers and full-subject mocks from ₹' + PRO_CONFIG.PRICE_INR + '.</small></span>' + v3Ic('chev', 20) + '</button>';
+            '<small>All ' + totalTopics() + ' topics, past papers and full-subject mocks from ₹' + PRO_CONFIG.PRICE_INR + '.</small></span>' + v3Ic('chev', 20) + '</button>';
         }
 
         var out = '<div class="v3-home"><div class="v3-col">' + colA + '</div><div class="v3-col">' + colB + '</div></div>';
@@ -7238,7 +7280,7 @@ window.addEventListener('error', function (ev) {
         var ix = v2Index(rd);
         var cats = [['all', 'All', ''], ['pre', 'Pre-clinical', 'layers'], ['para', 'Para-clinical', 'flask'], ['clinical', 'Clinical', 'steth']];
         var body = '<section class="v3-pagehead"><div class="v3-pagehead-t"><span class="v3-chip">' + v3Ic('layers', 16) + 'QBank</span>' +
-          '<h1>Subjects</h1><p>' + SUBJECT_INDEX.length + ' subjects · 740 topics · ' + totalQuestions().toLocaleString() + ' questions</p></div>' +
+          '<h1>Subjects</h1><p>' + SUBJECT_INDEX.length + ' subjects · ' + totalTopics() + ' topics · ' + totalQuestions().toLocaleString() + ' questions</p></div>' +
           v3Art(['anatomy', 'medicine', 'pharmacology']) + '</section>' +
           '<div class="v2-gsearch v3-search"><label class="v2-sr" for="v2GSearch">Search subjects or topics</label>' +
           '<span class="v2-gsearch-ic" aria-hidden="true">' + v3Ic('search', 20) + '</span>' +
@@ -7347,7 +7389,7 @@ window.addEventListener('error', function (ev) {
           row('sun', 'Theme', darkMode ? 'Dark' : 'Light', 'id="v3Theme"', '<span class="v3-switch' + (darkMode ? ' on' : '') + '" aria-hidden="true"><span></span></span>') +
           row('grid', 'Classic home', 'Use the earlier home screen', 'id="v2ClassicBtn"') +
           (isAdmin(currentUser) ? row('crown', 'Admin console', 'Students, questions, mock tests', 'id="v3Admin"') : '') +
-          (currentUser && !pro ? row('crown', 'Go Pro', 'All 740 topics and past papers', 'id="v2ProBtn"') : '') +
+          (currentUser && !pro ? row('crown', 'Go Pro', 'All ' + totalTopics() + ' topics and past papers', 'id="v2ProBtn"') : '') +
           (currentUser ? row('out', 'Sign out', '', 'id="v3SignOut"', '') : '') +
           '</div></section>';
         v2Paint('profile', v2Shell('profile', v2Header(), '<div class="v2-bold v3-page"><h1 class="v3-title">Profile</h1>' + body + '</div>', ix.due.length));
@@ -7361,7 +7403,7 @@ window.addEventListener('error', function (ev) {
         var cl = document.getElementById('v2ClassicBtn');
         if (cl) cl.onclick = function () { setUiMode('old'); };
         var ad = document.getElementById('v3Admin');
-        if (ad) ad.onclick = function () { openAdminModal(); };
+        if (ad) ad.onclick = function () { window.location.href = '/admin-mock'; };
         var pb = document.getElementById('v2ProBtn');
         if (pb) pb.onclick = function () { openProModal('banner', {}); };
         var so = document.getElementById('v3SignOut');
