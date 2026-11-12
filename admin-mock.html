@@ -42,6 +42,7 @@
           <button id="bankBtn" class="am-btn">Question bank</button>
           <button id="qotdBtn" class="am-btn">Question of the day</button>
           <button id="flaggedBtn" class="am-btn">🚩 Flagged questions</button>
+          <button id="editQBtn" class="am-btn">✏️ Edit questions</button>
           <button id="newTestBtn" class="am-btn am-btn-primary">+ New test</button>
         </div>
         <div id="testList" class="am-list"></div>
@@ -142,6 +143,41 @@ Q: Next question…</pre></p>
         </div>
         <p class="am-hint">To write a brand-new question for a day, add it in the
           <a href="#" id="qotdToBank">Question bank</a> and tick “Make it the question of the day”.</p>
+      </section>
+      <!-- edit any bank question -->
+      <section id="editQView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="editQBackBtn" class="am-btn">← All tests</button>
+          <h1>Edit questions</h1>
+        </div>
+        <p class="am-hint">Load questions from any subject and topic, then open one to fix its text,
+          options, answer or explanation, move it to another topic, or delete it.</p>
+        <div class="am-card">
+          <div class="am-row">
+            <label>Subject <select id="eqSubj"></select></label>
+            <label>Topic <select id="eqTopic" disabled></select></label>
+            <label>Show
+              <select id="eqFilter">
+                <option value="all">All questions</option>
+                <option value="short">Explanation under 100 characters</option>
+                <option value="review">Needs review (answer key or missing table)</option>
+                <option value="image">Has an image</option>
+              </select>
+            </label>
+          </div>
+          <div class="am-row">
+            <label class="am-wide">Search text or question number
+              <input id="eqSearch" placeholder="e.g. ectopic, or 13262"></label>
+            <button id="eqLoadBtn" class="am-btn am-btn-primary">Load questions</button>
+          </div>
+          <div id="eqInfo" class="am-hint"></div>
+        </div>
+        <div id="eqList" class="am-list"></div>
+        <div class="am-row" id="eqPager" hidden>
+          <button id="eqPrev" class="am-btn">← Previous</button>
+          <span id="eqPage" class="am-hint"></span>
+          <button id="eqNext" class="am-btn">Next →</button>
+        </div>
       </section>
       <!-- flagged questions review queue -->
       <section id="flaggedView" class="am-view" hidden>

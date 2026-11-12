@@ -60,7 +60,7 @@
       'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
   function showView(id) {
-    ['gateView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView'].forEach(function (v) {
+    ['gateView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView', 'editQView'].forEach(function (v) {
       $(v).hidden = v !== id;
     });
     window.scrollTo(0, 0);
@@ -607,6 +607,12 @@
     $('newTestBtn').onclick = function () { openEditor(null); };
     $('bankBtn').onclick = function () { showView('bankView'); };
     $('flaggedBtn').onclick = function () { loadFlags('open'); };
+    $('editQBtn').onclick = openEditQ;
+    $('editQBackBtn').onclick = loadTests;
+    $('eqLoadBtn').onclick = function () { eqLoad(0); };
+    $('eqSearch').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); eqLoad(0); } };
+    $('eqPrev').onclick = function () { eqLoad(Math.max(0, eqState.offset - eqState.limit)); };
+    $('eqNext').onclick = function () { eqLoad(eqState.offset + eqState.limit); };
     $('flaggedBackBtn').onclick = loadTests;
     Array.prototype.forEach.call(document.querySelectorAll('.flag-filter'), function (b) {
       b.onclick = function () { loadFlags(b.getAttribute('data-status')); };
@@ -1151,6 +1157,153 @@
       });
     }
     next();
+  }
+
+  /* ---------- edit any bank question ----------
+   * Browse the bank by subject / topic (or search), open a question, and
+   * change its text, options, key, explanation, image or topic, or delete it. */
+  var eqState = { offset: 0, total: 0, limit: 50 };
+
+  function eqFillSubjects() {
+    var subjSel = $('eqSubj'), topicSel = $('eqTopic');
+    var idx = bulkBuildIndex();
+    subjSel.innerHTML = '<option value="">Any subject</option>' + idx.subjects.map(function (s) {
+      return '<option>' + esc(s.name) + '</option>';
+    }).join('');
+    subjSel.onchange = function () {
+      var subj = idx.bySubject[(subjSel.value || '').toLowerCase()];
+      topicSel.innerHTML = '<option value="">' + (subj ? 'All topics in ' + esc(subj.name) : 'Pick a subject first') + '</option>' +
+        (subj ? subj.modules.map(function (m) { return '<option value="' + m.id + '">' + esc(m.name) + '</option>'; }).join('') : '');
+      topicSel.disabled = !subj;
+    };
+    subjSel.onchange();
+  }
+
+  function openEditQ() {
+    showView('editQView');
+    if (!$('eqSubj').options.length) eqFillSubjects();
+  }
+
+  function eqModuleIds() {
+    var topic = $('eqTopic').value;
+    if (topic) return [parseInt(topic, 10)];
+    var subj = bulkBuildIndex().bySubject[($('eqSubj').value || '').toLowerCase()];
+    return subj ? subj.modules.map(function (m) { return m.id; }) : null;
+  }
+
+  function eqLoad(offset) {
+    eqState.offset = offset || 0;
+    var list = $('eqList');
+    var term = ($('eqSearch').value || '').trim();
+    $('eqInfo').textContent = 'Loading…';
+    list.innerHTML = '';
+    sb.rpc('admin_bank_questions', {
+      p_module_ids: eqModuleIds(), p_search: term || null, p_filter: $('eqFilter').value,
+      p_limit: eqState.limit, p_offset: eqState.offset
+    }).then(function (res) {
+      if (res.error) { $('eqInfo').textContent = rpcErr(res.error); return; }
+      var rows = res.data || [];
+      var total = rows[0] ? Number(rows[0].total_count) : 0;
+      eqState.total = total;
+      $('eqInfo').textContent = total ? total + ' question' + (total === 1 ? '' : 's') + ' found' : 'No questions found.';
+      $('eqPager').hidden = total <= eqState.limit;
+      $('eqPage').textContent = (eqState.offset + 1) + '–' + Math.min(total, eqState.offset + eqState.limit) + ' of ' + total;
+      $('eqPrev').disabled = eqState.offset === 0;
+      $('eqNext').disabled = eqState.offset + eqState.limit >= total;
+      list.innerHTML = rows.map(function (r) {
+        var t = plain(r.question_text, 170);
+        return '<div class="am-q eq-row" data-eq="' + r.id + '"><div class="qhead">' +
+          '<span class="n">#' + r.id + '</span>' +
+          '<span class="am-hint">' + esc((r.subject || '?') + ' / ' + (r.topic || '?')) + (r.is_pyq ? ' · PYQ' : '') + '</span>' +
+          '<span class="sp"></span>' +
+          (r.review_reason ? '<span class="am-badge draft">Needs review</span>' : '') +
+          '<span class="am-badge ' + (r.expl_len < 40 ? 'draft' : r.expl_len < 100 ? '' : 'published') + '">Explanation ' + r.expl_len + '</span>' +
+          '</div><div class="qt">' + esc(t) + '</div>' +
+          (r.review_reason ? '<div class="am-hint" style="color:var(--red)">' + esc(r.review_reason) + '</div>' : '') +
+          '<button class="am-btn eq-open" type="button">Edit</button>' +
+          '<div class="eq-edit" hidden></div></div>';
+      }).join('');
+      var byId = {};
+      rows.forEach(function (r) { byId[r.id] = r; });
+      Array.prototype.forEach.call(list.querySelectorAll('[data-eq]'), function (row) {
+        row.querySelector('.eq-open').onclick = function () { eqOpen(row, byId[row.getAttribute('data-eq')]); };
+      });
+    });
+  }
+
+  function eqOpen(row, r) {
+    var box = row.querySelector('.eq-edit');
+    if (!box.hidden) { box.hidden = true; box.innerHTML = ''; return; }
+    var idx = bulkBuildIndex();
+    var subjOpts = idx.subjects.map(function (s) {
+      return '<option' + (s.name === r.subject ? ' selected' : '') + '>' + esc(s.name) + '</option>';
+    }).join('');
+    var ans = String(r.answer || 'A').toUpperCase();
+    box.innerHTML = '<form class="am-form eq-form">' +
+      '<label class="am-wide">Question <textarea name="q" rows="4" required></textarea></label>' +
+      ['a', 'b', 'c', 'd', 'e'].map(function (L) {
+        return '<label>' + L.toUpperCase() + ' <input name="' + L + '"' + (L === 'a' || L === 'b' ? ' required' : '') + '></label>';
+      }).join('') +
+      '<label>Correct answer <select name="ans">' + ['A', 'B', 'C', 'D', 'E'].map(function (L) {
+        return '<option' + (L === ans ? ' selected' : '') + '>' + L + '</option>';
+      }).join('') + '</select></label>' +
+      '<label class="am-wide">Explanation <textarea name="ex" rows="8"></textarea></label>' +
+      '<label class="am-wide">Image URL (optional) <input name="img" placeholder="https://…"></label>' +
+      '<label>Subject <select name="subj">' + subjOpts + '</select></label>' +
+      '<label>Topic <select name="topic"></select></label>' +
+      '<div class="am-wide am-row">' +
+      '<button class="am-btn am-btn-primary" type="submit">Save changes</button>' +
+      (r.review_reason ? '<button class="am-btn" type="button" data-act="reviewed">Mark reviewed</button>' : '') +
+      '<button class="am-btn am-btn-danger" type="button" data-act="delete">Delete question</button>' +
+      '<button class="am-btn" type="button" data-act="close">Close</button>' +
+      '</div><p class="am-hint am-wide">The explanation accepts plain text or simple HTML (&lt;b&gt;, &lt;i&gt;, &lt;p&gt;).</p></form>';
+    box.hidden = false;
+    var f = box.querySelector('form');
+    f.q.value = r.question_text || '';
+    ['a', 'b', 'c', 'd', 'e'].forEach(function (L) { f[L].value = r['option_' + L] || ''; });
+    f.ex.value = r.explanation || '';
+    f.img.value = r.image_url || '';
+    var fillTopics = function () {
+      var subj = idx.bySubject[(f.subj.value || '').toLowerCase()];
+      f.topic.innerHTML = subj ? subj.modules.map(function (m) {
+        return '<option value="' + m.id + '"' + (m.id === r.module_id ? ' selected' : '') + '>' + esc(m.name) + '</option>';
+      }).join('') : '';
+    };
+    f.subj.onchange = fillTopics;
+    fillTopics();
+    f.onsubmit = function (ev) {
+      ev.preventDefault();
+      var newMod = parseInt(f.topic.value, 10) || null;
+      var img = f.img.value.trim();
+      var imgArg = img ? img : (r.image_url ? '' : null);
+      if (newMod && newMod !== r.module_id && !window.confirm('Move this question to ' + f.subj.value + ' / ' + f.topic.options[f.topic.selectedIndex].text + '?')) return;
+      sb.rpc('admin_save_bank_question', {
+        p_question_id: r.id, p_question_text: f.q.value, p_option_a: f.a.value, p_option_b: f.b.value,
+        p_option_c: f.c.value, p_option_d: f.d.value, p_option_e: f.e.value,
+        p_answer: f.ans.value, p_explanation: f.ex.value, p_module_id: newMod, p_image_url: imgArg
+      }).then(function (res) {
+        if (res.error) { toast(rpcErr(res.error)); return; }
+        toast('Question #' + r.id + ' saved' + (newMod && newMod !== r.module_id ? ' and moved.' : '.'));
+        eqLoad(eqState.offset);
+      });
+    };
+    box.querySelector('[data-act="close"]').onclick = function () { box.hidden = true; box.innerHTML = ''; };
+    var rv = box.querySelector('[data-act="reviewed"]');
+    if (rv) rv.onclick = function () {
+      sb.rpc('admin_clear_review_flag', { p_question_id: r.id }).then(function (res) {
+        if (res.error) { toast(rpcErr(res.error)); return; }
+        toast('Marked as reviewed.');
+        eqLoad(eqState.offset);
+      });
+    };
+    box.querySelector('[data-act="delete"]').onclick = function () {
+      if (!window.confirm('Delete question #' + r.id + ' permanently? Students’ answers to it are removed too. (A copy is kept in the archive.)')) return;
+      sb.rpc('admin_delete_bank_question', { p_question_id: r.id }).then(function (res) {
+        if (res.error) { toast(rpcErr(res.error)); return; }
+        toast('Question #' + r.id + ' deleted.');
+        eqLoad(eqState.offset);
+      });
+    };
   }
 
   /* ---------- flagged questions review queue ----------

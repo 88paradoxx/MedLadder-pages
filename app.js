@@ -2401,6 +2401,10 @@ window.addEventListener('error', function (ev) {
       }
 
       function updateMastheadAuth() {
+        // Profile was drawn before sign-in settled: draw it again for the right person.
+        if (state && state.screen === 'profile' && v3ProfileUid !== undefined && v3ProfileUid !== (currentUser ? currentUser.id : null)) {
+          setTimeout(renderProfileV2, 0);
+        }
         var rightEls = document.querySelectorAll('.masthead .right');
         rightEls.forEach(function (rc) {
           var existingPro = rc.querySelector('#headerGoProBtn, .pro-badge-header, #headerAdminBtn');
@@ -6968,7 +6972,21 @@ window.addEventListener('error', function (ev) {
         return part + (name ? ', ' + esc(name.charAt(0).toUpperCase() + name.slice(1)) : '');
       }
 
+      // Links from other pages (e.g. the mock-test bottom bar) open a tab with ?go=.
+      var v3PendingGo = (function () {
+        try {
+          var m = /[?&]go=(qbank|pyq|bookmarks|profile)\b/.exec(window.location.search || '');
+          if (!m) return null;
+          history.replaceState(null, '', window.location.pathname + window.location.hash);
+          return m[1];
+        } catch (e) { return null; }
+      })();
       function renderHomeV2() {
+        if (v3PendingGo && (v3PendingGo !== 'bookmarks' || currentUser)) {
+          var go = v3PendingGo; v3PendingGo = null;
+          if (!quizStylesReady) { ensureQuizStyles().then(function () { v2Go(go); }); } else v2Go(go);
+          return;
+        }
         if (!quizStylesReady) { ensureQuizStyles().then(function () { if (state.screen === 'home') renderHomeV2(); }); return; }
         trackPageView('/', 'home');
         if (!currentUser) loadGuestModules();
@@ -7294,8 +7312,10 @@ window.addEventListener('error', function (ev) {
       }
 
       // ---- Profile ---------------------------------------------------------
+      var v3ProfileUid = undefined;
       function renderProfileV2() {
         if (!quizStylesReady) { ensureQuizStyles().then(renderProfileV2); return; }
+        v3ProfileUid = currentUser ? currentUser.id : null;
         trackPageView('/profile', 'profile');
         var rd = v2HaveHistory() ? reviewData : null;
         var ix = v2Index(rd);
