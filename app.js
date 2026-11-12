@@ -2152,6 +2152,10 @@ window.addEventListener('error', function (ev) {
           '<span>View my progress</span>' +
           '<svg class="dropdown-progress-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>' +
           '</button>' +
+          '<button class="dropdown-action-btn" id="dropdownUiModeBtn">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>' +
+          (v2On() ? 'Switch to classic home' : 'Switch to new home') +
+          '</button>' +
           '<div class="dropdown-divider dropdown-divider-wide"></div>' +
           '<button class="dropdown-action-btn" id="authSignOutBtn">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>' +
@@ -2482,6 +2486,15 @@ window.addEventListener('error', function (ev) {
             dropdown.classList.toggle('hidden', !isHidden);
             userBtn.classList.toggle('open', isHidden);
             userBtn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+          };
+        }
+        var uiModeBtn = document.getElementById('dropdownUiModeBtn');
+        if (uiModeBtn) {
+          uiModeBtn.onclick = function (e) {
+            e.stopPropagation();
+            var dd = document.getElementById('authDropdown');
+            if (dd) dd.classList.add('hidden');
+            setUiMode(v2On() ? 'old' : 'new');
           };
         }
         var signOutBtn = document.getElementById('authSignOutBtn');
@@ -5756,6 +5769,14 @@ window.addEventListener('error', function (ev) {
       // attempt_answers rows); nothing here writes anything new.
       // ======================================================================
       var V2_KEY = 'ml_ui';
+      function setUiMode(mode) {
+        try { localStorage.setItem(V2_KEY, mode); } catch (e) {}
+        try {
+          if (/[?&]ui=/.test(window.location.search || '')) history.replaceState(null, '', window.location.pathname + window.location.hash);
+        } catch (e) {}
+        renderHome(true);
+        if (typeof updateMastheadAuth === 'function') updateMastheadAuth();
+      }
       function v2On() {
         try {
           var m = /[?&]ui=(new|old)\b/.exec(window.location.search || '');
@@ -6701,8 +6722,11 @@ window.addEventListener('error', function (ev) {
 
         out += '<div class="v2-grid2"><div>' + colA + '</div><div>' + colB + '</div></div>';
 
+        out += '<p class="v2-classic-link"><button type="button" id="v2ClassicBtn">Switch to the classic home</button></p>';
         v2Paint('home', v2Shell('today', v2Header(), '<div class="v2-bold">' + out + '</div>', ix.due.length));
         wireV2Shell();
+        var classicBtn = document.getElementById('v2ClassicBtn');
+        if (classicBtn) classicBtn.onclick = function () { setUiMode('old'); };
         wireV2Common();
         wireV2Exam(function () { renderHomeV2(); });
         var tb = document.getElementById('v2TodayBtn');
