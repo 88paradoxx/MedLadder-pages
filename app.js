@@ -3202,33 +3202,49 @@ window.addEventListener('error', function (ev) {
         });
       }
 
+      // After sign-out, nothing signed-in may stay on screen: drop the
+      // per-user caches and redraw whatever tab is open as a guest. (Before,
+      // only Home was redrawn, so Profile, Bookmarks, Mock and the topic
+      // pages kept showing the old account.)
+      var signedOutShown = false;
+      function redrawSignedOut() {
+        reviewData = null;
+        v3BmCache = null;
+        v3MockCache = null;
+        v3ProfileUid = undefined;
+        bmSubjectFilter = 'all';
+        updateMastheadAuth();
+        var sc = state.screen;
+        if (!v2On()) {
+          if (sc === 'setup') renderSetup(state.subjectId, state.moduleId || 'all');
+          else renderHome(true);
+          return;
+        }
+        if (sc === 'subjects') renderSubjectsV2();
+        else if (sc === 'modules' && state.subjectId) renderTopicsV2(state.subjectId);
+        else if (sc === 'pyq') renderPyqV2();
+        else if (sc === 'mock') renderMockV2();
+        else if (sc === 'profile') renderProfileV2();
+        else renderHome(true);
+      }
       function handleSignOut() {
         resetAuthModalButtons();
         var doSignOut = function () {
           currentUser = null;
+          provisionalUser = false;
           resetProState();
           resetAuthModalButtons();
-          showToast('Signed out successfully.');
           updateProModalUI();
-          if (state.screen === 'quiz' || state.screen === 'results') {
-            renderHome();
-          } else if (state.screen === 'home') {
-            renderHome();
-          } else if (state.screen === 'setup') {
-            renderSetup(state.subjectId, state.moduleId || 'all');
-          } else {
-            updateMastheadAuth();
-          }
+          if (!signedOutShown) { signedOutShown = true; showToast('Signed out.'); }
+          redrawSignedOut();
         };
-        if (!supabaseClient) {
-          doSignOut();
-          return;
-        }
-        supabaseClient.auth.signOut().then(function () {
-          doSignOut();
-        }).catch(function (err) {
+        // Update the screen at once; the server-side sign-out can take a
+        // while on a slow connection and the page looked frozen meanwhile.
+        doSignOut();
+        if (!supabaseClient) return;
+        supabaseClient.auth.signOut().catch(function (err) {
           console.warn('Sign out error:', err);
-          doSignOut();
+          try { supabaseClient.auth.signOut({ scope: 'local' }); } catch (e) { }
         });
       }
 
@@ -3327,13 +3343,13 @@ window.addEventListener('error', function (ev) {
           var prevUser = currentUser;
 
           if (event === 'SIGNED_OUT') {
+            var wasIn = !!currentUser;
             currentUser = null;
             resetProState();
             resetAuthModalButtons();
-            updateMastheadAuth();
             updateProModalUI();
-            showToast('You have signed out.');
-            if (state.screen === 'home') renderHome();
+            if (!signedOutShown) { signedOutShown = true; showToast('You have signed out.'); }
+            if (wasIn) redrawSignedOut();
             return;
           }
 
@@ -3348,6 +3364,7 @@ window.addEventListener('error', function (ev) {
 
           if (session && session.user) {
             currentUser = session.user;
+            signedOutShown = false;
             var userChanged = !prevUser || prevUser.id !== currentUser.id;
             if (userChanged) {
               resetProState();
@@ -5214,10 +5231,22 @@ window.addEventListener('error', function (ev) {
         // counter; on a wide screen the same elements become the numbered grid
         // in the left rail.
         var wrongSoFar = answeredCount - correctSoFar;
+        // Practice goes in order: the ticks can take you back to a question
+        // you already answered, never ahead to one you have not reached.
+        // A timed test keeps free navigation, like an exam paper.
+        var freeNav = state.quizType === 'timed';
+        var reach = state.idx;
+        state.order.forEach(function (qi, i) {
+          var tq = state.questions[qi];
+          if (tq && state.answers[String(tq.id || tq.num)]) reach = Math.max(reach, i + 1);
+        });
+        state.navReach = freeNav ? total - 1 : Math.min(total - 1, reach);
         var ticksHtml = state.order.map(function (qi, i) {
           var tq = state.questions[qi];
           var ta = tq ? state.answers[String(tq.id || tq.num)] : null;
-          return '<i class="tick' + (ta ? (ta.isCorrect ? ' ok' : ' bad') : '') + (i === state.idx ? ' cur' : '') + '" data-jump="' + i + '" role="button" tabindex="-1" aria-label="Question ' + (i + 1) + (ta ? (ta.isCorrect ? ', correct' : ', wrong') : '') + '">' + (i + 1) + '</i>';
+          var can = i <= state.navReach && i !== state.idx;
+          return '<i class="tick' + (ta ? (ta.isCorrect ? ' ok' : ' bad') : '') + (i === state.idx ? ' cur' : '') + (can ? ' go' : ' locked') + '"' +
+            (can ? ' data-jump="' + i + '" role="button" tabindex="0"' : '') + ' aria-label="Question ' + (i + 1) + (ta ? (ta.isCorrect ? ', correct' : ', wrong') : '') + '">' + (i + 1) + '</i>';
         }).join('');
         var ladderDensity = total <= 40 ? 'sparse' : (total <= 110 ? 'mid' : 'dense');
         var quizCrumb = String(state.poolTitle || '').replace(' \u2014 ', ' / ');
@@ -5258,7 +5287,7 @@ window.addEventListener('error', function (ev) {
         app.querySelectorAll('#rrLadder .tick[data-jump]').forEach(function (t) {
           t.addEventListener('click', function () {
             var to = parseInt(t.getAttribute('data-jump'), 10);
-            if (!isFinite(to) || to === state.idx) return;
+            if (!isFinite(to) || to === state.idx || to > (state.navReach == null ? to : state.navReach)) return;
             state.idx = to;
             scrollToPageTop();
             renderQuiz();
@@ -8353,6 +8382,14 @@ window.addEventListener('error', function (ev) {
           rrTopBar('Back', resCrumb) +
           '<main id="mainContent" role="main" class="rr-results">' +
           rrResultSummary(correct, total, pct, timedOut) +
+          // A clear way into the answers and explanations, right under the
+          // score (the old "Show full review" link was easy to miss).
+          '<section class="rr-review-cta" aria-label="Review your answers">' +
+          '<div class="rr-review-cta-t"><b>Review your answers</b><span>The right answer and the explanation for every question.</span></div>' +
+          '<div class="rr-review-cta-b">' +
+          '<button class="btn rr-review-btn" id="reviewAllBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 013 3v12a2 2 0 00-2-2H2zM22 5h-7a3 3 0 00-3 3v12a2 2 0 012-2h8z"/></svg>Review all ' + total + '</button>' +
+          (missIdx.length ? '<button class="btn secondary rr-review-btn2" id="reviewMissedBtn">Only the ' + missIdx.length + ' missed</button>' : '') +
+          '</div></section>' +
           (currentUser ? '' :
             '<div class="rr-res-guest">' +
             '<p>You answered these without an account. Sign in to keep this result' +
@@ -8434,6 +8471,20 @@ window.addEventListener('error', function (ev) {
             renderSetup(state.subjectId, mid);
           }
         });
+        var ra = document.getElementById('reviewAllBtn');
+        if (ra) ra.onclick = function () {
+          var block = document.getElementById('reviewBlock');
+          var tg = document.getElementById('reviewToggle');
+          if (block && (block.classList.contains('hidden') || block.getAttribute('data-loaded') !== 'true')) tg.click();
+          setTimeout(function () { (tg || block).scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30);
+        };
+        var rm = document.getElementById('reviewMissedBtn');
+        if (rm) rm.onclick = function () {
+          var sec = app.querySelector('.rr-misses');
+          var first = app.querySelector('.rr-miss');
+          if (first && !first.open) first.querySelector('summary').click();
+          if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
         document.getElementById('reviewToggle').addEventListener('click', function () {
           var block = document.getElementById('reviewBlock');
           if (block && block.getAttribute('data-loaded') !== 'true') {

@@ -1021,6 +1021,7 @@
       var el = $('timer');
       el.textContent = fmtHMS(left);
       el.classList.toggle('danger', left < 10 * 60 * 1000);
+      el.classList.toggle('warn', left >= 10 * 60 * 1000 && left < 30 * 60 * 1000);
       if (left <= 0) {
         clearInterval(timerInt);
         doSubmit(true);
@@ -1030,55 +1031,133 @@
     timerInt = setInterval(tick, 1000);
   }
 
+  /* Question grid: a sidebar on wide screens, a slide-up panel on phones
+   (opened from the grid button in the top bar). Counts, a filter for
+   unanswered / marked questions, and a jump to any question. */
+  var paletteFilter = 'all';
+  function isWide() { return window.matchMedia && window.matchMedia('(min-width: 1024px)').matches; }
+  function openPalette(open) {
+    var d = $('paletteDrawer');
+    d.classList.toggle('open', !!open);
+    $('paletteBackdrop').hidden = !open;
+    $('paletteToggle').setAttribute('aria-expanded', String(!!open));
+    document.body.classList.toggle('mx-noscroll', !!open && !isWide());
+    if (open) {
+      var cur = $('palette').querySelector('.current');
+      if (cur) cur.scrollIntoView({ block: 'center' });
+    }
+  }
   function renderPalette() {
     var p = $('palette');
-    p.innerHTML = '';
+    var nA = 0, nM = 0;
+    questions.forEach(function (q) { if (answers[q.sort_order]) nA++; if (marked[q.sort_order]) nM++; });
+    var total = questions.length;
+    $('paletteCount').textContent = nA + '/' + total;
+    $('progressFill').style.width = (total ? (100 * nA / total) : 0) + '%';
+    $('paletteStats').innerHTML =
+      '<span class="a"><b>' + nA + '</b>Answered</span><span class="m"><b>' + nM + '</b>Marked</span><span class="n"><b>' + (total - nA) + '</b>Left</span>';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pf]'), function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.pf === paletteFilter));
+    });
+    var frag = document.createDocumentFragment();
     questions.forEach(function (q, i) {
+      var a = !!answers[q.sort_order], m = !!marked[q.sort_order];
+      if (paletteFilter === 'todo' && a) return;
+      if (paletteFilter === 'marked' && !m) return;
       var b = document.createElement('button');
-      b.className = 'mt-pal-btn';
+      b.type = 'button';
+      b.className = 'mt-pal-btn' + (a ? ' answered' : '') + (m ? ' marked' : '') + (i === currentIdx ? ' current' : '');
       b.textContent = (i + 1);
       b.dataset.i = i;
-      if (answers[q.sort_order]) b.classList.add('answered');
-      if (marked[q.sort_order]) b.classList.add('marked');
-      if (i === currentIdx) b.classList.add('current');
-      b.onclick = function () { currentIdx = i; renderQuestion(); renderPalette(); };
-      p.appendChild(b);
+      b.setAttribute('aria-label', 'Question ' + (i + 1) + (a ? ', answered' : ', not answered') + (m ? ', marked' : ''));
+      frag.appendChild(b);
     });
+    p.innerHTML = '';
+    if (!frag.childNodes.length) {
+      var e = document.createElement('p');
+      e.className = 'mx-pal-empty';
+      e.textContent = paletteFilter === 'marked' ? 'No questions marked for review.' : 'Every question is answered.';
+      p.appendChild(e);
+    } else p.appendChild(frag);
+  }
+  function goTo(i) {
+    if (i < 0 || i >= questions.length) return;
+    currentIdx = i;
+    renderQuestion();
+    renderPalette();
+    var m = document.querySelector('.mx-main');
+    if (!isWide()) window.scrollTo(0, 0); else if (m) m.scrollTop = 0;
   }
 
   function renderQuestion() {
     var q = questions[currentIdx];
     var card = $('questionCard');
     var letters = optLetters(q);
-    var html = '<div class="qnum">Question ' + (currentIdx + 1) + ' of ' + questions.length +
-      (q.subject ? ' · ' + esc(q.subject) : '') + '</div>' +
-      '<div class="qtext">' + sanitizeQuestionHtml(q.question_text) + '</div>';
+    var isMarked = !!marked[q.sort_order];
+    var html = '<div class="mx-qhead"><span class="mx-qno">Question ' + (currentIdx + 1) + '<small> / ' + questions.length + '</small></span>' +
+      (q.subject ? '<span class="mx-subj">' + esc(q.subject) + '</span>' : '') +
+      (isMarked ? '<span class="mx-flag">★ Marked</span>' : '') +
+      '<span class="mx-marks">+' + (currentTest ? currentTest.positive_marks : 1) + ' / −' + (currentTest ? currentTest.negative_marks : 0) + '</span></div>' +
+      '<div class="qtext">' + sanitizeQuestionHtml(q.question_text) + '</div><div class="mx-opts" role="radiogroup" aria-label="Options">';
     letters.forEach(function (k) {
-      var sel = answers[q.sort_order] === k ? ' selected' : '';
-      html += '<button class="mt-opt' + sel + '" data-k="' + k + '">' +
-        '<span class="key">' + k + '</span><span>' + sanitizeQuestionHtml(q['option_' + k]) + '</span></button>';
+      var on = answers[q.sort_order] === k;
+      html += '<button class="mt-opt' + (on ? ' selected' : '') + '" data-k="' + k + '" role="radio" aria-checked="' + on + '">' +
+        '<span class="key">' + k.toUpperCase() + '</span><span class="otext">' + sanitizeQuestionHtml(q['option_' + k]) + '</span></button>';
     });
-    card.innerHTML = html;
+    card.innerHTML = html + '</div>';
     Array.prototype.forEach.call(card.querySelectorAll('.mt-opt'), function (btn) {
-      btn.onclick = function () {
-        answers[q.sort_order] = btn.dataset.k;
-        saveLocal();
-        renderQuestion();
-        renderPalette();
-      };
+      btn.onclick = function () { pick(btn.dataset.k); };
     });
+    var last = currentIdx === questions.length - 1;
     $('prevBtn').disabled = currentIdx === 0;
-    $('nextBtn').disabled = currentIdx === questions.length - 1;
-    $('markBtn').textContent = marked[q.sort_order] ? 'Unmark review' : 'Mark for review';
+    $('nextBtn').disabled = false;
+    $('nextBtn').innerHTML = last ? 'Finish <span aria-hidden="true">›</span>' : 'Save &amp; next <span aria-hidden="true">›</span>';
+    $('markBtn').innerHTML = (isMarked ? '★ Marked' : '☆ Mark');
+    $('markBtn').classList.toggle('on', isMarked);
+    $('markBtn').setAttribute('aria-pressed', String(isMarked));
+    $('clearBtn').disabled = !answers[q.sort_order];
+  }
+  function pick(k) {
+    var q = questions[currentIdx];
+    if (!q || !q['option_' + k]) return;
+    answers[q.sort_order] = k;
+    saveLocal();
+    renderQuestion();
+    renderPalette();
   }
 
   function wireTestButtons() {
-    $('prevBtn').onclick = function () {
-      if (currentIdx > 0) { currentIdx--; renderQuestion(); renderPalette(); }
-    };
+    $('prevBtn').onclick = function () { goTo(currentIdx - 1); };
     $('nextBtn').onclick = function () {
-      if (currentIdx < questions.length - 1) { currentIdx++; renderQuestion(); renderPalette(); }
+      // On the last question "Finish" shows the grid, so unanswered and
+      // marked questions can be checked before submitting.
+      if (currentIdx < questions.length - 1) goTo(currentIdx + 1);
+      else openPalette(true);
     };
+    $('paletteToggle').onclick = function () { openPalette(!$('paletteDrawer').classList.contains('open')); };
+    $('paletteClose').onclick = function () { openPalette(false); };
+    $('paletteBackdrop').onclick = function () { openPalette(false); };
+    $('palette').onclick = function (e) {
+      var b = e.target.closest('.mt-pal-btn');
+      if (!b) return;
+      goTo(Number(b.dataset.i));
+      if (!isWide()) openPalette(false);
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pf]'), function (b) {
+      b.onclick = function () { paletteFilter = b.dataset.pf; renderPalette(); };
+    });
+    $('sideSubmitBtn').onclick = function () { confirmSubmit(); };
+    document.addEventListener('keydown', function (e) {
+      if ($('testView').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+      var t = e.target && e.target.tagName;
+      if (t === 'INPUT' || t === 'TEXTAREA') return;
+      var k = (e.key || '').toLowerCase();
+      if (/^[a-e]$/.test(k)) { pick(k); e.preventDefault(); }
+      else if (k === 'arrowright') { goTo(currentIdx + 1); e.preventDefault(); }
+      else if (k === 'arrowleft') { goTo(currentIdx - 1); e.preventDefault(); }
+      else if (k === 'm') { $('markBtn').click(); e.preventDefault(); }
+      else if (k === 'escape') openPalette(false);
+    });
     $('markBtn').onclick = function () {
       var q = questions[currentIdx];
       if (marked[q.sort_order]) delete marked[q.sort_order];
@@ -1114,11 +1193,18 @@
     window.onbeforeunload = null;
     clearInterval(timerInt);
     $('submitBtn').disabled = true;
-    $('submitBtn').textContent = auto ? 'Time up — submitting…' : 'Submitting…';
+    $('sideSubmitBtn').disabled = true;
+    $('submitBtn').textContent = auto ? 'Time up…' : 'Submitting…';
+    openPalette(false);
     sb.rpc('submit_mock_attempt', { p_attempt_id: attemptId, p_answers: answers })
       .then(function (res) {
         submitLock = false;
-        if (res.error) { toast(friendlyErr(res.error)); return; }
+        if (res.error) {
+          toast(friendlyErr(res.error));
+          $('submitBtn').disabled = false; $('sideSubmitBtn').disabled = false; $('submitBtn').textContent = 'Submit';
+          if (!auto) startTimer();
+          return;
+        }
         try { localStorage.removeItem(lsKey()); } catch (e) {}
         showResultView(res.data);
       });

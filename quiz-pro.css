@@ -4212,3 +4212,31 @@ html.ml-reading #app .v3 .v2-qotd-opt.v3-skel { display: block !important; }
 @media (max-width: 560px) {
   html.ml-reading #app .v3 .v2-qotd-opt { min-height: 48px !important; }
 }
+
+/* Practice quiz ticks: only answered questions can be revisited. */
+html.ml-reading #app .rr-ladder .tick.locked { cursor: default !important; }
+html.ml-reading #app .rr-ladder .tick.go { cursor: pointer !important; }
+@media (min-width: 1024px) {
+  html.ml-reading #app .rr-ladder .tick.locked:not(.cur) { opacity: .45 !important; }
+}
+
+/* Results: a clear "Review your answers" block under the score. */
+html.ml-reading #app .rr-review-cta {
+  display: flex !important; flex-wrap: wrap !important; align-items: center !important; justify-content: space-between !important; gap: 14px !important;
+  margin: 18px 0 22px !important; padding: 16px 18px !important; border-radius: 16px !important;
+  background: var(--rr-accent-soft) !important; border: 1.5px solid color-mix(in srgb, var(--rr-accent) 35%, transparent) !important;
+}
+html.ml-reading #app .rr-review-cta-t { display: flex !important; flex-direction: column !important; gap: 3px !important; min-width: 0 !important; flex: 1 1 240px !important; }
+html.ml-reading #app .rr-review-cta-t b { font: 700 17px/1.3 var(--rr-sans) !important; color: var(--rr-ink) !important; }
+html.ml-reading #app .rr-review-cta-t span { font: 400 14px/1.4 var(--rr-sans) !important; color: var(--rr-ink-dim) !important; }
+html.ml-reading #app .rr-review-cta-b { display: flex !important; gap: 10px !important; flex-wrap: wrap !important; flex: 1 1 260px !important; justify-content: flex-end !important; }
+html.ml-reading #app .rr-review-cta .btn {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important;
+  min-height: 48px !important; margin: 0 !important; padding: 0 18px !important; border-radius: 12px !important; font: 700 15px var(--rr-sans) !important;
+}
+html.ml-reading #app .rr-review-cta .rr-review-btn { background: var(--rr-accent-fill) !important; border: 1px solid var(--rr-accent-fill) !important; color: var(--rr-accent-ink) !important; flex: 1 1 auto !important; }
+html.ml-reading #app .rr-review-cta .rr-review-btn2 { flex: 1 1 auto !important; }
+@media (max-width: 560px) {
+  html.ml-reading #app .rr-review-cta-b { justify-content: stretch !important; }
+  html.ml-reading #app .rr-review-cta .btn { width: 100% !important; }
+}
