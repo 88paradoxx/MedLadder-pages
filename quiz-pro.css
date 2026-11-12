@@ -3658,7 +3658,8 @@ html.ml-reading #app .v3 .v3-filters::-webkit-scrollbar { display: none !importa
 html.ml-reading #app .v3 .v3-filter { flex: 0 0 auto !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; min-height: 46px !important; margin: 0 !important; padding: 0 18px !important; border: 1px solid var(--x-line2) !important; border-radius: 999px !important; background: var(--x-card) !important; color: var(--x-ink) !important; font: 500 15px var(--rr-sans) !important; cursor: pointer !important; white-space: nowrap !important; }
 html.ml-reading #app .v3 .v3-filter[aria-pressed="true"] { background: linear-gradient(140deg, #8B5CF6, #6D3DF0) !important; border-color: transparent !important; color: #fff !important; font-weight: 600 !important; box-shadow: 0 8px 18px -10px rgba(109, 61, 240, .9) !important; }
 html.ml-reading #app .v3 .v3-ways { display: grid !important; grid-template-columns: 1fr !important; gap: 10px !important; }
-@media (min-width: 620px) { html.ml-reading #app .v3 .v3-ways { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+@media (min-width: 620px) { html.ml-reading #app .v3 .v3-ways { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+@media (min-width: 1100px) { html.ml-reading #app .v3 .v3-ways { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
 html.ml-reading #app .v3 .v3-way { display: flex !important; align-items: center !important; gap: 12px !important; min-height: 70px !important; margin: 0 !important; padding: 12px 16px !important; color: var(--x-ink) !important; font: 600 16px var(--rr-sans) !important; text-decoration: none !important; text-align: left !important; cursor: pointer !important; }
 html.ml-reading #app .v3 .v3-way > span:nth-child(2) { flex: 1 1 auto !important; }
 html.ml-reading #app .v3 .v3-way small { display: block !important; color: var(--x-ink2) !important; font-weight: 500 !important; font-size: 13px !important; }
@@ -3666,6 +3667,7 @@ html.ml-reading #app .v3 .v3-way > svg:last-child { color: var(--x-ink3) !import
 html.ml-reading #app .v3 .v3-way-ic { width: 44px !important; height: 44px !important; border-radius: 14px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }
 html.ml-reading #app .v3 .w-trophy { background: rgba(245, 158, 11, .14) !important; color: #E59A0B !important; }
 html.ml-reading #app .v3 .w-doc { background: rgba(59, 130, 246, .14) !important; color: #3B82F6 !important; }
+html.ml-reading #app .v3 .w-book { background: rgba(217, 119, 6, .14) !important; color: #D97706 !important; }
 html.ml-reading #app .v3 .w-ref { background: var(--x-accs) !important; color: var(--x-acc) !important; }
 
 /* ---- topics ---- */

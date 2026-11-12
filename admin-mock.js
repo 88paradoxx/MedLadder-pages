@@ -64,7 +64,7 @@
       'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
   function showView(id) {
-    ['gateView', 'homeView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView', 'editQView', 'proView', 'usageView'].forEach(function (v) {
+    ['gateView', 'homeView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView', 'editQView', 'proView', 'usageView', 'booksView'].forEach(function (v) {
       $(v).hidden = v !== id;
     });
     window.scrollTo(0, 0);
@@ -912,6 +912,7 @@
     $('testsBackBtn').onclick = loadHome;
     $('proBackBtn').onclick = loadHome;
     $('usageBackBtn').onclick = loadHome;
+    wireBooks();
     $('proGrantBtn').onclick = function () { proCall('grant'); };
     $('proRevokeBtn').onclick = function () { proCall('revoke'); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-go]'), function (b) {
@@ -1568,6 +1569,11 @@
       setChip('edit', fmt(c.short_expl) + ' thin explanations', c.short_expl ? 'warn' : '');
       setChip('review', c.review ? fmt(c.review) + ' to fix' : 'All clear', c.review ? 'bad' : 'ok');
       setChip('reports', c.open_flags ? fmt(c.open_flags) + ' open' : 'None open', c.open_flags ? 'bad' : 'ok');
+      sb.from('books').select('id,published').then(function (r) {
+        if (r.error || !r.data) return;
+        var live = r.data.filter(function (b) { return b.published; }).length;
+        setChip('books', r.data.length ? live + ' live' + (r.data.length > live ? ' · ' + (r.data.length - live) + ' hidden' : '') : 'None yet', r.data.length ? '' : 'warn');
+      });
       setChip('qotd', (c.qotd_today ? 'Today set' : 'Today not set') + (c.qotd_days_ahead ? ' · +' + c.qotd_days_ahead : ''), c.qotd_today ? 'ok' : 'warn');
     });
   }
@@ -1580,7 +1586,177 @@
     else if (k === 'qotd') loadQotd();
     else if (k === 'pro') { showView('proView'); $('proMsg').textContent = ''; }
     else if (k === 'usage') loadUsage();
+    else if (k === 'books') loadBooks();
   }
+  /* ---------- Books: upload a PDF/Word file to R2 and list it on /books ----------
+   * The file goes to the Worker (/api/upload-book), which checks the admin
+   * session and streams it into the medladder-images R2 bucket under books/.
+   * The row in `books` (exam, subject, title...) is what the Books page shows;
+   * unticking "Publish" hides a book without deleting it. */
+  var BK_EXAMS = { 'neet-pg': 'NEET PG', fmge: 'FMGE', 'ini-cet': 'INI-CET', 'neet-ss': 'NEET SS' };
+  var BK_TYPES = { pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
+  var bk = { editing: null, rows: [], busy: false };
+  function bkSize(n) { return !n ? '' : n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+  function bkExamName(b) { return b.exam === 'custom' ? (b.exam_label || 'Custom') : (BK_EXAMS[b.exam] || b.exam); }
+  function bkFileExt(f) { var m = /\.(pdf|docx?)$/i.exec(f && f.name || ''); return m ? m[1].toLowerCase() : null; }
+  function wireBooks() {
+    var subs = (window.SYLLABUS_DATA || []).map(function (x) { return x.name; });
+    $('bkSubject').innerHTML = '<option value="">All subjects (' + subs.length + ')</option>' + subs.map(function (n) { return '<option>' + esc(n) + '</option>'; }).join('');
+    $('booksBackBtn').onclick = loadHome;
+    $('bkExam').onchange = function () { $('bkExamLabelWrap').hidden = $('bkExam').value !== 'custom'; };
+    $('bkFile').onchange = function () {
+      var f = $('bkFile').files[0], ext = bkFileExt(f);
+      $('bkFileInfo').textContent = !f ? '' : !ext ? 'Choose a .pdf, .doc or .docx file.' : f.size > 95 * 1048576 ? 'This file is ' + bkSize(f.size) + '. The limit is 95 MB.' : f.name + ' · ' + bkSize(f.size);
+      if (f && ext && !$('bkTitle').value.trim()) $('bkTitle').value = f.name.replace(/\.(pdf|docx?)$/i, '').replace(/[-_]+/g, ' ').trim();
+    };
+    $('bkSaveBtn').onclick = bkSave;
+    $('bkCancelBtn').onclick = bkReset;
+    $('bkList').onclick = function (e) {
+      var b = e.target.closest('[data-bk]');
+      if (!b) return;
+      var row = bk.rows.filter(function (r) { return String(r.id) === b.getAttribute('data-id'); })[0];
+      if (!row) return;
+      var act = b.getAttribute('data-bk');
+      if (act === 'edit') bkEdit(row);
+      else if (act === 'toggle') bkUpdate(row.id, { published: !row.published }, row.published ? 'Hidden from the Books page.' : 'Published.');
+      else if (act === 'up' || act === 'down') bkMove(row, act === 'up' ? -1 : 1);
+      else if (act === 'delete') bkDelete(row);
+    };
+  }
+  function loadBooks() {
+    showView('booksView');
+    bkReset();
+    $('bkList').innerHTML = '<p class="am-hint">Loading…</p>';
+    sb.from('books').select('*').order('sort', { ascending: true }).order('created_at', { ascending: false }).then(function (r) {
+      if (r.error) { $('bkList').innerHTML = '<p class="am-hint">' + esc(rpcErr(r.error)) + '</p>'; return; }
+      bk.rows = r.data || [];
+      bkRenderList();
+    });
+  }
+  function bkRenderList() {
+    if (!bk.rows.length) { $('bkList').innerHTML = '<p class="am-hint">No books yet. Add the first one above.</p>'; return; }
+    $('bkList').innerHTML = bk.rows.map(function (b, i) {
+      return '<div class="am-card bk-row"><div class="bk-row-main"><b>' + esc(b.title) + '</b><small>' + esc(bkExamName(b)) + ' · ' + esc(b.subject || 'All subjects') + ' · ' +
+        esc((b.file_type || 'pdf').toUpperCase()) + (b.file_size ? ' · ' + bkSize(b.file_size) : '') + ' · <a href="' + esc(b.file_url) + '" target="_blank" rel="noopener">open file</a></small></div>' +
+        '<span class="bk-state ' + (b.published ? 'on">Live' : 'off">Hidden') + '</span>' +
+        '<div class="bk-acts">' +
+        '<button class="am-btn" data-bk="up" data-id="' + b.id + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move up">&uarr;</button>' +
+        '<button class="am-btn" data-bk="down" data-id="' + b.id + '"' + (i === bk.rows.length - 1 ? ' disabled' : '') + ' aria-label="Move down">&darr;</button>' +
+        '<button class="am-btn" data-bk="edit" data-id="' + b.id + '">Edit</button>' +
+        '<button class="am-btn" data-bk="toggle" data-id="' + b.id + '">' + (b.published ? 'Hide' : 'Publish') + '</button>' +
+        '<button class="am-btn am-btn-danger" data-bk="delete" data-id="' + b.id + '">Delete</button></div></div>';
+    }).join('');
+  }
+  function bkReset() {
+    bk.editing = null;
+    $('bkFormTitle').textContent = 'Add a book';
+    $('bkExam').value = 'neet-pg'; $('bkExamLabel').value = ''; $('bkExamLabelWrap').hidden = true;
+    $('bkSubject').value = ''; $('bkTitle').value = ''; $('bkDesc').value = ''; $('bkPages').value = '';
+    $('bkFile').value = ''; $('bkFileInfo').textContent = ''; $('bkPublished').checked = true;
+    $('bkSaveBtn').textContent = 'Upload and publish'; $('bkCancelBtn').hidden = true; $('bkMsg').textContent = '';
+    $('bkProg').hidden = true;
+  }
+  function bkEdit(b) {
+    bkReset();
+    bk.editing = b;
+    $('bkFormTitle').textContent = 'Edit: ' + b.title;
+    $('bkExam').value = b.exam; $('bkExamLabel').value = b.exam_label || ''; $('bkExamLabelWrap').hidden = b.exam !== 'custom';
+    $('bkSubject').value = b.subject || ''; $('bkTitle').value = b.title; $('bkDesc').value = b.description || '';
+    $('bkPages').value = b.pages || ''; $('bkPublished').checked = !!b.published;
+    $('bkFileInfo').textContent = 'Current file: ' + (b.file_type || 'pdf').toUpperCase() + (b.file_size ? ', ' + bkSize(b.file_size) : '') + '. Choose a file only to replace it.';
+    $('bkSaveBtn').textContent = 'Save changes'; $('bkCancelBtn').hidden = false;
+    $('bkForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function bkUploadFile(file, ext) {
+    return sb.auth.getSession().then(function (res) {
+      var token = res.data && res.data.session && res.data.session.access_token;
+      if (!token) throw new Error('Your session expired. Sign in again, then retry.');
+      return new Promise(function (resolve, reject) {
+        var x = new XMLHttpRequest();
+        x.open('POST', '/api/upload-book');
+        x.setRequestHeader('Authorization', 'Bearer ' + token);
+        x.setRequestHeader('Content-Type', BK_TYPES[ext]);
+        x.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
+        $('bkProg').hidden = false; $('bkProgBar').style.width = '0';
+        x.upload.onprogress = function (e) {
+          if (!e.lengthComputable) return;
+          var pc = Math.round(100 * e.loaded / e.total);
+          $('bkProgBar').style.width = pc + '%';
+          $('bkMsg').textContent = 'Uploading… ' + pc + '%';
+        };
+        x.onload = function () {
+          var j = {}; try { j = JSON.parse(x.responseText); } catch (e) {}
+          if (x.status === 200 && j.ok) resolve(j);
+          else reject(new Error({ too_large: 'The file is over 95 MB.', not_pdf_or_word: 'Only PDF or Word files can be uploaded.', forbidden: 'This account is not an admin.', unauthorized: 'Your session expired. Sign in again.' }[j.error] || 'Upload failed (' + (j.error || x.status) + '). Try again.'));
+        };
+        x.onerror = function () { reject(new Error('Upload failed: check the connection and try again.')); };
+        x.send(file);
+      });
+    });
+  }
+  function bkSave() {
+    if (bk.busy) return;
+    var f = $('bkFile').files[0], ext = f ? bkFileExt(f) : null;
+    var exam = $('bkExam').value, label = $('bkExamLabel').value.trim(), title = $('bkTitle').value.trim();
+    var pages = parseInt($('bkPages').value, 10);
+    if (exam === 'custom' && !label) { $('bkMsg').textContent = 'Type the custom exam name.'; return; }
+    if (title.length < 2) { $('bkMsg').textContent = 'Give the book a title.'; return; }
+    if (!bk.editing && !f) { $('bkMsg').textContent = 'Choose the PDF or Word file.'; return; }
+    if (f && !ext) { $('bkMsg').textContent = 'Only .pdf, .doc or .docx files.'; return; }
+    if (f && f.size > 95 * 1048576) { $('bkMsg').textContent = 'The file is over 95 MB.'; return; }
+    var row = {
+      title: title, description: $('bkDesc').value.trim() || null, exam: exam, exam_label: exam === 'custom' ? label : null,
+      subject: $('bkSubject').value || null, pages: pages > 0 ? pages : null, published: $('bkPublished').checked, updated_at: new Date().toISOString()
+    };
+    bk.busy = true; $('bkSaveBtn').disabled = true;
+    var oldKey = bk.editing && f ? bk.editing.file_key : null;
+    (f ? bkUploadFile(f, ext) : Promise.resolve(null)).then(function (up) {
+      if (up) { row.file_url = up.url; row.file_key = up.key; row.file_type = up.type; row.file_size = up.size; }
+      $('bkMsg').textContent = 'Saving…';
+      if (bk.editing) return sb.from('books').update(row).eq('id', bk.editing.id);
+      row.sort = bk.rows.length ? Math.min.apply(null, bk.rows.map(function (r) { return r.sort; })) - 1 : 0;
+      return sb.from('books').insert(row);
+    }).then(function (r) {
+      if (r.error) throw new Error(rpcErr(r.error));
+      if (oldKey && oldKey !== row.file_key) bkDeleteFile(oldKey);
+      var msg = row.published ? 'Saved. It shows on the Books page within a minute.' : 'Saved as hidden.';
+      loadBooks();
+      $('bkMsg').textContent = msg;
+    }).catch(function (e) {
+      $('bkMsg').textContent = e.message;
+    }).then(function () { bk.busy = false; $('bkSaveBtn').disabled = false; });
+  }
+  function bkUpdate(id, patch, msg) {
+    patch.updated_at = new Date().toISOString();
+    return sb.from('books').update(patch).eq('id', id).then(function (r) {
+      if (r.error) { window.alert(rpcErr(r.error)); return; }
+      loadBooks(); if (msg) $('bkMsg').textContent = msg;
+    });
+  }
+  function bkMove(row, dir) {
+    var i = bk.rows.indexOf(row), j = i + dir;
+    if (j < 0 || j >= bk.rows.length) return;
+    var order = bk.rows.slice(); order.splice(i, 1); order.splice(j, 0, row);
+    Promise.all(order.map(function (b, k) { return b.sort === k ? null : sb.from('books').update({ sort: k }).eq('id', b.id); })).then(loadBooks);
+  }
+  function bkDeleteFile(key) {
+    if (!key || key.indexOf('books/') !== 0) return Promise.resolve();
+    return sb.auth.getSession().then(function (res) {
+      var token = res.data && res.data.session && res.data.session.access_token;
+      if (!token) return;
+      return fetch('/api/delete-book-file', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key }) });
+    }).catch(function () {});
+  }
+  function bkDelete(b) {
+    if (!window.confirm('Delete “' + b.title + '”? It disappears from the Books page and its file is removed.')) return;
+    sb.from('books').delete().eq('id', b.id).then(function (r) {
+      if (r.error) { window.alert(rpcErr(r.error)); return; }
+      // The NEET SS Pediatrics PDF is also linked from /neet-ss-books: keep that file.
+      if (b.file_key && b.file_key !== 'books/neet-ss-pediatrics-book.pdf') bkDeleteFile(b.file_key);
+      loadBooks();
+    });
+  }
+
   function proCall(action) {
     var email = ($('proEmail').value || '').trim().toLowerCase();
     var days = parseInt($('proDays').value, 10) || 365;

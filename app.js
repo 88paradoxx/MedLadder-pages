@@ -7017,6 +7017,7 @@ window.addEventListener('error', function (ev) {
         target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
         clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
         doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+        book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8M8 11h6"/>',
         sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
         bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
         trophy: '<path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/>',
@@ -7459,6 +7460,7 @@ window.addEventListener('error', function (ev) {
           '<section class="v3-sec"><div class="v3-h"><h2><span>More ways to practise</span></h2></div><div class="v3-ways">' +
           '<a class="v3-card v3-way" id="v2Mock" href="/mock-test"><span class="v3-way-ic w-trophy">' + v3Ic('trophy', 26) + '</span><span>Mock tests</span>' + v3Ic('chev', 18) + '</a>' +
           '<button class="v3-card v3-way" data-nav-go="pyq"><span class="v3-way-ic w-doc">' + v3Ic('doc', 26) + '</span><span>Past papers</span>' + v3Ic('chev', 18) + '</button>' +
+          '<a class="v3-card v3-way" href="/books"><span class="v3-way-ic w-book">' + v3Ic('book', 26) + '</span><span>Books <small>Free PDFs to download</small></span>' + v3Ic('chev', 18) + '</a>' +
           '<button class="v3-card v3-way" data-nav-go="review"><span class="v3-way-ic w-ref">' + v3Ic('refresh', 26) + '</span><span>Review' + (ix.due.length ? ' <small>' + ix.due.length + ' due</small>' : '') + '</span>' + v3Ic('chev', 18) + '</button>' +
           '</div></section>';
         body = '<div class="v2-bold v3-page">' + body + '</div>';
