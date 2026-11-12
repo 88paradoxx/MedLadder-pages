@@ -17,6 +17,10 @@
  */
 
 import COUNT_MAP from './count-map.json';
+// Written by build.mjs on every build (a placeholder is committed): lets the
+// deployed bundle show whether that build minified the site's files.
+import BUILD_STAMP from './build-stamp.json';
+var BUILD = BUILD_STAMP;
 
 var SUPABASE_URL = 'https://groeibwykzrliphzzruk.supabase.co';
 /* Publishable key — already shipped in app.js / admin-mock.js. */
@@ -260,6 +264,7 @@ async function servePage(request, env, ctx) {
   var h = new Headers(out.headers);
   h.delete('etag');
   h.delete('content-length');
+  h.set('x-ml-build', 'minified=' + BUILD.minified + (BUILD.built ? '; built=' + BUILD.built : ''));
   return new Response(out.body, { status: out.status, statusText: out.statusText, headers: h });
 }
 

@@ -43,6 +43,7 @@ const EXCLUDE_ENTRIES = new Set([
   'build.mjs',
   // Read by worker.js at bundle time; not a page asset.
   'count-map.json',
+  'build-stamp.json',
   // Node build script (require('fs')), referenced by no page — was being
   // served publicly. sw.js stays: it is registered from app.js, not via <script src>.
   'optimize_lcp.js',
@@ -85,6 +86,8 @@ async function minifyAssets() {
       esbuild = await import('esbuild');
     } catch (e2) {
       console.warn('build.mjs: esbuild unavailable, skipping minification: ' + e2.message);
+      const { writeFile: wf } = await import('node:fs/promises');
+      await wf(join(ROOT, 'build-stamp.json'), JSON.stringify({ minified: 0, error: String(e2.message).slice(0, 300), built: new Date().toISOString(), node: process.version }) + '\n');
       return;
     }
   }
@@ -110,7 +113,11 @@ async function minifyAssets() {
     }
   }
   console.log(`build.mjs: minified ${n} files, ${(before / 1024).toFixed(0)} KB -> ${(after / 1024).toFixed(0)} KB`);
-  await writeFile(join(DIST, 'build-info.json'), JSON.stringify({ minified: n, kb_before: Math.round(before / 1024), kb_after: Math.round(after / 1024), built: new Date().toISOString() }) + '\n');
+  const info = JSON.stringify({ minified: n, kb_before: Math.round(before / 1024), kb_after: Math.round(after / 1024), built: new Date().toISOString(), node: process.version }) + '\n';
+  await writeFile(join(DIST, 'build-info.json'), info);
+  // Also stamped into the Worker bundle (worker.js imports it), so the
+  // deployed Worker's code shows whether this build minified.
+  await writeFile(join(ROOT, 'build-stamp.json'), info);
 }
 
 async function main() {
