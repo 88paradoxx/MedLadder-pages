@@ -6512,6 +6512,7 @@ window.addEventListener('error', function (ev) {
       function v2Ring(frac, size, stroke, cls, inner) {
         var r = (size - stroke) / 2, c = 2 * Math.PI * r;
         var len = Math.max(0, Math.min(1, frac || 0)) * c;
+        if (frac > 0 && len < 3) len = 3;
         return '<span class="v2-ring ' + (cls || '') + '" style="width:' + size + 'px;height:' + size + 'px">' +
           '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true">' +
           '<circle class="v2-ring-track" cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" stroke-width="' + stroke + '"/>' +
@@ -6600,9 +6601,10 @@ window.addEventListener('error', function (ev) {
         var comp = ss.qseen / (ss.questions || 1);
         var p = v3Pct(comp);
         return '<button class="v3-subj" data-subject="' + sx.subjectId + '" data-name="' + esc(sx.name.toLowerCase()) + '" data-cat="' + esc(sx.cat) + '">' +
-          '<span class="v3-subj-ic">' + v2SubjIcon(sx, 52) + '</span>' +
-          '<span class="v3-subj-t"><b>' + esc(sx.name) + '</b><small>' + ss.started + '/' + ss.total + ' topics</small></span>' +
-          v2Ring(comp, 46, 4.5, 'v3-ring-s' + (p >= 50 ? ' hi' : ''), p + '%') +
+          '<span class="v3-subj-ic">' + v2SubjIcon(sx, 42) + '</span>' +
+          '<span class="v3-subj-t"><b>' + esc(sx.name) + '</b><small>' + ss.started + '/' + ss.total + ' topics<span class="v3-subj-pct"> · ' + p + '%</span></small>' +
+            '<span class="v3-subj-bar"><span style="width:' + (p ? Math.max(4, p) : 0) + '%"></span></span></span>' +
+          v2Ring(comp, 40, 4, 'v3-ring-s' + (p >= 50 ? ' hi' : ''), p + '%') +
           '<span class="v3-subj-chev">' + v3Ic('chev', 16) + '</span></button>';
       }
       function v3Head(icon, title, more) {
@@ -6617,6 +6619,30 @@ window.addEventListener('error', function (ev) {
           '<div class="v2-qotd" id="v2QotdCard"><p class="v2-qotd-wait">Loading today’s question…</p></div></section>';
       }
 
+      // Medal artwork for each badge: shape, two gradient stops, glyph.
+      var V3_MEDALS = {
+        first: ['hex', '#B794FF', '#6D3DF0', '<path d="M32 19l3.6 9 9.4.9-7.1 6.3 2.1 9.3L32 39.6l-8 4.9 2.1-9.3-7.1-6.3 9.4-.9z" fill="#fff"/>'],
+        c100: ['hex', '#7CC4FF', '#2563EB', '<text x="32" y="38.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="15" font-weight="800" fill="#fff">100</text>'],
+        c1000: ['hex', '#FFD66B', '#E08A00', '<text x="32" y="39" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="17" font-weight="800" fill="#fff">1K</text>'],
+        s3: ['circle', '#FFB067', '#F0442C', '<path d="M32 18c1 6 8 8.5 8 16.5A8 8 0 0124 35c0-3.5 2-5.5 3.5-7 .3 3 2 4.5 3.5 4.5-1.5-4.5-.5-10 1-14.5z" fill="#fff"/>'],
+        s7: ['circle', '#FF8FC8', '#D6246E', '<rect x="21" y="22" width="22" height="20" rx="3.5" fill="none" stroke="#fff" stroke-width="2.6"/><path d="M21 28h22M26 19.5v5M38 19.5v5" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><text x="32" y="40" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="800" fill="#fff">7</text>'],
+        td1: ['shield', '#6EE7A8', '#109A55', '<path d="M24.5 32.5l5.2 5.2L40 27.2" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>'],
+        td10: ['shield', '#67E8F9', '#0E7490', '<text x="32" y="38.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="16" font-weight="800" fill="#fff">10</text>'],
+        sharp: ['circle', '#FCA5A5', '#B91C3C', '<circle cx="32" cy="32" r="10" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="32" cy="32" r="4.5" fill="#fff"/>']
+      };
+      function v3MedalSvg(id) {
+        var m = V3_MEDALS[id] || V3_MEDALS.first;
+        var g = 'v3m-' + id;
+        var shape = m[0] === 'hex' ? '<path d="M32 4l24.2 14v28L32 60 7.8 46V18z" fill="url(#' + g + ')" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-linejoin="round"/>' +
+            '<path d="M32 10l19 11v22L32 54 13 43V21z" fill="rgba(255,255,255,.12)"/>'
+          : m[0] === 'shield' ? '<path d="M32 4l22 7v17c0 15-9.5 25-22 31C19.5 53 10 43 10 28V11z" fill="url(#' + g + ')" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-linejoin="round"/>' +
+            '<path d="M32 10l16 5v13c0 11-6.8 18.5-16 23-9.2-4.5-16-12-16-23V15z" fill="rgba(255,255,255,.12)"/>'
+          : '<path d="M20 44l-5 15 8-3 4 7 5-13M44 44l5 15-8-3-4 7-5-13" fill="' + m[2] + '" opacity=".85"/><circle cx="32" cy="30" r="24" fill="url(#' + g + ')" stroke="rgba(255,255,255,.55)" stroke-width="2"/>' +
+            '<circle cx="32" cy="30" r="18" fill="rgba(255,255,255,.12)"/>';
+        var glyph = m[0] === 'circle' ? '<g transform="translate(0,-2)">' + m[3] + '</g>' : m[3];
+        return '<svg class="v3-medal" viewBox="0 0 64 64" width="52" height="52" aria-hidden="true"><defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + m[1] + '"/><stop offset="1" stop-color="' + m[2] + '"/></linearGradient></defs>' +
+          shape + glyph + '<path d="M18 18c5-6 12-8 18-7" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2.4" stroke-linecap="round"/></svg>';
+      }
       function v3BadgesHtml(rd, ix) {
         var b = v2Badges(rd, ix);
         var earnedIds = b.earned.map(function (x) { return x.id; });
@@ -6625,7 +6651,7 @@ window.addEventListener('error', function (ev) {
           '<div class="v3-badges" id="v3Badges">' + list.map(function (x, i) {
             var got = earnedIds.indexOf(x.id) !== -1;
             return '<span class="v3-card v3-bdg' + (got ? '' : ' dim') + (i >= 4 ? ' extra' : '') + '" title="' + esc(x.d) + '"' + (i >= 4 ? ' hidden' : '') + '>' +
-              '<span class="v3-bdg-ic">' + x.ic + '</span><span class="v3-bdg-t">' + esc(x.t) + '</span>' +
+              '<span class="v3-bdg-ic">' + v3MedalSvg(x.id) + '</span><span class="v3-bdg-t">' + esc(x.t) + '</span>' +
               (got ? '' : '<span class="v3-bdg-p">' + Math.min(x.v, x.goal).toLocaleString() + '/' + x.goal.toLocaleString() + '</span>') + '</span>';
           }).join('') + '</div></section>';
       }
@@ -6748,7 +6774,7 @@ window.addEventListener('error', function (ev) {
           var fr = cont.x.st.seen / (cont.x.st.total || 1);
           colA += '<section class="v3-sec">' + v3Head('<span class="v3-hi v3-hi-play">' + v3Ic('play', 14) + '</span>', 'Continue learning', v3More('View all', 'data-nav-go="subjects"')) +
             '<button class="v3-card v3-cont" data-sid="' + cont.sx.subjectId + '" data-mod="' + esc(cont.x.m.moduleId) + '">' +
-            '<span class="v3-cont-ic">' + v2SubjIcon(cont.sx, 64) + '</span>' +
+            '<span class="v3-cont-ic">' + v2SubjIcon(cont.sx, 52) + '</span>' +
             '<span class="v3-cont-main"><b>' + esc(cont.x.m.name) + '</b><small>' + esc(cont.sx.name) + ' · ' + v2Plural(cont.x.st.total - cont.x.st.seen, 'question') + ' left</small>' +
             '<span class="v3-bar"><span style="width:' + Math.max(3, v3Pct(fr)) + '%"></span></span></span>' +
             '<span class="v3-cont-end"><span class="v3-play">' + v3Ic('play', 16) + '</span><span>' + v3Pct(fr) + '%</span></span></button></section>';
