@@ -944,6 +944,7 @@
     if ($('bqSubj')) $('bqSubj').onchange = rebuildBqTopics;
     populateBqDefaults();
     $('bankBulkParseBtn').onclick = previewBankBulk;
+    bbWire();
     $('bankBulkImportBtn').onclick = importBankBulk;
     if ($('bankBulkSubj')) $('bankBulkSubj').onchange = rebuildBankBulkTopics;
     populateBankBulkDefaults();
@@ -1387,42 +1388,115 @@
     });
   }
 
+  /* Bank bulk paste: every parsed question becomes an editable preview
+   * card (same as the past-paper flow): fix text, options, key or topic,
+   * and add pictures to the question or explanation before importing. */
+  var bbShow = 100;
+  function bbResolve(q) {
+    var defSubj = $('bankBulkSubj') ? $('bankBulkSubj').value : '';
+    var defTopic = $('bankBulkTopic') ? $('bankBulkTopic').value : '';
+    var r = q._pinned ? { moduleId: q._moduleId, subject: q._subject, topicName: q._topicName, status: 'ok', note: '' }
+      : resolveBulkTopic(q, defSubj, defTopic);
+    q._moduleId = r.moduleId; q._subject = r.subject; q._topicName = r.topicName;
+    q._topicStatus = r.status; q._note = r.note;
+  }
+  function bbProblems(q) {
+    var p = [];
+    if (q._topicStatus !== 'ok') p.push(q._note ? 'Topic: ' + q._note : 'Pick a topic');
+    if (!String(q.text || '').replace(/<(?!img)[^>]*>/gi, '').trim()) p.push('No question text');
+    if (!q.a || !q.b || !q.c || !q.d) p.push('Needs options A–D');
+    if (!/^[a-e]$/.test(q.answer || '')) p.push('No correct answer');
+    else if (!q[q.answer]) p.push('Answer ' + q.answer.toUpperCase() + ' has no option text');
+    if (!String(q.explanation || '').replace(/<(?!img)[^>]*>/gi, '').trim()) p.push('No explanation');
+    return p;
+  }
   function previewBankBulk() {
     if ($('bankBulkSubj') && !$('bankBulkSubj').options.length) populateBankBulkDefaults();
     var parsed = parseBulk($('bankBulkText').value);
-    var defSubj = $('bankBulkSubj') ? $('bankBulkSubj').value : '';
-    var defTopic = $('bankBulkTopic') ? $('bankBulkTopic').value : '';
-    bankBulkParsed = parsed.questions;
-    var willImport = 0;
-    bankBulkParsed.forEach(function (q) {
-      var r = resolveBulkTopic(q, defSubj, defTopic);
-      q._moduleId = r.moduleId; q._subject = r.subject; q._topicName = r.topicName;
-      q._topicStatus = r.status; q._note = r.note;
-      q._bankOk = r.status === 'ok' && !!q.c && !!q.d && !!q.explanation;
-      if (q._bankOk) willImport++;
-    });
-    var pv = $('bankBulkPreview');
-    $('bankBulkInfo').textContent = bankBulkParsed.length + ' valid question(s) · ' +
-      willImport + ' will import · ' + (bankBulkParsed.length - willImport) + ' skipped' +
-      (parsed.skipped ? ' · ' + parsed.skipped + ' block(s) dropped (need Q + A + B + answer).' : '');
-    $('bankBulkImportBtn').disabled = !willImport;
-    pv.innerHTML = '';
-    bankBulkParsed.slice(0, 5).forEach(function (q, i) {
-      var div = document.createElement('div');
-      div.className = 'am-q';
-      var loc = q._topicStatus === 'ok'
-        ? esc(q._subject) + ' / ' + esc(q._topicName)
-        : (q._subject ? esc(q._subject) + ' · ' : '') + esc(q._note || 'no topic');
-      var verdict = q._bankOk ? 'will import'
-        : 'skipped' + (q._topicStatus === 'ok' ? ' (needs C + D + explanation)' : '');
-      div.innerHTML = '<div class="qhead"><span class="n">#' + (i + 1) + '</span></div>' +
-        '<div class="qt">' + esc(q.text.slice(0, 160)) + (q.text.length > 160 ? '…' : '') + '</div>' +
-        '<div class="opts">Answer: <b>' + q.answer.toUpperCase() + '</b> · ' + loc + ' · ' + verdict + '</div>';
-      pv.appendChild(div);
-    });
-    if (bankBulkParsed.length > 5) {
-      pv.innerHTML += '<p class="am-hint">…and ' + (bankBulkParsed.length - 5) + ' more.</p>';
+    if (!parsed.questions.length) {
+      $('bankBulkInfo').textContent = 'No questions found' + (parsed.skipped ? ' (' + parsed.skipped + ' block(s) need Q + A + B + answer).' : '.');
+      return;
     }
+    parsed.questions.forEach(function (q) {
+      q.text = paHtml(q.text); q.explanation = paHtml(q.explanation);
+      bankBulkParsed.push(q);
+    });
+    bbDropped = parsed.skipped;
+    $('bankBulkText').value = '';
+    bbRender();
+  }
+  var bbDropped = 0;
+  function bbRender() {
+    var pv = $('bankBulkPreview');
+    var n = bankBulkParsed.length, ok = 0;
+    bankBulkParsed.forEach(function (q) { bbResolve(q); q._bankOk = !bbProblems(q).length; if (q._bankOk) ok++; });
+    $('bankBulkInfo').textContent = n ? n + ' in the preview · ' + ok + ' ready' + (n - ok ? ' · ' + (n - ok) + ' need fixing (they stay here)' : '') +
+      (bbDropped ? ' · ' + bbDropped + ' block(s) could not be read (need Q + A + B + answer)' : '') : '';
+    var btn = $('bankBulkImportBtn');
+    btn.disabled = !ok;
+    btn.textContent = ok ? 'Import ' + ok + ' to bank' : 'Import to bank';
+    if (!n) { pv.innerHTML = ''; return; }
+    var shown = Math.min(n, Math.max(bbShow, 100));
+    pv.innerHTML = '<p class="am-hint">Tap <b>Edit</b> to fix a question or add a picture to the question or the explanation.</p>' +
+      bankBulkParsed.slice(0, shown).map(function (q, i) {
+        var probs = bbProblems(q);
+        var opts = ['a', 'b', 'c', 'd', 'e'].filter(function (L) { return q[L]; }).map(function (L) {
+          var right = q.answer === L;
+          return '<li class="' + (right ? 'ok' : '') + '"><b>' + L.toUpperCase() + '</b> ' + esc(q[L]) + (right ? ' <span class="pa-tick">✓ answer</span>' : '') + '</li>';
+        }).join('');
+        return '<div class="am-q pa-card' + (probs.length ? ' bad' : '') + '" data-bb="' + i + '" id="bb-' + i + '">' +
+          '<div class="qhead"><span class="n">#' + (i + 1) + '</span><span class="am-hint">' +
+          (q._topicStatus === 'ok' ? esc(q._subject + ' / ' + q._topicName) : 'No topic yet') + '</span><span class="sp"></span>' +
+          probs.map(function (t) { return '<span class="am-badge pa-bad">' + esc(t) + '</span>'; }).join('') + '</div>' +
+          '<div class="qt rf-view">' + paView(q.text) + '</div>' +
+          '<ol class="pa-opts">' + opts + '</ol>' +
+          (String(q.explanation || '').trim() ? '<details class="pa-ex"><summary>Explanation</summary><div class="rf-view">' + paView(q.explanation) + '</div></details>' : '') +
+          '<div class="am-row pa-acts"><button type="button" class="am-btn" data-bbact="edit">Edit</button>' +
+          '<button type="button" class="am-btn am-btn-danger" data-bbact="del">Remove</button></div>' +
+          '<div class="pa-edit" hidden></div></div>';
+      }).join('') +
+      (shown < n ? '<div class="am-row pa-more"><button type="button" class="am-btn" data-bbmore="1">Show next ' + Math.min(100, n - shown) + ' (' + (n - shown) + ' more)</button>' +
+        '<button type="button" class="am-btn" data-bbmore="all">Show all ' + n + '</button></div>' : '') +
+      '<div class="am-row" style="margin-top:6px"><button type="button" class="am-btn" data-bbclear="1">Clear preview</button></div>';
+  }
+  function bbEdit(card, i) {
+    var box = card.querySelector('.pa-edit');
+    if (!box.hidden) { box.hidden = true; box.innerHTML = ''; return; }
+    var q = bankBulkParsed[i];
+    var row = { question_text: q.text, option_a: q.a, option_b: q.b, option_c: q.c, option_d: q.d, option_e: q.e,
+      answer: q.answer, explanation: q.explanation, subject: q._topicStatus === 'ok' ? q._subject : (q._subject || ''),
+      module_id: q._topicStatus === 'ok' ? q._moduleId : null };
+    qEditForm(box, row, {
+      place: 'topic', submitLabel: 'Done',
+      buttons: [{ label: 'Remove', cls: 'am-btn-danger', onClick: function () { bankBulkParsed.splice(i, 1); bbRender(); } }],
+      onSubmit: function (v) {
+        q.text = v.question_text; q.explanation = v.explanation; q.answer = (v.answer || '').toLowerCase();
+        q.a = v.option_a; q.b = v.option_b; q.c = v.option_c; q.d = v.option_d; q.e = v.option_e;
+        if (v.module_id) { q._pinned = true; q._moduleId = v.module_id; q._subject = v.subject; q._topicName = v.topic; }
+        bbRender();
+        var el = $('bb-' + i); if (el) el.scrollIntoView({ block: 'center' });
+      }
+    });
+  }
+  function bbWire() {
+    var pv = $('bankBulkPreview');
+    if (pv._wired) return;
+    pv._wired = true;
+    pv.addEventListener('click', function (e) {
+      var mb = e.target.closest('[data-bbmore]');
+      if (mb) { bbShow = mb.getAttribute('data-bbmore') === 'all' ? bankBulkParsed.length : bbShow + 100; bbRender(); return; }
+      if (e.target.closest('[data-bbclear]')) {
+        if (window.confirm('Remove all ' + bankBulkParsed.length + ' questions from the preview?')) { bankBulkParsed = []; bbDropped = 0; bbRender(); }
+        return;
+      }
+      var b = e.target.closest('[data-bbact]'); if (!b || b.closest('.pa-edit')) return;
+      var card = b.closest('[data-bb]'); var i = Number(card.getAttribute('data-bb'));
+      if (b.getAttribute('data-bbact') === 'edit') bbEdit(card, i);
+      else { bankBulkParsed.splice(i, 1); bbRender(); }
+    });
+    ['bankBulkSubj', 'bankBulkTopic'].forEach(function (id) {
+      var el = $(id); if (el) el.addEventListener('change', function () { if (bankBulkParsed.length) bbRender(); });
+    });
   }
 
   function importBankBulk() {
@@ -1431,23 +1505,17 @@
       if (q._bankOk) queue.push({ q: q, n: k + 1 });
     });
     if (!queue.length) return;
+    if (!window.confirm('Import ' + queue.length + ' questions to the bank? They go live straight away.')) return;
     $('bankBulkImportBtn').disabled = true;
-    $('bankBulkInfo').textContent = 'Importing…';
-    var i = 0, done = 0, failures = [];
+    var i = 0, done = 0, failures = [], doneSet = [];
     function finish() {
-      var msg = 'Imported ' + done + ' to bank.';
-      var skipped = bankBulkParsed.length - queue.length;
-      if (skipped) msg += ' ' + skipped + ' skipped (see preview).';
-      if (failures.length) {
-        msg += ' Failed: ' + failures.map(function (f) {
-          return '#' + f.n + ' (' + f.reason + ')';
-        }).join('; ') + '. Failed blocks are back in the box — fix and re-preview.';
-        $('bankBulkText').value = failures.map(function (f) { return f.q._raw; }).join('\n---\n');
-      } else {
-        $('bankBulkText').value = '';
-      }
-      bankBulkParsed = [];
-      $('bankBulkInfo').textContent = msg;
+      bankBulkParsed = bankBulkParsed.filter(function (q) { return doneSet.indexOf(q) === -1; });
+      bbRender();
+      var left = bankBulkParsed.length;
+      $('bankBulkInfo').textContent = 'Imported ' + done + ' to the bank.' +
+        (failures.length ? ' Failed: ' + failures.map(function (f) { return '#' + f.n + ' (' + f.reason + ')'; }).join('; ') + '.' : '') +
+        (left ? ' ' + left + ' still in the preview: fix and import again.' : '');
+      toast('Imported ' + done + ' to the bank.');
     }
     function next() {
       if (i >= queue.length) { finish(); return; }
@@ -1461,7 +1529,7 @@
         p_answer: q.answer, p_explanation: q.explanation
       }).then(function (br) {
         if (br.error) failures.push({ n: item.n, reason: rpcErr(br.error), q: q });
-        else done++;
+        else { done++; doneSet.push(q); }
         next();
       });
     }
@@ -1709,33 +1777,40 @@
     });
   }
 
-  function eqOpen(row, r) {
-    var box = row.querySelector('.eq-edit');
-    if (!box.hidden) { box.hidden = true; box.innerHTML = ''; return; }
+  /* One question form for every place a question is edited: Edit
+   * questions, the bank bulk-paste preview and the past-paper preview.
+   * r uses the database row shape (question_text, option_a…, answer,
+   * explanation, module_id / pyq_exam, pyq_year). cfg.place picks the
+   * location fields: 'topic' (subject + topic), 'pyq' (exam + session) or
+   * 'none'. cfg.onSubmit(values) receives the edited row; cfg.buttons adds
+   * extra buttons [{ label, cls, onClick }]. */
+  function qEditForm(box, r, cfg) {
+    cfg = cfg || {};
+    var place = cfg.place || 'none';
     var idx = bulkBuildIndex();
-    var subjOpts = idx.subjects.map(function (s) {
-      return '<option' + (s.name === r.subject ? ' selected' : '') + '>' + esc(s.name) + '</option>';
-    }).join('');
-    var ans = String(r.answer || 'A').toUpperCase();
+    var ans = String(r.answer || '').toUpperCase();
     box.innerHTML = '<form class="am-form eq-form">' +
-      '<label class="am-wide">Question <textarea name="q" rows="4" required></textarea></label>' +
+      '<label class="am-wide">Question <textarea name="q" rows="4"></textarea></label>' +
       ['a', 'b', 'c', 'd', 'e'].map(function (L) {
-        return '<label>' + L.toUpperCase() + ' <input name="' + L + '"' + (L === 'a' || L === 'b' ? ' required' : '') + '></label>';
+        return '<label>' + L.toUpperCase() + ' <input name="' + L + '"></label>';
       }).join('') +
-      '<label>Correct answer <select name="ans">' + ['A', 'B', 'C', 'D', 'E'].map(function (L) {
+      '<label>Correct answer <select name="ans">' + (ans ? '' : '<option value="">Pick…</option>') + ['A', 'B', 'C', 'D', 'E'].map(function (L) {
         return '<option' + (L === ans ? ' selected' : '') + '>' + L + '</option>';
       }).join('') + '</select></label>' +
       '<label class="am-wide">Explanation <textarea name="ex" rows="8"></textarea></label>' +
-      (r.is_pyq
+      (place === 'pyq'
         ? '<label>Exam <select name="exam">' + PYQ_EXAM_IDS.map(function (x) { return '<option' + (x === r.pyq_exam ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></label>' +
           '<label>Session <select name="year"></select></label>'
-        : '<label>Subject <select name="subj">' + subjOpts + '</select></label>' +
-          '<label>Topic <select name="topic"></select></label>') +
+        : place === 'topic'
+          ? '<label>Subject <select name="subj">' + (r.subject ? '' : '<option value="">Pick…</option>') + idx.subjects.map(function (s2) {
+              return '<option' + (s2.name === r.subject ? ' selected' : '') + '>' + esc(s2.name) + '</option>';
+            }).join('') + '</select></label>' +
+            '<label>Topic <select name="topic"></select></label>'
+          : '') +
       '<div class="am-wide am-row">' +
-      '<button class="am-btn am-btn-primary" type="submit">Save changes</button>' +
-      (r.review_reason ? '<button class="am-btn" type="button" data-act="reviewed">Mark reviewed</button>' : '') +
-      '<button class="am-btn am-btn-danger" type="button" data-act="delete">Delete question</button>' +
-      '<button class="am-btn" type="button" data-act="close">Close</button>' +
+      '<button class="am-btn am-btn-primary" type="submit">' + esc(cfg.submitLabel || 'Save changes') + '</button>' +
+      (cfg.buttons || []).map(function (b, i) { return '<button class="am-btn ' + (b.cls || '') + '" type="button" data-qbtn="' + i + '">' + esc(b.label) + '</button>'; }).join('') +
+      '<button class="am-btn" type="button" data-qclose="1">Close</button>' +
       '</div></form>';
     box.hidden = false;
     var f = box.querySelector('form');
@@ -1744,55 +1819,80 @@
     f.ex.value = r.explanation || '';
     richField(f.q, { alt: 'Question image', placeholder: 'Question text' });
     richField(f.ex, { alt: 'Explanation image', placeholder: 'Write the explanation…' });
-    if (r.is_pyq) {
+    if (place === 'pyq') {
       var fillYears = function (val) { fillPyqYearSelect(f.year, f.exam.value, { counts: false, value: val }); };
       loadPyqSessions().then(function () { fillYears(r.pyq_year); });
       f.exam.onchange = function () { fillYears(null); };
     }
-    var fillTopics = function () {
-      if (r.is_pyq) return;
-      var subj = idx.bySubject[(f.subj.value || '').toLowerCase()];
-      f.topic.innerHTML = subj ? subj.modules.map(function (m) {
-        return '<option value="' + m.id + '"' + (m.id === r.module_id ? ' selected' : '') + '>' + esc(m.name) + '</option>';
-      }).join('') : '';
-    };
-    if (f.subj) f.subj.onchange = fillTopics;
-    fillTopics();
+    if (place === 'topic') {
+      var fillTopics = function () {
+        var subj = idx.bySubject[(f.subj.value || '').toLowerCase()];
+        f.topic.innerHTML = (r.module_id ? '' : '<option value="">Pick…</option>') + (subj ? subj.modules.map(function (m) {
+          return '<option value="' + m.id + '"' + (m.id === r.module_id ? ' selected' : '') + '>' + esc(m.name) + '</option>';
+        }).join('') : '');
+      };
+      f.subj.onchange = fillTopics;
+      fillTopics();
+    }
+    function close() { box.hidden = true; box.innerHTML = ''; if (cfg.onClose) cfg.onClose(); }
     f.onsubmit = function (ev) {
       ev.preventDefault();
-      var newMod = r.is_pyq ? null : (parseInt(f.topic.value, 10) || null);
-      var exam = r.is_pyq ? f.exam.value : null, year = r.is_pyq ? f.year.value : null;
-      var moved = r.is_pyq ? (exam !== r.pyq_exam || year !== r.pyq_year) : (newMod && newMod !== r.module_id);
-      if (moved && !window.confirm('Move this question to ' + (r.is_pyq ? exam + ' ' + year : f.subj.value + ' / ' + f.topic.options[f.topic.selectedIndex].text) + '?')) return;
-      sb.rpc('admin_save_question', {
-        p_question_id: r.id, p_question_text: f.q.value, p_option_a: f.a.value, p_option_b: f.b.value,
-        p_option_c: f.c.value, p_option_d: f.d.value, p_option_e: f.e.value,
-        p_answer: f.ans.value, p_explanation: f.ex.value, p_module_id: newMod,
-        p_pyq_exam: exam, p_pyq_year: year
-      }).then(function (res) {
-        if (res.error) { toast(rpcErr(res.error)); return; }
-        toast('Question #' + r.id + ' saved' + (moved ? ' and moved.' : '.'));
-        if (moved && r.is_pyq) pyqSessions = null;
-        eqLoad(eqState.offset);
-      });
+      var v = {
+        question_text: f.q.value.trim(), option_a: f.a.value.trim(), option_b: f.b.value.trim(), option_c: f.c.value.trim(),
+        option_d: f.d.value.trim(), option_e: f.e.value.trim(), answer: f.ans.value, explanation: f.ex.value.trim()
+      };
+      if (place === 'topic') {
+        v.module_id = parseInt(f.topic.value, 10) || null;
+        v.subject = f.subj.value || '';
+        v.topic = f.topic.selectedIndex >= 0 && v.module_id ? f.topic.options[f.topic.selectedIndex].text : '';
+        v.moved = !!(v.module_id && v.module_id !== r.module_id);
+      } else if (place === 'pyq') {
+        v.exam = f.exam.value; v.year = f.year.value;
+        v.moved = v.exam !== r.pyq_exam || v.year !== r.pyq_year;
+      }
+      cfg.onSubmit(v, close);
     };
-    box.querySelector('[data-act="close"]').onclick = function () { box.hidden = true; box.innerHTML = ''; };
-    var rv = box.querySelector('[data-act="reviewed"]');
-    if (rv) rv.onclick = function () {
+    box.querySelector('[data-qclose]').onclick = close;
+    (cfg.buttons || []).forEach(function (b, i) { box.querySelector('[data-qbtn="' + i + '"]').onclick = function () { b.onClick(close); }; });
+    return f;
+  }
+
+  function eqOpen(row, r) {
+    var box = row.querySelector('.eq-edit');
+    if (!box.hidden) { box.hidden = true; box.innerHTML = ''; return; }
+    var buttons = [];
+    if (r.review_reason) buttons.push({ label: 'Mark reviewed', onClick: function () {
       sb.rpc('admin_clear_review_flag', { p_question_id: r.id }).then(function (res) {
         if (res.error) { toast(rpcErr(res.error)); return; }
         toast('Marked as reviewed.');
         eqLoad(eqState.offset);
       });
-    };
-    box.querySelector('[data-act="delete"]').onclick = function () {
+    } });
+    buttons.push({ label: 'Delete question', cls: 'am-btn-danger', onClick: function () {
       if (!window.confirm('Delete question #' + r.id + ' permanently? Students’ answers to it are removed too. (A copy is kept in the archive.)')) return;
       sb.rpc('admin_delete_bank_question', { p_question_id: r.id }).then(function (res) {
         if (res.error) { toast(rpcErr(res.error)); return; }
         toast('Question #' + r.id + ' deleted.');
         eqLoad(eqState.offset);
       });
-    };
+    } });
+    qEditForm(box, r, {
+      place: r.is_pyq ? 'pyq' : 'topic', submitLabel: 'Save changes', buttons: buttons,
+      onSubmit: function (v) {
+        if (v.moved && !window.confirm('Move this question to ' + (r.is_pyq ? v.exam + ' ' + v.year : v.subject + ' / ' + v.topic) + '?')) return;
+        sb.rpc('admin_save_question', {
+          p_question_id: r.id, p_question_text: v.question_text, p_option_a: v.option_a, p_option_b: v.option_b,
+          p_option_c: v.option_c, p_option_d: v.option_d, p_option_e: v.option_e,
+          p_answer: v.answer, p_explanation: v.explanation, p_module_id: r.is_pyq ? null : v.module_id,
+          p_pyq_exam: r.is_pyq ? v.exam : null, p_pyq_year: r.is_pyq ? v.year : null
+        }).then(function (res) {
+          if (res.error) { toast(rpcErr(res.error)); return; }
+          toast('Question #' + r.id + ' saved' + (v.moved ? ' and moved.' : '.'));
+          if (v.moved && r.is_pyq) pyqSessions = null;
+          eqLoad(eqState.offset);
+        });
+      }
+    });
   }
 
   /* ---------- flagged questions review queue ----------
@@ -2184,27 +2284,18 @@
     var box = card.querySelector('.pa-edit');
     if (!box.hidden) { box.hidden = true; box.innerHTML = ''; return; }
     var r = pa.rows[i];
-    box.innerHTML = '<form class="am-form">' +
-      '<label class="am-wide">Question <textarea name="q" rows="3"></textarea></label>' +
-      ['a', 'b', 'c', 'd', 'e'].map(function (L) { return '<label>' + L.toUpperCase() + ' <input name="' + L + '"></label>'; }).join('') +
-      '<label>Correct answer <select name="ans"><option value="">Pick…</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></label>' +
-      '<label class="am-wide">Explanation <textarea name="ex" rows="4"></textarea></label>' +
-      '<div class="am-wide am-row"><button class="am-btn am-btn-primary" type="submit">Done</button>' +
-      '<button class="am-btn" type="button" data-act="cancel">Cancel</button></div></form>';
-    box.hidden = false;
-    var f = box.querySelector('form');
-    f.q.value = r.q; f.ex.value = r.ex; f.ans.value = r.ans || '';
-    ['a', 'b', 'c', 'd', 'e'].forEach(function (L) { f[L].value = r[L] || ''; });
-    richField(f.q, { alt: 'Question image', placeholder: 'Question text' });
-    richField(f.ex, { alt: 'Explanation image', placeholder: 'Write the explanation…' });
-    f.onsubmit = function (ev) {
-      ev.preventDefault();
-      r.q = f.q.value.trim(); r.ex = f.ex.value.trim(); r.ans = f.ans.value;
-      ['a', 'b', 'c', 'd', 'e'].forEach(function (L) { r[L] = f[L].value.trim(); });
-      paSaveDraft(); paRender();
-      var el = $('pa-' + i); if (el) el.scrollIntoView({ block: 'center' });
-    };
-    box.querySelector('[data-act="cancel"]').onclick = function () { box.hidden = true; box.innerHTML = ''; };
+    var row = { question_text: r.q, option_a: r.a, option_b: r.b, option_c: r.c, option_d: r.d, option_e: r.e,
+      answer: r.ans, explanation: r.ex };
+    qEditForm(box, row, {
+      place: 'none', submitLabel: 'Done',
+      buttons: [{ label: 'Remove', cls: 'am-btn-danger', onClick: function () { pa.rows.splice(i, 1); paSaveDraft(); paRender(); } }],
+      onSubmit: function (v) {
+        r.q = v.question_text; r.ex = v.explanation; r.ans = v.answer;
+        r.a = v.option_a; r.b = v.option_b; r.c = v.option_c; r.d = v.option_d; r.e = v.option_e;
+        paSaveDraft(); paRender();
+        var el = $('pa-' + i); if (el) el.scrollIntoView({ block: 'center' });
+      }
+    });
   }
 
   function paYearValue() {
