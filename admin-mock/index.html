@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="/theme-init.js"></script>
-  <title>Mock Test Admin | MedLadder</title>
+  <title>Admin | MedLadder</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <link rel="stylesheet" href="/admin-mock.css">
@@ -21,7 +21,7 @@
   <div id="app">
     <header class="am-topbar">
       <a class="am-brand" href="/">MedLadder</a>
-      <span class="am-title">👑 Mock Test Admin</span>
+      <span class="am-title">Admin</span>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">🌙</button>
       <div id="authArea" class="am-auth"></div>
     </header>
@@ -35,23 +35,109 @@
         </div>
       </section>
 
+      <!-- admin home: one card per function -->
+      <section id="homeView" class="am-view" hidden>
+        <div class="ah-hero">
+          <p class="ah-kicker">MedLadder admin</p>
+          <h1 id="ahHello">Welcome back</h1>
+          <p class="ah-sub">Everything that runs the question bank, in one place.</p>
+          <div class="ah-stats" id="ahStats">
+            <div class="ah-stat"><strong>&nbsp;</strong><span>Accounts</span></div>
+            <div class="ah-stat"><strong>&nbsp;</strong><span>Active this week</span></div>
+            <div class="ah-stat"><strong>&nbsp;</strong><span>Answers this week</span></div>
+            <div class="ah-stat"><strong>&nbsp;</strong><span>Pro students</span></div>
+          </div>
+        </div>
+        <div class="ah-grid">
+          <button class="ah-card ah-t-tests" data-go="tests" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
+            <span class="ah-card-t"><b>Mock tests</b><small>Schedule, publish and score All-India mocks</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-tests">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-add" data-go="add" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>
+            <span class="ah-card-t"><b>Add questions</b><small>Write new bank questions, with images</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-add">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-edit" data-go="edit" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></span>
+            <span class="ah-card-t"><b>Edit questions</b><small>Fix text, answers and explanations, move or delete</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-edit">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-review" data-go="review" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></span>
+            <span class="ah-card-t"><b>Needs review</b><small>Suspect answer keys and missing tables to fix</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-review">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-reports" data-go="reports" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></span>
+            <span class="ah-card-t"><b>Student reports</b><small>Questions students flagged while practising</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-reports">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-qotd" data-go="qotd" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span>
+            <span class="ah-card-t"><b>Question of the day</b><small>Choose what every student sees on the home screen</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-qotd">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-pro" data-go="pro" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg></span>
+            <span class="ah-card-t"><b>Pro access</b><small>Grant or revoke Pro for a student</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-pro">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-usage" data-go="usage" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20V4"/></svg></span>
+            <span class="ah-card-t"><b>Usage and insights</b><small>Accounts, activity and the most-missed questions</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-usage">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Pro access -->
+      <section id="proView" class="am-view" hidden>
+        <div class="am-row"><button id="proBackBtn" class="am-btn">&larr; Admin home</button><h1>Pro access</h1></div>
+        <div class="am-card ah-panel">
+          <p class="am-hint">The student must already have an account. Granting adds time on top of any active subscription.</p>
+          <div class="am-row">
+            <label class="am-wide">Student email <input id="proEmail" type="email" placeholder="student@example.com" autocomplete="off"></label>
+            <label>Duration
+              <select id="proDays">
+                <option value="30">1 month</option><option value="90">3 months</option><option value="180">6 months</option>
+                <option value="365" selected>1 year</option><option value="3650">10 years</option>
+              </select>
+            </label>
+          </div>
+          <div class="am-row">
+            <button id="proGrantBtn" class="am-btn am-btn-primary">Grant Pro</button>
+            <button id="proRevokeBtn" class="am-btn am-btn-danger">Revoke Pro</button>
+          </div>
+          <p id="proMsg" class="am-hint"></p>
+        </div>
+      </section>
+
+      <!-- usage and insights -->
+      <section id="usageView" class="am-view" hidden>
+        <div class="am-row"><button id="usageBackBtn" class="am-btn">&larr; Admin home</button><h1>Usage and insights</h1></div>
+        <div id="usageStats" class="ah-usage"></div>
+        <h2 class="ah-h2">Most-missed questions</h2>
+        <p class="am-hint">Questions with 5 or more answers and the lowest scores. A very low score can mean a hard question, or a wrong answer key.</p>
+        <div id="usageHard" class="am-list"></div>
+      </section>
+
       <!-- tests list -->
       <section id="testsView" class="am-view" hidden>
         <div class="am-row">
+          <button id="testsBackBtn" class="am-btn">&larr; Admin home</button>
           <h1>Mock tests</h1>
-          <button id="bankBtn" class="am-btn">Question bank</button>
-          <button id="qotdBtn" class="am-btn">Question of the day</button>
-          <button id="flaggedBtn" class="am-btn">🚩 Flagged questions</button>
-          <button id="editQBtn" class="am-btn">✏️ Edit questions</button>
           <button id="newTestBtn" class="am-btn am-btn-primary">+ New test</button>
         </div>
+        <div hidden><button id="bankBtn"></button><button id="qotdBtn"></button><button id="flaggedBtn"></button><button id="editQBtn"></button></div>
         <div id="testList" class="am-list"></div>
       </section>
 
       <!-- question bank authoring (not tied to any test) -->
       <section id="bankView" class="am-view" hidden>
         <div class="am-row">
-          <button id="bankBackBtn" class="am-btn">← All tests</button>
+          <button id="bankBackBtn" class="am-btn">&larr; Admin home</button>
           <h1>Question bank</h1>
         </div>
         <p class="am-hint">New questions go live in the bank immediately — no review
@@ -118,7 +204,7 @@ Q: Next question…</pre></p>
       <!-- question of the day schedule -->
       <section id="qotdView" class="am-view" hidden>
         <div class="am-row">
-          <button id="qotdBackBtn" class="am-btn">← All tests</button>
+          <button id="qotdBackBtn" class="am-btn">&larr; Admin home</button>
           <h1>Question of the day</h1>
         </div>
         <p class="am-hint">Pick the question every student sees on the home screen for a given date.
@@ -147,7 +233,7 @@ Q: Next question…</pre></p>
       <!-- edit any bank question -->
       <section id="editQView" class="am-view" hidden>
         <div class="am-row">
-          <button id="editQBackBtn" class="am-btn">← All tests</button>
+          <button id="editQBackBtn" class="am-btn">&larr; Admin home</button>
           <h1>Edit questions</h1>
         </div>
         <p class="am-hint">Load questions from any subject and topic, then open one to fix its text,
@@ -182,7 +268,7 @@ Q: Next question…</pre></p>
       <!-- flagged questions review queue -->
       <section id="flaggedView" class="am-view" hidden>
         <div class="am-row">
-          <button id="flaggedBackBtn" class="am-btn">← All tests</button>
+          <button id="flaggedBackBtn" class="am-btn">&larr; Admin home</button>
           <h1>Flagged questions</h1>
         </div>
         <p class="am-hint">User reports that a bank question has an error. Open a flag to move

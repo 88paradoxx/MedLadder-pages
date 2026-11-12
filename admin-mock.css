@@ -164,3 +164,93 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 #editQView .eq-open { margin-top: 8px; }
 #editQView .eq-edit { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line, rgba(127,127,127,.25)); }
 #editQView .eq-form textarea[name="ex"] { min-height: 180px; }
+
+/* ===================== Admin home (card layout) ===================== */
+.am-title { padding: 4px 12px; border-radius: 999px; background: linear-gradient(135deg, rgba(160,107,255,.22), rgba(123,47,247,.12)); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+#homeView { padding-top: 20px; }
+.ah-hero {
+  position: relative; overflow: hidden; border-radius: 28px; padding: 28px 26px 24px; color: #fff; margin-bottom: 22px;
+  background:
+    radial-gradient(600px 260px at 100% -40%, rgba(255,255,255,.22), transparent 60%),
+    radial-gradient(400px 220px at -10% 120%, rgba(34,211,238,.25), transparent 60%),
+    linear-gradient(135deg, #2a0f6b 0%, #5b21d6 48%, #7c3aed 100%);
+  box-shadow: 0 30px 60px -30px rgba(76, 29, 149, .8), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.ah-hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .14;
+  background-image: linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px);
+  background-size: 28px 28px; mask-image: linear-gradient(120deg, transparent 30%, #000 80%); -webkit-mask-image: linear-gradient(120deg, transparent 30%, #000 80%); }
+.ah-kicker { margin: 0 0 6px; font: 600 12px/1 "Archivo", system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.ah-hero h1 { margin: 0 0 6px; font: 700 34px/1.1 "Literata", Georgia, serif; letter-spacing: -.01em; color: #fff; }
+.ah-sub { margin: 0 0 22px; opacity: .85; font-size: 15px; }
+.ah-stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.ah-stat { padding: 14px 14px 12px; border-radius: 18px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); min-width: 0; }
+.ah-stat strong { display: block; font: 700 28px/1.1 "Archivo", system-ui, sans-serif; letter-spacing: -.02em; }
+.ah-stat span { display: block; margin-top: 4px; font-size: 12.5px; opacity: .82; line-height: 1.35; }
+@media (max-width: 640px) {
+  .ah-hero { padding: 22px 18px 18px; border-radius: 24px; }
+  .ah-hero h1 { font-size: 28px; }
+  .ah-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .ah-stat strong { font-size: 24px; }
+}
+
+.ah-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (min-width: 860px) { .ah-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; } }
+.ah-card {
+  --t1: #8b5cf6; --t2: #6d28d9;
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; min-height: 196px;
+  padding: 20px 18px 16px; border-radius: 24px; text-align: left; cursor: pointer; color: var(--text);
+  font: inherit; border: 1px solid transparent;
+  background:
+    linear-gradient(var(--panel), var(--panel)) padding-box,
+    linear-gradient(150deg, color-mix(in srgb, var(--t1) 55%, transparent), var(--border) 45%, var(--border)) border-box;
+  box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 18px 40px -26px rgba(20, 10, 60, .55);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.ah-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(260px 140px at 0% 0%, color-mix(in srgb, var(--t1) 16%, transparent), transparent 70%); }
+.ah-card:hover { transform: translateY(-3px); box-shadow: 0 26px 50px -26px color-mix(in srgb, var(--t2) 70%, transparent); }
+.ah-card:active { transform: translateY(-1px) scale(.99); }
+.ah-card:focus-visible { outline: 2px solid var(--t1); outline-offset: 3px; }
+.ah-ic { position: relative; width: 52px; height: 52px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; color: #fff;
+  background: linear-gradient(145deg, var(--t1), var(--t2)); box-shadow: 0 12px 24px -12px var(--t2), inset 0 1px 0 rgba(255,255,255,.3); }
+.ah-card-t { position: relative; display: flex; flex-direction: column; gap: 5px; }
+.ah-card-t b { font: 700 18px/1.2 "Archivo", system-ui, sans-serif; letter-spacing: -.01em; }
+.ah-card-t small { font-size: 13.5px; line-height: 1.4; color: var(--muted); }
+.ah-card-f { position: relative; margin-top: auto; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ah-chip { display: inline-flex; align-items: center; min-height: 26px; padding: 3px 11px; border-radius: 999px; font: 600 12.5px/1.2 "Archivo", system-ui, sans-serif;
+  background: color-mix(in srgb, var(--t1) 14%, transparent); color: color-mix(in srgb, var(--t1) 75%, var(--text)); }
+.ah-chip.ok { background: rgba(34,197,94,.14); color: var(--green); }
+.ah-chip.warn { background: rgba(245,158,11,.15); color: var(--amber); }
+.ah-chip.bad { background: rgba(239,68,68,.14); color: var(--red); }
+.ah-chip.live { background: rgba(34,197,94,.16); color: var(--green); }
+.ah-arrow { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px;
+  background: var(--panel-2); color: var(--muted); font-size: 16px; transition: background .18s, color .18s, transform .18s; }
+.ah-card:hover .ah-arrow { background: linear-gradient(145deg, var(--t1), var(--t2)); color: #fff; transform: translateX(2px); }
+.ah-t-tests { --t1: #8b5cf6; --t2: #5b21b6; }
+.ah-t-add { --t1: #22c55e; --t2: #15803d; }
+.ah-t-edit { --t1: #3b82f6; --t2: #1d4ed8; }
+.ah-t-review { --t1: #f97316; --t2: #c2410c; }
+.ah-t-reports { --t1: #ef4444; --t2: #b91c1c; }
+.ah-t-qotd { --t1: #eab308; --t2: #a16207; }
+.ah-t-pro { --t1: #f59e0b; --t2: #b45309; }
+.ah-t-usage { --t1: #06b6d4; --t2: #0e7490; }
+@media (max-width: 640px) {
+  .ah-grid { gap: 10px; }
+  .ah-card { min-height: 172px; padding: 16px 14px 13px; border-radius: 20px; gap: 11px; }
+  .ah-ic { width: 44px; height: 44px; border-radius: 14px; }
+  .ah-ic svg { width: 22px; height: 22px; }
+  .ah-card-t b { font-size: 16px; }
+  .ah-card-t small { font-size: 12.5px; }
+  .ah-chip { font-size: 11.5px; padding: 2px 9px; min-height: 22px; }
+  .ah-arrow { width: 28px; height: 28px; flex-basis: 28px; font-size: 14px; }
+}
+.ah-panel { max-width: 640px; }
+#proView .am-row label, #usageView .am-row label { flex: 1 1 220px; min-width: 0; }
+#proView input, #proView select { width: 100%; max-width: 100%; box-sizing: border-box; }
+.ah-usage { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 6px 0 24px; }
+@media (max-width: 640px) { .ah-usage { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
+.ah-u { padding: 16px; border-radius: 20px; background: var(--panel); border: 1px solid var(--border); }
+.ah-u strong { display: block; font: 700 28px/1.1 "Archivo", system-ui, sans-serif; letter-spacing: -.02em; }
+.ah-u span { display: block; margin-top: 4px; font-weight: 600; font-size: 14px; }
+.ah-u small { display: block; margin-top: 3px; color: var(--muted); font-size: 12.5px; }
+.ah-h2 { margin: 6px 0 4px; font: 700 20px/1.2 "Archivo", system-ui, sans-serif; }
