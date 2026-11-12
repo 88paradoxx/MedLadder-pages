@@ -140,25 +140,45 @@
       </section>
 
       <!-- Live test -->
-      <section id="testView" class="mt-view" hidden>
-        <div class="mt-test-header">
-          <div class="mt-test-title" id="testTitle"></div>
-          <div id="practiceBadge" class="mt-practice-note" hidden>Practice mode — not ranked</div>
-          <div class="mt-timer" id="timer">--:--:--</div>
-          <button id="submitBtn" class="mt-btn mt-btn-primary">Submit Test</button>
-        </div>
-        <div class="mt-test-body">
-          <aside class="mt-palette" id="palette"></aside>
-          <div class="mt-question-pane">
-            <div id="questionCard" class="mt-qcard"></div>
-            <div class="mt-qnav">
-              <button id="prevBtn" class="mt-btn">← Previous</button>
-              <button id="markBtn" class="mt-btn">Mark for review</button>
-              <button id="clearBtn" class="mt-btn">Clear response</button>
-              <button id="nextBtn" class="mt-btn">Next →</button>
-            </div>
+      <section id="testView" class="mt-view mx" hidden>
+        <header class="mx-bar">
+          <div class="mx-bar-t">
+            <b id="testTitle"></b>
+            <span id="practiceBadge" class="mx-prac" hidden>Practice · not ranked</span>
           </div>
+          <div class="mx-timer" id="timer" role="timer" aria-live="off">--:--:--</div>
+          <button id="paletteToggle" class="mx-gridbtn" type="button" aria-controls="paletteDrawer" aria-expanded="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            <span id="paletteCount">0/0</span>
+          </button>
+          <button id="submitBtn" class="mx-submit" type="button">Submit</button>
+        </header>
+        <div class="mx-progress" aria-hidden="true"><span id="progressFill"></span></div>
+        <div class="mx-body">
+          <div class="mx-main">
+            <div id="questionCard" class="mt-qcard mx-q"></div>
+            <p class="mx-keys">Keys: <kbd>A</kbd>–<kbd>E</kbd> answer · <kbd>←</kbd> <kbd>→</kbd> move · <kbd>M</kbd> mark</p>
+          </div>
+          <aside class="mx-side" id="paletteDrawer" aria-label="All questions">
+            <div class="mx-side-h"><b>Questions</b><button id="paletteClose" class="mx-x" type="button" aria-label="Close">&times;</button></div>
+            <div class="mx-stats" id="paletteStats"></div>
+            <div class="mx-filters" role="group" aria-label="Show">
+              <button type="button" data-pf="all" aria-pressed="true">All</button>
+              <button type="button" data-pf="todo" aria-pressed="false">Unanswered</button>
+              <button type="button" data-pf="marked" aria-pressed="false">Marked</button>
+            </div>
+            <div class="mt-palette" id="palette"></div>
+            <div class="mx-legend"><span class="a">Answered</span><span class="m">Marked</span><span class="am">Answered + marked</span><span class="n">Not answered</span></div>
+            <button id="sideSubmitBtn" class="mx-submit mx-side-submit" type="button">Submit test</button>
+          </aside>
         </div>
+        <nav class="mx-actions" aria-label="Question actions">
+          <button id="prevBtn" class="mx-act" type="button"><span aria-hidden="true">‹</span> Previous</button>
+          <button id="markBtn" class="mx-act" type="button">Mark</button>
+          <button id="clearBtn" class="mx-act" type="button">Clear</button>
+          <button id="nextBtn" class="mx-act mx-next" type="button">Save &amp; next <span aria-hidden="true">›</span></button>
+        </nav>
+        <div id="paletteBackdrop" class="mx-backdrop" hidden></div>
       </section>
 
       <!-- Result + leaderboard -->
