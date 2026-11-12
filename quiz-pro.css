@@ -4109,3 +4109,89 @@ html.ml-reading #app .v3 .v3-duecard-go {
   padding: 8px 12px !important; border-radius: 12px !important; background: var(--x-acc) !important; color: #fff !important;
   font: 700 13.5px/1 var(--rr-sans) !important;
 }
+
+/* ---- PYQ list: exam card with session chips ---- */
+html.ml-reading #app .v3 .v3-pyq2 { padding: 0 !important; overflow: hidden !important; }
+html.ml-reading #app .v3 .v3-pyq2 .v3-pyq { width: 100% !important; background: none !important; border: 0 !important; border-radius: 0 !important; padding: 16px 16px 10px !important; }
+html.ml-reading #app .v3 .v3-pyq2 .v3-pyq-t b { display: flex !important; align-items: center !important; gap: 8px !important; flex-wrap: wrap !important; }
+html.ml-reading #app .v3 .v3-pyq2 .v3-pyq-t b .v3-tc { font-size: 12px !important; padding: 2px 8px !important; }
+html.ml-reading #app .v3 .v3-pyq2 .v3-pyq-t small { margin: 0 !important; }
+html.ml-reading #app .v3 .v3-pyq-years { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; padding: 0 16px 16px 86px !important; }
+html.ml-reading #app .v3 .v3-pyq-y {
+  padding: 7px 12px !important; border-radius: 12px !important; border: 1px solid var(--x-line) !important; background: var(--x-card2) !important;
+  color: var(--x-ink) !important; font: 600 13.5px/1.1 var(--rr-sans) !important; cursor: pointer !important;
+}
+html.ml-reading #app .v3 .v3-pyq-y:hover { border-color: var(--x-acc) !important; color: var(--x-acc-ink) !important; }
+html.ml-reading #app .v3 .v3-pyq-y.more { background: none !important; color: var(--x-acc-ink) !important; border-style: dashed !important; }
+@media (max-width: 560px) { html.ml-reading #app .v3 .v3-pyq-years { padding-left: 16px !important; } }
+
+/* ---- PYQ setup ---- */
+html.ml-reading #app .v3 .v3-pyq-big { font-size: 64px !important; line-height: 1 !important; filter: none !important; }
+html.ml-reading #app .v3 .v3-papers { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; gap: 10px !important; }
+html.ml-reading #app .v3 .v3-paper {
+  display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; padding: 14px !important;
+  border-radius: 16px !important; border: 1.5px solid var(--x-line) !important; background: var(--x-card) !important; color: var(--x-ink) !important;
+  text-align: left !important; cursor: pointer !important; box-shadow: var(--x-sh) !important;
+}
+html.ml-reading #app .v3 .v3-paper b { font: 800 17px/1.2 var(--rr-sans) !important; }
+html.ml-reading #app .v3 .v3-paper small { font-size: 12.5px !important; color: var(--x-ink2) !important; }
+html.ml-reading #app .v3 .v3-paper.all { grid-column: 1 / -1 !important; flex-direction: row !important; align-items: baseline !important; gap: 10px !important; }
+html.ml-reading #app .v3 .v3-paper.on { border-color: var(--x-acc) !important; background: var(--x-accs) !important; }
+html.ml-reading #app .v3 .v3-paper.on b { color: var(--x-acc-ink) !important; }
+html.ml-reading #app .v3 .v3-pyq-opts { padding: 6px 16px 14px !important; }
+html.ml-reading #app .v3 .v3-opt { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important; padding: 10px 0 !important; border-bottom: 1px solid var(--x-line) !important; }
+html.ml-reading #app .v3 .v3-opt > span { font: 600 14.5px var(--rr-sans) !important; color: var(--x-ink2) !important; }
+html.ml-reading #app .v3 .v3-opt-note { margin: 10px 0 0 !important; font-size: 13px !important; color: var(--x-ink3) !important; }
+html.ml-reading #app .v3 .v3-seg { display: inline-flex !important; gap: 3px !important; padding: 3px !important; border-radius: 12px !important; background: var(--x-card2) !important; border: 1px solid var(--x-line) !important; flex-wrap: wrap !important; justify-content: flex-end !important; }
+html.ml-reading #app .v3 .v3-seg-b { border: 0 !important; background: none !important; padding: 8px 12px !important; border-radius: 9px !important; font: 600 13.5px var(--rr-sans) !important; color: var(--x-ink2) !important; cursor: pointer !important; }
+html.ml-reading #app .v3 .v3-seg-b[aria-pressed="true"] { background: var(--x-acc) !important; color: #fff !important; }
+html.ml-reading #app .v3 .v3-start {
+  display: flex !important; align-items: center !important; justify-content: center !important; gap: 10px !important; width: 100% !important;
+  margin: 6px 0 18px !important; padding: 16px 18px !important; border: 0 !important; border-radius: 18px !important; cursor: pointer !important;
+  background: linear-gradient(135deg, var(--x-acc), var(--x-acc2)) !important; color: #fff !important; font: 800 16.5px/1.2 var(--rr-sans) !important;
+  box-shadow: 0 14px 30px -14px rgba(109, 61, 240, .7) !important; flex-wrap: wrap !important;
+}
+html.ml-reading #app .v3 .v3-start small { font: 600 13px var(--rr-sans) !important; opacity: .85 !important; }
+
+/* ---- Mock tab ---- */
+html.ml-reading #app .v3 .v3-mocks { display: grid !important; gap: 12px !important; }
+@media (min-width: 720px) { html.ml-reading #app .v3 .v3-mocks { grid-template-columns: 1fr 1fr !important; } }
+html.ml-reading #app .v3 .v3-mock { padding: 16px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }
+html.ml-reading #app .v3 .v3-mock-live { border-color: color-mix(in srgb, var(--x-ok) 45%, var(--x-line)) !important; }
+html.ml-reading #app .v3 .v3-mock-top { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
+html.ml-reading #app .v3 .v3-mock-badge { padding: 4px 10px !important; border-radius: 999px !important; font: 700 12px/1 var(--rr-sans) !important; letter-spacing: .04em !important; text-transform: uppercase !important; }
+html.ml-reading #app .v3 .v3-mock-badge.live { background: var(--x-okb) !important; color: var(--x-ok) !important; }
+html.ml-reading #app .v3 .v3-mock-badge.upcoming { background: var(--x-accs) !important; color: var(--x-acc-ink) !important; }
+html.ml-reading #app .v3 .v3-mock-badge.ended { background: var(--x-card2) !important; color: var(--x-ink3) !important; }
+html.ml-reading #app .v3 .v3-mock-exam { font: 600 13px var(--rr-sans) !important; color: var(--x-ink3) !important; }
+html.ml-reading #app .v3 .v3-mock h3 { margin: 2px 0 0 !important; font: 800 18px/1.25 var(--rr-sans) !important; color: var(--x-ink) !important; }
+html.ml-reading #app .v3 .v3-mock-desc { margin: 0 !important; font-size: 14px !important; line-height: 1.45 !important; color: var(--x-ink2) !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important; }
+html.ml-reading #app .v3 .v3-mock-when { margin: 0 !important; font: 600 13.5px var(--rr-sans) !important; color: var(--x-ink2) !important; }
+html.ml-reading #app .v3 .v3-mock-acts { display: flex !important; gap: 8px !important; flex-wrap: wrap !important; margin-top: 4px !important; }
+html.ml-reading #app .v3 .v3-mbtn {
+  display: inline-flex !important; align-items: center !important; gap: 7px !important; padding: 10px 14px !important; border-radius: 12px !important;
+  border: 1px solid var(--x-line) !important; background: var(--x-card2) !important; color: var(--x-ink) !important; text-decoration: none !important;
+  font: 700 14px/1 var(--rr-sans) !important; cursor: pointer !important;
+}
+html.ml-reading #app .v3 .v3-mbtn.primary { background: var(--x-acc) !important; border-color: var(--x-acc) !important; color: #fff !important; }
+html.ml-reading #app .v3 .v3-mock-rank { display: flex !important; flex-direction: column !important; align-items: flex-end !important; flex-shrink: 0 !important; }
+html.ml-reading #app .v3 .v3-mock-rank b { font: 800 16px var(--rr-sans) !important; color: var(--x-acc-ink) !important; }
+html.ml-reading #app .v3 .v3-mock-rank small { font-size: 12.5px !important; color: var(--x-ink3) !important; }
+html.ml-reading #app .v3 a.v3-li { text-decoration: none !important; color: var(--x-ink) !important; }
+html.ml-reading #app .v3 .v3-empty { padding: 22px 18px !important; text-align: center !important; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 8px !important; }
+html.ml-reading #app .v3 .v3-empty b { font: 800 17px var(--rr-sans) !important; color: var(--x-ink) !important; }
+html.ml-reading #app .v3 .v3-empty p { margin: 0 !important; color: var(--x-ink2) !important; font-size: 14px !important; }
+html.ml-reading #app .v3 .v3-mock-skel { display: grid !important; gap: 12px !important; }
+html.ml-reading #app .v3 .v3-mock-skel .v3-card { height: 150px !important; background: linear-gradient(90deg, var(--x-card) 0%, var(--x-card2) 50%, var(--x-card) 100%) !important; background-size: 200% 100% !important; animation: v3skel 1.2s linear infinite !important; }
+@keyframes v3skel { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* ---- Bookmarks ---- */
+html.ml-reading #app .v3 .v3-bm-n { font: 700 13px var(--rr-sans) !important; color: var(--x-ink3) !important; }
+html.ml-reading #app .v3 .v3-bms { padding: 4px 0 !important; }
+html.ml-reading #app .v3 .v3-bm { display: flex !important; align-items: flex-start !important; gap: 6px !important; padding: 0 8px 0 0 !important; border-bottom: 1px solid var(--x-line) !important; }
+html.ml-reading #app .v3 .v3-bm:last-child { border-bottom: 0 !important; }
+html.ml-reading #app .v3 .v3-bm-q { flex: 1 !important; min-width: 0 !important; display: flex !important; flex-direction: column !important; gap: 8px !important; padding: 14px 16px !important; background: none !important; border: 0 !important; text-align: left !important; cursor: pointer !important; }
+html.ml-reading #app .v3 .v3-bm-stem { font: 500 15px/1.45 var(--rr-sans) !important; color: var(--x-ink) !important; }
+html.ml-reading #app .v3 .v3-bm .v3-tc { font-size: 12px !important; padding: 3px 8px !important; }
+html.ml-reading #app .v3 .v3-bm-del { flex-shrink: 0 !important; margin-top: 10px !important; width: 40px !important; height: 40px !important; border-radius: 12px !important; border: 0 !important; background: none !important; color: var(--x-ink3) !important; cursor: pointer !important; display: inline-grid !important; place-items: center !important; }
+html.ml-reading #app .v3 .v3-bm-del:hover { color: var(--x-bad) !important; background: var(--x-badb) !important; }

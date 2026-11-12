@@ -1327,11 +1327,17 @@
     stopTestLoops();
     var params = new URLSearchParams(location.search);
     var testId = params.get('id');
-    if (testId) {
+    var attempt = params.get('attempt');
+    var practice = params.get('practice') === '1';
+    if (testId && attempt) {
+      // Opened from "Your results" in the app.
+      openPastAttempt(attempt, testId);
+    } else if (testId) {
       sb.from('mock_tests').select('*').eq('id', testId).single().then(function (tr) {
         if (tr.error || !tr.data) { toast('Mock test not found.'); loadLobby(); return; }
         currentTest = tr.data;
-        if (testPhase(currentTest) === 'ended') { showEndedView(currentTest); return; }
+        // "Practise" on an ended mock in the app: take it unranked.
+        if (testPhase(currentTest) === 'ended' && !practice) { showEndedView(currentTest); return; }
         startTestFlow(testId);
       });
     } else {
