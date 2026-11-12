@@ -2293,7 +2293,7 @@ window.addEventListener('error', function (ev) {
           '</div>' +
           directoryHtml +
           '<div class="footer-copy"><strong>MedLadder</strong> · Medical Entrance Exam Question Bank</div>' +
-          '<div class="footer-subcopy">MBBS · FMGE · NEET PG · INI-CET · NEET SS · USMLE · MCAT · PLAB · MRCS · MRCP · State PG</div>' +
+          '<div class="footer-subcopy">MBBS · FMGE · NEET PG · INI-CET · NEET SS</div>' +
           '</div>' +          '</footer>';
       }
 
@@ -6215,40 +6215,49 @@ window.addEventListener('error', function (ev) {
 
       // ---- shell --------------------------------------------------------------
       var V2_ICONS = {
+        home: '<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/>',
+        qbank: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5"/>',
+        pyq: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+        bookmarks: '<path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>',
+        profile: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
         today: '<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/>',
         subjects: '<path d="M4 5h16M4 12h16M4 19h10"/>',
         review: '<path d="M20 12a8 8 0 11-2.3-5.6M20 4v5h-5"/>',
-        bookmarks: '<path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>',
         progress: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'
       };
       function v2Svg(name, size) {
         return '<svg width="' + (size || 22) + '" height="' + (size || 22) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + V2_ICONS[name] + '</svg>';
       }
+      // Older screen names map onto the five tabs.
+      var V2_TAB_OF = { today: 'home', home: 'home', review: 'home', subjects: 'qbank', qbank: 'qbank', pyq: 'pyq', bookmarks: 'bookmarks', progress: 'profile', profile: 'profile' };
       function v2Nav(active, dueCount) {
-        var items = [['today', 'Today'], ['subjects', 'Subjects'], ['review', 'Review'], ['bookmarks', 'Bookmarks'], ['progress', 'Progress']];
-        return '<nav class="v2-nav" aria-label="Main">' + items.map(function (it) {
-          var badge = it[0] === 'review' && dueCount ? '<span class="v2-nav-badge">' + (dueCount > 99 ? '99+' : dueCount) + '</span>' : '';
-          return '<button class="v2-nav-item" data-nav="' + it[0] + '"' + (it[0] === active ? ' aria-current="page"' : '') + '>' +
+        var tab = V2_TAB_OF[active] || active;
+        var items = [['home', 'Home'], ['qbank', 'QBank'], ['pyq', 'PYQ'], ['bookmarks', 'Bookmarks'], ['profile', 'Profile']];
+        return '<nav class="v2-nav v3-nav" aria-label="Main">' + items.map(function (it) {
+          var badge = it[0] === 'home' && dueCount && tab !== 'home' ? '<span class="v2-nav-badge">' + (dueCount > 99 ? '99+' : dueCount) + '</span>' : '';
+          return '<button class="v2-nav-item" data-nav="' + it[0] + '"' + (it[0] === tab ? ' aria-current="page"' : '') + '>' +
             '<span class="v2-nav-icon">' + v2Svg(it[0]) + badge + '</span><span>' + it[1] + '</span></button>';
         }).join('') + '</nav>';
       }
       function v2Header(back, crumb) {
         var left = back
-          ? '<button class="rr-back" id="backBtn" aria-label="' + esc(back) + '">' + RR_BACK_SVG + '</button><div class="rr-crumb">' + esc(crumb || '') + '</div>'
+          ? '<button class="rr-back" id="backBtn" aria-label="' + esc(back) + '">' + RR_BACK_SVG + '</button><a href="/" class="v2-brand v3-brand-sm"><img src="/icons/icon-72.png" alt="" width="28" height="28"><span>MedLadder</span></a>'
           : '<a href="/" class="v2-brand"><img src="/icons/icon-72.png" alt="" width="28" height="28"><span>MedLadder</span></a>';
         return '<header class="rr-top v2-top" role="banner">' + left +
           '<div class="right rr-top-right">' + proHeaderBtnHtml() + authBtnHtml() + themeBtnHtml() + '</div></header>';
       }
       function v2Shell(active, header, body, dueCount) {
-        return '<div class="v2">' + header +
+        return '<div class="v2 v3">' + header +
           '<div class="v2-body">' + v2Nav(active, dueCount) +
           '<main id="mainContent" role="main" class="v2-main">' + body + '</main></div></div>' +
           footerHtml();
       }
       function v2Go(name) {
-        if (name === 'today') renderHome(true);
-        else if (name === 'subjects') renderSubjectsV2();
+        if (name === 'today' || name === 'home') renderHome(true);
+        else if (name === 'subjects' || name === 'qbank') renderSubjectsV2();
         else if (name === 'review') renderReviewV2();
+        else if (name === 'pyq') renderPyqV2();
+        else if (name === 'profile') renderProfileV2();
         else if (name === 'bookmarks') { if (!currentUser) v2NeedAccount('Sign in to see your bookmarks.', renderBookmarks); else renderBookmarks(); }
         else if (name === 'progress') renderDashboard();
       }
@@ -6351,10 +6360,6 @@ window.addEventListener('error', function (ev) {
         var pick = open[(day * 7919) % open.length];
         return { sx: pick.sx, m: pick.m, n: (day * 104729) % Math.max(1, pick.m.questionCount), day: day };
       }
-      function v2QotdHtml() {
-        return '<section class="v2-sec" id="v2Qotd"><h2 class="v2-h2b v2-h2b-row"><span>Question of the day</span><span class="v2-qotd-tag"></span></h2>' +
-          '<div class="v2-card2 v2-qotd" id="v2QotdCard"><p class="v2-qotd-wait">Loading today’s question…</p></div></section>';
-      }
       function v2LoadQotd() {
         var card = document.getElementById('v2QotdCard');
         if (!card || !supabaseClient) return;
@@ -6452,7 +6457,7 @@ window.addEventListener('error', function (ev) {
         ];
         var earned = list.filter(function (b) { return b.v >= b.goal; });
         var next = list.filter(function (b) { return b.v < b.goal; }).sort(function (a, b) { return (b.v / b.goal) - (a.v / a.goal); })[0];
-        return { earned: earned, next: next, total: list.length };
+        return { earned: earned, next: next, total: list.length, list: list };
       }
       function v2BadgesHtml(rd, ix) {
         var b = v2Badges(rd, ix);
@@ -6547,6 +6552,99 @@ window.addEventListener('error', function (ev) {
           (ss.due ? '<span class="v2-badge">' + ss.due + ' due</span>' : '') + '</span>' +
           '</button>';
       }
+      // ---- v3 pieces: icons, art, subject tiles ------------------------------
+      var V3_IC = {
+        target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+        clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+        sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
+        bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+        trophy: '<path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/>',
+        layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+        chart: '<path d="M5 20V12M10 20V6M15 20v-9M20 20V4"/>',
+        play: '<path d="M8 5l11 7-11 7z"/>',
+        playc: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/>',
+        check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/>',
+        calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+        chev: '<path d="M9 18l6-6-6-6"/>',
+        refresh: '<path d="M20 12a8 8 0 11-2.3-5.6M20 4v5h-5"/>',
+        bookmark: '<path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>',
+        custom: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l7-7M16 5h3v3"/>',
+        steth: '<path d="M6 3v6a4 4 0 008 0V3"/><path d="M10 13v3a5 5 0 0010 0v-2"/><circle cx="20" cy="12" r="2"/>',
+        flask: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/><path d="M7.5 15h9"/>',
+        bed: '<path d="M3 7v12M3 15h18v4M21 15v-3a3 3 0 00-3-3h-8v6"/><circle cx="6.5" cy="11.5" r="1.5"/>',
+        grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+        search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+        lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+        sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+        user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
+        out: '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',
+        crown: '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>'
+      };
+      function v3Ic(name, size) {
+        return '<svg class="v3-i" width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (V3_IC[name] || '') + '</svg>';
+      }
+      // Decorative cluster of the subject illustrations, for page headers.
+      function v3Art(slugs) {
+        return '<div class="v3-art" aria-hidden="true"><span class="v3-art-glow"></span>' + slugs.map(function (s, i) {
+          return '<img class="v3-art-' + (i + 1) + '" src="/assets/subjects-webp/' + s + '.webp" alt="" width="96" height="96" loading="lazy">';
+        }).join('') + '</div>';
+      }
+      function v3Pct(frac) {
+        var p = Math.round(frac * 100);
+        if (frac > 0 && p === 0) p = 1;
+        return p;
+      }
+      function v3SubjTile(sx, ix) {
+        var ss = v2SubjectStats(sx, ix);
+        var comp = ss.qseen / (ss.questions || 1);
+        var p = v3Pct(comp);
+        return '<button class="v3-subj" data-subject="' + sx.subjectId + '" data-name="' + esc(sx.name.toLowerCase()) + '" data-cat="' + esc(sx.cat) + '">' +
+          '<span class="v3-subj-ic">' + v2SubjIcon(sx, 52) + '</span>' +
+          '<span class="v3-subj-t"><b>' + esc(sx.name) + '</b><small>' + ss.started + '/' + ss.total + ' topics</small></span>' +
+          v2Ring(comp, 46, 4.5, 'v3-ring-s' + (p >= 50 ? ' hi' : ''), p + '%') +
+          '<span class="v3-subj-chev">' + v3Ic('chev', 16) + '</span></button>';
+      }
+      function v3Head(icon, title, more) {
+        return '<div class="v3-h"><h2>' + icon + '<span>' + title + '</span></h2>' + (more || '') + '</div>';
+      }
+      function v3More(label, attrs) {
+        return '<button class="v3-more" ' + attrs + '>' + label + v3Ic('chev', 15) + '</button>';
+      }
+
+      function v2QotdHtml() {
+        return '<section class="v3-card v3-qotd-card" id="v2Qotd">' + v3Head('<span class="v3-hi v3-hi-bolt">' + v3Ic('bolt') + '</span>', 'Question of the day', '<span class="v2-qotd-tag v3-tag"></span>') +
+          '<div class="v2-qotd" id="v2QotdCard"><p class="v2-qotd-wait">Loading today’s question…</p></div></section>';
+      }
+
+      function v3BadgesHtml(rd, ix) {
+        var b = v2Badges(rd, ix);
+        var earnedIds = b.earned.map(function (x) { return x.id; });
+        var list = b.earned.concat(b.list.filter(function (x) { return earnedIds.indexOf(x.id) === -1; }));
+        return '<section class="v3-sec">' + v3Head('<span class="v3-emoji">🏆</span>', 'Badges &amp; achievements', v3More(b.earned.length + ' of ' + b.total, 'id="v3BadgeMore" aria-expanded="false"')) +
+          '<div class="v3-badges" id="v3Badges">' + list.map(function (x, i) {
+            var got = earnedIds.indexOf(x.id) !== -1;
+            return '<span class="v3-card v3-bdg' + (got ? '' : ' dim') + (i >= 4 ? ' extra' : '') + '" title="' + esc(x.d) + '"' + (i >= 4 ? ' hidden' : '') + '>' +
+              '<span class="v3-bdg-ic">' + x.ic + '</span><span class="v3-bdg-t">' + esc(x.t) + '</span>' +
+              (got ? '' : '<span class="v3-bdg-p">' + Math.min(x.v, x.goal).toLocaleString() + '/' + x.goal.toLocaleString() + '</span>') + '</span>';
+          }).join('') + '</div></section>';
+      }
+
+      // Ten fresh questions from across the open topics.
+      function v3QuickPractice() {
+        if (!currentUser) { v2NeedAccount('Sign in free for quick mixed practice.', v3QuickPractice); return; }
+        loadReviewData().then(function (rd) {
+          var mods = [];
+          SUBJECT_INDEX.forEach(function (sx) {
+            getSubjectModules(sx.subjectId).forEach(function (m, i) { if (m.questionCount > 0 && v2Accessible(sx, m, i)) mods.push(m.id); });
+          });
+          var opts = { kind: 'quick', title: 'Quick practice', back: function () { renderHome(true); }, again: v3QuickPractice };
+          v2Loading(opts.title, 'Picking 10 questions', opts.back);
+          v2FreshIds(shuffle(mods).slice(0, 10), 10, rd).then(function (ids) { launchIdQuiz(shuffle(ids), opts); })
+            .catch(function () { opts.back(); });
+        });
+      }
+
       function v2Greeting() {
         var h = new Date().getHours();
         var part = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
@@ -6567,24 +6665,25 @@ window.addEventListener('error', function (ev) {
         var streak = 0;
         for (var s0 = (days[today] ? today : today - 1); days[s0]; s0--) streak++;
         var doneToday = days[today] || 0;
+        var flame = '<span aria-hidden="true">🔥</span> ';
 
-        // ---- greeting and exam chip
+        // ---- greeting, exam chip and art
         var g = v2ExamGet();
         var examChip = '';
         if (g) {
           var dleft = g.date ? v2Day(Date.parse(g.date + 'T00:00:00')) - today : null;
-          examChip = '<button class="v2-chip-pill" id="v2ExamEdit">' + v2Icon('calendar') + '<span>' + esc(g.exam) +
-            (dleft != null && isFinite(dleft) ? (dleft > 0 ? ' · ' + dleft + ' days' : dleft === 0 ? ' · today' : '') : '') + '</span></button>';
+          examChip = '<button class="v3-exam" id="v2ExamEdit">' + v3Ic('calendar', 18) + '<span><b>' + esc(g.exam) + '</b>' +
+            (dleft != null && isFinite(dleft) ? (dleft > 0 ? ' · <em>' + dleft + ' days left</em>' : dleft === 0 ? ' · <em>today</em>' : '') : '') + '</span>' + v3Ic('chev', 16) + '</button>';
         } else if (currentUser) {
-          examChip = '<button class="v2-chip-pill v2-chip-ghost" id="v2ExamEdit">' + v2Icon('calendar') + '<span>Set your exam date</span></button>';
+          examChip = '<button class="v3-exam ghost" id="v2ExamEdit">' + v3Ic('calendar', 18) + '<span>Set your exam date</span>' + v3Ic('chev', 16) + '</button>';
         }
-        var out = '<div class="v2-hello"><h1 class="v2-hello-h">' + (currentUser ? v2Greeting() : 'Welcome to MedLadder') + '</h1>' + examChip + '</div>';
-        // The editor form from the exam line, without its text.
-        out += v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '');
-        out += v2SearchHtml();
+        var colA = '<section class="v3-hello"><div class="v3-hello-t"><h1>' + (currentUser ? v2Greeting() + ' <span class="v3-wave" aria-hidden="true">👋</span>' : 'Welcome to MedLadder') + '</h1>' +
+          '<p>' + (currentUser ? 'Ready for today’s learning?' : totalQuestions().toLocaleString() + ' questions with explanations, free to start.') + '</p>' + examChip + '</div>' +
+          v3Art(['physiology', 'pathology', 'pharmacology']) + '</section>';
+        colA += v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '');
 
-        // ---- hero
-        var heroBody, heroBtn = '';
+        // ---- today's mission
+        var goal = v2Goal();
         if (!currentUser) {
           var guest = null;
           SUBJECT_INDEX.some(function (sx) {
@@ -6593,57 +6692,50 @@ window.addEventListener('error', function (ev) {
               return false;
             });
           });
-          heroBody = '<p class="v2-hero-k">Start here</p><h2 class="v2-hero-h">Try a topic free</h2>' +
-            '<p class="v2-hero-p">' + (guest ? esc(guest.m.name) + ' in ' + esc(guest.sx.name) + ', ' + v2Plural(guest.m.questionCount, 'question') + ' with explanations. No account needed.' : 'Every subject has one topic you can practise without an account.') + '</p>';
-          if (guest) heroBtn = '<button class="v2-hero-btn" id="v2GuestStart" data-sid="' + guest.sx.subjectId + '" data-mod="' + esc(guest.m.moduleId) + '">Start ' + esc(guest.m.name) + '</button>';
-          heroBtn += '<button class="v2-hero-link" id="v2SignUp">Sign up free for 8 topics in every subject</button>';
-          out += '<section class="v2-hero"><div class="v2-hero-main">' + heroBody + '</div><div class="v2-hero-actions">' + heroBtn + '</div></section>';
+          colA += '<section class="v2-hero v3-mission"><div class="v3-mission-main"><p class="v3-mission-k">' + v3Ic('target', 22) + 'Start here</p>' +
+            '<h2>Try a topic free</h2><ul class="v3-mission-list">' +
+            '<li>' + v3Ic('sparkle', 18) + (guest ? esc(guest.m.name) + ' in ' + esc(guest.sx.name) : 'One free topic in every subject') + '</li>' +
+            '<li>' + v3Ic('doc', 18) + 'Explanations with every answer</li><li>' + v3Ic('user', 18) + 'No account needed</li></ul></div>' +
+            '<div class="v3-mission-actions">' + (guest ? '<button class="v3-mission-btn" id="v2GuestStart" data-sid="' + guest.sx.subjectId + '" data-mod="' + esc(guest.m.moduleId) + '">Start ' + esc(guest.m.name) + ' <span aria-hidden="true">→</span></button>' : '') +
+            '<button class="v3-mission-link" id="v2SignUp">Sign up free for 8 topics in every subject</button></div></section>';
         } else if (!rd) {
-          out += '<section class="v2-hero" aria-busy="true"><div class="v2-hero-main"><p class="v2-hero-k">Today’s set</p><h2 class="v2-hero-h">Building your set…</h2><p class="v2-hero-p">Looking at what you have answered so far.</p></div></section>';
+          colA += '<section class="v2-hero v3-mission" aria-busy="true"><div class="v3-mission-main"><p class="v3-mission-k">' + v3Ic('target', 22) + 'Today’s mission</p><h2>Building your set…</h2>' +
+            '<ul class="v3-mission-list"><li>' + v3Ic('clock', 18) + 'Looking at what you have answered</li></ul></div></section>';
         } else {
           var plan = v2TodayPlan(ix);
           var nReview = plan.reviewIds.length;
           var newFrom = plan.next.filter(function (r) { return r.x.st.total > r.x.st.seen; }).map(function (r) { return r.x.m.name; });
-          var first = ix.seen === 0 && !Object.keys(progress).length;
-          var p2;
-          if (!plan.size) p2 = 'Nothing is due and every open topic is finished. Pick any subject below.';
-          else if (first) p2 = 'Your first set: ' + plan.newN + ' questions from ' + esc(newFrom.join(' and ')) + '.';
-          else {
-            p2 = [nReview ? nReview + ' due for review' : '', plan.newN ? plan.newN + ' new' : ''].filter(Boolean).join(' · ');
-            if (plan.newN && newFrom.length) p2 += '<span class="v2-hero-from">New from ' + esc(newFrom[0]) + (newFrom.length > 1 ? ' and 1 more topic' : '') + '</span>';
-          }
-          var goal = v2Goal();
           var mins = Math.max(1, Math.round(plan.size * 0.75));
-          out += '<section class="v2-hero">' +
-            '<div class="v2-hero-main">' +
-            '<p class="v2-hero-k">Today’s set' + (streak > 0 ? '<span class="v2-streak">' + v2Icon('flame') + streak + '-day streak</span>' : '') + '</p>' +
-            '<h2 class="v2-hero-h">' + (plan.size ? plan.size + ' questions <span class="v2-hero-min">about ' + mins + ' min</span>' : 'All caught up') + '</h2>' +
-            '<p class="v2-hero-p">' + p2 + '</p>' +
-            '</div>' +
-            v2Ring(doneToday / goal, 92, 9, 'v2-ring-hero', '<strong>' + Math.min(doneToday, 999) + '</strong><small>of ' + goal + ' today</small>') +
-            '<div class="v2-hero-actions">' + (plan.size ? '<button class="v2-hero-btn" id="v2TodayBtn">Start today’s set</button>' : '<button class="v2-hero-btn" data-nav-go="subjects">Browse subjects</button>') +
-            '<button class="v2-hero-link" id="v2GoalBtn" aria-expanded="false">Daily goal: ' + goal + ' questions</button>' +
+          var items = '';
+          if (plan.size) items += '<li>' + v3Ic('clock', 18) + 'About ' + mins + ' min</li>';
+          if (nReview) items += '<li><button class="v3-mission-due" data-nav-go="review">' + v3Ic('doc', 18) + nReview + ' due for revision</button></li>';
+          if (plan.newN) items += '<li>' + v3Ic('sparkle', 18) + '<span>' + plan.newN + ' new question' + (plan.newN === 1 ? '' : 's') + '</span></li>';
+          if (!plan.size) items += '<li>' + v3Ic('check', 18) + 'Nothing due, every open topic finished</li>';
+          var gp = Math.min(1, doneToday / goal);
+          colA += '<section class="v2-hero v3-mission">' +
+            '<p class="v3-mission-k">' + v3Ic('target', 22) + 'Today’s mission' + (streak > 0 ? '<span class="v3-streak-pill">' + flame + streak + '-day streak</span>' : '') + '</p>' +
+            '<div class="v3-mission-main"><h2>' + (plan.size ? plan.size + ' Questions' : 'All caught up') + '</h2><ul class="v3-mission-list">' + items + '</ul></div>' +
+            v2Ring(gp, 116, 11, 'v2-ring-hero v3-ring-mission', '<strong>' + Math.round(gp * 100) + '%</strong><small>' + Math.min(doneToday, 999) + '/' + goal + '</small>') +
+            '<div class="v3-mission-actions">' + (plan.size ? '<button class="v3-mission-btn" id="v2TodayBtn">Start today’s set <span aria-hidden="true">→</span></button>' : '<button class="v3-mission-btn" data-nav-go="subjects">Browse subjects <span aria-hidden="true">→</span></button>') +
+            '<button class="v3-mission-link" id="v2GoalBtn" aria-expanded="false">Daily goal: ' + goal + ' questions</button>' +
             '<div class="v2-goal-pick" id="v2GoalPick" hidden>' + V2_GOALS.map(function (gv) { return '<button class="v2-goal-opt' + (gv === goal ? ' on' : '') + '" data-goal="' + gv + '">' + gv + '</button>'; }).join('') + '</div>' +
-            '</div>' +
-            '</section>';
+            '</div></section>';
         }
 
-        // ---- quick actions
+        // ---- quick tiles
         var mockLive = v2MockState && v2MockState.live;
         var qa = [
-          ['review', 'Review', ix.due.length ? (ix.due.length > 99 ? '99+' : String(ix.due.length)) : '', 'data-nav-go="review"'],
-          ['mock', 'Mock tests', mockLive ? 'Live' : '', 'id="v2QaMock"'],
-          ['papers', 'Past papers', pro ? '' : 'Pro', 'id="v2QaPapers"'],
-          ['custom', 'Custom set', '', 'id="v2Custom"'],
-          ['bookmarks', 'Bookmarks', '', 'data-nav-go="bookmarks"']
+          ['bolt', 'Quick practice', '', 'id="v3Quick"'],
+          ['trophy', 'Mock tests', mockLive ? 'Live' : '', 'id="v2QaMock"'],
+          ['layers', 'Custom set', '', 'id="v2Custom"'],
+          ['chart', 'Analytics', '', 'data-nav-go="progress"']
         ];
-        out += '<nav class="v2-qa" aria-label="Quick actions">' + qa.map(function (q) {
-          return '<button class="v2-qa-btn" ' + q[3] + '><span class="v2-qa-ic v2-qa-' + q[0] + '">' + v2Icon(q[0]) +
-            (q[2] ? '<span class="v2-qa-badge' + (q[2] === 'Live' ? ' live' : q[2] === 'Pro' ? ' pro' : '') + '">' + q[2] + '</span>' : '') +
-            '</span><span class="v2-qa-l">' + q[1] + '</span></button>';
+        colA += '<nav class="v3-quick" aria-label="Quick actions">' + qa.map(function (q) {
+          return '<button class="v3-card v3-qt v3-qt-' + q[0] + '" ' + q[3] + '><span class="v3-qt-ic">' + v3Ic(q[0], 30) +
+            (q[2] ? '<span class="v3-qt-badge">' + q[2] + '</span>' : '') + '</span><span>' + q[1] + '</span></button>';
         }).join('') + '</nav>';
 
-        // ---- continue
+        // ---- continue learning
         var active = v2ActiveSubjects(ix);
         var cont = null;
         active.some(function (r) {
@@ -6652,81 +6744,72 @@ window.addEventListener('error', function (ev) {
           if (x && x.st.status === 'active' && x.open) { cont = { sx: r.sx, x: x }; return true; }
           return false;
         });
-        var colA = '', colB = '';
         if (cont) {
           var fr = cont.x.st.seen / (cont.x.st.total || 1);
-          colA += '<section class="v2-sec"><h2 class="v2-h2b">Continue</h2>' +
-            '<button class="v2-card2 v2-cont" data-sid="' + cont.sx.subjectId + '" data-mod="' + esc(cont.x.m.moduleId) + '">' +
-            v2SubjIcon(cont.sx, 48) +
-            '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(cont.x.m.name) + '</span>' +
-            '<span class="v2-cont-s">' + esc(cont.sx.name) + ' · ' + (cont.x.st.total - cont.x.st.seen) + ' left</span></span>' +
-            v2Ring(fr, 46, 5, 'v2-ring-cont', Math.round(fr * 100) + '%') + '</button></section>';
+          colA += '<section class="v3-sec">' + v3Head('<span class="v3-hi v3-hi-play">' + v3Ic('play', 14) + '</span>', 'Continue learning', v3More('View all', 'data-nav-go="subjects"')) +
+            '<button class="v3-card v3-cont" data-sid="' + cont.sx.subjectId + '" data-mod="' + esc(cont.x.m.moduleId) + '">' +
+            '<span class="v3-cont-ic">' + v2SubjIcon(cont.sx, 64) + '</span>' +
+            '<span class="v3-cont-main"><b>' + esc(cont.x.m.name) + '</b><small>' + esc(cont.sx.name) + ' · ' + v2Plural(cont.x.st.total - cont.x.st.seen, 'question') + ' left</small>' +
+            '<span class="v3-bar"><span style="width:' + Math.max(3, v3Pct(fr)) + '%"></span></span></span>' +
+            '<span class="v3-cont-end"><span class="v3-play">' + v3Ic('play', 16) + '</span><span>' + v3Pct(fr) + '%</span></span></button></section>';
         }
 
-        colA += v2QotdHtml() + v2ProCardHtml();
+        colA += v2QotdHtml();
 
-        // ---- stats + week
+        // ---- right column: progress, streak, subjects, needs work, badges
+        var colB = '';
         if (currentUser) {
           var dd = dashboardData(v2EffectiveProgress());
           var answered = Math.max(ix.seen, dd.done);
           var acc = ix.seen ? Math.round((ix.okNow / ix.seen) * 100) : (dd.done ? Math.round((dd.correct / dd.done) * 100) : null);
           var topicsStarted = 0;
           SUBJECT_INDEX.forEach(function (sx) { topicsStarted += v2SubjectStats(sx, ix).started; });
+          colB += '<section class="v3-card v3-prog">' + v3Head('<span class="v3-hi v3-hi-chart">' + v3Ic('chart') + '</span>', 'Your progress', v3More('View details', 'data-nav-go="progress"')) +
+            '<div class="v3-stat3">' +
+            '<div class="v3-stat s-ok">' + v3Ic('check', 30) + '<strong>' + answered.toLocaleString() + '</strong><span>Answered</span></div>' +
+            '<div class="v3-stat s-acc">' + v3Ic('target', 30) + '<strong>' + (acc == null ? '–' : acc + '%') + '</strong><span>Accuracy</span></div>' +
+            '<div class="v3-stat s-top">' + v3Ic('layers', 30) + '<strong>' + topicsStarted + '</strong><span>of 740 topics</span></div>' +
+            '</div></section>';
           var letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
           var strip = '';
           for (var d = 6; d >= 0; d--) {
             var n = days[today - d] || 0;
             var dt = new Date(Date.now() - d * 86400000);
-            strip += '<span class="v2-wd' + (n ? ' on' : '') + (d === 0 ? ' now' : '') + '" title="' + esc(dt.toLocaleDateString(undefined, { weekday: 'long' })) + ': ' + v2Plural(n, 'answer') + '"><span class="v2-wd-c">' + (n ? v2Icon('flame') : '') + '</span>' + letters[dt.getDay()] + '</span>';
+            strip += '<span class="v3-day' + (n ? ' on' : '') + (d === 0 ? ' now' : '') + '" title="' + esc(dt.toLocaleDateString(undefined, { weekday: 'long' })) + ': ' + v2Plural(n, 'answer') + '"><span class="v3-day-c">' + (n ? '🔥' : '') + '</span>' + letters[dt.getDay()] + '</span>';
           }
-          colB += '<section class="v2-sec"><h2 class="v2-h2b">Your progress</h2>' +
-            '<div class="v2-stat3">' +
-            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic ok">' + v2Icon('check') + '</span><strong>' + answered.toLocaleString() + '</strong><span>answered</span></div>' +
-            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic acc">' + v2Icon('target') + '</span><strong>' + (acc == null ? '–' : acc + '%') + '</strong><span>accuracy</span></div>' +
-            '<div class="v2-card2 v2-stat"><span class="v2-stat-ic top">' + v2Icon('layers') + '</span><strong>' + topicsStarted + '</strong><span>of 740 topics</span></div>' +
-            '</div>' +
-            '<div class="v2-card2 v2-stand" id="v2Standing" hidden></div>' +
-            '<div class="v2-card2 v2-week2"><div class="v2-week2-h"><span>This week</span><span>' + (streak ? streak + '-day streak' : 'Start a streak today') + '</span></div><div class="v2-week2-row">' + strip + '</div></div>' +
-            '<button class="v2-link v2-more" data-nav-go="progress">See all progress</button></section>';
-          colB += v2BadgesHtml(rd, ix);
+          colB += '<section class="v3-card v3-streak">' + v3Head('<span class="v3-hi v3-hi-cal">' + v3Ic('calendar') + '</span>', 'Study streak',
+            streak ? '<span class="v3-streak-pill">' + flame + streak + '-day streak</span>' : '<span class="v3-muted">Start one today</span>') +
+            '<div class="v3-week">' + strip + '</div></section>';
         }
 
-        // ---- needs work
+        var used = active.map(function (r) { return r.sx.subjectId; });
+        var shown = active.map(function (r) { return r.sx; });
+        SUBJECT_INDEX.forEach(function (sx) { if (shown.length < 4 && used.indexOf(sx.subjectId) === -1) shown.push(sx); });
+        colB += '<section class="v3-sec">' + v3Head('<span class="v3-hi v3-hi-layers">' + v3Ic('layers') + '</span>', 'Subjects', v3More('All ' + SUBJECT_INDEX.length, 'data-nav-go="subjects"')) +
+          '<div class="v3-subj4">' + shown.slice(0, 4).map(function (sx) { return v3SubjTile(sx, ix); }).join('') + '</div></section>';
+
         var weak = [];
         active.forEach(function (r) {
           r.ss.mods.forEach(function (x) { if (x.open && x.st.seen >= 5 && x.st.pct != null && x.st.pct < 60) weak.push({ sx: r.sx, x: x }); });
         });
         weak.sort(function (a, b) { return a.x.st.pct - b.x.st.pct; });
         if (weak.length) {
-          colB += '<section class="v2-sec"><h2 class="v2-h2b">Needs work</h2>' + weak.slice(0, 3).map(function (w) {
-            return '<button class="v2-card2 v2-weak" data-sid="' + w.sx.subjectId + '" data-mod="' + esc(w.x.m.moduleId) + '">' + v2SubjIcon(w.sx, 36) +
-              '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(w.x.m.name) + '</span><span class="v2-cont-s">' + esc(w.sx.name) + ' · ' + w.x.st.seen + ' answered</span></span>' +
-              '<span class="v2-pct-bad">' + w.x.st.pct + '%</span></button>';
-          }).join('') + '</section>';
+          colB += '<section class="v3-sec">' + v3Head('<span class="v3-hi v3-hi-target">' + v3Ic('target') + '</span>', 'Needs work', '<span class="v3-muted">Focus on these topics</span>') +
+            '<div class="v3-card v3-list">' + weak.slice(0, 3).map(function (w) {
+              return '<button class="v3-li" data-sid="' + w.sx.subjectId + '" data-mod="' + esc(w.x.m.moduleId) + '">' + v2SubjIcon(w.sx, 40) +
+                '<span class="v3-li-t"><b>' + esc(w.x.m.name) + '</b><small>' + esc(w.sx.name) + ' · ' + w.x.st.seen + ' answered</small></span>' +
+                '<span class="v3-pill bad">' + w.x.st.pct + '%</span></button>';
+            }).join('') + '</div></section>';
+        }
+        if (currentUser) colB += v3BadgesHtml(rd, ix);
+        if (currentUser && !pro) {
+          colB += '<button class="v3-pro" id="v2ProBtn"><span class="v3-pro-ic" aria-hidden="true">👑</span><span class="v3-pro-t"><b>Go Pro with MedLadder</b>' +
+            '<small>All 740 topics, past papers and full-subject mocks from ₹' + PRO_CONFIG.PRICE_INR + '.</small></span>' + v3Ic('chev', 20) + '</button>';
         }
 
-        // ---- subjects
-        var used = active.map(function (r) { return r.sx.subjectId; });
-        var shown = active.map(function (r) { return r.sx; });
-        SUBJECT_INDEX.forEach(function (sx) { if (shown.length < 6 && used.indexOf(sx.subjectId) === -1) shown.push(sx); });
-        shown = shown.slice(0, 6);
-        colA += '<section class="v2-sec"><h2 class="v2-h2b v2-h2b-row"><span>Subjects</span><button class="v2-link" data-nav-go="subjects">All ' + SUBJECT_INDEX.length + '</button></h2>' +
-          '<div class="v2-tiles">' + shown.map(function (sx) { return v2SubjectTile(sx, ix); }).join('') + '</div></section>';
-
-        colB += '<section class="v2-sec" id="v2Recent" hidden></section>';
-        // ---- past papers
-        colB += '<section class="v2-sec" id="v2Papers"><h2 class="v2-h2b v2-h2b-row"><span>Past papers</span>' + (pro ? '' : '<span class="v2-pro-tag">Pro</span>') + '</h2><div class="v2-chips">' +
-          PYQ_EXAMS.map(function (ex) {
-            return '<button class="v2-chip" data-pyq="' + esc(ex.id) + '">' + esc(ex.name) + (pro ? '' : ' <span class="v2-lock" aria-label="Pro">' + v2LockSvg() + '</span>') + '</button>';
-          }).join('') + '</div></section>';
-
-        out += '<div class="v2-grid2"><div>' + colA + '</div><div>' + colB + '</div></div>';
-
-        out += '<p class="v2-classic-link"><button type="button" id="v2ClassicBtn">Switch to the classic home</button></p>';
-        v2Paint('home', v2Shell('today', v2Header(), '<div class="v2-bold">' + out + '</div>', ix.due.length));
+        var out = '<div class="v3-home"><div class="v3-col">' + colA + '</div><div class="v3-col">' + colB + '</div></div>';
+        v2Paint('home', v2Shell('home', v2Header(), '<div class="v2-bold v3-page">' + out + '</div>', ix.due.length));
         wireV2Shell();
-        var classicBtn = document.getElementById('v2ClassicBtn');
-        if (classicBtn) classicBtn.onclick = function () { setUiMode('old'); };
         wireV2Common();
         wireV2Exam(function () { renderHomeV2(); });
         var tb = document.getElementById('v2TodayBtn');
@@ -6737,23 +6820,24 @@ window.addEventListener('error', function (ev) {
         if (su) su.onclick = function () { openAuthModal('signup', { reason: 'Create a free account to open 8 topics in every subject.' }); };
         var cu = document.getElementById('v2Custom');
         if (cu) cu.onclick = function () { setupChoice.count = 'all'; renderCustomSetup(); };
+        var qk = document.getElementById('v3Quick');
+        if (qk) qk.onclick = v3QuickPractice;
         var qm = document.getElementById('v2QaMock');
         if (qm) qm.onclick = function () { window.location.href = '/mock-test'; };
-        var qp = document.getElementById('v2QaPapers');
-        if (qp) qp.onclick = function () { var el = document.getElementById('v2Papers'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-        if (v2MockState === null) {
-          v2LoadMockState();
-        }
-        wireV2Search();
+        var bm = document.getElementById('v3BadgeMore');
+        if (bm) bm.onclick = function () {
+          var open = bm.getAttribute('aria-expanded') !== 'true';
+          bm.setAttribute('aria-expanded', String(open));
+          app.querySelectorAll('#v3Badges .extra').forEach(function (e) { e.hidden = !open; });
+        };
+        if (v2MockState === null) v2LoadMockState();
         v2LoadQotd();
-        v2LoadStanding();
-        v2LoadRecent();
         var pb = document.getElementById('v2ProBtn');
         if (pb) pb.onclick = function () { openProModal('banner', {}); };
-        var gb = document.getElementById('v2GoalBtn'), gp = document.getElementById('v2GoalPick');
-        if (gb && gp) {
-          gb.onclick = function () { gp.hidden = !gp.hidden; gb.setAttribute('aria-expanded', String(!gp.hidden)); };
-          gp.querySelectorAll('[data-goal]').forEach(function (o) {
+        var gb = document.getElementById('v2GoalBtn'), gpk = document.getElementById('v2GoalPick');
+        if (gb && gpk) {
+          gb.onclick = function () { gpk.hidden = !gpk.hidden; gb.setAttribute('aria-expanded', String(!gpk.hidden)); };
+          gpk.querySelectorAll('[data-goal]').forEach(function (o) {
             o.onclick = function () { v2SetGoal(parseInt(o.getAttribute('data-goal'), 10)); renderHomeV2(); };
           });
         }
@@ -6780,7 +6864,7 @@ window.addEventListener('error', function (ev) {
             var row = document.getElementById('v2Mock');
             if (row) row.outerHTML = v2MockRow();
             var qa = document.getElementById('v2QaMock');
-            if (qa && v2MockState.live && !qa.querySelector('.v2-qa-badge')) qa.querySelector('.v2-qa-ic').insertAdjacentHTML('beforeend', '<span class="v2-qa-badge live">Live</span>');
+            if (qa && v2MockState.live && !qa.querySelector('.v3-qt-badge')) qa.querySelector('.v3-qt-ic').insertAdjacentHTML('beforeend', '<span class="v3-qt-badge">Live</span>');
           }, function () {});
         } catch (e) { }
       }
@@ -6812,36 +6896,40 @@ window.addEventListener('error', function (ev) {
         });
       }
 
-      // ---- all subjects -----------------------------------------------------
+      // ---- QBank: all subjects ---------------------------------------------
       var v2SubjectFilter = 'all';
       function renderSubjectsV2() {
         if (!quizStylesReady) { ensureQuizStyles().then(renderSubjectsV2); return; }
         trackPageView('/subjects', 'subjects');
         var rd = v2HaveHistory() ? reviewData : null;
         var ix = v2Index(rd);
-        var cats = [['all', 'All'], ['pre', 'Pre-clinical'], ['para', 'Para-clinical'], ['clinical', 'Clinical']];
-        var body = '<h1 class="v2-title">Subjects</h1>' +
-          '<p class="v2-sub">' + SUBJECT_INDEX.length + ' subjects · 740 topics · ' + totalQuestions().toLocaleString() + ' questions</p>' +
-          '<label class="v2-sr" for="v2SubjSearch">Search subjects</label>' +
-          '<input id="v2SubjSearch" class="v2-search" type="search" placeholder="Search subjects" autocomplete="off">' +
-          '<div class="v2-filters" role="group" aria-label="Filter subjects">' + cats.map(function (c) {
-            return '<button class="v2-filter" data-cat-f="' + c[0] + '" aria-pressed="' + (v2SubjectFilter === c[0]) + '">' + c[1] + '</button>';
+        var cats = [['all', 'All', ''], ['pre', 'Pre-clinical', 'layers'], ['para', 'Para-clinical', 'flask'], ['clinical', 'Clinical', 'steth']];
+        var body = '<section class="v3-pagehead"><div class="v3-pagehead-t"><span class="v3-chip">' + v3Ic('layers', 16) + 'QBank</span>' +
+          '<h1>Subjects</h1><p>' + SUBJECT_INDEX.length + ' subjects · 740 topics · ' + totalQuestions().toLocaleString() + ' questions</p></div>' +
+          v3Art(['anatomy', 'medicine', 'pharmacology']) + '</section>' +
+          '<div class="v2-gsearch v3-search"><label class="v2-sr" for="v2GSearch">Search subjects or topics</label>' +
+          '<span class="v2-gsearch-ic" aria-hidden="true">' + v3Ic('search', 20) + '</span>' +
+          '<input id="v2GSearch" type="search" placeholder="Search subjects or topics…" autocomplete="off">' +
+          '<div class="v2-gsearch-res" id="v2GSearchRes" hidden></div></div>' +
+          '<div class="v3-filters" role="group" aria-label="Filter subjects">' + cats.map(function (c) {
+            return '<button class="v3-filter" data-cat-f="' + c[0] + '" aria-pressed="' + (v2SubjectFilter === c[0]) + '">' + (c[2] ? v3Ic(c[2], 18) : '') + c[1] + '</button>';
           }).join('') + '</div>' +
-          '<div class="v2-tiles v2-sec" id="v2SubjList">' + SUBJECT_INDEX.map(function (sx) { return v2SubjectTile(sx, ix); }).join('') + '</div>' +
+          '<div class="v3-subjgrid" id="v2SubjList">' + SUBJECT_INDEX.map(function (sx) { return v3SubjTile(sx, ix); }).join('') +
+          '<button class="v3-custom" id="v2Custom"><span class="v3-custom-ic">' + v3Ic('custom', 30) + '</span><span class="v3-custom-t"><b>Custom practice</b><small>Build a set from any subjects and topics</small></span>' + v3Ic('chev', 20) + '</button></div>' +
           '<p class="v2-empty" id="v2SubjNone" hidden>No subject matches.</p>' +
-          '<section class="v2-sec"><h2 class="v2-h2">More ways to practise</h2>' +
-          v2MockRow() +
-          '<button class="v2-row v2-row-plain" id="v2Custom"><span>Custom set from any topics</span><span aria-hidden="true">›</span></button>' +
-          PYQ_EXAMS.map(function (ex) {
-            return '<button class="v2-row v2-row-plain" data-pyq="' + esc(ex.id) + '"><span>' + esc(ex.name) + ' past papers</span><span class="v2-row-end">' + (isUserPro(currentUser) ? '›' : 'Pro') + '</span></button>';
-          }).join('') + '</section>';
-        body = '<div class="v2-bold">' + body + '</div>';
-        v2Paint('subjects', v2Shell('subjects', v2Header('Back to today', 'Subjects'), body, ix.due.length));
+          '<section class="v3-sec"><div class="v3-h"><h2><span>More ways to practise</span></h2></div><div class="v3-ways">' +
+          '<a class="v3-card v3-way" id="v2Mock" href="/mock-test"><span class="v3-way-ic w-trophy">' + v3Ic('trophy', 26) + '</span><span>Mock tests</span>' + v3Ic('chev', 18) + '</a>' +
+          '<button class="v3-card v3-way" data-nav-go="pyq"><span class="v3-way-ic w-doc">' + v3Ic('doc', 26) + '</span><span>Past papers</span>' + v3Ic('chev', 18) + '</button>' +
+          '<button class="v3-card v3-way" data-nav-go="review"><span class="v3-way-ic w-ref">' + v3Ic('refresh', 26) + '</span><span>Review' + (ix.due.length ? ' <small>' + ix.due.length + ' due</small>' : '') + '</span>' + v3Ic('chev', 18) + '</button>' +
+          '</div></section>';
+        body = '<div class="v2-bold v3-page">' + body + '</div>';
+        v2Paint('subjects', v2Shell('qbank', v2Header(), body, ix.due.length));
         wireV2Shell();
         wireV2Common();
+        wireV2Search();
         var cu = document.getElementById('v2Custom');
         if (cu) cu.onclick = function () { setupChoice.count = 'all'; renderCustomSetup(); };
-        var input = document.getElementById('v2SubjSearch');
+        var input = document.getElementById('v2GSearch');
         function apply() {
           var q = (input.value || '').trim().toLowerCase();
           var shown = 0;
@@ -6850,9 +6938,10 @@ window.addEventListener('error', function (ev) {
             r.hidden = !ok;
             if (ok) shown++;
           });
-          document.getElementById('v2SubjNone').hidden = shown > 0;
+          // Typing also lists matching topics, so an empty subject grid is fine then.
+          document.getElementById('v2SubjNone').hidden = shown > 0 || q.length >= 2;
         }
-        input.oninput = apply;
+        input.addEventListener('input', apply);
         app.querySelectorAll('[data-cat-f]').forEach(function (b) {
           b.onclick = function () {
             v2SubjectFilter = b.getAttribute('data-cat-f');
@@ -6861,8 +6950,95 @@ window.addEventListener('error', function (ev) {
           };
         });
         apply();
-        v2LoadMockState();
         v2WithHistory('subjects', renderSubjectsV2);
+      }
+
+      // ---- PYQ: past papers -----------------------------------------------
+      function renderPyqV2() {
+        if (!quizStylesReady) { ensureQuizStyles().then(renderPyqV2); return; }
+        trackPageView('/pyqs', 'pyq');
+        var pro = isUserPro(currentUser);
+        var ix = v2Index(v2HaveHistory() ? reviewData : null);
+        var body = '<section class="v3-pagehead"><div class="v3-pagehead-t"><span class="v3-chip">' + v3Ic('doc', 16) + 'PYQ</span>' +
+          '<h1>Past papers</h1><p>Previous-year questions, by exam and year' + (pro ? '' : ' · Pro') + '</p></div>' +
+          v3Art(['forensic-medicine', 'psm', 'surgery']) + '</section>' +
+          '<div class="v3-pyqs">' + PYQ_EXAMS.map(function (ex) {
+            var years = (ex.years || []).filter(function (y) { return !/^All /.test(y); });
+            var span = String(ex.coverage || '').split('·')[0].replace(/ – /g, '–').replace(/\s*(Recalls|Exam Question Papers)\s*$/i, '').trim();
+            return '<button class="v3-card v3-pyq" data-pyq="' + esc(ex.id) + '"><span class="v3-pyq-ic" aria-hidden="true">' + esc(ex.icon || '📄') + '</span>' +
+              '<span class="v3-pyq-t"><b>' + esc(ex.name) + '</b><small>' + esc(ex.label || '') + '</small>' +
+              '<span class="v3-tchips"><span class="v3-tc">' + v3Ic('calendar', 14) + esc(span) + '</span>' + (years.length ? '<span class="v3-tc">' + v2Plural(years.length, /Sessions/.test(ex.coverage || '') ? 'session' : 'paper') + '</span>' : '') +
+              (pro ? '' : '<span class="v3-tc pro">' + v3Ic('lock', 13) + 'Pro</span>') + '</span></span>' + v3Ic('chev', 20) + '</button>';
+          }).join('') + '</div>' +
+          (pro ? '' : '<button class="v3-pro" id="v2ProBtn"><span class="v3-pro-ic" aria-hidden="true">👑</span><span class="v3-pro-t"><b>Unlock past papers</b><small>Every year of NEET PG, INI-CET, FMGE and more with Pro.</small></span>' + v3Ic('chev', 20) + '</button>');
+        v2Paint('pyq', v2Shell('pyq', v2Header(), '<div class="v2-bold v3-page">' + body + '</div>', ix.due.length));
+        wireV2Shell();
+        wireV2Common();
+        var pb = document.getElementById('v2ProBtn');
+        if (pb) pb.onclick = function () { if (currentUser) openProModal('banner', {}); else openAuthModal('signup', { reason: 'Create a free account, then go Pro for past papers.' }); };
+      }
+
+      // ---- Profile ---------------------------------------------------------
+      function renderProfileV2() {
+        if (!quizStylesReady) { ensureQuizStyles().then(renderProfileV2); return; }
+        trackPageView('/profile', 'profile');
+        var rd = v2HaveHistory() ? reviewData : null;
+        var ix = v2Index(rd);
+        var pro = isUserPro(currentUser);
+        var row = function (icon, label, sub, attrs, end) {
+          return '<button class="v3-li v3-set" ' + attrs + '><span class="v3-set-ic">' + v3Ic(icon, 20) + '</span><span class="v3-li-t"><b>' + label + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (end || v3Ic('chev', 18)) + '</button>';
+        };
+        var body = '';
+        if (currentUser) {
+          var name = esc(getUserDisplayName(currentUser) || 'Student');
+          body += '<section class="v3-card v3-me"><span class="v3-me-av">' + esc(getUserInitials(currentUser)) + '</span><span class="v3-me-t"><b>' + name + '</b><small>' + esc(currentUser.email || '') + '</small>' +
+            '<span class="v3-pill ' + (pro ? 'pro' : '') + '">' + (pro ? '⭐ Pro active' : 'Free plan') + '</span></span></section>';
+        } else {
+          body += '<section class="v2-hero v3-mission v3-mission-sm"><div class="v3-mission-main"><p class="v3-mission-k">' + v3Ic('user', 22) + 'Your account</p><h2>Sign in to save your progress</h2>' +
+            '<ul class="v3-mission-list"><li>' + v3Ic('check', 18) + '8 free topics in every subject</li><li>' + v3Ic('refresh', 18) + 'Spaced review of what you miss</li></ul></div>' +
+            '<div class="v3-mission-actions"><button class="v3-mission-btn" id="v3SignIn">Sign in free <span aria-hidden="true">→</span></button></div></section>';
+        }
+        var g = v2ExamGet();
+        var goal = v2Goal();
+        body += '<section class="v3-sec">' + v3Head('', 'Study', '') + '<div class="v3-card v3-list">' +
+          (currentUser ? row('calendar', 'Exam and date', g ? esc(g.exam) + (g.date ? ' · ' + esc(g.date) : '') : 'Not set', 'id="v2ExamEdit"') : '') +
+          (currentUser ? row('target', 'Daily goal', goal + ' questions a day', 'id="v2GoalBtn" aria-expanded="false"') +
+            '<div class="v2-goal-pick v3-goal-pick" id="v2GoalPick" hidden>' + V2_GOALS.map(function (gv) { return '<button class="v2-goal-opt' + (gv === goal ? ' on' : '') + '" data-goal="' + gv + '">' + gv + '</button>'; }).join('') + '</div>' : '') +
+          row('chart', 'Progress and analytics', 'Accuracy, activity and every subject', 'data-nav-go="progress"') +
+          row('refresh', 'Review', ix.due.length ? ix.due.length + ' questions due' : 'Spaced review of past answers', 'data-nav-go="review"') +
+          row('bookmark', 'Bookmarks', 'Questions you saved', 'data-nav-go="bookmarks"') +
+          '</div>' + (currentUser ? v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '') : '') + '</section>';
+        body += '<section class="v3-sec">' + v3Head('', 'App', '') + '<div class="v3-card v3-list">' +
+          row('sun', 'Theme', darkMode ? 'Dark' : 'Light', 'id="v3Theme"', '<span class="v3-switch' + (darkMode ? ' on' : '') + '" aria-hidden="true"><span></span></span>') +
+          row('grid', 'Classic home', 'Use the earlier home screen', 'id="v2ClassicBtn"') +
+          (isAdmin(currentUser) ? row('crown', 'Admin console', 'Students, questions, mock tests', 'id="v3Admin"') : '') +
+          (currentUser && !pro ? row('crown', 'Go Pro', 'All 740 topics and past papers', 'id="v2ProBtn"') : '') +
+          (currentUser ? row('out', 'Sign out', '', 'id="v3SignOut"', '') : '') +
+          '</div></section>';
+        v2Paint('profile', v2Shell('profile', v2Header(), '<div class="v2-bold v3-page"><h1 class="v3-title">Profile</h1>' + body + '</div>', ix.due.length));
+        wireV2Shell();
+        wireV2Common();
+        if (currentUser) wireV2Exam(function () { renderProfileV2(); });
+        var si = document.getElementById('v3SignIn');
+        if (si) si.onclick = function () { openAuthModal('signin', { reason: 'Sign in to save your progress.' }); };
+        var th = document.getElementById('v3Theme');
+        if (th) th.onclick = function (e) { toggleTheme(e); setTimeout(renderProfileV2, 60); };
+        var cl = document.getElementById('v2ClassicBtn');
+        if (cl) cl.onclick = function () { setUiMode('old'); };
+        var ad = document.getElementById('v3Admin');
+        if (ad) ad.onclick = function () { openAdminModal(); };
+        var pb = document.getElementById('v2ProBtn');
+        if (pb) pb.onclick = function () { openProModal('banner', {}); };
+        var so = document.getElementById('v3SignOut');
+        if (so) so.onclick = function () { handleSignOut(); };
+        var gb = document.getElementById('v2GoalBtn'), gpk = document.getElementById('v2GoalPick');
+        if (gb && gpk) {
+          gb.onclick = function () { gpk.hidden = !gpk.hidden; gb.setAttribute('aria-expanded', String(!gpk.hidden)); };
+          gpk.querySelectorAll('[data-goal]').forEach(function (o) {
+            o.onclick = function () { v2SetGoal(parseInt(o.getAttribute('data-goal'), 10)); renderProfileV2(); };
+          });
+        }
+        v2WithHistory('profile', renderProfileV2);
       }
 
       // ---- review -------------------------------------------------------------
@@ -6946,94 +7122,78 @@ window.addEventListener('error', function (ev) {
         var next = v2NextIn(ss, v2LastModuleIn(ss));
         var started = ss.mods.filter(function (x) { return x.open && x.st.seen > 0; });
         var freeCount = ss.mods.filter(function (x) { return !x.locked; }).length;
+        var slug = v2Slug(sx.name);
+        var comp = ss.qseen / (ss.questions || 1);
 
-        var startedFrac = ss.started / (ss.total || 1);
-        var body = '<div class="v2-bold v2-topics-bold"><div class="v2-subj-head">' + v2SubjIcon(sx, 60) +
-          '<div class="v2-subj-head-t"><p class="v2-subj-cat">' + esc(sx.catLabel || '') + '</p><h1 class="v2-title">' + esc(sx.name) + '</h1>' +
-          '<p class="v2-sub">' + v2Plural(ss.total, 'topic') + ' · ' + v2Plural(ss.questions, 'question') + '</p></div>' +
-          v2Ring(startedFrac, 60, 6, 'v2-ring-cont', Math.round(startedFrac * 100) + '%') + '</div>' +
-          '<div class="v2-mini4">' +
-          '<div class="v2-card2"><strong>' + ss.done + '</strong><span>done</span></div>' +
-          '<div class="v2-card2"><strong>' + ss.active + '</strong><span>in progress</span></div>' +
-          '<div class="v2-card2"><strong>' + ss.fresh + '</strong><span>not started</span></div>' +
-          '<div class="v2-card2"><strong>' + (ss.pct != null ? ss.pct + '%' : '–') + '</strong><span>correct</span></div>' +
-          '</div>';
-        if (next) {
-          var resume = next.st.status === 'active';
-          body += '<section class="v2-hero v2-hero-compact"><div class="v2-hero-main"><p class="v2-hero-k">' + (resume ? 'Continue' : 'Next topic') + '</p>' +
-            '<h2 class="v2-hero-h">' + esc(next.m.name) + '</h2>' +
-            '<p class="v2-hero-p">' + (resume ? (next.st.total - next.st.seen) + ' of ' + next.st.total + ' questions left' : v2Plural(next.m.questionCount, 'question') + (next.m.section ? ' · ' + esc(next.m.section) : '')) + '</p></div>' +
-            (resume ? v2Ring(next.st.seen / (next.st.total || 1), 64, 7, 'v2-ring-hero', '<strong style="font-size:13px">' + Math.round(100 * next.st.seen / (next.st.total || 1)) + '%</strong>') : '') +
-            '<div class="v2-hero-actions"><button class="v2-hero-btn" data-sid="' + subjectId + '" data-mod="' + esc(next.m.moduleId) + '">' + (resume ? 'Resume' : 'Start') + '</button></div></section>';
-        }
-        if (currentUser && started.length >= 2) {
-          body += '<button class="v2-card2 v2-weak v2-mix" id="v2Mix"><span class="v2-qa-ic v2-qa-custom" style="width:40px;height:40px;border-radius:12px">' + v2Icon('custom') + '</span><span class="v2-cont-main"><span class="v2-cont-t">Mixed ' + esc(sx.name) + ' set</span>' +
-            '<span class="v2-row-sub">20 questions from the ' + started.length + ' topics you have started' + (ss.due ? ', due ones first' : '') + '</span></span>' + RR_CHEVRON_SVG.replace('M6 9l6 6 6-6', 'M9 18l6-6-6-6') + '</button>';
-        }
+        var body = '<div class="v2-bold v3-page v3-topics"><section class="v3-topichead v2-subj-head">' +
+          '<span class="v3-th-ic">' + v2SubjIcon(sx, 84) + '</span>' +
+          '<div class="v3-th-t"><h1>' + esc(sx.name) + '</h1><p>' + v2Plural(ss.total, 'topic') + ' · ' + v2Plural(ss.questions, 'question') + '</p>' +
+          '<div class="v3-th-bar"><span class="v3-bar"><span style="width:' + Math.max(2, v3Pct(comp)) + '%"></span></span><span>' + v3Pct(comp) + '% complete</span></div></div>' +
+          '<img class="v3-th-art" src="/assets/subjects-webp/' + slug + '.webp" alt="" width="96" height="96" aria-hidden="true"></section>';
+
         if (!pro) {
-          body += '<p class="v2-tier">' + (currentUser
+          body += '<p class="v2-tier v3-tier">' + (currentUser
             ? freeCount + ' of ' + ss.total + ' topics are open on the free plan.'
             : 'One topic here is free to try without an account; a free account opens ' + Math.min(PRO_CONFIG.FREE_MODULES_PER_SUBJECT, ss.total) + '.') +
             ' <button class="v2-link" id="v2Upgrade">' + (currentUser ? 'Unlock all ' + ss.total + ' with Pro' : 'Sign up free') + '</button></p>';
         }
 
-        var counts = { all: ss.total, due: 0, active: ss.active, fresh: ss.fresh, done: ss.done };
-        ss.mods.forEach(function (x) { if (x.st.due) counts.due++; });
-        var filters = [['all', 'All'], ['due', 'Due'], ['active', 'In progress'], ['fresh', 'Not started'], ['done', 'Done']]
-          .filter(function (f) { return f[0] === 'all' || counts[f[0]] > 0; });
-        if (v2TopicFilter !== 'all' && !counts[v2TopicFilter]) v2TopicFilter = 'all';
-        body += '<label class="v2-sr" for="topicSearch">Search ' + esc(sx.name) + ' topics</label>' +
-          '<input id="topicSearch" class="v2-search" type="search" placeholder="Search ' + ss.total + ' topics" autocomplete="off">' +
-          '<div class="v2-filters" role="group" aria-label="Filter topics">' + filters.map(function (f) {
-            return '<button class="v2-filter" data-topic-f="' + f[0] + '" aria-pressed="' + (v2TopicFilter === f[0]) + '">' + f[1] + ' ' + counts[f[0]] + '</button>';
+        var rows = [];
+        ss.mods.forEach(function (x) {
+          var f = x.locked ? 'locked' : x.st.status === 'done' ? 'done' : x.st.status === 'active' ? 'active' : 'fresh';
+          rows.push({ x: x, f: f });
+        });
+        var counts = { all: ss.total, fresh: 0, active: 0, due: 0, done: 0 };
+        rows.forEach(function (r) { if (counts[r.f] != null) counts[r.f]++; if (r.x.st.due) counts.due++; });
+        var filters = [['all', 'All', ''], ['fresh', 'Not started', 'playc'], ['active', 'In progress', 'refresh'], ['due', 'Needs revision', 'bookmark'], ['done', 'Done', 'check']]
+          .filter(function (fl) { return fl[0] !== 'done' || counts.done > 0; });
+        if (!filters.some(function (fl) { return fl[0] === v2TopicFilter; })) v2TopicFilter = 'all';
+        body += '<div class="v2-gsearch v3-search"><label class="v2-sr" for="topicSearch">Search ' + esc(sx.name) + ' topics</label>' +
+          '<span class="v2-gsearch-ic" aria-hidden="true">' + v3Ic('search', 20) + '</span>' +
+          '<input id="topicSearch" type="search" placeholder="Search topics in ' + esc(sx.name) + '…" autocomplete="off"></div>' +
+          '<div class="v3-filters" role="group" aria-label="Filter topics">' + filters.map(function (fl) {
+            return '<button class="v3-filter" data-topic-f="' + fl[0] + '" aria-pressed="' + (v2TopicFilter === fl[0]) + '">' + (fl[2] ? v3Ic(fl[2], 18) : '') + fl[1] + ' (' + counts[fl[0]] + ')</button>';
           }).join('') + '</div>';
 
-        var html = '';
-        var section = null;
-        var secRows = [];
+        var html = '', section = null, secRows = [];
         function flush() {
           if (section === null && !secRows.length) return;
-          var done = secRows.filter(function (x) { return x.st.status === 'done'; }).length;
-          html += '<section class="v2-sec v2-topic-sec"><h2 class="v2-h2 v2-h2-flat"><span>' + esc(section || 'Topics') + '</span><span>' + done + ' of ' + secRows.length + ' done</span></h2>' +
-            secRows.map(function (x) { return x.html; }).join('') + '</section>';
+          html += '<section class="v3-topic-sec v2-topic-sec">' + (section ? '<h2 class="v3-sec-h">' + esc(section) + '</h2>' : '') + secRows.join('') + '</section>';
           secRows = [];
         }
-        ss.mods.forEach(function (x) {
+        rows.forEach(function (r) {
+          var x = r.x, st = x.st;
           if ((x.m.section || null) !== section) { flush(); section = x.m.section || null; }
-          var st = x.st;
-          var isNext = next && next.m.id === x.m.id;
-          var tPct = st.total ? Math.round((100 * st.seen) / st.total) : 0;
-          if (st.seen > 0 && tPct === 0) tPct = 1;
-          var icon = x.locked ? '<span class="v2-st v2-st-lock v2-st-box">' + v2LockSvg() + '</span>'
-            : v2Ring(st.total ? st.seen / st.total : 0, 42, 4, 'v2-ring-topic v2-rt-' + (st.status === 'done' ? 'done' : st.status === 'active' ? 'active' : (isNext ? 'next' : 'new')),
-              st.status === 'done' ? '\u2713' : tPct + '%');
-          var chips = [];
-          chips.push('<span class="v2-tc">' + x.m.questionCount + ' Qs</span>');
-          if (x.locked) chips.push('<span class="v2-tc pro">Pro</span>');
-          else if (st.status === 'active') chips.push('<span class="v2-tc">' + st.seen + ' of ' + st.total + ' done</span>');
-          if (!x.locked && st.pct != null && st.seen) chips.push('<span class="v2-tc ' + (st.pct >= 70 ? 'ok' : st.pct >= 50 ? 'mid' : 'bad') + '">' + st.pct + '% correct</span>');
-          if (isNext && !x.locked) chips.push('<span class="v2-tc next">Next up</span>');
-          if (!currentUser && !x.locked) chips.push('<span class="v2-tc">' + (x.open ? 'Free to try' : 'Free account') + '</span>');
-          var sub = chips.join('');
-          var chev = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
-          var end = x.locked ? '' : st.due ? '<span class="v2-tag">' + st.due + ' due</span>' : '<span class="v2-tchev">' + chev + '</span>';
-          var f = x.locked ? 'locked' : st.status === 'done' ? 'done' : st.status === 'active' ? 'active' : 'fresh';
-          secRows.push({
-            st: st,
-            html: '<button class="v2-row v2-topic' + (x.locked ? ' is-locked' : '') + (isNext ? ' is-next' : '') + (x.m.questionCount ? '' : ' is-empty') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
-              ' data-f="' + f + '" data-due="' + (st.due ? 1 : 0) + '" data-name="' + esc((x.m.name + ' ' + (x.m.section || '')).toLowerCase()) + '">' +
-              icon + '<span class="v2-row-main"><span class="v2-row-title">' + esc(x.m.name) + '</span><span class="v2-tchips">' + sub + '</span></span>' + end + '</button>'
-          });
+          var isNext = next && next.m.id === x.m.id && !x.locked;
+          var frac = st.total ? st.seen / st.total : 0;
+          var p = v3Pct(frac);
+          var chips = ['<span class="v3-tc">' + v3Ic('layers', 15) + x.m.questionCount + ' Qs</span>'];
+          if (x.locked) chips.push('<span class="v3-tc pro">' + v3Ic('lock', 14) + 'Pro</span>');
+          else if (st.status === 'done') chips.push('<span class="v3-tc ok">' + v3Ic('check', 15) + 'Done</span>');
+          else if (st.status === 'active') chips.push('<span class="v3-tc">' + v3Ic('check', 15) + st.seen + ' of ' + st.total + '</span>');
+          else chips.push('<span class="v3-tc">' + v3Ic('playc', 15) + 'Not started</span>');
+          if (!x.locked && st.pct != null && st.seen) chips.push('<span class="v3-tc ' + (st.pct >= 70 ? 'ok' : st.pct >= 50 ? 'mid' : 'bad') + '">' + v3Ic('target', 15) + st.pct + '% correct</span>');
+          if (!x.locked && st.due) chips.push('<span class="v3-tc due">' + v3Ic('refresh', 14) + st.due + ' due</span>');
+          if (!currentUser && !x.locked) chips.push('<span class="v3-tc">' + (x.open ? 'Free to try' : 'Free account') + '</span>');
+          var ring = x.locked ? '<span class="v3-lockc">' + v3Ic('lock', 20) + '</span>'
+            : v2Ring(frac, 54, 5, 'v3-ring-t v3-rt-' + (st.status === 'done' ? 'done' : st.status === 'active' ? 'active' : 'new'), st.status === 'done' ? '✓' : p + '%');
+          var end = isNext ? '<span class="v3-nextbtn">' + (st.status === 'active' ? 'Next up' : 'Start') + v3Ic('chev', 16) + '</span>' : '<span class="v3-tchev">' + v3Ic('chev', 18) + '</span>';
+          secRows.push('<button class="v3-topic' + (x.locked ? ' is-locked' : '') + (isNext ? ' is-next' : '') + (x.m.questionCount ? '' : ' is-empty') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
+            ' data-f="' + r.f + '" data-due="' + (st.due ? 1 : 0) + '" data-name="' + esc((x.m.name + ' ' + (x.m.section || '')).toLowerCase()) + '">' +
+            '<span class="v3-thumb v3-thumb-' + (x.i % 6) + '"><img src="/assets/subjects-webp/' + slug + '.webp" alt="" width="44" height="44" loading="lazy"><span class="v3-thumb-n">' + (x.i + 1) + '</span></span>' +
+            '<span class="v3-topic-t"><b>' + esc(x.m.name) + '</b><span class="v3-tchips">' + chips.join('') + '</span></span>' +
+            ring + end + '</button>');
         });
         flush();
-        body += '<div id="v2TopicList">' + html + '</div><p class="v2-empty" id="v2TopicNone" hidden>No topics match.</p>';
+        body += '<div id="v2TopicList" class="v3-topiclist">' + html + '</div><p class="v2-empty" id="v2TopicNone" hidden>No topics match.</p>';
 
         var mockLocked = isModuleLocked(subjectId, 'all');
-        body += '<section class="v2-sec"><h2 class="v2-h2">Whole subject</h2>' +
-          '<button class="v2-row v2-row-plain" id="v2AllTopics"><span>' + esc(sx.name) + ' mock: all ' + v2Plural(ss.questions, 'question') + '</span><span class="v2-row-end">' + (mockLocked ? 'Pro' : '›') + '</span></button></section>';
+        body += '<section class="v3-sec"><div class="v3-h"><h2><span>More practice</span></h2></div><div class="v3-card v3-list">' +
+          (currentUser && started.length >= 2 ? '<button class="v3-li v3-set" id="v2Mix"><span class="v3-set-ic">' + v3Ic('custom', 20) + '</span><span class="v3-li-t"><b>Mixed ' + esc(sx.name) + ' set</b><small>20 questions from the ' + started.length + ' topics you have started' + (ss.due ? ', due ones first' : '') + '</small></span>' + v3Ic('chev', 18) + '</button>' : '') +
+          '<button class="v3-li v3-set" id="v2AllTopics"><span class="v3-set-ic">' + v3Ic('trophy', 20) + '</span><span class="v3-li-t"><b>' + esc(sx.name) + ' mock</b><small>All ' + v2Plural(ss.questions, 'question') + '</small></span>' + (mockLocked ? '<span class="v3-tc pro">' + v3Ic('lock', 14) + 'Pro</span>' : v3Ic('chev', 18)) + '</button>' +
+          '</div></section></div>';
 
-        body += '</div>';
-        v2Paint('modules', v2Shell('subjects', v2Header('All subjects', 'Subjects'), body, ix.due.length));
+        v2Paint('modules', v2Shell('qbank', v2Header('All subjects', 'Subjects'), body, ix.due.length));
         wireV2Shell(function () { renderSubjectsV2(); });
         wireV2Common();
 
@@ -7066,7 +7226,7 @@ window.addEventListener('error', function (ev) {
         function apply() {
           var q = (input.value || '').trim().toLowerCase();
           var shown = 0;
-          app.querySelectorAll('#v2TopicList .v2-topic-sec').forEach(function (sec) {
+          app.querySelectorAll('#v2TopicList .v3-topic-sec').forEach(function (sec) {
             var any = false;
             sec.querySelectorAll('[data-topic]').forEach(function (r) {
               var f = r.getAttribute('data-f');
