@@ -79,6 +79,11 @@
             <span class="ah-card-t"><b>Question of the day</b><small>Choose what every student sees on the home screen</small></span>
             <span class="ah-card-f"><span class="ah-chip" id="ahChip-qotd">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
           </button>
+          <button class="ah-card ah-t-books" data-go="books" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg></span>
+            <span class="ah-card-t"><b>Books</b><small>Upload PDF or Word books and publish them on the Books page</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-books">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
           <button class="ah-card ah-t-pro" data-go="pro" type="button">
             <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg></span>
             <span class="ah-card-t"><b>Pro access</b><small>Grant or revoke Pro for a student</small></span>
@@ -90,6 +95,40 @@
             <span class="ah-card-f"><span class="ah-chip" id="ahChip-usage">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
           </button>
         </div>
+      </section>
+
+      <!-- Books -->
+      <section id="booksView" class="am-view" hidden>
+        <div class="am-row"><button id="booksBackBtn" class="am-btn">&larr; Admin home</button><h1>Books</h1>
+          <a class="am-btn" href="/books" target="_blank" rel="noopener">Open the Books page &#8599;</a></div>
+        <div class="am-card ah-panel" id="bkForm">
+          <h3 id="bkFormTitle" style="margin-top:0">Add a book</h3>
+          <div class="am-form">
+            <label>Exam
+              <select id="bkExam">
+                <option value="neet-pg">NEET PG</option><option value="fmge">FMGE</option><option value="ini-cet">INI-CET</option>
+                <option value="neet-ss">NEET SS</option><option value="custom">Custom name…</option>
+              </select>
+            </label>
+            <label id="bkExamLabelWrap" hidden>Custom exam name <input id="bkExamLabel" maxlength="60" placeholder="e.g. NEXT, USMLE Step 1"></label>
+            <label>Subject <select id="bkSubject"></select></label>
+            <label class="am-wide">Title <input id="bkTitle" maxlength="200" placeholder="e.g. Anatomy high-yield notes"></label>
+            <label class="am-wide">Short description <textarea id="bkDesc" rows="3" maxlength="600" placeholder="What the book covers (shown on the Books page)"></textarea></label>
+            <label>Pages (optional) <input id="bkPages" type="number" min="1" max="5000" inputmode="numeric"></label>
+            <label class="am-wide">File (PDF or Word, up to 95 MB)
+              <input id="bkFile" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
+            <p class="am-hint am-wide" id="bkFileInfo"></p>
+            <label class="am-wide bk-pub"><input type="checkbox" id="bkPublished" checked> Publish on the Books page now</label>
+            <div class="am-wide">
+              <div class="bk-prog" id="bkProg" hidden><span id="bkProgBar"></span></div>
+              <button id="bkSaveBtn" class="am-btn am-btn-primary" type="button">Upload and publish</button>
+              <button id="bkCancelBtn" class="am-btn" type="button" hidden>Cancel editing</button>
+              <span id="bkMsg" class="am-hint"></span>
+            </div>
+          </div>
+        </div>
+        <h2 class="ah-h2">All books</h2>
+        <div id="bkList" class="am-list"><p class="am-hint">Loading…</p></div>
       </section>
 
       <!-- Pro access -->

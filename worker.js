@@ -14,6 +14,12 @@
  * Upload route: verifies the caller is a MedLadder admin via their
  * Supabase session token (mock_is_admin RPC), then stores the image in the
  * medladder-images R2 bucket and returns its public URL.
+ *
+ * Books: POST /api/upload-book (admin) streams a PDF or Word file into the
+ * same bucket under books/; POST /api/delete-book-file removes one. The
+ * /books page gets the published list from the `books` table written into
+ * its HTML (cached for a minute), so a book goes live within a minute of
+ * being published and search engines see the list without running scripts.
  */
 
 import COUNT_MAP from './count-map.json';
@@ -34,6 +40,27 @@ var EXT_BY_TYPE = {
   'image/png': 'png',
   'image/gif': 'gif'
 };
+
+/* Admin check shared by the upload routes: the caller's Supabase session
+   token must belong to an admin (mock_is_admin RPC). Returns null when the
+   caller is an admin, otherwise the error response to send. */
+async function requireAdmin(request) {
+  var auth = request.headers.get('authorization') || '';
+  var token = auth.replace(/^Bearer\s+/i, '');
+  if (!token) return json(401, { ok: false, error: 'unauthorized' });
+  try {
+    var rpc = await fetch(SUPABASE_URL + '/rest/v1/rpc/mock_is_admin', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    if (!rpc.ok) return json(401, { ok: false, error: 'unauthorized' });
+    if ((await rpc.json()) !== true) return json(403, { ok: false, error: 'forbidden' });
+  } catch (e) {
+    return json(502, { ok: false, error: 'auth_check_failed' });
+  }
+  return null;
+}
 
 function json(status, obj) {
   return new Response(JSON.stringify(obj), {
@@ -319,6 +346,116 @@ async function uploadImage(request, env) {
     return json(200, { ok: true, key: key, url: R2_PUBLIC_BASE + '/' + key });
 }
 
+/* ---------- books ---------- */
+
+var BOOK_MAX_BYTES = 95 * 1024 * 1024;
+var BOOK_TYPES = {
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx'
+};
+
+function slugify(s) {
+  return String(s || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'book';
+}
+
+/* The file is sent as the raw request body (not a form) so the Worker can
+   stream it into R2 without holding a large PDF in memory. */
+async function uploadBook(request, env) {
+  var denied = await requireAdmin(request);
+  if (denied) return denied;
+  var type = (request.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  var ext = BOOK_TYPES[type];
+  if (!ext) return json(400, { ok: false, error: 'not_pdf_or_word' });
+  var len = Number(request.headers.get('content-length') || 0);
+  if (!len) return json(411, { ok: false, error: 'length_required' });
+  if (len > BOOK_MAX_BYTES) return json(413, { ok: false, error: 'too_large' });
+  var name = decodeURIComponent(request.headers.get('x-file-name') || 'book');
+  var key = 'books/' + slugify(name.replace(/\.(pdf|docx?)$/i, '')) + '-' + Date.now().toString(36) + '.' + ext;
+  try {
+    await env.IMAGES_BUCKET.put(key, request.body, {
+      httpMetadata: { contentType: type, contentDisposition: 'inline; filename="' + slugify(name.replace(/\.(pdf|docx?)$/i, '')) + '.' + ext + '"' }
+    });
+  } catch (e) {
+    return json(502, { ok: false, error: 'r2_put_failed' });
+  }
+  return json(200, { ok: true, key: key, url: R2_PUBLIC_BASE + '/' + key, size: len, type: ext });
+}
+
+async function deleteBookFile(request, env) {
+  var denied = await requireAdmin(request);
+  if (denied) return denied;
+  var body = {};
+  try { body = await request.json(); } catch (e) {}
+  var key = String(body.key || '');
+  // Only files this route manages; never images or anything outside books/.
+  if (!/^books\/[a-z0-9-]+\.(pdf|docx?)$/.test(key)) return json(400, { ok: false, error: 'bad_key' });
+  try { await env.IMAGES_BUCKET.delete(key); } catch (e) { return json(502, { ok: false, error: 'r2_delete_failed' }); }
+  return json(200, { ok: true });
+}
+
+var EXAM_NAMES = { 'neet-pg': 'NEET PG', fmge: 'FMGE', 'ini-cet': 'INI-CET', 'neet-ss': 'NEET SS' };
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function bookExam(b) { return b.exam === 'custom' ? (b.exam_label || 'Other') : (EXAM_NAMES[b.exam] || b.exam); }
+function fmtSize(n) {
+  if (!n) return '';
+  return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+}
+/* Same markup as renderBook() in books.js. */
+function bookCard(b) {
+  var t = (b.file_type || 'pdf').toUpperCase();
+  return '<article class="bk-card" data-exam="' + esc(b.exam === 'custom' ? 'custom:' + (b.exam_label || '') : b.exam) + '" data-subject="' + esc(b.subject || 'All subjects') + '">' +
+    '<div class="bk-cover bk-t-' + esc(b.file_type || 'pdf') + '" aria-hidden="true"><span>' + esc(t) + '</span></div>' +
+    '<div class="bk-body"><div class="bk-tags"><span class="bk-tag">' + esc(bookExam(b)) + '</span><span class="bk-tag bk-tag-s">' + esc(b.subject || 'All subjects') + '</span></div>' +
+    '<h2 class="bk-title">' + esc(b.title) + '</h2>' +
+    (b.description ? '<p class="bk-desc">' + esc(b.description) + '</p>' : '') +
+    '<p class="bk-meta">' + esc(t) + (b.file_size ? ' · ' + fmtSize(b.file_size) : '') + (b.pages ? ' · ' + b.pages + ' pages' : '') + '</p>' +
+    '<a class="bk-dl" href="' + esc(b.file_url) + '" target="_blank" rel="noopener" download>Download ' + esc(t) + ' — free</a></div></article>';
+}
+
+var memBooks = null;
+async function getBooks(ctx) {
+  var now = Date.now();
+  if (memBooks && now - memBooks.at < 60000) return memBooks.data;
+  var cache = caches.default;
+  var key = new Request('https://medladder.top/__books/' + Math.floor(now / 60000));
+  var hit = await cache.match(key);
+  if (hit) { var d = await hit.json(); memBooks = { at: now, data: d }; return d; }
+  var ctl = new AbortController();
+  var timer = setTimeout(function () { ctl.abort(); }, 2500);
+  try {
+    var r = await fetch(SUPABASE_URL + '/rest/v1/books?published=eq.true&select=id,title,description,exam,exam_label,subject,file_url,file_type,file_size,pages,created_at&order=sort.asc,created_at.desc', {
+      headers: { apikey: SUPABASE_ANON_KEY }, signal: ctl.signal
+    });
+    if (!r.ok) throw new Error('books ' + r.status);
+    var rows = await r.json();
+    memBooks = { at: now, data: rows };
+    ctx.waitUntil(cache.put(key, new Response(JSON.stringify(rows), { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=60' } })));
+    return rows;
+  } finally { clearTimeout(timer); }
+}
+
+async function serveBooks(request, env, ctx) {
+  var res = await env.ASSETS.fetch(request);
+  if (request.method !== 'GET' || res.status !== 200) return res;
+  var rows;
+  try { rows = await getBooks(ctx); } catch (e) { return res; }
+  var data = JSON.stringify(rows).replace(/</g, '\\u003c');
+  var out = new HTMLRewriter()
+    .on('#bookList', { element: function (el) { el.setInnerContent(rows.length ? rows.map(bookCard).join('') : '<p class="bk-empty">No books yet — check back soon.</p>', { html: true }); } })
+    .on('#bookCount', { element: function (el) { el.setInnerContent(String(rows.length)); } })
+    .on('body', { element: function (el) { el.append('<script type="application/json" id="ml-books">' + data + '</script>', { html: true }); } })
+    .transform(res);
+  var h = new Headers(out.headers);
+  h.delete('etag'); h.delete('content-length');
+  h.set('cache-control', 'public, max-age=0, must-revalidate');
+  return new Response(out.body, { status: out.status, headers: h });
+}
+
 export default {
   async fetch(request, env, ctx) {
     var url = new URL(request.url);
@@ -326,6 +463,11 @@ export default {
       if (request.method !== 'POST') return json(404, { ok: false, error: 'not_found' });
       return uploadImage(request, env);
     }
+    if (url.pathname === '/api/upload-book' || url.pathname === '/api/delete-book-file') {
+      if (request.method !== 'POST') return json(404, { ok: false, error: 'not_found' });
+      return url.pathname === '/api/upload-book' ? uploadBook(request, env) : deleteBookFile(request, env);
+    }
+    if (url.pathname === '/books') return serveBooks(request, env, ctx);
     return servePage(request, env, ctx);
   }
 };
