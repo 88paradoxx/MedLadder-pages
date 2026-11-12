@@ -3321,3 +3321,10 @@ html.ml-reading #app .v2-topics-bold .v2-st-box { background: var(--rr-rule-soft
 html.ml-reading #app .v2-topics-bold .v2-topic[data-f] { border-left-color: var(--rr-rule-soft) !important; }
 html.dark.ml-reading #app .v2-topics-bold .v2-topic[data-f] { border-left-color: var(--rr-rule) !important; }
 html.ml-reading #app .v2-topics-bold .v2-topic.is-next[data-f], html.ml-reading #app .v2-topics-bold .v2-topic[data-f]:hover { border-color: var(--v2-accent) !important; }
+
+/* switch back to the classic home */
+html.ml-v2 .v2-classic-link{text-align:center!important;margin:28px 0 8px!important;grid-column:1/-1!important}
+html.ml-v2 .v2-classic-link button{background:none!important;border:0!important;padding:8px 12px!important;font:inherit!important;font-size:13px!important;color:var(--rr-ink-3,#777)!important;text-decoration:underline!important;text-underline-offset:3px!important;cursor:pointer!important}
+html.ml-v2 .v2-classic-link button:hover{color:var(--v2-accent,#5B34C9)!important}
+#dropdownUiModeBtn{color:#E9E2FB!important;background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.16)!important;font-weight:600!important}
+#dropdownUiModeBtn:hover{background:rgba(255,255,255,.12)!important}
