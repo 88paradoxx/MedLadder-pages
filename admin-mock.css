@@ -254,3 +254,37 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .ah-u span { display: block; margin-top: 4px; font-weight: 600; font-size: 14px; }
 .ah-u small { display: block; margin-top: 3px; color: var(--muted); font-size: 12.5px; }
 .ah-h2 { margin: 6px 0 4px; font: 700 20px/1.2 "Archivo", system-ui, sans-serif; }
+
+/* ---------- rich text field (question / explanation editor) ---------- */
+.rf { display: grid; gap: 6px; min-width: 0; }
+.rf-cap { font-size: 13px; color: var(--muted); }
+.rf-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px 10px 0 0; border-bottom: 0; }
+.rf-bar button { min-width: 36px; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid transparent;
+  background: transparent; color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+.rf-bar button:hover:not(:disabled) { background: var(--panel); border-color: var(--border); }
+.rf-bar button:disabled { opacity: .4; cursor: default; }
+.rf-bar .rf-add { color: var(--accent-2); font-weight: 600; }
+.rf-bar .rf-rm { color: var(--red); font-weight: 600; }
+.rf-bar .rf-mode { font-size: 13px; color: var(--muted); border-color: var(--border); }
+.rf-sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+.rf-sp { flex: 1; }
+.rf-ed, .rf .rf-src { min-height: 150px; max-height: 70vh; overflow: auto; margin-top: -6px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 0 0 10px 10px;
+  padding: 12px 14px; color: var(--text); font-size: 15px; line-height: 1.6; outline: none; }
+.rf .rf-src { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; resize: vertical; }
+.rf-ed:focus, .rf .rf-src:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(123, 47, 247, .18); }
+.rf-ed:empty::before { content: attr(data-ph); color: var(--muted); }
+.rf-ed p, .rf-view p { margin: 0 0 .6em; }
+.rf-ed img, .rf-view img { display: block; max-width: min(100%, 520px); height: auto; margin: 8px 0; border-radius: 8px;
+  border: 1px solid var(--border); background: #fff; cursor: pointer; }
+.rf-ed img.rf-sel { outline: 3px solid var(--accent); outline-offset: 2px; }
+.rf-status { margin: 0; font-size: 12px; }
+.rf-urlbox { display: grid; gap: 8px; margin-top: 6px; }
+.rf-urlbox .am-row { margin: 0; gap: 8px; }
+.rf-urlprev { max-width: 240px; max-height: 180px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
+.rf-view img { cursor: default; }
+@media (max-width: 640px) {
+  .rf-bar button { height: 38px; }
+  .rf-bar .rf-sp { flex-basis: 100%; height: 0; }
+}

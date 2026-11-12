@@ -41,6 +41,8 @@ const EXCLUDE_ENTRIES = new Set([
   'package.json',
   'package-lock.json',
   'build.mjs',
+  // Read by worker.js at bundle time; not a page asset.
+  'count-map.json',
   // Node build script (require('fs')), referenced by no page — was being
   // served publicly. sw.js stays: it is registered from app.js, not via <script src>.
   'optimize_lcp.js',

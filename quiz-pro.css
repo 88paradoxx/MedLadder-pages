@@ -3335,7 +3335,7 @@ html.ml-v2 .v2-classic-link button:hover{color:var(--v2-accent,#5B34C9)!importan
    ========================================================================== */
 .v3 {
   --x-bg: #F6F4FD; --x-card: #FFFFFF; --x-card2: #F8F6FE; --x-line: #E8E3F6; --x-line2: #DCD4F3;
-  --x-ink: #1A1433; --x-ink2: #5E5880; --x-ink3: #8B86A6;
+  --x-ink: #1A1433; --x-ink2: #5E5880; --x-ink3: #6B6590;
   --x-acc: #6D3DF0; --x-acc2: #8B5CF6; --x-accs: #EFE9FE; --x-acc-ink: #5B2FD6;
   --x-sh: 0 1px 2px rgba(40, 20, 90, .04), 0 10px 26px -14px rgba(60, 30, 140, .22);
   --x-ok: #16A34A; --x-okb: #E8F7EE; --x-bad: #E5484D; --x-badb: #FDECEC; --x-mid: #C2680A; --x-midb: #FEF3E2;
