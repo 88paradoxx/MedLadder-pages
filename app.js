@@ -163,8 +163,37 @@ window.addEventListener('error', function (ev) {
           if (sub.questionCount !== sum) { sub.questionCount = sum; changed = true; }
           if (SUBJECT_INDEX[si]) SUBJECT_INDEX[si].questionCount = sum;
         });
+        if (applyPyqSessions(c.pyq_sessions)) changed = true;
         if (!LIVE_COUNTS || LIVE_COUNTS.total !== c.total) changed = true;
         LIVE_COUNTS = c;
+        return changed;
+      }
+      // Past-paper sessions come from the database too, so a paper added in
+      // the admin panel (say NEET PG 2026) shows up without a code change.
+      var PYQ_MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+      function pyqSessionKey(y) {
+        var m = String(y).match(/^([A-Za-z]+)?\s*(\d{4})$/);
+        if (!m) return 0;
+        return Number(m[2]) * 100 + (m[1] ? (PYQ_MONTHS[m[1].toLowerCase().slice(0, 4)] || PYQ_MONTHS[m[1].toLowerCase().slice(0, 3)] || 0) : 0);
+      }
+      function applyPyqSessions(list) {
+        if (!Array.isArray(list) || !list.length || !PYQ_EXAMS) return false;
+        var changed = false;
+        PYQ_EXAMS.forEach(function (ex) {
+          var mine = list.filter(function (r) { return r.exam === ex.id && r.n > 0; });
+          if (!mine.length) return;
+          var allLabel = ex.years && ex.years[0] && /^All/.test(ex.years[0]) ? ex.years[0] : 'All Sessions';
+          var ys = mine.map(function (r) { return r.year; }).sort(function (a, b) { return pyqSessionKey(b) - pyqSessionKey(a); });
+          var next = [allLabel].concat(ys);
+          if (JSON.stringify(next) !== JSON.stringify(ex.years)) { ex.years = next; changed = true; }
+          var total = mine.reduce(function (t, r) { return t + Number(r.n || 0); }, 0);
+          var yrs = ys.map(function (y) { return Math.floor(pyqSessionKey(y) / 100); });
+          var lo = Math.min.apply(null, yrs), hi = Math.max.apply(null, yrs);
+          var monthly = ys.some(function (y) { return /[A-Za-z]/.test(y); });
+          var cov = (lo === hi ? String(lo) : lo + ' – ' + hi) + ' · ' + ys.length + (monthly ? ' Sessions' : ' Years') +
+            ' (' + (Math.floor(total / 10) * 10).toLocaleString('en-US') + '+ MCQs)';
+          if (ex.coverage !== cov) { ex.coverage = cov; changed = true; }
+        });
         return changed;
       }
       function loadSiteCounts() {
@@ -181,6 +210,7 @@ window.addEventListener('error', function (ev) {
           if (state.screen === 'home') renderHome(true);
           else if (state.screen === 'subjects' && typeof renderSubjectsV2 === 'function') renderSubjectsV2();
           else if (state.screen === 'modules' && state.subjectId && v2On()) renderTopicsV2(state.subjectId);
+          else if (state.screen === 'pyq' && v2On()) renderPyqV2();
         }, function () { });
       }
 
@@ -2312,6 +2342,7 @@ window.addEventListener('error', function (ev) {
         } else {
           directoryHtml = '<nav class="footer-directory footer-directory-minimal" aria-label="Site information"><div class="footer-directory-group"><strong>MedLadder</strong><div><a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></div></nav>';
         }
+        if (v2On()) return v3FooterHtml(isNative, directoryHtml);
         return '<footer class="credit">' +
           '<div class="footer-content">' +
           apkBtnHtml +
@@ -2333,6 +2364,32 @@ window.addEventListener('error', function (ev) {
           '<div class="footer-copy"><strong>MedLadder</strong> · Medical Entrance Exam Question Bank</div>' +
           '<div class="footer-subcopy">MBBS · FMGE · NEET PG · INI-CET · NEET SS</div>' +
           '</div>' +          '</footer>';
+      }
+
+      var V3_SOCIAL = [
+        ['https://www.facebook.com/profile.php?id=61568903965858', 'Facebook', '<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>'],
+        ['https://www.instagram.com/medladder2026/', 'Instagram', '<rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="4.3" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="17.6" cy="6.4" r="1.4"/>'],
+        ['https://x.com/medladder2026', 'X', '<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 23.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>'],
+        ['https://t.me/+JdqZ1YlJ-NhlOThl', 'Telegram', '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.329-.913.489-1.302.481-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.14.121.099.155.232.164.333-.008.068.002.193-.006.31z"/>']
+      ];
+      // The new-look footer: one centred column on phones, brand + links side
+      // by side on wide screens. Same links as the classic footer.
+      function v3FooterHtml(isNative, directoryHtml) {
+        var year = new Date().getFullYear();
+        return '<footer class="credit v3 v3-foot">' +
+          '<div class="v3f">' +
+          '<div class="v3f-top">' +
+          '<div class="v3f-brand"><img src="/icons/icon-72.png" alt="" width="44" height="44" loading="lazy"><div><b>MedLadder</b><span>Free question bank for NEET PG, FMGE, INI-CET and NEET SS</span></div></div>' +
+          '<div class="v3f-cta">' +
+          (isNative ? '' : '<a href="https://play.google.com/store/apps/details?id=com.medladder.app" class="v3f-play" target="_blank" rel="noopener">' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4.2 2.6c-.3.3-.5.8-.5 1.4v16c0 .6.2 1.1.5 1.4l9.2-9.4z"/><path fill="currentColor" opacity=".75" d="M16.5 15.1l-3.1-3.1-9.2 9.4c.4.4 1 .4 1.7.1z"/><path fill="currentColor" opacity=".55" d="M16.5 8.9L5.9 2.5c-.7-.3-1.3-.3-1.7.1l9.2 9.4z"/><path fill="currentColor" opacity=".9" d="M20.2 11l-3.7-2.1-3.1 3.1 3.1 3.1 3.7-2.1c.9-.5.9-1.5 0-2z"/></svg>' +
+            '<span><small>Get it on</small>Google Play</span></a>') +
+          '<div class="v3f-social">' + V3_SOCIAL.map(function (x) {
+            return '<a href="' + x[0] + '" target="_blank" rel="noopener noreferrer" aria-label="MedLadder on ' + x[1] + '" title="' + x[1] + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + x[2] + '</svg></a>';
+          }).join('') + '</div></div></div>' +
+          directoryHtml +
+          '<p class="v3f-copy">© ' + year + ' MedLadder · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/terms#cancellation-refund">Refunds</a></p>' +
+          '</div></footer>';
       }
 
       function modeNoteHtml() {
@@ -6281,10 +6338,13 @@ window.addEventListener('error', function (ev) {
         var tab = V2_TAB_OF[active] || active;
         var items = [['home', 'Home'], ['qbank', 'QBank'], ['mock', 'Mock'], ['pyq', 'PYQ'], ['bookmarks', 'Bookmarks'], ['profile', 'Profile']];
         return '<nav class="v2-nav v3-nav" aria-label="Main">' + items.map(function (it) {
-          var badge = it[0] === 'home' && dueCount && tab !== 'home' ? '<span class="v2-nav-badge">' + (dueCount > 99 ? '99+' : dueCount) + '</span>'
+          var badge = it[0] === 'home' && dueCount && tab !== 'home' ? '<span class="v2-nav-badge" title="' + dueCount + ' questions due for revision" aria-label="' + dueCount + ' questions due for revision">' + (dueCount > 99 ? '99+' : dueCount) + '</span>'
             : it[0] === 'mock' && v2MockState && v2MockState.live ? '<span class="v3-nav-live" title="A mock test is live"></span>' : '';
-          return '<button class="v2-nav-item" data-nav="' + it[0] + '"' + (it[0] === tab ? ' aria-current="page"' : '') + '>' +
-            '<span class="v2-nav-icon">' + v2Svg(it[0]) + badge + '</span><span>' + it[1] + '</span></button>';
+          var inner = '<span class="v2-nav-icon">' + v2Svg(it[0]) + badge + '</span><span>' + it[1] + '</span>';
+          // Mock is a separate page: a real link lets the browser start loading
+          // it the moment a finger touches it (speculation rules, _headers).
+          if (it[0] === 'mock') return '<a class="v2-nav-item" href="/mock-test" data-nav="mock">' + inner + '</a>';
+          return '<button class="v2-nav-item" data-nav="' + it[0] + '"' + (it[0] === tab ? ' aria-current="page"' : '') + '>' + inner + '</button>';
         }).join('') + '</nav>';
       }
       function v2Header(back, crumb) {
@@ -6312,8 +6372,13 @@ window.addEventListener('error', function (ev) {
       }
       function wireV2Shell(back) {
         wireTopBar(back || function () { renderHome(true); });
-        app.querySelectorAll('.v2-nav-item[data-nav]').forEach(function (b) {
-          b.onclick = function () { v2Go(b.getAttribute('data-nav')); };
+        app.querySelectorAll('button.v2-nav-item[data-nav]').forEach(function (b) {
+          b.onclick = function () {
+            // Mark the tab at once so the tap feels instant, then render.
+            app.querySelectorAll('.v2-nav-item[aria-current]').forEach(function (o) { o.removeAttribute('aria-current'); });
+            b.setAttribute('aria-current', 'page');
+            v2Go(b.getAttribute('data-nav'));
+          };
         });
         hideStaticFooter();
       }
@@ -7083,7 +7148,7 @@ window.addEventListener('error', function (ev) {
           var mins = Math.max(1, Math.round(plan.size * 0.75));
           var items = '';
           if (plan.size) items += '<li>' + v3Ic('clock', 18) + 'About ' + mins + ' min</li>';
-          if (nReview) items += '<li><button class="v3-mission-due" data-nav-go="review">' + v3Ic('doc', 18) + nReview + ' due for revision</button></li>';
+          if (ix.due.length) items += '<li><button class="v3-mission-due" data-nav-go="review">' + v3Ic('refresh', 18) + ix.due.length + ' due for revision' + (nReview && nReview < ix.due.length ? ' (' + nReview + ' in this set)' : '') + ' ›</button></li>';
           if (plan.newN) items += '<li>' + v3Ic('sparkle', 18) + '<span>' + plan.newN + ' new question' + (plan.newN === 1 ? '' : 's') + '</span></li>';
           if (!plan.size) items += '<li>' + v3Ic('check', 18) + 'Nothing due, every open topic finished</li>';
           var gp = Math.min(1, doneToday / goal);

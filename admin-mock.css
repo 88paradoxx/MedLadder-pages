@@ -288,3 +288,45 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
   .rf-bar button { height: 38px; }
   .rf-bar .rf-sp { flex-basis: 100%; height: 0; }
 }
+
+/* Layout rules (display:grid/flex) beat the [hidden] attribute; restate it. */
+.am-view [hidden] { display: none !important; }
+
+/* ---------- segmented switch (bank / PYQ, paste / one) ---------- */
+.am-seg { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 14px; border-radius: 12px;
+  background: var(--panel-2); border: 1px solid var(--border); max-width: 100%; }
+.am-seg-b { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600;
+  padding: 9px 16px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+.am-seg-b[aria-pressed="true"] { background: var(--accent); color: #fff; box-shadow: 0 4px 14px -6px rgba(123, 47, 247, .7); }
+.am-seg-lg { display: flex; width: 100%; }
+.am-seg-lg .am-seg-b { flex: 1; padding: 12px 10px; font-size: 15px; }
+
+/* ---------- past-paper add flow ---------- */
+.pa-step h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 17px; }
+.pa-n { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 13px; font-weight: 800; flex-shrink: 0; }
+.pa-sample { margin: 0 0 10px; }
+.pa-sample summary { cursor: pointer; color: var(--accent-2); font-size: 13px; font-weight: 600; }
+.pa-card { border-left: 3px solid transparent; }
+.pa-card.bad { border-left-color: var(--red); }
+.pa-card .qt { margin: 6px 0 8px; font-size: 15px; line-height: 1.55; }
+.pa-opts { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+.pa-opts li { padding: 6px 10px; border-radius: 8px; background: var(--panel-2); }
+.pa-opts li b { display: inline-block; min-width: 18px; color: var(--muted); }
+.pa-opts li.ok { background: rgba(34, 197, 94, .14); outline: 1px solid rgba(34, 197, 94, .45); }
+.pa-tick { color: var(--green); font-size: 12px; font-weight: 700; margin-left: 4px; }
+.pa-ex summary { cursor: pointer; color: var(--accent-2); font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.pa-ex .rf-view { font-size: 14px; line-height: 1.55; color: var(--text); }
+.pa-acts { margin: 10px 0 0; gap: 8px; }
+.pa-acts .am-btn { padding: 7px 12px; }
+.pa-edit { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.am-badge.pa-bad { background: rgba(239, 68, 68, .16); color: var(--red); border-color: rgba(239, 68, 68, .4); }
+.am-badge.pa-warn { background: rgba(245, 158, 11, .14); color: var(--amber); border-color: rgba(245, 158, 11, .4); }
+.pa-issues { padding: 10px 12px; border-radius: 10px; margin: 0 0 10px; background: rgba(239, 68, 68, .1);
+  border: 1px solid rgba(239, 68, 68, .35); font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pa-jump { border: 1px solid rgba(239, 68, 68, .45); background: transparent; color: var(--red); border-radius: 8px;
+  padding: 3px 8px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.pa-savebar { position: sticky; bottom: 0; margin: 12px -18px -18px; padding: 12px 18px; background: var(--panel);
+  border-top: 1px solid var(--border); border-radius: 0 0 12px 12px; z-index: 2; }
+.pa-done { border-color: rgba(34, 197, 94, .45); }
+#editQView .am-seg { margin-bottom: 12px; }

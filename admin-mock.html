@@ -138,8 +138,75 @@
       <section id="bankView" class="am-view" hidden>
         <div class="am-row">
           <button id="bankBackBtn" class="am-btn">&larr; Admin home</button>
-          <h1>Question bank</h1>
+          <h1>Add questions</h1>
         </div>
+        <div class="am-seg am-seg-lg" role="group" aria-label="Where the questions go">
+          <button type="button" class="am-seg-b" data-addsrc="bank" aria-pressed="true">Question bank</button>
+          <button type="button" class="am-seg-b" data-addsrc="pyq" aria-pressed="false">Past papers (PYQ)</button>
+        </div>
+        <div id="pyqAddPanel" hidden>
+          <div class="am-card pa-step">
+            <h3><span class="pa-n">1</span>Which paper?</h3>
+            <div class="am-row">
+              <label>Exam <select id="paExam"><option>NEET PG</option><option>INICET</option><option>FMGE</option></select></label>
+              <label>Session <select id="paYear"></select></label>
+              <label id="paNewWrap" hidden>New session <input id="paNew" placeholder="2026, or May 2026" maxlength="14"></label>
+            </div>
+            <p class="am-hint" id="paSessInfo"></p>
+          </div>
+          <div class="am-card pa-step">
+            <h3><span class="pa-n">2</span>Add questions</h3>
+            <div class="am-seg" role="group" aria-label="How to add">
+              <button type="button" class="am-seg-b" data-pamode="paste" aria-pressed="true">Paste many</button>
+              <button type="button" class="am-seg-b" data-pamode="one" aria-pressed="false">One at a time</button>
+            </div>
+            <div id="paPastePane">
+              <p class="am-hint">Paste the whole paper. Numbered questions (<code>1.</code>, <code>Q2)</code>) or blocks separated by
+                <code>---</code> both work. Options as <code>A.</code> <code>(b)</code> <code>c)</code>, the key as
+                <code>Ans: B</code>, and <code>Explanation:</code> for the rest. An answer key at the end
+                (<code>Answer key</code> then <code>1-B 2-C …</code>) also works. Nothing is saved until step 3.</p>
+              <details class="pa-sample"><summary>Example</summary><pre class="am-sample">1. Which nerve supplies the deltoid?
+A. Radial nerve
+B. Axillary nerve
+C. Musculocutaneous nerve
+D. Suprascapular nerve
+Ans: B
+Explanation: The axillary nerve (C5, C6) supplies deltoid and teres minor.
+
+2. Next question…</pre></details>
+              <textarea id="paText" rows="10" class="am-wide" placeholder="Paste questions here…"></textarea>
+              <div class="am-row" style="margin-top:10px">
+                <button id="paParseBtn" type="button" class="am-btn am-btn-primary">Add to preview</button>
+                <span id="paParseInfo" class="am-hint"></span>
+              </div>
+            </div>
+            <form id="paOneForm" class="am-form" hidden>
+              <label class="am-wide">Question <textarea name="q" rows="3"></textarea></label>
+              <label>A <input name="a"></label><label>B <input name="b"></label><label>C <input name="c"></label>
+              <label>D <input name="d"></label><label>E <input name="e"></label>
+              <label>Correct answer <select name="ans"><option value="">Pick…</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></label>
+              <label class="am-wide">Explanation <textarea name="ex" rows="4"></textarea></label>
+              <div class="am-wide am-row"><button class="am-btn am-btn-primary" type="submit">Add to preview</button>
+                <span class="am-hint" id="paOneInfo"></span></div>
+            </form>
+          </div>
+          <div class="am-card pa-step">
+            <div class="am-row" style="margin-bottom:6px">
+              <h3 style="margin:0"><span class="pa-n">3</span>Preview and save <span id="paCount" class="am-badge"></span></h3>
+              <span class="sp" style="flex:1"></span>
+              <button id="paClearBtn" type="button" class="am-btn" hidden>Clear all</button>
+            </div>
+            <p class="am-hint">Check every question here. Tap <b>Edit</b> to fix the text, the options or the key,
+              or to add a picture to the question or the explanation. The preview is kept on this device until you save.</p>
+            <div id="paIssues" class="pa-issues" hidden></div>
+            <div id="paList" class="am-list"></div>
+            <div class="am-row pa-savebar">
+              <button id="paSaveBtn" type="button" class="am-btn am-btn-primary" disabled>Save</button>
+              <span id="paSaveInfo" class="am-hint"></span>
+            </div>
+          </div>
+        </div>
+        <div id="bankAddPanel">
         <p class="am-hint">New questions go live in the bank immediately — no review
           queue. Pick a subject and topic in the form; after adding, the form stays
           on the same topic so you can keep entering questions.</p>
@@ -198,6 +265,7 @@ Q: Next question…</pre></p>
           </div>
           <div id="bankBulkPreview" class="am-list" style="margin-top:10px"></div>
         </div>
+        </div>
       </section>
 
 
@@ -236,12 +304,18 @@ Q: Next question…</pre></p>
           <button id="editQBackBtn" class="am-btn">&larr; Admin home</button>
           <h1>Edit questions</h1>
         </div>
-        <p class="am-hint">Load questions from any subject and topic, then open one to fix its text,
-          options, answer or explanation, move it to another topic, or delete it.</p>
+        <p class="am-hint">Load questions from the question bank or a past paper, then open one to fix its text,
+          options, answer or explanation, add pictures, move it, or delete it.</p>
         <div class="am-card">
+          <div class="am-seg" role="group" aria-label="Which questions">
+            <button type="button" class="am-seg-b" data-eqsrc="bank" aria-pressed="true">Question bank</button>
+            <button type="button" class="am-seg-b" data-eqsrc="pyq" aria-pressed="false">Past papers (PYQ)</button>
+          </div>
           <div class="am-row">
-            <label>Subject <select id="eqSubj"></select></label>
-            <label>Topic <select id="eqTopic" disabled></select></label>
+            <label class="eq-bank">Subject <select id="eqSubj"></select></label>
+            <label class="eq-bank">Topic <select id="eqTopic" disabled></select></label>
+            <label class="eq-pyq" hidden>Exam <select id="eqExam"><option>NEET PG</option><option>INICET</option><option>FMGE</option></select></label>
+            <label class="eq-pyq" hidden>Session <select id="eqYear"><option value="">All sessions</option></select></label>
             <label>Show
               <select id="eqFilter">
                 <option value="all">All questions</option>
