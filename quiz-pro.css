@@ -3807,3 +3807,151 @@ html.ml-reading #app .v3 .v3-search .v2-gsearch-ic { top: 17px !important; }
   html.ml-reading #app .v3 .v3-tc { padding: 3px 8px !important; font-size: 12.5px !important; }
   html.ml-reading #app .v3 .v3-th-t p { font-size: 14.5px !important; }
 }
+
+/* ---- QBank tiles: compact rows (icon, name, ring, chevron) ---- */
+html.ml-reading #app .v3 .v3-subjgrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; margin-bottom: 22px !important; }
+@media (min-width: 720px) { html.ml-reading #app .v3 .v3-subjgrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px !important; } }
+html.ml-reading #app .v3 .v3-subjgrid .v3-subj {
+  grid-template-columns: auto minmax(0, 1fr) auto !important; grid-template-areas: "ic t ring" !important; align-items: center !important;
+  gap: 8px !important; min-height: 66px !important; padding: 10px 10px 10px 10px !important; border-radius: 16px !important;
+}
+html.ml-reading #app .v3 .v3-subjgrid .v3-subj-ic .v2-subj-ic { width: 40px !important; height: 40px !important; border-radius: 50% !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-subj-ic .v2-subj-ic img { width: 30px !important; height: 30px !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-subj-t { gap: 1px !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-subj-t b { font-size: 14.5px !important; line-height: 1.2 !important; white-space: normal !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-subj-t small { font-size: 12px !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v2-ring { width: 36px !important; height: 36px !important; margin-bottom: 8px !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v2-ring svg { width: 36px !important; height: 36px !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v2-ring-in { font-size: 10.5px !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-subj-chev { display: block !important; position: absolute !important; right: 8px !important; bottom: 4px !important; color: var(--x-ink3) !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-subj-chev svg { width: 13px !important; height: 13px !important; }
+@media (min-width: 720px) and (max-width: 939px) { html.ml-reading #app .v3 .v3-subjgrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+html.ml-reading #app .v3 .v3-subjgrid .v3-custom { padding: 12px 14px !important; border-radius: 16px !important; gap: 12px !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-custom-ic { width: 42px !important; height: 42px !important; flex-basis: 42px !important; border-radius: 50% !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-custom-t b { font-size: 16px !important; }
+html.ml-reading #app .v3 .v3-subjgrid .v3-custom-t small { font-size: 12.5px !important; }
+html.ml-reading #app .v3 .v3-way { min-height: 58px !important; border-radius: 16px !important; padding: 10px 14px !important; font-size: 15px !important; }
+html.ml-reading #app .v3 .v3-way-ic { width: 38px !important; height: 38px !important; border-radius: 50% !important; }
+
+/* ---- home subjects 2x2: smaller stacked tiles ---- */
+html.ml-reading #app .v3 .v3-subj4 { gap: 8px !important; }
+html.ml-reading #app .v3 .v3-subj4 .v3-subj { padding: 12px !important; gap: 8px !important; border-radius: 18px !important; }
+html.ml-reading #app .v3 .v3-subj4 .v3-subj-t b { font-size: 16px !important; }
+html.ml-reading #app .v3 .v3-subj4 .v3-subj-t small { font-size: 12.5px !important; }
+html.ml-reading #app .v3 .v3-subj4 .v2-ring-in { font-size: 11px !important; }
+
+/* ---- badges: medal art ---- */
+html.ml-reading #app .v3 .v3-medal { display: block !important; width: 48px !important; height: 48px !important; filter: drop-shadow(0 6px 8px rgba(60, 20, 140, .25)) !important; }
+html.ml-reading #app .v3 .v3-bdg-ic { filter: none !important; font-size: 0 !important; }
+html.ml-reading #app .v3 .v3-bdg.dim .v3-bdg-ic { filter: grayscale(1) !important; opacity: .4 !important; }
+html.ml-reading #app .v3 .v3-bdg { min-height: 96px !important; gap: 6px !important; border-radius: 18px !important; }
+
+/* ---- footer clears the floating bar instead of a big gap ---- */
+html.ml-reading #app .v3 .v2-main { padding-bottom: 28px !important; }
+html:has(#app > .v3) body { padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important; }
+@media (min-width: 1240px) { html:has(#app > .v3) body { padding-bottom: 0 !important; } }
+
+/* ---- compact home on phones ---- */
+@media (max-width: 560px) {
+  html.ml-reading #app .v3 .v3-home, html.ml-reading #app .v3 .v3-col { gap: 14px !important; }
+  html.ml-reading #app .v3 .v3-hello { min-height: 0 !important; }
+  html.ml-reading #app .v3 .v3-hello h1 { font-size: 24px !important; margin-bottom: 4px !important; }
+  html.ml-reading #app .v3 .v3-hello p { font-size: 14px !important; margin-bottom: 10px !important; }
+  html.ml-reading #app .v3 .v3-exam { min-height: 36px !important; font-size: 13.5px !important; padding: 0 12px !important; gap: 6px !important; }
+  html.ml-reading #app .v3 .v3-art { flex-basis: 92px !important; width: 92px !important; height: 92px !important; }
+  html.ml-reading #app .v3 .v3-art-1 { width: 64px !important; height: 64px !important; }
+  html.ml-reading #app .v3 .v3-art-2 { width: 44px !important; height: 44px !important; }
+  html.ml-reading #app .v3 .v3-art-3 { width: 40px !important; height: 40px !important; }
+  html.ml-reading #app .v3 .v2-hero.v3-mission { padding: 16px !important; gap: 10px !important; border-radius: 22px !important; }
+  html.ml-reading #app .v3 .v3-mission-k { font-size: 16px !important; gap: 8px !important; }
+  html.ml-reading #app .v3 .v3-mission .v3-streak-pill { font-size: 12px !important; padding: 4px 10px !important; }
+  html.ml-reading #app .v3 .v3-mission h2 { font-size: 24px !important; margin-bottom: 8px !important; }
+  html.ml-reading #app .v3 .v3-mission-list { gap: 5px !important; }
+  html.ml-reading #app .v3 .v3-mission-list li, html.ml-reading #app .v3 .v3-mission-due { font-size: 14px !important; gap: 8px !important; }
+  html.ml-reading #app .v3 .v3-mission-list svg { width: 16px !important; height: 16px !important; }
+  html.ml-reading #app .v3 .v3-ring-mission, html.ml-reading #app .v3 .v3-ring-mission svg { width: 84px !important; height: 84px !important; }
+  html.ml-reading #app .v3 .v3-ring-mission .v2-ring-in strong { font-size: 20px !important; }
+  html.ml-reading #app .v3 .v3-ring-mission .v2-ring-in small { font-size: 12px !important; }
+  html.ml-reading #app .v3 .v3-mission-btn { min-height: 48px !important; font-size: 16.5px !important; border-radius: 14px !important; }
+  html.ml-reading #app .v3 .v3-mission-link { font-size: 13px !important; }
+  html.ml-reading #app .v3 .v3-quick { gap: 8px !important; }
+  html.ml-reading #app .v3 .v3-qt { min-height: 78px !important; gap: 6px !important; padding: 8px 4px !important; font-size: 12px !important; border-radius: 16px !important; }
+  html.ml-reading #app .v3 .v3-qt-ic svg { width: 24px !important; height: 24px !important; }
+  html.ml-reading #app .v3 .v3-h { margin-bottom: 8px !important; }
+  html.ml-reading #app .v3 .v3-h h2 { font-size: 17.5px !important; gap: 8px !important; }
+  html.ml-reading #app .v3 .v3-hi svg { width: 20px !important; height: 20px !important; }
+  html.ml-reading #app .v3 .v3-hi-play { width: 24px !important; height: 24px !important; }
+  html.ml-reading #app .v3 .v3-emoji { font-size: 18px !important; }
+  html.ml-reading #app .v3 .v3-more { font-size: 13.5px !important; }
+  html.ml-reading #app .v3 .v3-card { border-radius: 18px !important; }
+  html.ml-reading #app .v3 .v3-cont { padding: 10px 12px !important; gap: 12px !important; }
+  html.ml-reading #app .v3 .v3-cont-ic .v2-subj-ic { width: 46px !important; height: 46px !important; border-radius: 14px !important; }
+  html.ml-reading #app .v3 .v3-cont-ic .v2-subj-ic img { width: 32px !important; height: 32px !important; }
+  html.ml-reading #app .v3 .v3-cont-main b { font-size: 16px !important; }
+  html.ml-reading #app .v3 .v3-cont-main small { font-size: 13px !important; margin-bottom: 4px !important; }
+  html.ml-reading #app .v3 .v3-cont-end { flex-direction: row-reverse !important; gap: 8px !important; font-size: 13px !important; }
+  html.ml-reading #app .v3 .v3-play { width: 36px !important; height: 36px !important; }
+  html.ml-reading #app .v3 .v3-qotd-card, html.ml-reading #app .v3 .v3-prog, html.ml-reading #app .v3 .v3-streak { padding: 14px !important; }
+  html.ml-reading #app .v3 .v3-qotd-card .v3-h { padding-bottom: 10px !important; margin-bottom: 10px !important; }
+  html.ml-reading #app .v3 .v3-qotd-card .v3-h h2 { font-size: 17px !important; }
+  html.ml-reading #app .v3 .v3-tag { font-size: 12px !important; padding: 4px 10px !important; }
+  html.ml-reading #app .v3 .v2-qotd-q { font-size: 15px !important; margin-bottom: 10px !important; }
+  html.ml-reading #app .v3 .v2-qotd-opts { gap: 7px !important; }
+  html.ml-reading #app .v3 .v2-qotd-opt { min-height: 40px !important; padding: 6px 10px !important; font-size: 14px !important; border-radius: 12px !important; }
+  html.ml-reading #app .v3 .v2-qotd-l { flex-basis: 26px !important; width: 26px !important; height: 26px !important; font-size: 12.5px !important; }
+  html.ml-reading #app .v3 .v2-qotd-res, html.ml-reading #app .v3 .v2-qotd-res span { font-size: 13.5px !important; }
+  html.ml-reading #app .v3 .v3-stat3 { gap: 8px !important; }
+  html.ml-reading #app .v3 .v3-stat { padding: 10px !important; border-radius: 14px !important; }
+  html.ml-reading #app .v3 .v3-stat svg { width: 22px !important; height: 22px !important; margin-bottom: 4px !important; }
+  html.ml-reading #app .v3 .v3-stat strong { font-size: 21px !important; }
+  html.ml-reading #app .v3 .v3-stat span { font-size: 12px !important; }
+  html.ml-reading #app .v3 .v3-day { gap: 5px !important; font-size: 12px !important; }
+  html.ml-reading #app .v3 .v3-day-c { width: 30px !important; height: 30px !important; font-size: 13px !important; }
+  html.ml-reading #app .v3 .v3-list { padding: 2px 12px !important; }
+  html.ml-reading #app .v3 .v3-li { padding: 9px 0 !important; gap: 10px !important; }
+  html.ml-reading #app .v3 .v3-li .v2-subj-ic { width: 34px !important; height: 34px !important; }
+  html.ml-reading #app .v3 .v3-li .v2-subj-ic img { width: 24px !important; height: 24px !important; }
+  html.ml-reading #app .v3 .v3-li-t b { font-size: 14.5px !important; }
+  html.ml-reading #app .v3 .v3-li-t small { font-size: 12.5px !important; }
+  html.ml-reading #app .v3 .v3-pill { font-size: 12.5px !important; padding: 3px 10px !important; }
+  html.ml-reading #app .v3 .v3-badges { gap: 8px !important; }
+  html.ml-reading #app .v3 .v3-bdg { min-height: 82px !important; padding: 8px 2px !important; border-radius: 16px !important; }
+  html.ml-reading #app .v3 .v3-medal { width: 40px !important; height: 40px !important; }
+  html.ml-reading #app .v3 .v3-bdg-t { font-size: 11.5px !important; }
+  html.ml-reading #app .v3 .v3-bdg-p { font-size: 10.5px !important; }
+  html.ml-reading #app .v3 .v3-pro { padding: 12px 14px !important; gap: 12px !important; border-radius: 18px !important; }
+  html.ml-reading #app .v3 .v3-pro-ic { font-size: 26px !important; }
+  html.ml-reading #app .v3 .v3-pro-t b { font-size: 16px !important; }
+  html.ml-reading #app .v3 .v3-pro-t small { font-size: 12.5px !important; }
+  html.ml-reading #app .v3 .v3-subj4 .v3-subj-t b { font-size: 15px !important; }
+  html.ml-reading #app .v3 .v3-nav { padding: 6px !important; border-radius: 24px !important; }
+  html.ml-reading #app .v3 .v3-nav .v2-nav-item { min-height: 52px !important; font-size: 11.5px !important; gap: 2px !important; border-radius: 18px !important; }
+  html.ml-reading #app .v3 .v3-nav .v2-nav-item svg { width: 22px !important; height: 22px !important; }
+  html.ml-reading #app .v3 .v3-pagehead { min-height: 0 !important; margin-bottom: 12px !important; }
+  html.ml-reading #app .v3 .v3-pagehead h1 { font-size: 28px !important; margin-top: 8px !important; }
+  html.ml-reading #app .v3 .v3-pagehead p { font-size: 13.5px !important; }
+  html.ml-reading #app .v3 .v3-search input { min-height: 46px !important; font-size: 15px !important; padding-left: 46px !important; }
+  html.ml-reading #app .v3 .v3-search .v2-gsearch-ic { top: 13px !important; left: 16px !important; }
+  html.ml-reading #app .v3 .v3-filters { gap: 8px !important; margin-bottom: 14px !important; }
+  html.ml-reading #app .v3 .v3-filter { min-height: 38px !important; padding: 0 14px !important; font-size: 13.5px !important; gap: 6px !important; }
+  html.ml-reading #app .v3 .v3-filter svg { width: 16px !important; height: 16px !important; }
+}
+html.ml-reading #app .v3 .v3-subj-pct, html.ml-reading #app .v3 .v3-subj-bar { display: none !important; }
+@media (max-width: 559px) {
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj { grid-template-columns: auto minmax(0, 1fr) !important; grid-template-areas: "ic t" !important; gap: 10px !important; min-height: 64px !important; padding: 10px 12px 10px 10px !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v2-ring { display: none !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-chev { display: none !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-pct { display: inline !important; color: var(--x-acc-ink) !important; font-weight: 600 !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-bar { display: block !important; height: 4px !important; margin-top: 5px !important; border-radius: 99px !important; background: var(--x-line) !important; overflow: hidden !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-bar > span { display: block !important; height: 100% !important; border-radius: 99px !important; background: linear-gradient(90deg, #8B5CF6, #6D3DF0) !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-t b { font-size: 14px !important; -webkit-line-clamp: 2 !important; overflow: hidden !important; text-overflow: clip !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-t small { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  html.ml-reading #app .v3 .v3-wave { display: none !important; }
+}
+@media (max-width: 559px) {
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj { gap: 8px !important; padding: 10px 10px 10px 8px !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-ic .v2-subj-ic { width: 34px !important; height: 34px !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-ic .v2-subj-ic img { width: 26px !important; height: 26px !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-t b { font-size: 13.5px !important; letter-spacing: -0.01em !important; }
+  html.ml-reading #app .v3 .v3-subjgrid .v3-subj-t small { font-size: 11.5px !important; }
+}
