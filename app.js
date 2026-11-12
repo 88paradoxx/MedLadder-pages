@@ -463,7 +463,7 @@ window.addEventListener('error', function (ev) {
           '<button class="pro-modal-close" id="proModalClose" aria-label="Close modal" title="Close modal (Esc)">✕</button>' +
           '<div class="pro-modal-badge">⭐ MEDLADDER PRO</div>' +
           '<h2 class="pro-modal-title" id="proModalTitle">Unlock Full Medical QBank</h2>' +
-          '<p class="pro-modal-sub" id="proModalSub">Free registered accounts get 8 topics per subject. Upgrade to Pro for unrestricted access to all 740 topics and 36,219 questions.</p>' +
+          '<p class="pro-modal-sub" id="proModalSub">Free registered accounts get 8 topics per subject. Upgrade to Pro for unrestricted access to all ' + totalTopics() + ' topics and ' + totalQuestions().toLocaleString('en-US') + ' questions.</p>' +
           '</div>' +
           '<div class="pro-modal-body">' +
           '<div class="pro-features-list">' +
@@ -477,7 +477,7 @@ window.addEventListener('error', function (ev) {
           '<div class="pro-feature-item">' +
           '<div class="pro-feature-icon">✓</div>' +
           '<div class="pro-feature-text">' +
-          '<strong>36,219 NEET PG, FMGE &amp; NEET SS MCQs</strong>' +
+          '<strong>' + totalQuestions().toLocaleString('en-US') + ' NEET PG, FMGE &amp; NEET SS MCQs</strong>' +
           '<span>Every single question with clinical pearls, rationale &amp; tables.</span>' +
           '</div>' +
           '</div>' +
@@ -668,7 +668,7 @@ window.addEventListener('error', function (ev) {
 
         if (reason === 'locked_module' && context && context.moduleName) {
           titleEl.textContent = 'Unlock ' + context.moduleName;
-          subEl.innerHTML = 'Free registered accounts include the <strong>first 8 topics</strong> in this subject. Upgrade to MedLadder Pro to unlock ' + esc(context.moduleName) + ' and all 740 topics!';
+          subEl.innerHTML = 'Free registered accounts include the <strong>first 8 topics</strong> in this subject. Upgrade to MedLadder Pro to unlock ' + esc(context.moduleName) + ' and all ' + totalTopics() + ' topics!';
         } else if (reason === 'all_topics') {
           titleEl.textContent = 'Full Subject Exam is Pro Only';
           subEl.innerHTML = 'The <strong>\"All topics\"</strong> cumulative grand test is a MedLadder Pro feature. Upgrade now to practice full-length multi-topic exams!';
@@ -3702,7 +3702,7 @@ window.addEventListener('error', function (ev) {
             '<p class="subtitle">Your climb through FMGE, NEET PG, INICET &amp; NEET SS — ' + SUBJECT_INDEX.length + ' subjects, ' + totalQuestions().toLocaleString() + ' MCQs including Previous Year Questions. Pick a subject or launch a PYQ test.</p>' +
             '<div class="bento-bar">' +
             '<div class="bento-stat"><div class="bento-stat-num">' + SUBJECT_INDEX.length + '</div><div class="bento-stat-lbl">Subjects</div></div>' +
-            '<div class="bento-stat"><div class="bento-stat-num">740</div><div class="bento-stat-lbl">Topics</div></div>' +
+            '<div class="bento-stat"><div class="bento-stat-num">' + totalTopics() + '</div><div class="bento-stat-lbl">Topics</div></div>' +
             '<div class="bento-stat"><div class="bento-stat-num">' + totalQuestions().toLocaleString() + '</div><div class="bento-stat-lbl">Total MCQs</div></div>' +
             '<div class="bento-stat"><div class="bento-stat-num">5 Exams</div><div class="bento-stat-lbl">PYQ Papers</div></div>' +
             '</div>' +
@@ -6353,7 +6353,7 @@ window.addEventListener('error', function (ev) {
       function v2SearchHtml() {
         return '<div class="v2-gsearch"><label class="v2-sr" for="v2GSearch">Search all topics</label>' +
           '<span class="v2-gsearch-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>' +
-          '<input id="v2GSearch" type="search" placeholder="Search 740 topics" autocomplete="off">' +
+          '<input id="v2GSearch" type="search" placeholder="Search ' + totalTopics() + ' topics" autocomplete="off">' +
           '<div class="v2-gsearch-res" id="v2GSearchRes" hidden></div></div>';
       }
       function wireV2Search() {
@@ -6550,7 +6550,7 @@ window.addEventListener('error', function (ev) {
       function v2ProCardHtml() {
         if (!currentUser || isUserPro(currentUser)) return '';
         return '<section class="v2-sec"><div class="v2-card2 v2-pro">' +
-          '<div class="v2-cont-main"><span class="v2-pro-k">MedLadder Pro</span><span class="v2-pro-h">All 740 topics, past papers and full-subject mocks</span>' +
+          '<div class="v2-cont-main"><span class="v2-pro-k">MedLadder Pro</span><span class="v2-pro-h">All ' + totalTopics() + ' topics, past papers and full-subject mocks</span>' +
           '<span class="v2-cont-s">From ₹' + PRO_CONFIG.PRICE_INR + ' a month. You are using ' + (SUBJECT_INDEX.length * PRO_CONFIG.FREE_MODULES_PER_SUBJECT) + ' free topics.</span></div>' +
           '<button class="v2-btn v2-pro-btn" id="v2ProBtn">See plans</button></div></section>';
       }

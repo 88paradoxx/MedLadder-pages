@@ -6,8 +6,22 @@
     "directory": "./dist",
     "html_handling": "drop-trailing-slash",
     "not_found_handling": "404-page",
+    "binding": "ASSETS",
     "run_worker_first": [
-      "/api/upload-image"
+      "/api/upload-image",
+      "/",
+      "/index.html",
+      "/subjects/*",
+      "/pyqs",
+      "/pyqs/*",
+      "/neet-pg*",
+      "/neet-ss",
+      "/neet-ss/*",
+      "/fmge*",
+      "/inicet*",
+      "/landing*",
+      "/best-free-neet-pg-question-bank*",
+      "/medladder-vs-*"
     ]
   },
   "r2_buckets": [

@@ -1,16 +1,22 @@
-/* medladder-pages Worker: static assets + POST /api/upload-image.
+/* medladder-pages Worker: static assets, live question counts on pages,
+ * and POST /api/upload-image.
  *
- * Only /api/upload-image reaches this code (assets.run_worker_first in
- * wrangler.jsonc); every other path is served directly from dist/ without
- * invoking the Worker, so _redirects, _headers, html_handling and the 404
- * page are untouched.
+ * Only the paths in assets.run_worker_first (wrangler.jsonc) reach this code;
+ * everything else (scripts, styles, images) is served straight from dist/.
  *
- * The upload route: verifies the caller is a MedLadder admin via their
+ * Live counts: the HTML pages carry question counts baked in when they were
+ * written. For HTML responses the Worker swaps those for the numbers from
+ * the site_counts() RPC. The counts are fetched once per day (the cache key
+ * is the date in India, so the first request after midnight IST refreshes
+ * them) and kept in the Cloudflare cache until the next midnight. If the
+ * RPC fails the page is served unchanged.
+ *
+ * Upload route: verifies the caller is a MedLadder admin via their
  * Supabase session token (mock_is_admin RPC), then stores the image in the
- * medladder-images R2 bucket and returns its public URL. The admin panel
- * appends that URL to the question / explanation as an <img> tag before
- * calling admin_add_bank_question.
+ * medladder-images R2 bucket and returns its public URL.
  */
+
+import COUNT_MAP from './count-map.json';
 
 var SUPABASE_URL = 'https://groeibwykzrliphzzruk.supabase.co';
 /* Publishable key — already shipped in app.js / admin-mock.js. */
@@ -32,13 +38,187 @@ function json(status, obj) {
   });
 }
 
-export default {
-  async fetch(request, env) {
-    var url = new URL(request.url);
-    if (request.method !== 'POST' || url.pathname !== '/api/upload-image') {
-      return json(404, { ok: false, error: 'not_found' });
-    }
 
+/* ---------- live counts ---------- */
+
+/* Numbers baked into the static pages when they were generated. */
+var BAKED = { total: 36219, pyq: 6937, topics: 740 };
+var IST_OFFSET_MS = 330 * 60 * 1000;
+var memCounts = null;
+
+function istDay(now) {
+  return new Date(now + IST_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+function secondsToIstMidnight(now) {
+  var d = new Date(now + IST_OFFSET_MS);
+  var next = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1) - IST_OFFSET_MS;
+  return Math.max(60, Math.round((next - now) / 1000));
+}
+
+async function getCounts(ctx) {
+  var now = Date.now();
+  var day = istDay(now);
+  if (memCounts && memCounts.day === day) return memCounts.data;
+  var cache = caches.default;
+  var key = new Request('https://medladder.top/__site_counts/' + day);
+  var hit = await cache.match(key);
+  if (hit) {
+    var data = await hit.json();
+    memCounts = { day: day, data: data };
+    return data;
+  }
+  var r = await fetch(SUPABASE_URL + '/rest/v1/rpc/site_counts', {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+    body: '{}'
+  });
+  if (!r.ok) throw new Error('site_counts ' + r.status);
+  var fresh = await r.json();
+  if (!fresh || !fresh.total || !fresh.modules) throw new Error('site_counts empty');
+  memCounts = { day: day, data: fresh };
+  ctx.waitUntil(cache.put(key, new Response(JSON.stringify(fresh), {
+    headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=' + secondsToIstMidnight(now) }
+  })));
+  return fresh;
+}
+
+function fmt(n) { return Number(n).toLocaleString('en-US'); }
+
+function liveFor(entry, counts) {
+  if (!entry) return null;
+  var n = 0;
+  for (var i = 0; i < entry.m.length; i++) n += counts.modules[entry.m[i]] || 0;
+  return n;
+}
+
+function entryFor(path) {
+  path = path.replace(/\/+$/, '') || '/';
+  return COUNT_MAP.paths[path] || null;
+}
+
+/* A number counts as "this page's/link's count" when it is within 25% of the
+   baked value; this tolerates pages that were written at slightly different
+   times without touching unrelated numbers such as years or page numbers. */
+function near(num, baked) {
+  return baked > 0 && Math.abs(num - baked) <= Math.max(2, baked * 0.25);
+}
+
+var Q_WORD = '(?:\\s|&nbsp;)*(?:practice |topic-wise |high-yield )?(?:MCQs?|questions|Questions|QUESTIONS|Qs)\\b';
+var NUM_Q = new RegExp('\\b(\\d{1,3}(?:,\\d{3})+|\\d+)(?=' + Q_WORD + ')', 'g');
+var ONLY_NUM = /^(\s*)(\d{1,3}(?:,\d{3})+|\d+)(\s*)$/;
+
+function swapNear(text, re, baked, live) {
+  return text.replace(re, function (m) {
+    var v = parseInt(m.replace(/,/g, ''), 10);
+    return near(v, baked) ? fmt(live) : m;
+  });
+}
+
+function swapGlobals(text, counts) {
+  if (text.indexOf('36,219') !== -1 || text.indexOf('36219') !== -1) {
+    text = text.replace(/36,219/g, fmt(counts.total)).replace(/\b36219\b/g, String(counts.total));
+  }
+  if (counts.pyq && text.indexOf('6,937') !== -1) text = text.replace(/6,937/g, fmt(counts.pyq));
+  if (counts.topics && text.indexOf('740 topics') !== -1) text = text.replace(/\b740 topics/g, counts.topics + ' topics');
+  return text;
+}
+
+function rewriteCounts(response, path, counts) {
+  var page = entryFor(path);
+  var pageLive = liveFor(page, counts);
+  var link = null, linkLive = null, rowLink = null, rowLive = null, inRow = false;
+  var buf = '';
+  /* Inline scripts are allow-listed by hash in the CSP, so their text must
+     not change; JSON-LD is data and is rewritten like the rest of the page. */
+  var raw = false;
+
+  function transform(text) {
+    text = swapGlobals(text, counts);
+    var ctxEntry = link || rowLink;
+    var ctxLive = link ? linkLive : rowLive;
+    if (ctxEntry) {
+      text = swapNear(text, NUM_Q, ctxEntry.n, ctxLive);
+      if (!link && rowLink) {
+        var m = text.match(ONLY_NUM);
+        if (m && near(parseInt(m[2].replace(/,/g, ''), 10), rowLink.n) && parseInt(m[2].replace(/,/g, ''), 10) > 99) {
+          text = m[1] + fmt(rowLive) + m[3];
+        }
+      }
+    } else if (page) {
+      text = swapNear(text, NUM_Q, page.n, pageLive);
+    }
+    return text;
+  }
+
+  var textHandler = {
+    text: function (t) {
+      if (raw) return;
+      buf += t.text;
+      if (!t.lastInTextNode) { t.remove(); return; }
+      var out = transform(buf);
+      buf = '';
+      t.replace(out, { html: true });
+    }
+  };
+
+  return new HTMLRewriter()
+    .on('script, style', {
+      element: function (el) {
+        var type = el.getAttribute('type') || '';
+        if (el.tagName === 'script' && type.indexOf('ld+json') !== -1) return;
+        raw = true;
+        el.onEndTag(function () { raw = false; });
+      }
+    })
+    .on('tr', {
+      element: function (el) {
+        inRow = true; rowLink = null; rowLive = null;
+        el.onEndTag(function () { inRow = false; rowLink = null; rowLive = null; });
+      }
+    })
+    .on('a[href]', {
+      element: function (el) {
+        var href = el.getAttribute('href') || '';
+        var e = href.charAt(0) === '/' ? entryFor(href.split(/[?#]/)[0]) : null;
+        if (!e) return;
+        link = e; linkLive = liveFor(e, counts);
+        if (inRow && !rowLink) { rowLink = e; rowLive = linkLive; }
+        el.onEndTag(function () { link = null; linkLive = null; });
+      }
+    })
+    .on('meta[content]', {
+      element: function (el) {
+        var c = el.getAttribute('content');
+        if (!c || !/\d/.test(c)) return;
+        var out = swapGlobals(c, counts);
+        if (page) out = swapNear(out, NUM_Q, page.n, pageLive);
+        if (out !== c) el.setAttribute('content', out);
+      }
+    })
+    .on('*', textHandler)
+    .transform(response);
+}
+
+async function servePage(request, env, ctx) {
+  var res = await env.ASSETS.fetch(request);
+  var type = res.headers.get('content-type') || '';
+  if (request.method !== 'GET' || res.status !== 200 || type.indexOf('text/html') === -1) return res;
+  var counts;
+  try {
+    counts = await getCounts(ctx);
+  } catch (e) {
+    return res;
+  }
+  var path = new URL(request.url).pathname;
+  var out = rewriteCounts(res, path, counts);
+  var h = new Headers(out.headers);
+  h.delete('etag');
+  h.delete('content-length');
+  return new Response(out.body, { status: out.status, statusText: out.statusText, headers: h });
+}
+
+async function uploadImage(request, env) {
     /* Admin check: the caller's Supabase session token must belong to an
        admin. mock_is_admin() is granted to `authenticated` only, so an
        invalid token fails here (401) and a non-admin gets false (403). */
@@ -87,5 +267,15 @@ export default {
       return json(502, { ok: false, error: 'r2_put_failed' });
     }
     return json(200, { ok: true, key: key, url: R2_PUBLIC_BASE + '/' + key });
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    var url = new URL(request.url);
+    if (url.pathname === '/api/upload-image') {
+      if (request.method !== 'POST') return json(404, { ok: false, error: 'not_found' });
+      return uploadImage(request, env);
+    }
+    return servePage(request, env, ctx);
   }
 };

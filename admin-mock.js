@@ -222,6 +222,289 @@
     return '<p><img src="' + url + '" alt="Question image" loading="lazy" decoding="async" style="max-width:100%;height:auto;object-fit:contain"></p>';
   }
 
+  /* ---------- rich text field (question / explanation editor) ----------
+   * Upgrades a <textarea> holding question or explanation HTML into a
+   * visual editor: text shows formatted, images show as pictures, and the
+   * toolbar can add an image (uploaded to R2 like the Add-question form).
+   * "Edit HTML" switches back to the raw source. The textarea stays the
+   * source of truth: it is updated on every change, so existing code that
+   * reads textarea.value keeps working. Unedited content is never
+   * re-serialised, so opening and saving changes nothing by accident.
+   *
+   * Allowed tags match sanitizeQuestionHtml() in app.js (what students see). */
+  var RF_KEEP = { BR: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, S: 1, SUB: 1, SUP: 1, SMALL: 1, SPAN: 1, P: 1, DIV: 1, IMG: 1 };
+  var RF_DROP = { SCRIPT: 1, STYLE: 1, IFRAME: 1, OBJECT: 1, EMBED: 1, LINK: 1, META: 1, FORM: 1, INPUT: 1, BUTTON: 1, SELECT: 1, TEXTAREA: 1, SVG: 1, MATH: 1, TEMPLATE: 1 };
+
+  function rfIsHtml(s) { return /<\/?[a-z][^>]*>/i.test(s || ''); }
+
+  function rfClean(html, forEditor) {
+    var tpl = document.createElement('template');
+    tpl.innerHTML = String(html || '');
+    (function walk(parent) {
+      Array.prototype.slice.call(parent.childNodes).forEach(function (n) {
+        if (n.nodeType === 8) { n.remove(); return; }
+        if (n.nodeType !== 1) return;
+        var tag = n.tagName.toUpperCase();
+        if (RF_DROP[tag]) { n.remove(); return; }
+        if (!RF_KEEP[tag]) {
+          walk(n);
+          while (n.firstChild) parent.insertBefore(n.firstChild, n);
+          n.remove();
+          return;
+        }
+        if (tag === 'IMG') {
+          var src = n.getAttribute('src') || '';
+          if (!/^https?:\/\//i.test(src)) { n.remove(); return; }
+          var alt = n.getAttribute('alt') || '';
+          Array.prototype.slice.call(n.attributes).forEach(function (a) { n.removeAttribute(a.name); });
+          n.setAttribute('src', src);
+          if (alt) n.setAttribute('alt', alt);
+          if (forEditor) n.setAttribute('contenteditable', 'false');
+          return;
+        }
+        Array.prototype.slice.call(n.attributes).forEach(function (a) { n.removeAttribute(a.name); });
+        walk(n);
+      });
+    })(tpl.content);
+    return tpl.innerHTML;
+  }
+
+  function rfToEditor(v) {
+    if (!v) return '';
+    if (!rfIsHtml(v)) return esc(v).replace(/\r?\n/g, '<br>');
+    return rfClean(v, true);
+  }
+
+  function rfFromEditor(ed) {
+    var html = rfClean(ed.innerHTML, false)
+      .replace(/(<br>\s*)+$/i, '')
+      .replace(/<(p|div)>(\s|<br>)*<\/\1>/gi, '')
+      .trim();
+    return html;
+  }
+
+  function richField(ta, opts) {
+    opts = opts || {};
+    if (ta._rf) return ta._rf;
+    var label = ta.parentNode && ta.parentNode.tagName === 'LABEL' ? ta.parentNode : null;
+    var wrap = document.createElement('div');
+    wrap.className = 'rf' + (label && label.classList.contains('am-wide') ? ' am-wide' : '');
+    if (label) {
+      /* A contenteditable inside a <label> hands every click to the label's
+         control, so the label becomes a plain block. */
+      var cap = document.createElement('span');
+      cap.className = 'rf-cap';
+      Array.prototype.slice.call(label.childNodes).forEach(function (c) {
+        if (c !== ta && c.nodeType === 3) cap.appendChild(document.createTextNode(c.textContent.trim()));
+      });
+      label.parentNode.replaceChild(wrap, label);
+      wrap.appendChild(cap);
+    } else {
+      ta.parentNode.insertBefore(wrap, ta);
+    }
+    var bar = document.createElement('div');
+    bar.className = 'rf-bar';
+    bar.innerHTML =
+      '<button type="button" data-cmd="bold" title="Bold"><b>B</b></button>' +
+      '<button type="button" data-cmd="italic" title="Italic"><i>I</i></button>' +
+      '<button type="button" data-cmd="underline" title="Underline"><u>U</u></button>' +
+      '<button type="button" data-cmd="superscript" title="Superscript">x<sup>2</sup></button>' +
+      '<button type="button" data-cmd="subscript" title="Subscript">x<sub>2</sub></button>' +
+      '<span class="rf-sep"></span>' +
+      '<button type="button" data-act="img" class="rf-add">＋ Image</button>' +
+      '<button type="button" data-act="rmimg" class="rf-rm" hidden>Remove image</button>' +
+      '<span class="rf-sp"></span>' +
+      '<button type="button" data-act="mode" class="rf-mode">Edit HTML</button>';
+    var ed = document.createElement('div');
+    ed.className = 'rf-ed';
+    ed.contentEditable = 'true';
+    ed.setAttribute('role', 'textbox');
+    ed.setAttribute('aria-multiline', 'true');
+    if (opts.placeholder) ed.setAttribute('data-ph', opts.placeholder);
+    var file = document.createElement('input');
+    file.type = 'file'; file.accept = 'image/*'; file.hidden = true;
+    var status = document.createElement('p');
+    status.className = 'am-hint rf-status';
+    status.textContent = 'Paste or drop an image into the box, or use ＋ Image.';
+    wrap.appendChild(bar); wrap.appendChild(ed); wrap.appendChild(ta); wrap.appendChild(file); wrap.appendChild(status);
+    ta.classList.add('rf-src');
+    ta.required = false;
+    ta.hidden = true;
+
+    var dirty = false, htmlMode = false, selImg = null, range = null;
+    ed.innerHTML = rfToEditor(ta.value);
+
+    function sync() { dirty = true; ta.value = rfFromEditor(ed); }
+    function saveRange() {
+      var s = window.getSelection();
+      if (s.rangeCount && ed.contains(s.anchorNode)) range = s.getRangeAt(0).cloneRange();
+    }
+    function pick(img) {
+      if (selImg) selImg.classList.remove('rf-sel');
+      selImg = img;
+      if (img) img.classList.add('rf-sel');
+      bar.querySelector('.rf-rm').hidden = !img;
+    }
+    function insertNode(node) {
+      var s = window.getSelection();
+      if (!range || !ed.contains(range.startContainer)) {
+        /* No caret placed yet: add the picture at the end. */
+        ed.appendChild(node);
+        range = document.createRange();
+        range.setStartAfter(node); range.collapse(true);
+      } else {
+        ed.focus();
+        s.removeAllRanges(); s.addRange(range);
+        var r = s.getRangeAt(0);
+        r.deleteContents();
+        r.insertNode(node);
+        r.setStartAfter(node); r.collapse(true);
+        s.removeAllRanges(); s.addRange(r);
+      }
+      saveRange();
+      sync();
+    }
+    function addImages(files) {
+      var list = Array.prototype.filter.call(files || [], function (f) { return /^image\//.test(f.type); });
+      if (!list.length) return;
+      var n = list.length, done = 0;
+      status.textContent = 'Uploading ' + (n === 1 ? 'image' : n + ' images') + '…';
+      list.reduce(function (p, f) {
+        return p.then(function () {
+          return downscaleBankImage(f).then(uploadBankImage).then(function (url) {
+            var img = document.createElement('img');
+            img.src = url; img.alt = opts.alt || 'Explanation image';
+            img.setAttribute('contenteditable', 'false');
+            var p2 = document.createElement('p');
+            p2.appendChild(img);
+            insertNode(p2);
+            done++;
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        status.textContent = done === 1 ? 'Image added. Save changes to keep it.' : done + ' images added. Save changes to keep them.';
+      }).catch(function (e) {
+        status.textContent = (e && e.message) || 'Image upload failed.';
+        toast(status.textContent);
+      });
+    }
+
+    ed.addEventListener('input', function () { pick(null); sync(); });
+    ed.addEventListener('keyup', saveRange);
+    ed.addEventListener('mouseup', saveRange);
+    ed.addEventListener('blur', saveRange);
+    ed.addEventListener('click', function (e) {
+      pick(e.target && e.target.tagName === 'IMG' ? e.target : null);
+    });
+    ed.addEventListener('keydown', function (e) {
+      if (selImg && (e.key === 'Delete' || e.key === 'Backspace')) {
+        e.preventDefault();
+        bar.querySelector('.rf-rm').click();
+      }
+    });
+    ed.addEventListener('paste', function (e) {
+      var cd = e.clipboardData;
+      if (!cd) return;
+      if (cd.files && cd.files.length) { e.preventDefault(); addImages(cd.files); return; }
+      var html = cd.getData('text/html');
+      e.preventDefault();
+      if (html) document.execCommand('insertHTML', false, rfClean(html, true));
+      else document.execCommand('insertText', false, cd.getData('text/plain'));
+    });
+    ed.addEventListener('dragover', function (e) {
+      if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1) e.preventDefault();
+    });
+    ed.addEventListener('drop', function (e) {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+        e.preventDefault();
+        addImages(e.dataTransfer.files);
+      }
+    });
+    file.addEventListener('change', function () { addImages(file.files); file.value = ''; });
+    ta.addEventListener('input', function () { dirty = true; });
+
+    bar.addEventListener('mousedown', function (e) {
+      if (e.target.closest('[data-cmd]')) e.preventDefault();
+    });
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      var cmd = b.getAttribute('data-cmd'), act = b.getAttribute('data-act');
+      if (cmd) {
+        if (htmlMode) return;
+        ed.focus();
+        document.execCommand(cmd, false, null);
+        sync();
+      } else if (act === 'img') {
+        saveRange();
+        file.click();
+      } else if (act === 'rmimg' && selImg) {
+        var holder = selImg.parentNode;
+        selImg.remove();
+        if (holder && holder !== ed && !holder.textContent.trim() && !holder.querySelector('img')) holder.remove();
+        pick(null);
+        sync();
+        status.textContent = 'Image removed. Save changes to keep this.';
+      } else if (act === 'mode') {
+        htmlMode = !htmlMode;
+        if (htmlMode) {
+          ta.hidden = false; ed.hidden = true;
+          ta.style.minHeight = Math.max(160, ed.offsetHeight) + 'px';
+          b.textContent = 'Visual editor';
+          ta.focus();
+        } else {
+          ed.innerHTML = rfToEditor(ta.value);
+          ta.hidden = true; ed.hidden = false;
+          b.textContent = 'Edit HTML';
+        }
+        Array.prototype.forEach.call(bar.querySelectorAll('[data-cmd]'), function (x) { x.disabled = htmlMode; });
+      }
+    });
+    try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) { /* older browsers */ }
+
+    ta._rf = {
+      dirty: function () { return dirty; },
+      refresh: function () { ed.innerHTML = rfToEditor(ta.value); dirty = false; }
+    };
+    return ta._rf;
+  }
+
+  /* Image URL field: a preview of the picture plus Upload / Remove buttons. */
+  function imageUrlField(input) {
+    var box = document.createElement('div');
+    box.className = 'rf-urlbox';
+    box.innerHTML = '<img class="rf-urlprev" alt="" hidden>' +
+      '<div class="am-row"><button type="button" class="am-btn" data-act="up">Upload image</button>' +
+      '<button type="button" class="am-btn" data-act="clear" hidden>Remove</button>' +
+      '<span class="am-hint" data-st></span></div><input type="file" accept="image/*" hidden>';
+    var host = input.parentNode;
+    host.appendChild(box);
+    var prev = box.querySelector('img'), fileIn = box.querySelector('input[type=file]');
+    var clear = box.querySelector('[data-act=clear]'), st = box.querySelector('[data-st]');
+    function show() {
+      var v = input.value.trim();
+      prev.hidden = !/^https?:\/\//i.test(v);
+      if (!prev.hidden) prev.src = v;
+      clear.hidden = !v;
+    }
+    prev.onerror = function () { prev.hidden = true; st.textContent = 'This link does not open as an image.'; };
+    prev.onload = function () { st.textContent = ''; };
+    input.addEventListener('input', show);
+    box.querySelector('[data-act=up]').onclick = function () { fileIn.click(); };
+    clear.onclick = function () { input.value = ''; show(); st.textContent = 'Image removed. Save changes to keep this.'; };
+    fileIn.onchange = function () {
+      var f = fileIn.files && fileIn.files[0];
+      fileIn.value = '';
+      if (!f) return;
+      st.textContent = 'Uploading…';
+      downscaleBankImage(f).then(uploadBankImage).then(function (url) {
+        input.value = url; show();
+        st.textContent = 'Uploaded. Save changes to keep it.';
+      }).catch(function (e) { st.textContent = (e && e.message) || 'Upload failed.'; });
+    };
+    show();
+  }
+
   function clearBankImageInput(fileId, prevId, clearId) {
     var input = $(fileId), prev = $(prevId), clearBtn = $(clearId);
     if (input) input.value = '';
@@ -1329,6 +1612,7 @@
           '<span class="am-hint">' + esc((r.subject || '?') + ' / ' + (r.topic || '?')) + (r.is_pyq ? ' · PYQ' : '') + '</span>' +
           '<span class="sp"></span>' +
           (r.review_reason ? '<span class="am-badge draft">Needs review</span>' : '') +
+          (r.has_image ? '<span class="am-badge">Has image</span>' : '') +
           '<span class="am-badge ' + (r.expl_len < 40 ? 'draft' : r.expl_len < 100 ? '' : 'published') + '">Explanation ' + r.expl_len + '</span>' +
           '</div><div class="qt">' + esc(t) + '</div>' +
           (r.review_reason ? '<div class="am-hint" style="color:var(--red)">' + esc(r.review_reason) + '</div>' : '') +
@@ -1360,7 +1644,7 @@
         return '<option' + (L === ans ? ' selected' : '') + '>' + L + '</option>';
       }).join('') + '</select></label>' +
       '<label class="am-wide">Explanation <textarea name="ex" rows="8"></textarea></label>' +
-      '<label class="am-wide">Image URL (optional) <input name="img" placeholder="https://…"></label>' +
+      '<label class="am-wide">Picture shown with the question (optional) <input name="img" placeholder="https://…"></label>' +
       '<label>Subject <select name="subj">' + subjOpts + '</select></label>' +
       '<label>Topic <select name="topic"></select></label>' +
       '<div class="am-wide am-row">' +
@@ -1368,13 +1652,16 @@
       (r.review_reason ? '<button class="am-btn" type="button" data-act="reviewed">Mark reviewed</button>' : '') +
       '<button class="am-btn am-btn-danger" type="button" data-act="delete">Delete question</button>' +
       '<button class="am-btn" type="button" data-act="close">Close</button>' +
-      '</div><p class="am-hint am-wide">The explanation accepts plain text or simple HTML (&lt;b&gt;, &lt;i&gt;, &lt;p&gt;).</p></form>';
+      '</div></form>';
     box.hidden = false;
     var f = box.querySelector('form');
     f.q.value = r.question_text || '';
     ['a', 'b', 'c', 'd', 'e'].forEach(function (L) { f[L].value = r['option_' + L] || ''; });
     f.ex.value = r.explanation || '';
     f.img.value = r.image_url || '';
+    richField(f.q, { alt: 'Question image', placeholder: 'Question text' });
+    richField(f.ex, { alt: 'Explanation image', placeholder: 'Write the explanation…' });
+    imageUrlField(f.img);
     var fillTopics = function () {
       var subj = idx.bySubject[(f.subj.value || '').toLowerCase()];
       f.topic.innerHTML = subj ? subj.modules.map(function (m) {
@@ -1525,9 +1812,9 @@
       '<span class="am-badge">' + esc(FLAG_REASONS[f.reason] || f.reason) + '</span>' +
       '<span class="sp"></span>' +
       '<span class="am-hint">' + new Date(f.created_at).toLocaleString() + '</span></div>' +
-      '<div class="qt">' + renderAdminQText(f.question_text) + '</div>' +
+      '<div class="qt rf-view">' + rfToEditor(f.question_text).replace(/ contenteditable="false"/g, '') + '</div>' +
       '<div class="opts">' + opts + '</div>' +
-      (f.explanation ? '<div class="expl"><strong>Explanation:</strong> ' + esc(f.explanation) + '</div>' : '') +
+      (f.explanation ? '<div class="expl rf-view"><strong>Explanation:</strong> ' + rfToEditor(f.explanation).replace(/ contenteditable="false"/g, '') + '</div>' : '') +
       '<div class="am-hint">Currently: ' + loc +
       (f.open_flag_count > 1 ? ' · ' + f.open_flag_count + ' open flags on this question' : '') + '</div>' +
       (f.detail ? '<div class="am-hint">User note: ' + esc(f.detail) + '</div>' : '') +
@@ -1569,6 +1856,8 @@
     $('flagQE').value = f.option_e || '';
     $('flagQAns').value = (f.answer || 'a').toLowerCase();
     $('flagQExpl').value = f.explanation || '';
+    richField($('flagQText'), { alt: 'Question image', placeholder: 'Question text' });
+    richField($('flagQExpl'), { alt: 'Explanation image', placeholder: 'Write the explanation…' });
     var openOnly = f.status === 'open';
     ['flagMoveBtn', 'flagResolveBtn', 'flagDismissBtn'].forEach(function (id) {
       $(id).disabled = !openOnly;
