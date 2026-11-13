@@ -47,7 +47,7 @@ if (isNative) {
     var nativeCss = document.createElement('style');
     nativeCss.id = 'medladder-native-css';
     nativeCss.textContent = [
-      'html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}',
+      'html{-webkit-tap-highlight-color:transparent;}body{overscroll-behavior-y:none;}',
       // No long-press text selection / link previews on UI chrome (question and explanation text stay selectable)
       'button,a,nav,header,footer,label,summary,[role="button"],[role="tab"],.opt,.v3-li,.btn,img,svg{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}',
       'input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text;}',
