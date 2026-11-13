@@ -1,0 +1,85 @@
+name: Android release build
+
+# Builds the signed Play Store AAB (and an APK) for com.medladder.app.
+# Run it from the Actions tab: "Android release build" -> Run workflow.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          missing=0
+          for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_PASSWORD GOOGLE_SERVICES_JSON; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v is not set. Add it at https://github.com/88paradoxx/MedLadder/settings/secrets/actions"; missing=1; fi
+          done
+          exit $missing
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-36 build-tools;36.0.0 platform-tools'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build web assets and sync Capacitor
+        run: npm run android:sync
+
+      - name: Restore keystore and Firebase config
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/medladder-release-key.jks"
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
+      - name: Build signed AAB and APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/medladder-release-key.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'medladder' }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon bundleRelease assembleRelease
+
+      - name: Collect outputs
+        run: |
+          VERSION=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
+          CODE=$(grep -oP 'versionCode \K[0-9]+' android/app/build.gradle)
+          mkdir -p out
+          cp android/app/build/outputs/bundle/release/app-release.aab "out/MedLadder-$VERSION-$CODE.aab"
+          cp android/app/build/outputs/apk/release/app-release.apk "out/MedLadder-$VERSION-$CODE.apk"
+          echo "ARTIFACT_NAME=MedLadder-$VERSION-$CODE" >> "$GITHUB_ENV"
+          rm -f "$RUNNER_TEMP/medladder-release-key.jks" android/app/google-services.json
+
+      - name: Upload AAB + APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: out/
+          retention-days: 30
