@@ -105,6 +105,31 @@ if (isNative) {
   else startBarsSync();
 }
 
+// ---------------------------------------------------------------------------
+// Website-only pages (exam hubs, PYQ / subject SEO pages, comparisons) are not
+// bundled in the app: medladder.top renders them live on the server. Open them
+// from the live site in an in-app browser tab instead of a stale/missing copy.
+// ---------------------------------------------------------------------------
+var LIVE_SITE = 'https://medladder.top';
+var WEB_ONLY_PATH = /^\/(neet-pg[^/]*|fmge[^/]*|inicet[^/]*|ini-cet[^/]*|neet-ss(\/.*)?|pyqs(\/.*)?|subjects(\/.*)?|landing[^/]*|best-free-[^/]*|medladder-vs-[^/]*)\/?$/;
+
+if (isNative) {
+  document.addEventListener('click', function (e) {
+    try {
+      if (e.defaultPrevented) return;
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a) return;
+      var url = new URL(a.getAttribute('href'), location.href);
+      if (url.origin !== location.origin) return;
+      if (!WEB_ONLY_PATH.test(url.pathname)) return;
+      e.preventDefault();
+      Browser.open({ url: LIVE_SITE + url.pathname + url.search + url.hash }).catch(function () {
+        location.href = LIVE_SITE + url.pathname + url.search + url.hash;
+      });
+    } catch (err) {}
+  }, true);
+}
+
 var backHandlers = [];
 var lastBackPressTime = 0;
 

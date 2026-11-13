@@ -24,6 +24,10 @@ const webDir = path.join(root, 'www');
 const SKIP_TOP = new Set([
   'subjects',            // ~38 MB of static SEO topic pages
   'pyqs',                // ~15 MB of static SEO past-paper pages
+  // Other website-only SEO pages: the app opens these from medladder.top (see the native bridge)
+  'neet-pg', 'neet-pg-syllabus', 'neet-pg-high-yield-topics', 'neet-pg-top-100-questions',
+  'fmge', 'inicet', 'ini-cet', 'neet-ss', 'landing', 'landing.html',
+  'best-free-neet-pg-question-bank', 'medladder-vs-marrow', 'medladder-vs-prepladder',
   'MedLadder-latest.apk',
   'sitemap.xml',
   'robots.txt',
