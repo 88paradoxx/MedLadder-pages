@@ -133,7 +133,8 @@
   }
   function getShareUrl(testId) {
     var id = testId ? encodeURIComponent(testId) : '';
-    return 'https://medladder.top/mock-test' + (id ? '?id=' + id : '');
+    // Shared links open the Mock tab in the app with this mock highlighted.
+    return 'https://medladder.top/mock-test' + (id ? '?m=' + id : '');
   }
   function shareLink(title, text, url) {
     url = normalizeShareUrl(url);
@@ -819,6 +820,13 @@
       '</div></div>';
   }
   function loadLobby() {
+    // The lobby moved into the app's Mock tab. Leave a moment for any toast
+    // (e.g. "Mock test not found.") to be read, then go there.
+    stopTestLoops();
+    setTimeout(function () { location.replace('/?go=mock'); }, ($('toast') && !$('toast').hidden) ? 1400 : 0);
+    return;
+  }
+  function loadLobbyLegacy() {
     showView('lobbyView');
     var list = $('testList');
     list.innerHTML = '<p style="color:var(--muted)">Loading mock tests…</p>';
