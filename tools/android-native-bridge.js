@@ -365,6 +365,17 @@ function haptic(kind) {
   } catch (e) {}
 }
 
+// ===== CI SCROLL TEST ONLY =====
+if (isNative) {
+  (function () {
+    var tm = 0;
+    document.addEventListener('touchmove', function () { tm++; }, { passive: true, capture: true });
+    setInterval(function () {
+      var se = document.scrollingElement || document.documentElement;
+      console.log('DIAGSCROLL top=' + Math.round(se.scrollTop) + ' h=' + se.scrollHeight + ' ch=' + se.clientHeight + ' tm=' + tm + ' url=' + location.pathname);
+    }, 1000);
+  })();
+}
 window.MedLadderNative = {
   isNative: isNative,
   App: App,
