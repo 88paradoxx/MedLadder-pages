@@ -36,11 +36,11 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            // R8: shrink + obfuscate (Play "DEX code optimization"), in compatibility mode
-            // and without R8's code optimizer: full-mode optimization broke WebView scrolling
-            // on some phones.
-            minifyEnabled true
-            shrinkResources true
+            // R8 is OFF. With R8 on, WebView scrolling broke on real phones (full and compat
+            // mode). Play only enforces the "DEX code optimization" threshold for bundles with
+            // at least 10 MB of DEX; this Capacitor app is far below that, so it is not required.
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
