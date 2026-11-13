@@ -41,3 +41,6 @@
 -keep class * implements com.getcapacitor.PluginHandle {
     public void invoke(java.lang.String, com.getcapacitor.PluginCall);
 }
+
+# Shrink + obfuscate only; R8's optimizer broke WebView scrolling on some devices.
+-dontoptimize
