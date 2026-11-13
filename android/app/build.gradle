@@ -39,8 +39,8 @@ android {
             // R8: shrink + obfuscate (Play "DEX code optimization"), in compatibility mode
             // and without R8's code optimizer: full-mode optimization broke WebView scrolling
             // on some phones.
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false // fallback: no R8
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
