@@ -29,6 +29,7 @@ import java.util.Iterator;
 public class MainActivity extends BridgeActivity {
 
     private FirebaseAnalytics mFirebaseAnalytics;
+    private AnimatedSplash animatedSplash;
 
     public class NativeBridge {
         @android.webkit.JavascriptInterface
@@ -64,7 +65,10 @@ public class MainActivity extends BridgeActivity {
         public void setBarsColor(String hex) {
             try {
                 final int color = Color.parseColor(hex);
-                runOnUiThread(() -> getWindow().getDecorView().setBackgroundColor(color));
+                runOnUiThread(() -> {
+                    if (animatedSplash != null && animatedSplash.isShowing()) animatedSplash.setPendingBarsColor(color);
+                    else getWindow().getDecorView().setBackgroundColor(color);
+                });
             } catch (Exception ignored) {}
         }
 
@@ -82,6 +86,10 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         hideStatusBar();
         fixKeyboardGap();
+        if (savedInstanceState == null) { // cold start only
+            animatedSplash = new AnimatedSplash(this);
+            animatedSplash.show();
+        }
         try {
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         } catch (Exception ignored) {}
@@ -170,6 +178,12 @@ public class MainActivity extends BridgeActivity {
             }
 
             getBridge().getWebView().setWebViewClient(new BridgeWebViewClient(getBridge()) {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    if (animatedSplash != null) animatedSplash.markContentReady();
+                }
+
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                     return handleUpiIntent(view, request.getUrl().toString())
