@@ -99,6 +99,27 @@ if (isNative) {
   }, true);
 }
 
+// Strips around the page (camera cutout at the top, navigation bar) take the page's background.
+function syncStripColor() {
+  try {
+    if (!window.MedLadderAndroidApp || typeof window.MedLadderAndroidApp.setBarsColor !== 'function') return;
+    var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(document.documentElement).backgroundColor || '');
+    var dark = document.documentElement.classList.contains('dark');
+    var hex = m ? '#' + [m[1], m[2], m[3]].map(function (n) { return ('0' + (+n).toString(16)).slice(-2); }).join('') : (dark ? '#140326' : '#F8F3FC');
+    if (hex === syncStripColor.last) return;
+    syncStripColor.last = hex;
+    window.MedLadderAndroidApp.setBarsColor(hex);
+  } catch (e) {}
+}
+if (isNative) {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncStripColor);
+  else syncStripColor();
+  try {
+    new MutationObserver(function () { setTimeout(syncStripColor, 60); })
+      .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+}
+
 var backHandlers = [];
 var lastBackPressTime = 0;
 

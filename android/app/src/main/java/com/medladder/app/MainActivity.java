@@ -13,6 +13,9 @@ import android.webkit.WebView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.graphics.Insets;
+import android.graphics.Color;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import android.os.Build;
@@ -56,6 +59,15 @@ public class MainActivity extends BridgeActivity {
             runOnUiThread(() -> Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show());
         }
 
+        /** Colour of the strips around the page (camera cutout / navigation bar), matched to the page. */
+        @android.webkit.JavascriptInterface
+        public void setBarsColor(String hex) {
+            try {
+                final int color = Color.parseColor(hex);
+                runOnUiThread(() -> getWindow().getDecorView().setBackgroundColor(color));
+            } catch (Exception ignored) {}
+        }
+
         @android.webkit.JavascriptInterface
         public void exitApp() {
             runOnUiThread(() -> finishAffinity());
@@ -69,6 +81,7 @@ public class MainActivity extends BridgeActivity {
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         hideStatusBar();
+        fixKeyboardGap();
         try {
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         } catch (Exception ignored) {}
@@ -91,6 +104,24 @@ public class MainActivity extends BridgeActivity {
             WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
             bars.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
             bars.hide(WindowInsetsCompat.Type.statusBars());
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Capacitor pads the window by the keyboard height, and the WebView also shrank its own
+     * viewport for the same keyboard insets, leaving a large empty gap above the keyboard
+     * (e.g. on the sign-in form). Hand the WebView the insets without the keyboard part.
+     */
+    private void fixKeyboardGap() {
+        try {
+            if (getBridge() == null || getBridge().getWebView() == null) return;
+            ViewCompat.setOnApplyWindowInsetsListener(getBridge().getWebView(), (v, insets) -> {
+                WindowInsetsCompat noIme = new WindowInsetsCompat.Builder(insets)
+                    .setInsets(WindowInsetsCompat.Type.ime(), Insets.NONE)
+                    .setVisible(WindowInsetsCompat.Type.ime(), false)
+                    .build();
+                return ViewCompat.onApplyWindowInsets(v, noIme);
+            });
         } catch (Exception ignored) {}
     }
 
