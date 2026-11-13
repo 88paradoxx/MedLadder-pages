@@ -14,7 +14,6 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.core.splashscreen.SplashScreen;
 import android.graphics.Color;
-import android.os.SystemClock;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -24,7 +23,7 @@ import java.util.Iterator;
 public class MainActivity extends BridgeActivity {
 
     private FirebaseAnalytics mFirebaseAnalytics;
-    private volatile boolean webReady = false;
+    private AnimatedSplash animatedSplash;
 
     public class NativeBridge {
         @android.webkit.JavascriptInterface
@@ -72,17 +71,24 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Native splash: hold it until the first page has painted (max ~3 s).
+        // System splash (required on Android 12+) is only a plain background here; it is
+        // removed on the first frame and the animated MedLadder splash takes over.
         SplashScreen splash = SplashScreen.installSplashScreen(this);
-        final long splashStart = SystemClock.uptimeMillis();
-        splash.setKeepOnScreenCondition(() -> !webReady && SystemClock.uptimeMillis() - splashStart < 3000);
+        splash.setOnExitAnimationListener(provider -> provider.remove());
 
         super.onCreate(savedInstanceState);
         // Edge-to-edge on every Android version (Play recommendation). Must run AFTER
         // super.onCreate so the window is created with the app theme, not the launch theme.
         // Capacitor's SystemBars pads the WebView so content never sits under the bars.
         EdgeToEdge.enable(this);
-        applyBarsColor(Color.parseColor("#0d1033"));
+
+        if (savedInstanceState == null) { // cold start only, not on rotation / theme recreate
+            animatedSplash = new AnimatedSplash(this);
+            animatedSplash.show();
+        }
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().setBackgroundColor(Color.WHITE);
+        }
         try {
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         } catch (Exception ignored) {}
@@ -92,7 +98,12 @@ public class MainActivity extends BridgeActivity {
 
     private void applyBarsColor(int color) {
         try {
-            getWindow().getDecorView().setBackgroundColor(color);
+            if (animatedSplash != null && animatedSplash.isShowing()) {
+                // Keep the splash art behind the bars; use this colour once it is gone.
+                animatedSplash.setPendingBarsColor(color);
+            } else {
+                getWindow().getDecorView().setBackgroundColor(color);
+            }
             if (getBridge() != null && getBridge().getWebView() != null) {
                 getBridge().getWebView().setBackgroundColor(color);
             }
@@ -140,7 +151,7 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    webReady = true;
+                    if (animatedSplash != null) animatedSplash.markContentReady();
                 }
 
                 @Override
