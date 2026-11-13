@@ -365,6 +365,39 @@ function haptic(kind) {
   } catch (e) {}
 }
 
+// ===== DIAGNOSTIC BUILD ONLY: on-screen scroll/touch report =====
+if (isNative) {
+  (function () {
+    var n = { ts: 0, tm: 0, sc: 0, wheel: 0 };
+    var box;
+    function fmt() {
+      var se = document.scrollingElement || document.documentElement;
+      var cs = function (el) { try { var c = getComputedStyle(el); return c.overflowY + '/' + c.height + '/' + c.position + '/' + c.touchAction; } catch (e) { return '?'; } };
+      var top = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      return [
+        'DIAG  touchstart:' + n.ts + ' touchmove:' + n.tm + ' scroll:' + n.sc,
+        'scrollTop:' + Math.round(se.scrollTop) + ' scrollH:' + se.scrollHeight + ' clientH:' + se.clientHeight + ' innerH:' + window.innerHeight,
+        'html ' + cs(document.documentElement),
+        'body ' + cs(document.body),
+        'center el: ' + (top ? (top.tagName + '#' + (top.id || '') + '.' + String(top.className || '').slice(0, 40)) : 'none'),
+        'url: ' + location.pathname + location.search
+      ].join('\n');
+    }
+    function paint() {
+      if (!document.body) return;
+      if (!box) {
+        box = document.createElement('pre');
+        box.style.cssText = 'position:fixed;left:6px;right:6px;bottom:70px;z-index:2147483647;margin:0;padding:8px;font:11px/1.35 monospace;white-space:pre-wrap;background:rgba(0,0,0,.82);color:#7CFC9A;border-radius:8px;pointer-events:none';
+        document.body.appendChild(box);
+      }
+      box.textContent = fmt();
+    }
+    document.addEventListener('touchstart', function () { n.ts++; }, { passive: true, capture: true });
+    document.addEventListener('touchmove', function () { n.tm++; }, { passive: true, capture: true });
+    window.addEventListener('scroll', function () { n.sc++; }, { passive: true, capture: true });
+    setInterval(paint, 500);
+  })();
+}
 window.MedLadderNative = {
   isNative: isNative,
   App: App,
