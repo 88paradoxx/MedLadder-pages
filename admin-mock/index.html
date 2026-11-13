@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/theme-init.js"></script>
+  <title>Admin | MedLadder</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/admin-mock.css">
+  <script src="/vendor/supabase-2.45.4.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" defer></script>
+  <!-- Subject/topic picker data (same file the main site uses). Must load
+       before admin-mock.js so window.SYLLABUS_DATA is ready at init. -->
+  <script src="/syllabus.js" defer></script>
+  <script src="/admin-mock.js" defer></script>
+  <script src="/gtag-init.js" defer></script>
+</head>
+
+<body>
+  <div id="app">
+    <header class="am-topbar">
+      <a class="am-brand" href="/">MedLadder</a>
+      <span class="am-title">Admin</span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">🌙</button>
+      <div id="authArea" class="am-auth"></div>
+    </header>
+
+    <main id="viewRoot">
+      <!-- access gate -->
+      <section id="gateView" class="am-view" hidden>
+        <div class="am-gate">
+          <h2>Restricted area</h2>
+          <p id="gateMsg">Checking access…</p>
+        </div>
+      </section>
+
+      <!-- admin home: one card per function -->
+      <section id="homeView" class="am-view" hidden>
+        <div class="ah-hero">
+          <p class="ah-kicker">MedLadder admin</p>
+          <h1 id="ahHello">Welcome back</h1>
+          <p class="ah-sub">Everything that runs the question bank, in one place.</p>
+          <div class="ah-stats" id="ahStats">
+            <div class="ah-stat"><strong>&nbsp;</strong><span>Accounts</span></div>
+            <div class="ah-stat"><strong>&nbsp;</strong><span>Active this week</span></div>
+            <div class="ah-stat"><strong>&nbsp;</strong><span>Answers this week</span></div>
+            <div class="ah-stat"><strong>&nbsp;</strong><span>Pro students</span></div>
+          </div>
+        </div>
+        <div class="ah-grid">
+          <button class="ah-card ah-t-tests" data-go="tests" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
+            <span class="ah-card-t"><b>Mock tests</b><small>Schedule, publish and score All-India mocks</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-tests">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-add" data-go="add" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>
+            <span class="ah-card-t"><b>Add questions</b><small>Write new bank questions, with images</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-add">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-edit" data-go="edit" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></span>
+            <span class="ah-card-t"><b>Edit questions</b><small>Fix text, answers and explanations, move or delete</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-edit">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-review" data-go="review" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></span>
+            <span class="ah-card-t"><b>Needs review</b><small>Suspect answer keys and missing tables to fix</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-review">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-reports" data-go="reports" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></span>
+            <span class="ah-card-t"><b>Student reports</b><small>Questions students flagged while practising</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-reports">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-qotd" data-go="qotd" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span>
+            <span class="ah-card-t"><b>Question of the day</b><small>Choose what every student sees on the home screen</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-qotd">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-books" data-go="books" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg></span>
+            <span class="ah-card-t"><b>Books</b><small>Upload PDF or Word books and publish them on the Books page</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-books">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-pro" data-go="pro" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg></span>
+            <span class="ah-card-t"><b>Pro access</b><small>Grant or revoke Pro for a student</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-pro">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+          <button class="ah-card ah-t-usage" data-go="usage" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20V4"/></svg></span>
+            <span class="ah-card-t"><b>Usage and insights</b><small>Accounts, activity and the most-missed questions</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-usage">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Books -->
+      <section id="booksView" class="am-view" hidden>
+        <div class="am-row"><button id="booksBackBtn" class="am-btn">&larr; Admin home</button><h1>Books</h1>
+          <a class="am-btn" href="/books" target="_blank" rel="noopener">Open the Books page &#8599;</a></div>
+        <div class="am-card ah-panel" id="bkForm">
+          <h3 id="bkFormTitle" style="margin-top:0">Add a book</h3>
+          <div class="am-form">
+            <label>Exam
+              <select id="bkExam">
+                <option value="neet-pg">NEET PG</option><option value="fmge">FMGE</option><option value="ini-cet">INI-CET</option>
+                <option value="neet-ss">NEET SS</option><option value="custom">Custom name…</option>
+              </select>
+            </label>
+            <label id="bkExamLabelWrap" hidden>Custom exam name <input id="bkExamLabel" maxlength="60" placeholder="e.g. NEXT, USMLE Step 1"></label>
+            <label>Subject <select id="bkSubject"></select></label>
+            <label class="am-wide">Title <input id="bkTitle" maxlength="200" placeholder="e.g. Anatomy high-yield notes"></label>
+            <label class="am-wide">Short description <textarea id="bkDesc" rows="3" maxlength="600" placeholder="What the book covers (shown on the Books page)"></textarea></label>
+            <label>Pages (optional) <input id="bkPages" type="number" min="1" max="5000" inputmode="numeric"></label>
+            <label class="am-wide">File (PDF or Word, up to 95 MB)
+              <input id="bkFile" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
+            <p class="am-hint am-wide" id="bkFileInfo"></p>
+            <label class="am-wide bk-pub"><input type="checkbox" id="bkPublished" checked> Publish on the Books page now</label>
+            <div class="am-wide">
+              <div class="bk-prog" id="bkProg" hidden><span id="bkProgBar"></span></div>
+              <button id="bkSaveBtn" class="am-btn am-btn-primary" type="button">Upload and publish</button>
+              <button id="bkCancelBtn" class="am-btn" type="button" hidden>Cancel editing</button>
+              <span id="bkMsg" class="am-hint"></span>
+            </div>
+          </div>
+        </div>
+        <h2 class="ah-h2">All books</h2>
+        <div id="bkList" class="am-list"><p class="am-hint">Loading…</p></div>
+      </section>
+
+      <!-- Pro access -->
+      <section id="proView" class="am-view" hidden>
+        <div class="am-row"><button id="proBackBtn" class="am-btn">&larr; Admin home</button><h1>Pro access</h1></div>
+        <div class="am-card ah-panel">
+          <p class="am-hint">The student must already have an account. Granting adds time on top of any active subscription.</p>
+          <div class="am-row">
+            <label class="am-wide">Student email <input id="proEmail" type="email" placeholder="student@example.com" autocomplete="off"></label>
+            <label>Duration
+              <select id="proDays">
+                <option value="30">1 month</option><option value="90">3 months</option><option value="180">6 months</option>
+                <option value="365" selected>1 year</option><option value="3650">10 years</option>
+              </select>
+            </label>
+          </div>
+          <div class="am-row">
+            <button id="proGrantBtn" class="am-btn am-btn-primary">Grant Pro</button>
+            <button id="proRevokeBtn" class="am-btn am-btn-danger">Revoke Pro</button>
+          </div>
+          <p id="proMsg" class="am-hint"></p>
+        </div>
+      </section>
+
+      <!-- usage and insights -->
+      <section id="usageView" class="am-view" hidden>
+        <div class="am-row"><button id="usageBackBtn" class="am-btn">&larr; Admin home</button><h1>Usage and insights</h1></div>
+        <div id="usageStats" class="ah-usage"></div>
+        <h2 class="ah-h2">Most-missed questions</h2>
+        <p class="am-hint">Questions with 5 or more answers and the lowest scores. A very low score can mean a hard question, or a wrong answer key.</p>
+        <div id="usageHard" class="am-list"></div>
+      </section>
+
+      <!-- tests list -->
+      <section id="testsView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="testsBackBtn" class="am-btn">&larr; Admin home</button>
+          <h1>Mock tests</h1>
+          <button id="newTestBtn" class="am-btn am-btn-primary">+ New test</button>
+        </div>
+        <div hidden><button id="bankBtn"></button><button id="qotdBtn"></button><button id="flaggedBtn"></button><button id="editQBtn"></button></div>
+        <div id="testList" class="am-list"></div>
+      </section>
+
+      <!-- question bank authoring (not tied to any test) -->
+      <section id="bankView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="bankBackBtn" class="am-btn">&larr; Admin home</button>
+          <h1>Add questions</h1>
+        </div>
+        <div class="am-seg am-seg-lg" role="group" aria-label="Where the questions go">
+          <button type="button" class="am-seg-b" data-addsrc="bank" aria-pressed="true">Question bank</button>
+          <button type="button" class="am-seg-b" data-addsrc="pyq" aria-pressed="false">Past papers (PYQ)</button>
+        </div>
+        <div id="pyqAddPanel" hidden>
+          <div class="am-card pa-step">
+            <h3><span class="pa-n">1</span>Which paper?</h3>
+            <div class="am-row">
+              <label>Exam <select id="paExam"><option>NEET PG</option><option>INICET</option><option>FMGE</option></select></label>
+              <label>Session <select id="paYear"></select></label>
+              <label id="paNewWrap" hidden>New session <input id="paNew" placeholder="2026, or May 2026" maxlength="14"></label>
+            </div>
+            <p class="am-hint" id="paSessInfo"></p>
+          </div>
+          <div class="am-card pa-step">
+            <h3><span class="pa-n">2</span>Add questions</h3>
+            <div class="am-seg" role="group" aria-label="How to add">
+              <button type="button" class="am-seg-b" data-pamode="paste" aria-pressed="true">Paste many</button>
+              <button type="button" class="am-seg-b" data-pamode="one" aria-pressed="false">One at a time</button>
+            </div>
+            <div id="paPastePane">
+              <p class="am-hint">Paste the whole paper. Numbered questions (<code>1.</code>, <code>Q2)</code>) or blocks separated by
+                <code>---</code> both work. Options as <code>A.</code> <code>(b)</code> <code>c)</code>, the key as
+                <code>Ans: B</code>, and <code>Explanation:</code> for the rest. An answer key at the end
+                (<code>Answer key</code> then <code>1-B 2-C …</code>) also works. Up to 300 questions per save. Nothing is saved until step 3.</p>
+              <details class="pa-sample"><summary>Example</summary><pre class="am-sample">1. Which nerve supplies the deltoid?
+A. Radial nerve
+B. Axillary nerve
+C. Musculocutaneous nerve
+D. Suprascapular nerve
+Ans: B
+Explanation: The axillary nerve (C5, C6) supplies deltoid and teres minor.
+
+2. Next question…</pre></details>
+              <textarea id="paText" rows="10" class="am-wide" placeholder="Paste questions here…"></textarea>
+              <div class="am-row" style="margin-top:10px">
+                <button id="paParseBtn" type="button" class="am-btn am-btn-primary">Add to preview</button>
+                <span id="paParseInfo" class="am-hint"></span>
+              </div>
+            </div>
+            <form id="paOneForm" class="am-form" hidden>
+              <label class="am-wide">Question <textarea name="q" rows="3"></textarea></label>
+              <label>A <input name="a"></label><label>B <input name="b"></label><label>C <input name="c"></label>
+              <label>D <input name="d"></label><label>E <input name="e"></label>
+              <label>Correct answer <select name="ans"><option value="">Pick…</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></label>
+              <label class="am-wide">Explanation <textarea name="ex" rows="4"></textarea></label>
+              <div class="am-wide am-row"><button class="am-btn am-btn-primary" type="submit">Add to preview</button>
+                <span class="am-hint" id="paOneInfo"></span></div>
+            </form>
+          </div>
+          <div class="am-card pa-step">
+            <div class="am-row" style="margin-bottom:6px">
+              <h3 style="margin:0"><span class="pa-n">3</span>Preview and save <span id="paCount" class="am-badge"></span></h3>
+              <span class="sp" style="flex:1"></span>
+              <button id="paClearBtn" type="button" class="am-btn" hidden>Clear all</button>
+            </div>
+            <p class="am-hint">Check every question here. Tap <b>Edit</b> to fix the text, the options or the key,
+              or to add a picture to the question or the explanation. The preview is kept on this device until you save.</p>
+            <div id="paIssues" class="pa-issues" hidden></div>
+            <div id="paList" class="am-list"></div>
+            <div class="am-row pa-savebar">
+              <button id="paSaveBtn" type="button" class="am-btn am-btn-primary" disabled>Save</button>
+              <span id="paSaveInfo" class="am-hint"></span>
+            </div>
+          </div>
+        </div>
+        <div id="bankAddPanel">
+        <p class="am-hint">New questions go live in the bank immediately — no review
+          queue. Pick a subject and topic in the form; after adding, the form stays
+          on the same topic so you can keep entering questions.</p>
+        <form id="bankQForm" class="am-card am-form">
+          <label class="am-wide">Subject <select id="bqSubj"></select></label>
+          <label class="am-wide">Topic <select id="bqTopic"></select></label>
+          <label class="am-wide">Question <textarea id="bqText" rows="3" required></textarea></label>
+          <label class="am-wide">Question image <input type="file" id="bqQImg" accept="image/*">
+            <img id="bqQImgPrev" hidden alt="Question image preview" style="max-width:160px;max-height:120px;display:block;margin-top:6px;border-radius:6px">
+            <button type="button" id="bqQImgClear" class="am-btn" hidden>Remove image</button></label>
+          <label>A <input id="bqA" required></label>
+          <label>B <input id="bqB" required></label>
+          <label>C <input id="bqC" required></label>
+          <label>D <input id="bqD" required></label>
+          <label>E <input id="bqE"></label>
+          <label>Answer
+            <select id="bqAns"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option><option value="e">E</option></select>
+          </label>
+          <label class="am-wide">Explanation <textarea id="bqExpl" rows="2" required></textarea></label>
+          <label class="am-wide">Explanation image <input type="file" id="bqEImg" accept="image/*">
+            <img id="bqEImgPrev" hidden alt="Explanation image preview" style="max-width:160px;max-height:120px;display:block;margin-top:6px;border-radius:6px">
+            <button type="button" id="bqEImgClear" class="am-btn" hidden>Remove image</button></label>
+          <label class="am-wide am-inline"><input type="checkbox" id="bqQotd"> Make it the question of the day on
+            <input type="date" id="bqQotdDay" style="width:auto;margin-left:6px"></label>
+          <div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Add to bank</button>
+            <span id="bankInfo" class="am-hint"></span></div>
+        </form>
+        <h3>Bulk paste</h3>
+        <div class="am-card">
+          <p class="am-hint">One block per question, separated by <code>---</code>.
+            The selects below override a block's own Subject:/Topic: labels when
+            set; leave them unset to route each block from its own labels. Only
+            questions with a resolved topic, options C + D
+            and an explanation can go to the bank — the preview lists the rest as
+            skipped with the reason.
+<pre class="am-sample">Q: A 45-year-old man has…
+A: First option
+B: Second option
+C: Third option
+D: Fourth option
+Answer: B
+Explanation: Because…
+Subject: Anatomy
+Topic: Cardiovascular, Lymphatic and Nervous Systems
+---
+Q: Next question…</pre></p>
+          <div class="am-row">
+            <label>Default subject <select id="bankBulkSubj"></select></label>
+            <label>Default topic <select id="bankBulkTopic"></select></label>
+          </div>
+          <textarea id="bankBulkText" rows="10" class="am-wide" placeholder="Paste questions here…"></textarea>
+          <div class="am-row" style="margin-top:10px">
+            <button id="bankBulkParseBtn" class="am-btn">Add to preview</button>
+            <button id="bankBulkImportBtn" class="am-btn am-btn-primary" disabled>Import to bank</button>
+            <span id="bankBulkInfo" class="am-hint"></span>
+          </div>
+          <div id="bankBulkPreview" class="am-list" style="margin-top:10px"></div>
+        </div>
+        </div>
+      </section>
+
+
+      <!-- question of the day schedule -->
+      <section id="qotdView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="qotdBackBtn" class="am-btn">&larr; Admin home</button>
+          <h1>Question of the day</h1>
+        </div>
+        <p class="am-hint">Pick the question every student sees on the home screen for a given date.
+          Nothing is picked automatically: a day you leave empty keeps showing the last question
+          you chose, and until you choose one the card is hidden. Avoid questions that need an
+          image: the home card shows text only.</p>
+        <h3>Next 14 days</h3>
+        <div id="qotdSchedule" class="am-list"><p class="am-hint">Loading…</p></div>
+        <h3 id="qotdPickTitle">Choose a question</h3>
+        <div class="am-card">
+          <div class="am-form">
+            <label>Date <input type="date" id="qdDay"></label>
+            <label>Subject <select id="qdSubj"></select></label>
+            <label>Topic <select id="qdTopic"></select></label>
+            <label class="am-wide">Search the question text, or type a question ID
+              <input id="qdSearch" placeholder="e.g. primary oocyte, or 1234"></label>
+            <div class="am-wide"><button id="qdSearchBtn" class="am-btn am-btn-primary" type="button">Search</button>
+              <button id="qdRecentBtn" class="am-btn" type="button">Questions I added recently</button>
+              <span id="qdInfo" class="am-hint"></span></div>
+          </div>
+          <div id="qdResults" class="am-list" style="margin-top:12px"></div>
+        </div>
+        <p class="am-hint">To write a brand-new question for a day, add it in the
+          <a href="#" id="qotdToBank">Question bank</a> and tick “Make it the question of the day”.</p>
+      </section>
+      <!-- edit any bank question -->
+      <section id="editQView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="editQBackBtn" class="am-btn">&larr; Admin home</button>
+          <h1>Edit questions</h1>
+        </div>
+        <p class="am-hint">Load questions from the question bank or a past paper, then open one to fix its text,
+          options, answer or explanation, add pictures, move it, or delete it.</p>
+        <div class="am-card">
+          <div class="am-seg" role="group" aria-label="Which questions">
+            <button type="button" class="am-seg-b" data-eqsrc="bank" aria-pressed="true">Question bank</button>
+            <button type="button" class="am-seg-b" data-eqsrc="pyq" aria-pressed="false">Past papers (PYQ)</button>
+          </div>
+          <div class="am-row">
+            <label class="eq-bank">Subject <select id="eqSubj"></select></label>
+            <label class="eq-bank">Topic <select id="eqTopic" disabled></select></label>
+            <label class="eq-pyq" hidden>Exam <select id="eqExam"><option>NEET PG</option><option>INICET</option><option>FMGE</option></select></label>
+            <label class="eq-pyq" hidden>Session <select id="eqYear"><option value="">All sessions</option></select></label>
+            <label>Show
+              <select id="eqFilter">
+                <option value="all">All questions</option>
+                <option value="short">Explanation under 100 characters</option>
+                <option value="review">Needs review (answer key or missing table)</option>
+                <option value="image">Has an image</option>
+              </select>
+            </label>
+          </div>
+          <div class="am-row">
+            <label class="am-wide">Search text or question number
+              <input id="eqSearch" placeholder="e.g. ectopic, or 13262"></label>
+            <button id="eqLoadBtn" class="am-btn am-btn-primary">Load questions</button>
+          </div>
+          <div id="eqInfo" class="am-hint"></div>
+        </div>
+        <div id="eqList" class="am-list"></div>
+        <div class="am-row" id="eqPager" hidden>
+          <button id="eqPrev" class="am-btn">← Previous</button>
+          <span id="eqPage" class="am-hint"></span>
+          <button id="eqNext" class="am-btn">Next →</button>
+        </div>
+      </section>
+      <!-- flagged questions review queue -->
+      <section id="flaggedView" class="am-view" hidden>
+        <div class="am-row">
+          <button id="flaggedBackBtn" class="am-btn">&larr; Admin home</button>
+          <h1>Flagged questions</h1>
+        </div>
+        <p class="am-hint">User reports that a bank question has an error. Open a flag to move
+          the question to its correct subject/topic, fix its content, resolve it,
+          or dismiss it. Fixing content does not resolve the flag — resolve or
+          dismiss it explicitly once handled.</p>
+        <div class="am-row">
+          <button class="am-btn flag-filter" data-status="open">Open</button>
+          <button class="am-btn flag-filter" data-status="resolved">Resolved</button>
+          <button class="am-btn flag-filter" data-status="dismissed">Dismissed</button>
+          <span id="flagCount" class="am-hint"></span>
+        </div>
+        <div id="flagList" class="am-list"></div>
+        <div id="flagDetail" class="am-card" hidden></div>
+      </section>
+
+      <!-- editor -->
+      <section id="editorView" class="am-view" hidden>
+        <button id="backBtn" class="am-btn">← All tests</button>
+        <h1 id="editorTitle">New test</h1>
+
+        <form id="testForm" class="am-card am-form">
+          <label>Title <input id="fTitle" required maxlength="120"></label>
+          <label>Exam
+            <select id="fExam">
+              <option>NEET PG</option><option>INI-CET</option><option>FMGE</option>
+              <option>NEET SS</option><option>USMLE</option><option>PLAB</option>
+            </select>
+          </label>
+          <label class="am-wide">Description <input id="fDesc" maxlength="300"></label>
+          <label>Starts <input id="fStarts" type="datetime-local" required></label>
+          <label>Ends <input id="fEnds" type="datetime-local" required></label>
+          <label>Duration (min) <input id="fDur" type="number" value="180" min="5" max="600" required></label>
+          <label>Questions <input id="fTotal" type="number" value="200" min="1" max="500" required></label>
+          <label>+ marks <input id="fPos" type="number" step="0.5" value="4" required></label>
+          <label>− marks <input id="fNeg" type="number" step="0.5" value="1" required></label>
+          <label>Free <select id="fFree"><option value="true">Yes — free for all</option><option value="false">No — Pro only</option></select></label>
+          <label>Status
+            <select id="fStatus"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select>
+          </label>
+          <div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Save test</button></div>
+        </form>
+
+        <div id="qSection" hidden>
+          <div class="am-row">
+            <h2>Questions (<span id="qCount">0</span>)</h2>
+            <div class="am-actions">
+              <input id="fillCount" type="number" value="50" min="1" max="500" style="width:70px">
+              <button id="fillBtn" class="am-btn" title="Snapshot random questions from the bank">Fill from bank</button>
+            </div>
+          </div>
+
+          <div class="am-card">
+            <h3 style="margin-top:0">Fill from subjects</h3>
+            <p class="am-hint">Pick a subject, tick topics, and draw random questions from just those topics into this test.</p>
+            <div id="subjMenu" class="am-list"></div>
+            <div class="am-row">
+              <span id="subjSelInfo" class="am-hint">No topics selected.</span>
+              <div class="am-actions" style="margin-left:auto">
+                <input id="subjFillCount" type="number" value="50" min="1" max="500" style="width:70px">
+                <button id="subjFillBtn" class="am-btn" title="Snapshot random questions from the selected topics">Draw from topics</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="qList" class="am-list"></div>
+
+          <h3>Add a question</h3>
+          <form id="qForm" class="am-card am-form">
+            <label class="am-wide">Question <textarea id="qText" rows="3" required></textarea></label>
+            <label>A <input id="qA" required></label>
+            <label>B <input id="qB" required></label>
+            <label>C <input id="qC"></label>
+            <label>D <input id="qD"></label>
+            <label>E <input id="qE"></label>
+            <label>Answer
+              <select id="qAns"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option><option value="e">E</option></select>
+            </label>
+            <label>Subject <input id="qSubj" maxlength="60"></label>
+            <label class="am-wide">Explanation <textarea id="qExpl" rows="2"></textarea></label>
+            <div class="am-wide"><button class="am-btn am-btn-primary" type="submit">Add question</button></div>
+          </form>
+
+          <h3>Bulk paste</h3>
+          <div class="am-card">
+            <p class="am-hint">One block per question, separated by <code>---</code>.
+            The selects below override a block's own Subject:/Topic: labels when
+            set; leave them unset to route each block from its own labels. Every
+            valid question goes to this mock; questions with
+            a resolved topic, options C + D and an explanation also go to the question
+            bank, live immediately.
+<pre class="am-sample">Q: A 45-year-old man has…
+A: First option
+B: Second option
+C: Third option
+D: Fourth option
+Answer: B
+Explanation: Because…
+Subject: Anatomy
+Topic: Cardiovascular, Lymphatic and Nervous Systems
+---
+Q: Next question…</pre></p>
+            <div class="am-row">
+              <label>Default subject <select id="bulkSubj"></select></label>
+              <label>Default topic <select id="bulkTopic"></select></label>
+            </div>
+            <textarea id="bulkText" rows="10" class="am-wide" placeholder="Paste questions here…"></textarea>
+            <div class="am-row" style="margin-top:10px">
+              <button id="bulkParseBtn" class="am-btn">Preview</button>
+              <button id="bulkImportBtn" class="am-btn am-btn-primary" disabled>Import</button>
+              <span id="bulkInfo" class="am-hint"></span>
+            </div>
+            <div id="bulkPreview" class="am-list" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </section>
+
+      <div id="toast" class="am-toast" hidden></div>
+    </main>
+  </div>
+  <script src="/analytics-loader.js" defer></script>
+</body>
+
+</html>

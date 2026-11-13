@@ -1,0 +1,46 @@
+{
+  "name": "medladder-pages",
+  "compatibility_date": "2026-10-25",
+  "main": "worker.js",
+  // Run the site build on every `wrangler deploy`, whatever the dashboard's
+  // build command does first. build.mjs empties dist/ and refills it with
+  // only the public site (no build scripts, worker source, docs or audit
+  // files), minified, with source maps.
+  "build": {
+    "command": "npm run build"
+  },
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/upload-image",
+      "/api/upload-book",
+      "/api/delete-book-file",
+      "/books",
+      "/",
+      "/index.html",
+      "/subjects/*",
+      "/pyqs",
+      "/pyqs/*",
+      "/neet-pg*",
+      "/neet-ss",
+      "/neet-ss/*",
+      "/fmge*",
+      "/inicet*",
+      "/landing*",
+      "/best-free-neet-pg-question-bank*",
+      "/medladder-vs-*"
+    ]
+  },
+  "r2_buckets": [
+    {
+      "binding": "IMAGES_BUCKET",
+      "bucket_name": "medladder-images"
+    }
+  ],
+  "observability": {
+    "enabled": false
+  }
+}

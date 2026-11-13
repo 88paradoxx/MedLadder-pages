@@ -1,0 +1,12 @@
+== no-r8  apk=10686124 bytes
+Performing Streamed Install
+Success
+screen 1080 x 2400
+before: 11-13 18:12:42.999  3597  3597 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=0 h=2602 ch=842 tm=0 url=/
+before: 11-13 18:12:44.002  3597  3597 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=0 h=2602 ch=842 tm=0 url=/
+after: 11-13 18:12:51.007  3597  3597 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=0 h=2602 ch=842 tm=0 url=/
+after: 11-13 18:12:51.998  3597  3597 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=0 h=2602 ch=842 tm=0 url=/
+-- crashes:
+-- top window:
+  mCurrentFocus=Window{5c7b593 u0 com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity}
+  mCurrentFocus=Window{4a6b3d9 u0 Application Not Responding: com.google.android.apps.nexuslauncher}

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Theme init inlined verbatim from theme-init.js (same bytes; topic and subject pages still load the file). This is the only inline executable script, allowlisted by a CSP sha256 hash in _headers: if you edit the script, update the hash too. -->
+  <script>// Apply the saved theme before stylesheets paint, without an inline script.
+(function () {
+  try {
+    // Light by default; dark only for someone who chose it.
+    if (localStorage.getItem('medladder_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  } catch (_) { document.documentElement.classList.remove('dark'); }
+
+  window.medladderToggleTheme = function () {
+    document.documentElement.classList.add('theme-switching');
+    var isDark = document.documentElement.classList.toggle('dark');
+    try {
+      localStorage.setItem('medladder_theme', isDark ? 'dark' : 'light');
+    } catch (_) {}
+    var btns = document.querySelectorAll('.theme-toggle, #themeToggle');
+    btns.forEach(function (b) {
+      b.textContent = isDark ? '🌙' : '☀️';
+      b.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+      b.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    });
+    if (typeof window.__onThemeToggle === 'function') {
+      try { window.__onThemeToggle(isDark); } catch (_) {}
+    }
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        document.documentElement.classList.remove('theme-switching');
+      });
+    });
+    return isDark;
+  };
+
+  function initThemeBtn() {
+    var isDark = document.documentElement.classList.contains('dark');
+    var btns = document.querySelectorAll('.theme-toggle, #themeToggle');
+    btns.forEach(function (b) {
+      b.textContent = isDark ? '🌙' : '☀️';
+      b.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+      b.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+      if (!b.__themeWired) {
+        b.__themeWired = true;
+        b.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.medladderToggleTheme();
+        });
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initThemeBtn);
+  } else {
+    initThemeBtn();
+  }
+}());
+</script>
+  <title>MedLadder — FMGE, NEET PG, INI-CET &amp; NEET SS QBank</title>
+  <meta name="description" content="Medical MCQ question bank for FMGE, NEET PG, INI-CET and NEET SS. Practise 36,219 questions across 19 subjects and past papers, with explained answers.">
+  <meta name="keywords" content="NEET PG question bank, NEET PG MCQs with answers, NEET PG previous year questions, free NEET PG mock test, NEET PG 2027, INI-CET question bank, INI-CET previous year questions, FMGE question bank, best question bank for NEET PG, USMLE question bank, MBBS question bank, NEET SS question bank">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://medladder.top/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MedLadder">
+  <meta property="og:title" content="MedLadder — FMGE, NEET PG, INI-CET &amp; NEET SS QBank">
+  <meta property="og:description" content="Medical MCQ question bank for FMGE, NEET PG, INI-CET and NEET SS. Practise 36,219 questions across 19 subjects and past papers, with explained answers.">
+  <meta property="og:url" content="https://medladder.top/">
+  <meta property="og:image" content="https://medladder.top/og-home.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MedLadder — FMGE, NEET PG, INI-CET &amp; NEET SS QBank">
+  <meta name="twitter:description" content="Medical MCQ question bank for FMGE, NEET PG, INI-CET and NEET SS. Practise 36,219 questions across 19 subjects and past papers, with explained answers.">
+  <meta name="twitter:image" content="https://medladder.top/og-home.jpg">
+
+  <!-- PWA Support -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#7B2FF7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MedLadder">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "MedLadder",
+    "url": "https://medladder.top/",
+    "description": "Medical exam question bank for MBBS, FMGE, NEET PG, INI-CET, NEET SS, USMLE, MCAT, PLAB, MRCS, MRCP and State PG exams.",
+    "@id": "https://medladder.top/#website",
+    "publisher": {
+      "@id": "https://medladder.top/#organization"
+    },
+    "inLanguage": "en"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": [
+      "EducationalOrganization",
+      "Organization"
+    ],
+    "@id": "https://medladder.top/#organization",
+    "name": "MedLadder",
+    "url": "https://medladder.top/",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://medladder.top/icons/icon-512.png",
+      "width": 512,
+      "height": 512
+    },
+    "image": "https://medladder.top/og-image.png",
+    "description": "Medical exam question bank for MBBS, FMGE, NEET PG, INI-CET and NEET SS, with previous year papers and mock tests.",
+    "email": "99medladder@gmail.com",
+    "areaServed": {
+      "@type": "Country",
+      "name": "India"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer support",
+      "email": "99medladder@gmail.com",
+      "availableLanguage": [
+        "English"
+      ]
+    },
+    "knowsAbout": [
+      "NEET PG",
+      "FMGE",
+      "INI-CET",
+      "NEET SS",
+      "Medical MCQs"
+    ],
+    "sameAs": [
+      "https://play.google.com/store/apps/details?id=com.medladder.app",
+      "https://www.instagram.com/medladder2026/"
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What medical exams does MedLadder cover?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "MedLadder covers a wide range of medical exams including MBBS, FMGE, NEET PG, INI-CET, NEET SS, AIIMS PG, USMLE (Steps 1–3), MCAT, PLAB (Parts 1 & 2), MRCS, MRCP and Indian State PG entrance exams — all built on the same 19-subject, 36,219 MCQ foundation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are previous-year question papers (PYQs) included?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! MedLadder contains verified PYQ banks covering NEET PG (2018–2025), INI-CET (2020–2025), FMGE (2020–2025), AIIMS PG, and NEET SS."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How many modules can I practice for free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The first 8 modules in every single subject are completely free, with full access to questions, answer keys, and detailed explanations."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I practice questions in timed test mode?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. MedLadder supports both Practice Mode (instant answer feedback) and Exam Mode (timed tests with customizable question limits and end-of-test review)."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&family=DM+Sans:wght@400;500;600;700&display=optional" media="print" id="gfonts-css">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&family=DM+Sans:wght@400;500;600;700&display=optional"></noscript>
+
+  <link rel="preload" href="/app.css" as="style">
+  <link rel="stylesheet" href="/app.css">
+  <link rel="preload" href="/quiz-pro.css" as="style">
+  <link rel="stylesheet" href="/quiz-pro.css" media="print" id="quiz-pro-css">
+  <style>.seo-static{color:#f8fafc;font-family:system-ui,sans-serif;line-height:1.6}.seo-static h1{font-size:1.6rem;margin:0 0 .6em}.seo-static h2{font-size:1.2rem;margin:1.4em 0 .4em}.seo-static h3{font-size:1rem;margin:1em 0 .3em;opacity:.85}.seo-static ul{margin:.3em 0 .8em 1.2em}.seo-static a{color:#c4b5fd}.seo-static-note{opacity:.6;font-size:.85rem;margin-top:2em}</style>
+</head>
+
+<body>
+
+  <div class="app" id="app" style="min-height:100vh;min-height:100svh;">
+    <main id="mainContent" role="main" aria-live="polite">
+      <div class="seo-static" style="max-width:980px;margin:0 auto;padding:28px 20px 8px;">
+        <h1>MedLadder — Medical MCQ Question Bank</h1>
+        <p><strong>MedLadder is a medical question bank for FMGE, NEET PG, INI-CET and
+        NEET SS preparation, with 36,219 multiple-choice questions.</strong> That is 29,282
+        subject-wise questions across 19 subjects and 740 topics, plus 6,937 previous-year
+        questions from past papers — each with an explained answer referenced to a standard
+        textbook. Timed mock tests are also available.</p>
+
+        <ul>
+          <li><strong>36,219</strong> MCQs with explanations</li>
+          <li><strong>29,282</strong> subject-wise, across <strong>19</strong> subjects and <strong>740</strong> topics</li>
+          <li><strong>6,937</strong> previous-year questions</li>
+          <li><strong>3</strong> previous-year question banks</li>
+        </ul>
+
+        <h2>Practise by subject</h2>
+          <h3>Pre-Clinical</h3>
+          <ul>
+            <li><a href="/subjects/anatomy">Anatomy MCQs</a> — 2,119 questions across 58 topics</li>
+            <li><a href="/subjects/physiology">Physiology MCQs</a> — 1,482 questions across 40 topics</li>
+            <li><a href="/subjects/biochemistry">Biochemistry MCQs</a> — 1,470 questions across 27 topics</li>
+          </ul>
+          <h3>Para-Clinical</h3>
+          <ul>
+            <li><a href="/subjects/pathology">Pathology MCQs</a> — 1,718 questions across 64 topics</li>
+            <li><a href="/subjects/microbiology">Microbiology MCQs</a> — 1,670 questions across 31 topics</li>
+            <li><a href="/subjects/pharmacology">Pharmacology MCQs</a> — 1,228 questions across 52 topics</li>
+            <li><a href="/subjects/forensic-medicine">Forensic Medicine MCQs</a> — 1,041 questions across 21 topics</li>
+          </ul>
+          <h3>Clinical</h3>
+          <ul>
+            <li><a href="/subjects/medicine">Medicine MCQs</a> — 2,610 questions across 69 topics</li>
+            <li><a href="/subjects/psm">PSM MCQs</a> — 2,208 questions across 56 topics</li>
+            <li><a href="/subjects/surgery">Surgery MCQs</a> — 2,177 questions across 51 topics</li>
+            <li><a href="/subjects/ob-g">OB &amp; G MCQs</a> — 1,846 questions across 44 topics</li>
+            <li><a href="/subjects/ophthalmology">Ophthalmology MCQs</a> — 1,568 questions across 26 topics</li>
+            <li><a href="/subjects/orthopaedics">Orthopaedics MCQs</a> — 1,393 questions across 30 topics</li>
+            <li><a href="/subjects/pediatrics">Pediatrics MCQs</a> — 1,325 questions across 34 topics</li>
+            <li><a href="/subjects/radiology">Radiology MCQs</a> — 1,186 questions across 20 topics</li>
+            <li><a href="/subjects/ent">ENT MCQs</a> — 1,158 questions across 36 topics</li>
+            <li><a href="/subjects/psychiatry">Psychiatry MCQs</a> — 1,046 questions across 33 topics</li>
+            <li><a href="/subjects/anaesthesia">Anaesthesia MCQs</a> — 1,031 questions across 24 topics</li>
+            <li><a href="/subjects/dermatology">Dermatology MCQs</a> — 869 questions across 24 topics</li>
+          </ul>
+
+        <h2>Previous year questions</h2>
+          <ul>
+            <li><a href="/pyqs/neet-pg">NEET PG previous-year papers</a> — 2018–2025</li>
+            <li><a href="/pyqs/ini-cet">INI-CET previous-year papers</a> — 2020–2025</li>
+            <li><a href="/pyqs/fmge">FMGE previous-year papers</a> — 2020–2025</li>
+          </ul>
+
+        <h2>Mock tests and study tools</h2>
+          <ul>
+            <li><a href="/mock-test">Free NEET PG mock tests</a> with a live leaderboard</li>
+            <li><a href="/neet-pg-syllabus">NEET PG syllabus</a> and <a href="/neet-pg-high-yield-topics">high-yield topics</a></li>
+            <li><a href="/neet-pg-top-100-questions">Top 100 NEET PG questions</a></li>
+            <li><a href="/neet-ss-books">NEET SS books</a></li><li><a href="/books">Free books</a></li>
+          </ul>
+
+        <h2>How MedLadder works</h2>
+        <p>Pick a subject, then a topic, and answer one question at a time. In practice mode
+        you see straight away whether you were right, why the correct option is correct, and the
+        textbook the explanation comes from. A timed test runs the same questions against the
+        clock, the way the real exam does, and shows your score and every missed question at
+        the end.</p>
+        <p>Your answers are saved to your account, so the My progress page can show how many
+        questions you have answered, your accuracy, your strongest and weakest subjects, and the
+        next topic to practise. Questions you want to revisit can be bookmarked and practised
+        together later.</p>
+
+        <h2>Free and Pro access</h2>
+        <p>One topic in every subject can be tried without an account. A free account opens the
+        first eight topics of each subject and keeps your progress. MedLadder Pro opens every
+        topic and the previous-year papers, with plans from one month to one year, paid
+        securely through Razorpay by UPI, card or net banking.</p>
+
+        <h2>Who it is for</h2>
+        <p>MedLadder is built for MBBS graduates preparing for NEET PG and INI-CET, for foreign
+        medical graduates taking FMGE, and for postgraduates preparing for NEET SS. It works in
+        any browser on a phone or laptop, and as an Android app on
+        <a href="https://play.google.com/store/apps/details?id=com.medladder.app">Google Play</a>.</p>
+
+        <p class="seo-static-note">Loading the interactive question bank…</p>
+      </div>
+    </main>
+  </div>
+
+  <nav aria-label="Browse MedLadder" style="max-width:980px;margin:0 auto;padding:20px;text-align:center;font-size:13px;line-height:2.2;">
+    <a href="/neet-pg" style="color:inherit;">NEET PG</a> · <a href="/fmge" style="color:inherit;">FMGE</a> · <a href="/inicet" style="color:inherit;">INI-CET</a> · <a href="/neet-ss" style="color:inherit;">NEET SS</a> · <a href="/subjects/anaesthesia" style="color:inherit;">Anaesthesia</a> · <a href="/subjects/anatomy" style="color:inherit;">Anatomy</a> · <a href="/subjects/biochemistry" style="color:inherit;">Biochemistry</a> · <a href="/subjects/dermatology" style="color:inherit;">Dermatology</a> · <a href="/subjects/ent" style="color:inherit;">ENT</a> · <a href="/subjects/forensic-medicine" style="color:inherit;">Forensic Medicine</a> · <a href="/subjects/medicine" style="color:inherit;">Medicine</a> · <a href="/subjects/microbiology" style="color:inherit;">Microbiology</a> · <a href="/subjects/ob-g" style="color:inherit;">OB&amp;G</a> · <a href="/subjects/ophthalmology" style="color:inherit;">Ophthalmology</a> · <a href="/subjects/orthopaedics" style="color:inherit;">Orthopaedics</a> · <a href="/subjects/pathology" style="color:inherit;">Pathology</a> · <a href="/subjects/pediatrics" style="color:inherit;">Pediatrics</a> · <a href="/subjects/pharmacology" style="color:inherit;">Pharmacology</a> · <a href="/subjects/physiology" style="color:inherit;">Physiology</a> · <a href="/subjects/psm" style="color:inherit;">PSM</a> · <a href="/subjects/psychiatry" style="color:inherit;">Psychiatry</a> · <a href="/subjects/radiology" style="color:inherit;">Radiology</a> · <a href="/subjects/surgery" style="color:inherit;">Surgery</a> · <a href="/neet-pg-syllabus" style="color:inherit;">NEET PG Syllabus</a> · <a href="/neet-pg-high-yield-topics" style="color:inherit;">High-Yield Topics</a> · <a href="/neet-pg-top-100-questions" style="color:inherit;">Top 100 Questions</a> · <a href="/medladder-vs-marrow" style="color:inherit;">MedLadder vs Marrow</a> · <a href="/medladder-vs-prepladder" style="color:inherit;">MedLadder vs PrepLadder</a> · <a href="/best-free-neet-pg-question-bank" style="color:inherit;">Best Free NEET PG Question Bank</a> · <a href="/mock-test" style="color:inherit;">Mock Tests</a> · <a href="/landing" style="color:inherit;">Landing Page</a> · <a href="/pyqs" style="color:inherit;">PYQs</a> · <a href="/pyqs/neet-pg" style="color:inherit;">NEET PG PYQs</a> · <a href="/pyqs/fmge" style="color:inherit;">FMGE PYQs</a> · <a href="/pyqs/ini-cet" style="color:inherit;">INI-CET PYQs</a> · <a href="/pyqs/anaesthesia" style="color:inherit;">Anaesthesia PYQs</a> · <a href="/pyqs/anatomy" style="color:inherit;">Anatomy PYQs</a> · <a href="/pyqs/biochemistry" style="color:inherit;">Biochemistry PYQs</a> · <a href="/pyqs/dermatology" style="color:inherit;">Dermatology PYQs</a> · <a href="/pyqs/ent" style="color:inherit;">ENT PYQs</a> · <a href="/pyqs/forensic-medicine" style="color:inherit;">Forensic Medicine PYQs</a> · <a href="/pyqs/medicine" style="color:inherit;">Medicine PYQs</a> · <a href="/pyqs/microbiology" style="color:inherit;">Microbiology PYQs</a> · <a href="/pyqs/ob-g" style="color:inherit;">OB&amp;G PYQs</a> · <a href="/pyqs/ophthalmology" style="color:inherit;">Ophthalmology PYQs</a> · <a href="/pyqs/orthopaedics" style="color:inherit;">Orthopaedics PYQs</a> · <a href="/pyqs/pathology" style="color:inherit;">Pathology PYQs</a> · <a href="/pyqs/pediatrics" style="color:inherit;">Pediatrics PYQs</a> · <a href="/pyqs/pharmacology" style="color:inherit;">Pharmacology PYQs</a> · <a href="/pyqs/physiology" style="color:inherit;">Physiology PYQs</a> · <a href="/pyqs/psm" style="color:inherit;">PSM PYQs</a> · <a href="/pyqs/psychiatry" style="color:inherit;">Psychiatry PYQs</a> · <a href="/pyqs/radiology" style="color:inherit;">Radiology PYQs</a> · <a href="/pyqs/surgery" style="color:inherit;">Surgery PYQs</a>
+  </nav>
+
+
+  <noscript>
+    <p style="max-width:760px;margin:0 auto 32px;padding:0 20px;font-family:system-ui,sans-serif;color:#f8fafc;opacity:.75;">
+      JavaScript is required for the interactive question bank. The subject and
+      topic pages linked above work without it.
+    </p>
+  </noscript>
+
+  <!-- Deferred Scripts -->
+  <script src="/vendor/supabase-2.45.4.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" defer></script>
+  <script src="/syllabus.js" defer></script>
+  <script src="/gtag-init.js" defer></script>
+  <script src="/app.js" defer></script>
+  <script src="/mock-banner.js" defer></script>
+  <script src="/neet-ss-books.js" defer></script>
+  <script src="/analytics-loader.js" defer></script>
+</body>
+
+</html>
+

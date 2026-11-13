@@ -1,0 +1,31 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-e6BsBnK6vva1bKpzX9FZ+pIv1Ds+2BNu0urMghNKreE=' https://cdn.jsdelivr.net https://checkout.razorpay.com https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://groeibwykzrliphzzruk.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com https://www.google-analytics.com https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://www.google.com https://*.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com https://static.cloudflareinsights.com; frame-src https://api.razorpay.com https://checkout.razorpay.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+/sw.js
+  Cache-Control: no-cache
+/MedLadder-latest.apk
+  Content-Type: application/vnd.android.package-archive
+  Content-Disposition: attachment; filename="MedLadder-latest.apk"
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Speculation rules: start loading a page as soon as a finger touches a link
+# to it (Chrome / Android), so moving between the app, Mock and the static
+# pages feels instant. Served as a header so the CSP needs no inline script.
+/
+  Speculation-Rules: "/speculation-rules.json"
+/mock-test
+  Speculation-Rules: "/speculation-rules.json"
+/neet-ss-books
+  Speculation-Rules: "/speculation-rules.json"
+/speculation-rules.json
+  Content-Type: application/speculationrules+json
+  Cache-Control: public, max-age=3600
+
+# Self-hosted supabase-js (versioned file name): cache for a year.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable

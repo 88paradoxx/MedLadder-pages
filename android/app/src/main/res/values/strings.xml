@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MedLadder</string>
+    <string name="title_activity_main">MedLadder</string>
+    <string name="package_name">com.medladder.app</string>
+    <string name="custom_url_scheme">com.medladder.app</string>
+</resources>

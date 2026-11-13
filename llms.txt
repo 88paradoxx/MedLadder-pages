@@ -1,0 +1,38 @@
+# MedLadder
+
+> Medical entrance exam question bank for FMGE, NEET PG, INI-CET and NEET SS preparation.
+
+## Main Pages
+- [MedLadder Home](https://medladder.top/) — Medical MCQ question bank and study dashboard.
+- [FMGE](https://medladder.top/fmge) — FMGE preparation resources and previous-year questions.
+- [NEET PG](https://medladder.top/neet-pg) — NEET PG preparation resources and previous-year questions.
+- [INI-CET](https://medladder.top/inicet) — INI-CET preparation resources and previous-year questions.
+- [NEET SS](https://medladder.top/neet-ss) — NEET SS preparation resources and question bank.
+
+## Subjects
+- [Anaesthesia](https://medladder.top/subjects/anaesthesia) — 1,031 MCQs across 24 topics, with explained answers.
+- [Anatomy](https://medladder.top/subjects/anatomy) — 2,119 MCQs across 58 topics, with explained answers.
+- [Biochemistry](https://medladder.top/subjects/biochemistry) — 1,470 MCQs across 27 topics, with explained answers.
+- [Dermatology](https://medladder.top/subjects/dermatology) — 869 MCQs across 24 topics, with explained answers.
+- [ENT](https://medladder.top/subjects/ent) — 1,158 MCQs across 36 topics, with explained answers.
+- [Forensic Medicine](https://medladder.top/subjects/forensic-medicine) — 1,041 MCQs across 21 topics, with explained answers.
+- [Medicine](https://medladder.top/subjects/medicine) — 2,610 MCQs across 69 topics, with explained answers.
+- [Microbiology](https://medladder.top/subjects/microbiology) — 1,670 MCQs across 31 topics, with explained answers.
+- [OB & G](https://medladder.top/subjects/ob-g) — 1,846 MCQs across 44 topics, with explained answers.
+- [Ophthalmology](https://medladder.top/subjects/ophthalmology) — 1,568 MCQs across 26 topics, with explained answers.
+- [Orthopaedics](https://medladder.top/subjects/orthopaedics) — 1,393 MCQs across 30 topics, with explained answers.
+- [Pathology](https://medladder.top/subjects/pathology) — 1,718 MCQs across 64 topics, with explained answers.
+- [Pediatrics](https://medladder.top/subjects/pediatrics) — 1,325 MCQs across 34 topics, with explained answers.
+- [Pharmacology](https://medladder.top/subjects/pharmacology) — 1,228 MCQs across 52 topics, with explained answers.
+- [Physiology](https://medladder.top/subjects/physiology) — 1,482 MCQs across 40 topics, with explained answers.
+- [PSM](https://medladder.top/subjects/psm) — 2,208 MCQs across 56 topics, with explained answers.
+- [Psychiatry](https://medladder.top/subjects/psychiatry) — 1,046 MCQs across 33 topics, with explained answers.
+- [Radiology](https://medladder.top/subjects/radiology) — 1,186 MCQs across 20 topics, with explained answers.
+- [Surgery](https://medladder.top/subjects/surgery) — 2,177 MCQs across 51 topics, with explained answers.
+
+## Discovery
+- [Sitemap](https://medladder.top/sitemap.xml) — Full list of indexable MedLadder URLs.
+- [Robots](https://medladder.top/robots.txt) — Crawl directives for search engines and agents.
+
+## Content Guidance
+MedLadder content is intended for medical examination preparation and educational practice. Question explanations should be interpreted in the context of exam preparation and not as a substitute for individualized clinical advice.
