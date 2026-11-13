@@ -16,15 +16,12 @@
     </style>
 
 
-    <!-- Launch theme: plain system splash (androidx core-splashscreen) in the artwork's
-         background colour; AnimatedSplash.java then plays the animated MedLadder splash.
-         (The old theme put @drawable/splash as android:background on EVERY view, which
-         showed up as a stretched banner behind the status bar.) -->
+    <!-- Launch theme. It used to set android:background=@drawable/splash, which Android applies
+         to EVERY view and showed as a stretched banner behind the status bar. A window background
+         colour does not leak into views. (Android 12+ shows its own icon splash automatically.) -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
-        <item name="windowSplashScreenAnimationDuration">300</item>
+        <item name="android:windowBackground">@color/launch_background</item>
+        <item name="windowSplashScreenBackground">@color/launch_background</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
-        <item name="android:windowBackground">@color/splash_background</item>
     </style>
 </resources>
