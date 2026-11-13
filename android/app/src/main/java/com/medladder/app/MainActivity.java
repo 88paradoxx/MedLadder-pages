@@ -73,8 +73,8 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         // System splash (required on Android 12+) is only a plain background here; it is
         // removed on the first frame and the animated MedLadder splash takes over.
-        SplashScreen splash = SplashScreen.installSplashScreen(this);
-        splash.setOnExitAnimationListener(provider -> provider.remove());
+        // Let the library remove the system splash itself (no custom exit listener).
+        SplashScreen.installSplashScreen(this);
 
         super.onCreate(savedInstanceState);
         // Edge-to-edge on every Android version (Play recommendation). Must run AFTER

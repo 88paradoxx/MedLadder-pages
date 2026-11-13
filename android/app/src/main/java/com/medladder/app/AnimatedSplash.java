@@ -98,7 +98,8 @@ public class AnimatedSplash {
 
             overlay = new FrameLayout(activity);
             overlay.setBackground(new CenterCropArt(overlay));
-            overlay.setClickable(true); // swallow touches while the splash is showing
+            // Swallow touches only while the splash is up; once finishing, let everything through.
+            overlay.setOnTouchListener((v, e) -> !finished);
 
             for (int i = 0; i < RES.length; i++) {
                 ImageView iv = new ImageView(activity);
@@ -258,9 +259,7 @@ public class AnimatedSplash {
         handler.removeCallbacksAndMessages(null);
         if (overlay == null) return;
         // Stop catching touches right away, so the app underneath is usable during the fade.
-        overlay.setClickable(false);
-        overlay.setFocusable(false);
-        overlay.setOnTouchListener((v, e) -> false);
+        overlay.setOnTouchListener(null);
         overlay.animate()
             .alpha(0f)
             .scaleX(1.04f)
