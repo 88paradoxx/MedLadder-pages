@@ -1,5 +1,19 @@
 // Apply the saved theme before stylesheets paint, without an inline script.
 (function () {
+  // The mock-test lobby now lives inside the app (Mock tab). A bare /mock-test
+  // visit goes there at once; /mock-test?id=… (taking a test, leaderboard,
+  // review) still opens this page. ?m=<id> is a shared-mock link.
+  try {
+    if (/^\/mock-test(\/|\.html)?$/.test(location.pathname)) {
+      var q = location.search || '';
+      if (!/[?&](id|attempt)=/.test(q)) {
+        var m = /[?&]m=([^&#]+)/.exec(q);
+        location.replace('/?go=mock' + (m ? '&mock=' + m[1] : ''));
+        return;
+      }
+    }
+  } catch (_) {}
+
   try {
     // Light by default; dark only for someone who chose it.
     if (localStorage.getItem('medladder_theme') === 'dark') {

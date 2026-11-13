@@ -7172,6 +7172,8 @@ window.addEventListener('error', function (ev) {
         try {
           var m = /[?&]go=(qbank|pyq|bookmarks|profile|mock)\b/.exec(window.location.search || '');
           if (!m) return null;
+          var fm = /[?&]mock=([^&#]+)/.exec(window.location.search || '');
+          if (fm) v3FocusMock = decodeURIComponent(fm[1]);
           history.replaceState(null, '', window.location.pathname + window.location.hash);
           return m[1];
         } catch (e) { return null; }
@@ -7351,7 +7353,9 @@ window.addEventListener('error', function (ev) {
         var qk = document.getElementById('v3Quick');
         if (qk) qk.onclick = v3QuickPractice;
         var qm = document.getElementById('v2QaMock');
-        if (qm) qm.onclick = function () { window.location.href = '/mock-test'; };
+        if (qm) qm.onclick = function () { v2Go('mock'); };
+        var mrow = document.getElementById('v2Mock');
+        if (mrow) mrow.onclick = function (e) { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); v2Go('mock'); };
         var bm = document.getElementById('v3BadgeMore');
         if (bm) bm.onclick = function () {
           var open = bm.getAttribute('aria-expanded') !== 'true';
@@ -7531,6 +7535,9 @@ window.addEventListener('error', function (ev) {
       // here like any other tab (instant, from a short cache). Only taking a
       // test, its leaderboard or a past result opens the mock-test page.
       var v3MockCache = null; // { at, uid, tests, mine }
+      // A shared link (/mock-test?m=<id> → /?go=mock&mock=<id>) highlights that mock.
+      var v3FocusMock; // set by the ?go=mock&mock=<id> parser above (no initialiser, so it is not reset)
+      function v3MockShareUrl(id) { return 'https://medladder.top/mock-test?m=' + encodeURIComponent(id); }
       function v3MockFetch(force) {
         var uid = currentUser ? currentUser.id : null;
         if (!force && v3MockCache && v3MockCache.uid === uid && Date.now() - v3MockCache.at < 60000) return Promise.resolve(v3MockCache);
@@ -7569,13 +7576,15 @@ window.addEventListener('error', function (ev) {
         var when = ph === 'live' ? 'Ends in ' + v3Rel(new Date(t.ends_at).getTime() - now)
           : ph === 'upcoming' ? 'Starts in ' + v3Rel(new Date(t.starts_at).getTime() - now) + ' · ' + v3When(t.starts_at)
             : 'Ended ' + v3When(t.ends_at);
+        var share = '<button class="v3-mbtn v3-mshare" data-mock-share="' + esc(t.id) + '" data-mock-title="' + esc(t.title) + '" data-mock-phase="' + ph + '" aria-label="Share this mock test">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 007.07 0l3-3a5 5 0 00-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 00-7.07 0l-3 3a5 5 0 007.07 7.07l1.5-1.5"/></svg>Share</button>';
         var acts = ph === 'live'
-          ? '<a class="v3-mbtn primary" href="/mock-test?id=' + encodeURIComponent(t.id) + '">' + v3Ic('play', 16) + 'Start test</a>'
+          ? '<a class="v3-mbtn primary" href="/mock-test?id=' + encodeURIComponent(t.id) + '">' + v3Ic('play', 16) + 'Start test</a>' + share
           : ph === 'ended'
             ? '<a class="v3-mbtn" href="/mock-test?id=' + encodeURIComponent(t.id) + '">' + v3Ic('trophy', 16) + 'Leaderboard</a>' +
-              '<a class="v3-mbtn" href="/mock-test?id=' + encodeURIComponent(t.id) + '&practice=1">' + v3Ic('refresh', 16) + 'Practise</a>'
-            : '<button class="v3-mbtn" data-mock-share="' + esc(t.id) + '" data-mock-title="' + esc(t.title) + '">' + v3Ic('calendar', 16) + 'Share</button>';
-        return '<article class="v3-card v3-mock v3-mock-' + ph + '">' +
+              '<a class="v3-mbtn" href="/mock-test?id=' + encodeURIComponent(t.id) + '&practice=1">' + v3Ic('refresh', 16) + 'Practise</a>' + share
+            : share;
+        return '<article class="v3-card v3-mock v3-mock-' + ph + (v3FocusMock === String(t.id) ? ' v3-mock-focus' : '') + '" data-mock-id="' + esc(t.id) + '">' +
           '<div class="v3-mock-top"><span class="v3-mock-badge ' + ph + '">' + (ph === 'live' ? '● Live now' : ph === 'upcoming' ? 'Upcoming' : 'Ended') + '</span>' +
           '<span class="v3-mock-exam">' + esc(t.exam || '') + '</span></div>' +
           '<h3>' + esc(t.title) + '</h3>' +
@@ -7617,12 +7626,36 @@ window.addEventListener('error', function (ev) {
         wireV2Common();
         app.querySelectorAll('[data-mock-share]').forEach(function (b) {
           b.onclick = function () {
-            var url = 'https://medladder.top/mock-test?id=' + encodeURIComponent(b.getAttribute('data-mock-share'));
+            var url = v3MockShareUrl(b.getAttribute('data-mock-share'));
             var title = b.getAttribute('data-mock-title');
-            if (navigator.share) navigator.share({ title: title, text: 'Join this free mock test on MedLadder: ' + title, url: url }).catch(function () {});
-            else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { showToast('Link copied.'); });
+            var ph = b.getAttribute('data-mock-phase');
+            var text = (ph === 'ended' ? 'Practise this mock test on MedLadder: ' : ph === 'upcoming' ? 'This mock test opens soon on MedLadder: ' : 'Join this live mock test on MedLadder: ') + title;
+            var copied = function () { showToast('Link copied.'); };
+            var copy = function () {
+              if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(copied, legacy);
+              else legacy();
+            };
+            var legacy = function () {
+              try {
+                var ta = document.createElement('textarea'); ta.value = url; ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+                document.execCommand('copy'); document.body.removeChild(ta); copied();
+              } catch (e) { window.prompt('Copy this link', url); }
+            };
+            if (navigator.share) navigator.share({ title: title, text: text, url: url }).catch(function (e) { if (!e || e.name !== 'AbortError') copy(); });
+            else copy();
           };
         });
+        if (v3FocusMock && c) {
+          var fc = app.querySelector('.v3-mock[data-mock-id="' + (window.CSS && CSS.escape ? CSS.escape(v3FocusMock) : v3FocusMock) + '"]');
+          if (fc) {
+            v3FocusMock = null;
+            setTimeout(function () { try { fc.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { fc.scrollIntoView(); } }, 60);
+            setTimeout(function () { fc.classList.remove('v3-mock-focus'); }, 4000);
+          } else if (c.tests.length) {
+            v3FocusMock = null; showToast('That mock test is no longer available.');
+          }
+        }
         var si = document.getElementById('v3MockSignIn');
         if (si) si.onclick = function () { openAuthModal('signin', { reason: 'Sign in to take mock tests.' }); };
         if (!c || Date.now() - c.at > 60000) {

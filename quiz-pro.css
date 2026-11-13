@@ -4185,6 +4185,8 @@ html.ml-reading #app .v3 .v3-mbtn {
   font: 700 14px/1 var(--rr-sans) !important; cursor: pointer !important;
 }
 html.ml-reading #app .v3 .v3-mbtn.primary { background: var(--x-acc) !important; border-color: var(--x-acc) !important; color: #fff !important; }
+html.ml-reading #app .v3 .v3-mbtn.v3-mshare svg { flex: 0 0 auto; }
+html.ml-reading #app .v3 .v3-mock.v3-mock-focus { box-shadow: 0 0 0 3px var(--x-acc), 0 10px 30px rgba(123, 47, 247, .25) !important; transition: box-shadow .6s ease; }
 html.ml-reading #app .v3 .v3-mock-rank { display: flex !important; flex-direction: column !important; align-items: flex-end !important; flex-shrink: 0 !important; }
 html.ml-reading #app .v3 .v3-mock-rank b { font: 800 16px var(--rr-sans) !important; color: var(--x-acc-ink) !important; }
 html.ml-reading #app .v3 .v3-mock-rank small { font-size: 12.5px !important; color: var(--x-ink3) !important; }
