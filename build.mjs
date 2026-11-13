@@ -30,6 +30,10 @@ const EXCLUDE_ENTRIES = new Set([
   '.github',
   '.wrangler',
   'android',
+  // Android app build inputs/outputs (Capacitor), not site assets.
+  'www',
+  'live-updates',
+  'capacitor.config.json',
   'supabase',
   'tools',
   // Generated audit reports: unlinked, not in the sitemap, ~900 KB. Not for serving.
