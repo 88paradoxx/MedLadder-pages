@@ -11,6 +11,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
+import androidx.activity.EdgeToEdge;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -58,6 +59,9 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Edge-to-edge on every Android version (Play recommendation); Capacitor's
+        // SystemBars pads the WebView so content never sits under the bars.
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         try {
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);

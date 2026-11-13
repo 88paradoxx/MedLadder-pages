@@ -19,3 +19,25 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# ---- MedLadder release (R8) rules ----
+-keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod, SourceFile, LineNumberTable
+
+# JavaScript interface used by the web app (window.MedLadderAndroidApp)
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keep class com.medladder.app.MainActivity$NativeBridge { *; }
+
+# Capgo live updates (the plugin ships these rules but not as consumer rules)
+-keep class ee.forgr.capacitor_updater.** { *; }
+-keep class com.getcapacitor.Bridge {
+    com.getcapacitor.MessageHandler msgHandler;
+}
+-keep class com.getcapacitor.MessageHandler { *; }
+-keep class com.getcapacitor.PluginCall {
+    <init>(com.getcapacitor.MessageHandler, java.lang.String, java.lang.String, java.lang.String, com.getcapacitor.JSObject);
+}
+-keep class * implements com.getcapacitor.PluginHandle {
+    public void invoke(java.lang.String, com.getcapacitor.PluginCall);
+}
