@@ -22,7 +22,7 @@ jobs:
         run: |
           missing=0
           for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_PASSWORD GOOGLE_SERVICES_JSON; do
-            if [ -z "${!v}" ]; then echo "::error::Secret $v is not set. Add it at https://github.com/88paradoxx/MedLadder/settings/secrets/actions"; missing=1; fi
+            if [ -z "${!v}" ]; then echo "::error::Secret $v is not set. Add it at https://github.com/88paradoxx/MedLadder-pages/settings/secrets/actions"; missing=1; fi
           done
           exit $missing
 
