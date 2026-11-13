@@ -12,6 +12,11 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import android.os.Build;
+import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -63,11 +68,37 @@ public class MainActivity extends BridgeActivity {
         // SystemBars pads the WebView so content never sits under the bars.
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
+        hideStatusBar();
         try {
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         } catch (Exception ignored) {}
         setupDownloadBridge();
         setupUpiIntentHandler();
+    }
+
+    /**
+     * Full screen: hide the status bar (swipe down from the top edge shows it briefly).
+     * The navigation bar stays, so back/home gestures and buttons keep working.
+     */
+    private void hideStatusBar() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                // Use the area beside a camera cutout too; Capacitor still pads content clear of it.
+                WindowManager.LayoutParams lp = getWindow().getAttributes();
+                lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                getWindow().setAttributes(lp);
+            }
+            WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            bars.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            bars.hide(WindowInsetsCompat.Type.statusBars());
+        } catch (Exception ignored) {}
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // Android can bring the status bar back after dialogs, the keyboard or app switching.
+        if (hasFocus) hideStatusBar();
     }
 
     @Override
