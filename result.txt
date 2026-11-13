@@ -1,0 +1,18 @@
+== r8-current  apk=3634870 bytes
+Performing Streamed Install
+Success
+Starting: Intent { cmp=com.medladder.app/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.medladder.app/.MainActivity
+TotalTime: 3165
+WaitTime: 3241
+Complete
+screen 1080 x 2400
+before: 11-13 18:23:08.788  4431  4431 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=0 h=2602 ch=867 tm=0 url=/
+before: 11-13 18:23:09.788  4431  4431 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=0 h=2602 ch=867 tm=0 url=/
+after: 11-13 18:23:17.790  4431  4431 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=1223 h=2602 ch=867 tm=15 url=/
+after: 11-13 18:23:18.788  4431  4431 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=1223 h=2602 ch=867 tm=15 url=/
+-- crashes:
+-- top window:
+  mCurrentFocus=Window{828f8a3 u0 com.medladder.app/com.medladder.app.MainActivity}
