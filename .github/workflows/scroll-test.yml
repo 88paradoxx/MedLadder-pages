@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [r8-current, r8-compat-dontoptimize, r8-broad-keeps, no-r8]
+        variant: [r8-current, r8-compat-dontoptimize, no-r8]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -68,13 +68,8 @@ jobs:
       - name: Save result
         if: always()
         run: |
-          mkdir -p results
-          cp result-*.txt results/ 2>/dev/null || echo "no result" > results/result-${{ matrix.variant }}.txt
+          [ -f result-${{ matrix.variant }}.txt ] || echo "no result" > result-${{ matrix.variant }}.txt
+          cp result-${{ matrix.variant }}.txt /tmp/res.txt
           git config user.name ci; git config user.email ci@example.com
-          for i in 1 2 3 4 5; do
-            git fetch -q origin ci-scroll-results 2>/dev/null && git checkout -q -B r origin/ci-scroll-results || git checkout -q --orphan r
-            git rm -rq --cached . >/dev/null 2>&1 || true
-            cp results/* . ; git add result-*.txt
-            git commit -qm "result ${{ matrix.variant }}" && git push -q origin HEAD:ci-scroll-results && break
-            sleep $((RANDOM % 10 + 3))
-          done
+          git checkout -q --orphan r && git rm -rqf --cached . >/dev/null 2>&1 || true
+          cp /tmp/res.txt result.txt && git add result.txt && git commit -qm "result" && git push -qf origin HEAD:refs/heads/ci-res-${{ matrix.variant }}
