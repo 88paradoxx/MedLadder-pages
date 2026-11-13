@@ -5,6 +5,43 @@ import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 var isNative = Capacitor.isNativePlatform();
+
+// ---------------------------------------------------------------------------
+// Clean URLs inside the app. Capacitor's local server answers every path without a
+// file extension (/privacy, /terms, /books, ...) with index.html, so those links
+// landed on the home screen. index.html loads this script first, so send such
+// paths to the real bundled page (or, for website-only pages, the live site).
+// ---------------------------------------------------------------------------
+var BUNDLED_PAGES = {
+  '/privacy': '/privacy.html',
+  '/terms': '/terms.html',
+  '/mock-test': '/mock-test.html',
+  '/admin-mock': '/admin-mock.html',
+  '/neet-ss-books': '/neet-ss-books.html',
+  '/books': '/books/index.html',
+  '/editorial-team': '/editorial-team/index.html'
+};
+var LIVE_SITE = 'https://medladder.top';
+var WEB_ONLY_PATH = /^\/(neet-pg[^/]*|fmge[^/]*|inicet[^/]*|ini-cet[^/]*|neet-ss(\/.*)?|pyqs(\/.*)?|subjects(\/.*)?|landing[^/]*|best-free-[^/]*|medladder-vs-[^/]*)\/?$/;
+
+function bundledPageFor(pathname) {
+  var p = (pathname || '').replace(/\/+$/, '') || '/';
+  return Object.prototype.hasOwnProperty.call(BUNDLED_PAGES, p) ? BUNDLED_PAGES[p] : null;
+}
+
+if (isNative) {
+  try {
+    var target = bundledPageFor(location.pathname);
+    if (target) {
+      location.replace(target + location.search + location.hash);
+    } else if (WEB_ONLY_PATH.test(location.pathname)) {
+      var live = LIVE_SITE + location.pathname + location.search + location.hash;
+      Browser.open({ url: live }).catch(function () {});
+      location.replace('/');
+    }
+  } catch (e) {}
+}
+
 if (isNative) {
   try {
     document.documentElement.classList.add('is-native-app');
@@ -38,18 +75,22 @@ if (isNative) {
   }
 }
 
-// Website-only pages (exam hubs, PYQ / subject SEO pages, comparisons) are not bundled in the
-// app; medladder.top renders them live. Open them from the live site in an in-app browser tab.
-var LIVE_SITE = 'https://medladder.top';
-var WEB_ONLY_PATH = /^\/(neet-pg[^/]*|fmge[^/]*|inicet[^/]*|ini-cet[^/]*|neet-ss(\/.*)?|pyqs(\/.*)?|subjects(\/.*)?|landing[^/]*|best-free-[^/]*|medladder-vs-[^/]*)\/?$/;
+// Links: bundled pages go straight to their file; website-only pages open from the live site.
 if (isNative) {
   document.addEventListener('click', function (e) {
     try {
       if (e.defaultPrevented) return;
       var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-      if (!a) return;
+      if (!a || (a.target && a.target !== '_self')) return;
       var url = new URL(a.getAttribute('href'), location.href);
-      if (url.origin !== location.origin || !WEB_ONLY_PATH.test(url.pathname)) return;
+      if (url.origin !== location.origin) return;
+      var page = bundledPageFor(url.pathname);
+      if (page) {
+        e.preventDefault();
+        location.href = page + url.search + url.hash;
+        return;
+      }
+      if (!WEB_ONLY_PATH.test(url.pathname)) return;
       e.preventDefault();
       Browser.open({ url: LIVE_SITE + url.pathname + url.search + url.hash }).catch(function () {
         location.href = LIVE_SITE + url.pathname + url.search + url.hash;
