@@ -72,6 +72,7 @@ public class AnimatedSplash {
     private boolean contentReady = false;
     private boolean finished = false;
     private Integer pendingBarsColor = null;
+    private ViewTreeObserver.OnGlobalLayoutListener layoutListener;
 
     public AnimatedSplash(Activity activity) {
         this.activity = activity;
@@ -118,20 +119,25 @@ public class AnimatedSplash {
             bars.setAppearanceLightStatusBars(true);
             bars.setAppearanceLightNavigationBars(false);
 
-            overlay.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            layoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
                 boolean started = false;
 
                 @Override
                 public void onGlobalLayout() {
+                    // This observer belongs to the whole window and keeps firing after the
+                    // splash is gone, so it must never touch a removed overlay.
+                    FrameLayout ov = overlay;
+                    if (ov == null || finished && ov.getParent() == null) return;
                     layoutPieces();
-                    overlay.invalidate();
+                    ov.invalidate();
                     decor.invalidate();
-                    if (!started && overlay.getWidth() > 0) {
+                    if (!started && ov.getWidth() > 0) {
                         started = true;
                         animateIn();
                     }
                 }
-            });
+            };
+            decor.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
 
             handler.postDelayed(this::finish, MAX_SHOW_MS);
         } catch (Throwable t) {
@@ -182,6 +188,7 @@ public class AnimatedSplash {
     }
 
     private void animateIn() {
+        if (overlay == null) return;
         float density = activity.getResources().getDisplayMetrics().density;
         float slide = overlay.getWidth() * 0.18f;
         List<Animator> all = new ArrayList<>();
@@ -262,6 +269,10 @@ public class AnimatedSplash {
     private void removeOverlay() {
         try {
             View decor = activity.getWindow().getDecorView();
+            if (layoutListener != null) {
+                decor.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
+                layoutListener = null;
+            }
             decor.setBackground(new ColorDrawable(pendingBarsColor != null ? pendingBarsColor : 0xFFFFFFFF));
             if (overlay != null && overlay.getParent() instanceof ViewGroup) {
                 ((ViewGroup) overlay.getParent()).removeView(overlay);
