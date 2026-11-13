@@ -12,6 +12,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
+import androidx.core.splashscreen.SplashScreen;
+import android.graphics.Color;
+import android.os.SystemClock;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -21,6 +24,7 @@ import java.util.Iterator;
 public class MainActivity extends BridgeActivity {
 
     private FirebaseAnalytics mFirebaseAnalytics;
+    private volatile boolean webReady = false;
 
     public class NativeBridge {
         @android.webkit.JavascriptInterface
@@ -51,6 +55,15 @@ public class MainActivity extends BridgeActivity {
             runOnUiThread(() -> Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show());
         }
 
+        /** Colour behind the status/navigation bars, matched to the page's theme. */
+        @android.webkit.JavascriptInterface
+        public void setBarsColor(String hex) {
+            try {
+                final int color = Color.parseColor(hex);
+                runOnUiThread(() -> applyBarsColor(color));
+            } catch (Exception ignored) {}
+        }
+
         @android.webkit.JavascriptInterface
         public void exitApp() {
             runOnUiThread(() -> finishAffinity());
@@ -59,15 +72,31 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Edge-to-edge on every Android version (Play recommendation); Capacitor's
-        // SystemBars pads the WebView so content never sits under the bars.
-        EdgeToEdge.enable(this);
+        // Native splash: hold it until the first page has painted (max ~3 s).
+        SplashScreen splash = SplashScreen.installSplashScreen(this);
+        final long splashStart = SystemClock.uptimeMillis();
+        splash.setKeepOnScreenCondition(() -> !webReady && SystemClock.uptimeMillis() - splashStart < 3000);
+
         super.onCreate(savedInstanceState);
+        // Edge-to-edge on every Android version (Play recommendation). Must run AFTER
+        // super.onCreate so the window is created with the app theme, not the launch theme.
+        // Capacitor's SystemBars pads the WebView so content never sits under the bars.
+        EdgeToEdge.enable(this);
+        applyBarsColor(Color.parseColor("#0d1033"));
         try {
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         } catch (Exception ignored) {}
         setupDownloadBridge();
         setupUpiIntentHandler();
+    }
+
+    private void applyBarsColor(int color) {
+        try {
+            getWindow().getDecorView().setBackgroundColor(color);
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                getBridge().getWebView().setBackgroundColor(color);
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -108,6 +137,12 @@ public class MainActivity extends BridgeActivity {
             }
 
             getBridge().getWebView().setWebViewClient(new BridgeWebViewClient(getBridge()) {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    webReady = true;
+                }
+
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                     return handleUpiIntent(view, request.getUrl().toString())

@@ -7856,6 +7856,8 @@ window.addEventListener('error', function (ev) {
           '</div>' + (currentUser ? v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '') : '') + '</section>';
         body += '<section class="v3-sec">' + v3Head('', 'App', '') + '<div class="v3-card v3-list">' +
           row('sun', 'Theme', darkMode ? 'Dark' : 'Light', 'id="v3Theme"', '<span class="v3-switch' + (darkMode ? ' on' : '') + '" aria-hidden="true"><span></span></span>') +
+          (window.MedLadderNative && window.MedLadderNative.isNative && window.MedLadderNative.setHapticsEnabled ?
+            row('bolt', 'Haptic feedback', window.MedLadderNative.hapticsEnabled() ? 'Vibrate on answers' : 'Off', 'id="v3Haptics"', '<span class="v3-switch' + (window.MedLadderNative.hapticsEnabled() ? ' on' : '') + '" aria-hidden="true"><span></span></span>') : '') +
           row('grid', 'Classic home', 'Use the earlier home screen', 'id="v2ClassicBtn"') +
           (isAdmin(currentUser) ? row('crown', 'Admin console', 'Students, questions, mock tests', 'id="v3Admin"') : '') +
           (currentUser && !pro ? row('crown', 'Go Pro', 'All ' + totalTopics() + ' topics and past papers', 'id="v2ProBtn"') : '') +
@@ -7869,6 +7871,8 @@ window.addEventListener('error', function (ev) {
         if (si) si.onclick = function () { openAuthModal('signin', { reason: 'Sign in to save your progress.' }); };
         var th = document.getElementById('v3Theme');
         if (th) th.onclick = function (e) { toggleTheme(e); setTimeout(renderProfileV2, 60); };
+        var hp = document.getElementById('v3Haptics');
+        if (hp) hp.onclick = function () { window.MedLadderNative.setHapticsEnabled(!window.MedLadderNative.hapticsEnabled()); renderProfileV2(); };
         var cl = document.getElementById('v2ClassicBtn');
         if (cl) cl.onclick = function () { setUiMode('old'); };
         var ad = document.getElementById('v3Admin');
