@@ -82,7 +82,7 @@ public class MainActivity extends BridgeActivity {
         // Capacitor's SystemBars pads the WebView so content never sits under the bars.
         EdgeToEdge.enable(this);
 
-        if (savedInstanceState == null) { // cold start only, not on rotation / theme recreate
+        if (false && savedInstanceState == null) { // DIAGNOSTIC BUILD: animated splash off, not on rotation / theme recreate
             animatedSplash = new AnimatedSplash(this);
             animatedSplash.show();
         }

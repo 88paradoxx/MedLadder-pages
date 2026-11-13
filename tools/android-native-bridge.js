@@ -42,7 +42,7 @@ if (isNative) {
 // Native feel: app-like touch behaviour + status/navigation bars that match
 // the page (light/dark theme) instead of a fixed strip.
 // ---------------------------------------------------------------------------
-if (isNative) {
+if (false && isNative) { // DIAGNOSTIC BUILD: native CSS off
   try {
     var nativeCss = document.createElement('style');
     nativeCss.id = 'medladder-native-css';
