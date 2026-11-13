@@ -1,0 +1,9 @@
+== r8-compat-dontoptimize  apk=4120267 bytes
+Performing Streamed Install
+Success
+screen 1080 x 2400
+after: 11-13 18:13:00.631  2639  2639 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=127 h=2602 ch=842 tm=1 url=/
+after: 11-13 18:13:01.632  2639  2639 I Capacitor/Console: File: https://localhost/medladder-native.js - Line 2 - Msg: DIAGSCROLL top=127 h=2602 ch=842 tm=1 url=/
+-- crashes:
+-- top window:
+  mCurrentFocus=Window{9732f76 u0 com.medladder.app/com.medladder.app.MainActivity}
