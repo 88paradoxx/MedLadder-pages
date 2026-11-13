@@ -4,6 +4,15 @@ name: Android release build
 # Run it from the Actions tab: "Android release build" -> Run workflow.
 on:
   workflow_dispatch:
+  # Also build (and so compile-check) pull requests that touch the Android app.
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'tools/android-native-bridge.js'
+      - 'tools/build-android-web.cjs'
+      - 'capacitor.config.json'
+      - 'package.json'
+      - '.github/workflows/android-release.yml'
 
 jobs:
   build:

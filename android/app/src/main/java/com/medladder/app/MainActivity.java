@@ -12,6 +12,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
+import androidx.core.splashscreen.SplashScreen;
+import android.graphics.Color;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -21,6 +23,7 @@ import java.util.Iterator;
 public class MainActivity extends BridgeActivity {
 
     private FirebaseAnalytics mFirebaseAnalytics;
+    private AnimatedSplash animatedSplash;
 
     public class NativeBridge {
         @android.webkit.JavascriptInterface
@@ -51,6 +54,15 @@ public class MainActivity extends BridgeActivity {
             runOnUiThread(() -> Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show());
         }
 
+        /** Colour behind the status/navigation bars, matched to the page's theme. */
+        @android.webkit.JavascriptInterface
+        public void setBarsColor(String hex) {
+            try {
+                final int color = Color.parseColor(hex);
+                runOnUiThread(() -> applyBarsColor(color));
+            } catch (Exception ignored) {}
+        }
+
         @android.webkit.JavascriptInterface
         public void exitApp() {
             runOnUiThread(() -> finishAffinity());
@@ -59,15 +71,43 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Edge-to-edge on every Android version (Play recommendation); Capacitor's
-        // SystemBars pads the WebView so content never sits under the bars.
-        EdgeToEdge.enable(this);
+        // System splash (required on Android 12+) is only a plain background here; it is
+        // removed on the first frame and the animated MedLadder splash takes over.
+        SplashScreen splash = SplashScreen.installSplashScreen(this);
+        splash.setOnExitAnimationListener(provider -> provider.remove());
+
         super.onCreate(savedInstanceState);
+        // Edge-to-edge on every Android version (Play recommendation). Must run AFTER
+        // super.onCreate so the window is created with the app theme, not the launch theme.
+        // Capacitor's SystemBars pads the WebView so content never sits under the bars.
+        EdgeToEdge.enable(this);
+
+        if (savedInstanceState == null) { // cold start only, not on rotation / theme recreate
+            animatedSplash = new AnimatedSplash(this);
+            animatedSplash.show();
+        }
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().setBackgroundColor(Color.WHITE);
+        }
         try {
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         } catch (Exception ignored) {}
         setupDownloadBridge();
         setupUpiIntentHandler();
+    }
+
+    private void applyBarsColor(int color) {
+        try {
+            if (animatedSplash != null && animatedSplash.isShowing()) {
+                // Keep the splash art behind the bars; use this colour once it is gone.
+                animatedSplash.setPendingBarsColor(color);
+            } else {
+                getWindow().getDecorView().setBackgroundColor(color);
+            }
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                getBridge().getWebView().setBackgroundColor(color);
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -108,6 +148,12 @@ public class MainActivity extends BridgeActivity {
             }
 
             getBridge().getWebView().setWebViewClient(new BridgeWebViewClient(getBridge()) {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    if (animatedSplash != null) animatedSplash.markContentReady();
+                }
+
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                     return handleUpiIntent(view, request.getUrl().toString())
