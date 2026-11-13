@@ -6537,14 +6537,14 @@ window.addEventListener('error', function (ev) {
           if (tag) tag.textContent = pick.sx ? pick.sx.name : (pick.subj || '');
           var letters = ['A', 'B', 'C', 'D', 'E'].filter(function (L) { return q['option_' + L.toLowerCase()]; });
           card.removeAttribute('aria-busy');
-          card.innerHTML = '<p class="v2-qotd-q">' + esc(stripHtmlPreview(q.question_text, 400)) + '</p>' +
+          card.innerHTML = '<p class="v2-qotd-q">' + esc(stripHtmlPreview(q.question_text, 1e6)) + '</p>' +
             '<div class="v2-qotd-opts">' + letters.map(function (L) {
               var cls = 'v2-qotd-opt';
               if (picked) { if (L === q.answer) cls += ' ok'; else if (L === picked) cls += ' bad'; else cls += ' dim'; }
-              return '<button class="' + cls + '" data-qotd="' + L + '"' + (picked ? ' disabled' : '') + '><span class="v2-qotd-l">' + L + '</span><span>' + esc(stripHtmlPreview(q['option_' + L.toLowerCase()], 200)) + '</span></button>';
+              return '<button class="' + cls + '" data-qotd="' + L + '"' + (picked ? ' disabled' : '') + '><span class="v2-qotd-l">' + L + '</span><span>' + esc(stripHtmlPreview(q['option_' + L.toLowerCase()], 1e6)) + '</span></button>';
             }).join('') + '</div>' +
             (picked ? '<p class="v2-qotd-res ' + (picked === q.answer ? 'ok' : 'bad') + '">' + (picked === q.answer ? 'Right. ' : 'The answer is ' + esc(q.answer) + '. ') +
-              '<span>' + esc(stripHtmlPreview(q.explanation, 260)) + '</span></p>' +
+              '<span>' + esc(stripHtmlPreview(q.explanation, 1e6)) + '</span></p>' +
               (pick.sx && pick.m ? '<button class="v2-link" data-sid="' + pick.sx.subjectId + '" data-mod="' + esc(pick.m.moduleId) + '">Practise ' + esc(pick.m.name) + '</button>' : '') : '');
           card.querySelectorAll('[data-qotd]').forEach(function (b) {
             b.onclick = function () { try { localStorage.setItem(key, b.getAttribute('data-qotd')); } catch (e) { } paint(q); };
