@@ -7047,9 +7047,12 @@ window.addEventListener('error', function (ev) {
         return '<svg class="v3-i" width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (V3_IC[name] || '') + '</svg>';
       }
       // Decorative cluster of the subject illustrations, for page headers.
-      function v3Art(slugs) {
+      // Always at the top of the screen, so never lazy-loaded. On Home the
+      // images can be the largest thing painted (LCP): `hot` marks them high
+      // priority, and index.html preloads the same three files.
+      function v3Art(slugs, hot) {
         return '<div class="v3-art" aria-hidden="true"><span class="v3-art-glow"></span>' + slugs.map(function (s, i) {
-          return '<img class="v3-art-' + (i + 1) + '" src="/assets/subjects-webp/' + s + '.webp" alt="" width="96" height="96" loading="lazy">';
+          return '<img class="v3-art-' + (i + 1) + '" src="/assets/subjects-webp/' + s + '.webp" alt="" width="96" height="96" decoding="async"' + (hot ? ' fetchpriority="high"' : '') + '>';
         }).join('') + '</div>';
       }
       function v3Pct(frac) {
@@ -7210,7 +7213,7 @@ window.addEventListener('error', function (ev) {
         }
         var colA = '<section class="v3-hello"><div class="v3-hello-t"><h1>' + (currentUser ? v2Greeting() + ' <span class="v3-wave" aria-hidden="true">👋</span>' : 'Welcome to MedLadder') + '</h1>' +
           '<p>' + (currentUser ? 'Ready for today’s learning?' : totalQuestions().toLocaleString() + ' questions with explanations, free to start.') + '</p>' + examChip + '</div>' +
-          v3Art(['physiology', 'pathology', 'pharmacology']) + '</section>';
+          v3Art(['physiology', 'pathology', 'pharmacology'], true) + '</section>';
         colA += v2ExamLine(ix).replace(/^<p class="v2-exam">[\s\S]*?<\/p>/, '');
 
         // ---- today's mission
