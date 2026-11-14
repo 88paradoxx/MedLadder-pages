@@ -2017,8 +2017,22 @@ window.addEventListener('error', function (ev) {
           var y = window.scrollY;
           if (state.screen === 'home') renderHome();
           else if (state.screen === 'modules') renderModuleList(state.subjectId);
+          else redrawAppTab();
           window.scrollTo(0, y);
         });
+      }
+      // Redraw the app tab on screen (QBank, PYQ, Mock, Profile, Bookmarks)
+      // once the session is known. A page opened straight on a tab
+      // (/?go=qbank from the Books page or a static page's bottom bar) draws
+      // before the sign-in check answers, and stayed in its signed-out look.
+      function redrawAppTab() {
+        if (!v2On()) return;
+        var sc = state.screen;
+        if (sc === 'subjects') renderSubjectsV2();
+        else if (sc === 'pyq') renderPyqV2();
+        else if (sc === 'mock') renderMockV2();
+        else if (sc === 'profile') renderProfileV2();
+        else if (sc === 'bookmarks') renderBookmarks();
       }
 
       // "Reset all progress" must leave nothing for the dashboard to count:
@@ -3340,6 +3354,7 @@ window.addEventListener('error', function (ev) {
             currentUser = res.data.session.user;
             loadUserProgress(currentUser.id);
             updateMastheadAuth();
+            redrawAppTab();
             updateProModalUI();
             refreshProStatus();
             if (recoveryMode) { cleanAuthReturnUrl(); openAuthModal('reset'); }
