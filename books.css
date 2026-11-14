@@ -1,6 +1,6 @@
 /* /books — the public list of MedLadder books (published from the admin panel). */
-:root { --bk-bg: #0f0d1a; --bk-card: rgba(255,255,255,.035); --bk-line: rgba(148,163,184,.2); --bk-ink: #f1f0fa; --bk-ink2: #c9c5e4; --bk-ink3: #8b87a8; --bk-acc: #a78bfa; --bk-btn: #7b2ff7; }
-html:not(.dark) { --bk-bg: #f6f5fb; --bk-card: #fff; --bk-line: #dedbea; --bk-ink: #17142b; --bk-ink2: #4a4663; --bk-ink3: #6e6a86; --bk-acc: #5b34c9; --bk-btn: #5b34c9; }
+:root { --bk-bg: #0C0920; --bk-card: #161130; --bk-line: #2A2350; --bk-ink: #F4F1FF; --bk-ink2: #CFC9EA; --bk-ink3: #9A94BD; --bk-acc: #a78bfa; --bk-btn: #7b2ff7; }
+html:not(.dark) { --bk-bg: #F6F4FD; --bk-card: #fff; --bk-line: #E8E3F6; --bk-ink: #1A1433; --bk-ink2: #3D3760; --bk-ink3: #6B6590; --bk-acc: #5b34c9; --bk-btn: #5b34c9; }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bk-bg); color: var(--bk-ink); min-height: 100vh; line-height: 1.6; }
 .wrap { max-width: 920px; margin: 0 auto; padding: 24px 16px 60px; }
@@ -47,3 +47,5 @@ h1 { font-size: 30px; margin: 0 0 8px; line-height: 1.2; }
 .bk-exams h3 { font-size: 16.5px; margin: 18px 0 4px; }
 .bk-exams p { margin: 0 0 8px; color: var(--bk-ink2); font-size: 15px; }
 .bk-exams a { color: var(--bk-acc); text-decoration: underline; text-underline-offset: 2px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--bk-ink); font-size: 22px; letter-spacing: -0.02em; }
+.brand img { width: 34px; height: 34px; border-radius: 10px; }

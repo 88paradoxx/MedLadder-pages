@@ -259,3 +259,57 @@ html:has(.seo-main) section[aria-label="Bank counts and free tier"] > div { line
 html:has(.seo-main) section[aria-label="Bank counts and free tier"] a { color: var(--sr-ink) !important; }
 html:has(.seo-main) .seo-qcard { border-left-width: 1px !important; }
 html:has(.seo-main) .seo-qcard::before, html:has(.seo-main) .seo-qcard::after { display: none !important; }
+
+/* ==========================================================================
+   Unified look (Nov 2026): the same palette, type and shapes as the app's
+   Home screen (--x-* tokens in quiz-pro.css) — lavender ground, white cards
+   with soft shadows, bold sans headings, violet pill buttons.
+   ========================================================================== */
+html:has(.seo-main) {
+  --sr-ground: #F6F4FD; --sr-raised: #FFFFFF; --sr-rule: #E8E3F6; --sr-soft: #F8F6FE; --sr-tick: #DCD4F3;
+  --sr-ink: #1A1433; --sr-dim: #3D3760; --sr-quiet: #6B6590;
+  --sr-accent: #6D3DF0; --sr-accent-ink: #FFFFFF; --sr-accent-soft: #EFE9FE;
+  --sr-serif: var(--sr-sans);
+  --sr-shadow: 0 1px 2px rgba(40, 20, 90, .04), 0 10px 26px -14px rgba(60, 30, 140, .22);
+}
+html.dark:has(.seo-main) {
+  --sr-ground: #0C0920; --sr-raised: #161130; --sr-rule: #2A2350; --sr-soft: #1C1640; --sr-tick: #2E2657;
+  --sr-ink: #F4F1FF; --sr-dim: #CFC9EA; --sr-quiet: #9A94BD;
+  --sr-accent: #8B5CF6; --sr-accent-ink: #FFFFFF; --sr-accent-soft: rgba(139, 92, 246, .2);
+  --sr-shadow: 0 12px 30px -18px rgba(0, 0, 0, .7);
+}
+html:has(.seo-main) #app { max-width: 820px !important; }
+/* type: bold sans headings like Home */
+html:has(.seo-main) .hero-wrap h1, html:has(.seo-main) .hero-wrap .title { font-weight: 800 !important; letter-spacing: -0.025em !important; }
+html:has(.seo-main) .seo-main h2, html:has(.seo-main) .seo-section-title { font-weight: 800 !important; letter-spacing: -0.02em !important; }
+html:has(.seo-main) .seo-main h3, html:has(.seo-main) .seo-card strong { font-weight: 700 !important; }
+html:has(.seo-main) .masthead .brand { font-weight: 800 !important; font-size: 22px !important; letter-spacing: -0.02em !important; }
+html:has(.seo-main) .masthead .brand-icon { width: 34px !important; height: 34px !important; border-radius: 10px !important; }
+/* header controls: pills, Sign in filled like Home */
+html:has(.seo-main) .masthead .right > * { border-radius: 999px !important; }
+html:has(.seo-main) .masthead .btn-go-pro, html:has(.seo-main) .masthead .pro-badge-header {
+  background: var(--sr-raised) !important; border: 1px solid var(--sr-rule) !important; color: var(--sr-ink) !important; font-weight: 700 !important;
+}
+html:has(.seo-main) .masthead .auth-btn {
+  background: linear-gradient(140deg, #8B5CF6, #6A3BEF) !important; border: 0 !important; color: #fff !important; font-weight: 700 !important;
+  box-shadow: 0 6px 16px -8px rgba(106, 59, 239, .8) !important;
+}
+html:has(.seo-main) .masthead .auth-btn svg { color: #fff !important; stroke: #fff !important; }
+html:has(.seo-main) #themeToggle, html:has(.seo-main) .masthead .theme-toggle { border-radius: 999px !important; background: var(--sr-raised) !important; }
+html:has(.seo-main) .masthead .stat { display: none !important; }
+/* shapes: rounder cards with the Home shadow, rounded buttons */
+html:has(.seo-main) .seo-qcard, html:has(.seo-main) .seo-card, html:has(.seo-main) .seo-faq-card,
+html:has(.seo-main) .seo-full-bank-cta, html:has(.seo-main) section[aria-label="Bank counts and free tier"] > div,
+html:has(.seo-main) .pyq-card, html:has(.seo-main) .seo-main details[style*="border"] {
+  border-radius: 20px !important; border-color: var(--sr-rule) !important; box-shadow: var(--sr-shadow) !important; background-color: var(--sr-raised) !important;
+}
+html:has(.seo-main) .seo-main .btn, html:has(.seo-main) .seo-main a.btn, html:has(.seo-main) .pyq-subject-bank-primary { border-radius: 14px !important; }
+html:has(.seo-main) .seo-main .btn:not(.secondary), html:has(.seo-main) .seo-main a.btn:not(.secondary), html:has(.seo-main) .pyq-subject-bank-primary {
+  background: linear-gradient(140deg, #8457FF 0%, #6A3BEF 45%, #5126CF 100%) !important; border-color: transparent !important;
+  box-shadow: 0 8px 20px -10px rgba(106, 59, 239, .7) !important;
+}
+html:has(.seo-main) .seo-main .btn.secondary, html:has(.seo-main) .seo-main a.btn.secondary { background: var(--sr-raised) !important; box-shadow: var(--sr-shadow) !important; }
+html:has(.seo-main) .seo-opt { border-radius: 12px !important; }
+html:has(.seo-main) .bento-bar { background: var(--sr-raised) !important; border-radius: 20px !important; box-shadow: var(--sr-shadow) !important; border: 1px solid var(--sr-rule) !important; overflow: hidden !important; }
+html:has(.seo-main) .seo-main h2 a, html:has(.seo-main) .seo-main h3 a { text-decoration: none !important; color: var(--sr-ink) !important; }
+html:has(.seo-main) .seo-main h2 a:hover, html:has(.seo-main) .seo-main h3 a:hover { color: var(--sr-accent) !important; }
