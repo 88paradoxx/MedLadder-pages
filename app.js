@@ -7890,6 +7890,17 @@ window.addEventListener('error', function (ev) {
 
       // ---- Profile ---------------------------------------------------------
       var v3ProfileUid = undefined;
+      // Android app only: native version, the web bundle in use and the last
+      // live-update check. Tapping it checks again.
+      function v3AppVersionRow(row) {
+        var N = window.MedLadderNative;
+        if (!N || !N.isNative || !N.liveUpdateStatus) return '';
+        var st = N.liveUpdateStatus() || {};
+        var ago = st.at ? Math.max(0, Math.round((Date.now() - st.at) / 60000)) : null;
+        var words = { checking: 'checking…', downloading: 'downloading ' + (st.latest || ''), ready: (st.latest || 'update') + ' ready, reopen the app', applying: 'updating…', 'up-to-date': 'up to date', error: 'check failed: ' + (st.error || '') };
+        var sub = (st.native || '') + (st.current ? ' · web ' + st.current : '') + (st.state ? ' · ' + (words[st.state] || st.state) : '') + (ago !== null ? ' · ' + (ago ? ago + ' min ago' : 'just now') : '');
+        return row('refresh', 'App version', esc(sub || 'Not checked yet'), 'id="v3AppVer"');
+      }
       function renderProfileV2() {
         if (!quizStylesReady) { ensureQuizStyles().then(renderProfileV2); return; }
         v3ProfileUid = currentUser ? currentUser.id : null;
@@ -7924,6 +7935,7 @@ window.addEventListener('error', function (ev) {
           row('sun', 'Theme', darkMode ? 'Dark' : 'Light', 'id="v3Theme"', '<span class="v3-switch' + (darkMode ? ' on' : '') + '" aria-hidden="true"><span></span></span>') +
           (window.MedLadderNative && window.MedLadderNative.isNative && window.MedLadderNative.setHapticsEnabled ?
             row('bolt', 'Haptic feedback', window.MedLadderNative.hapticsEnabled() ? 'Vibrate on answers' : 'Off', 'id="v3Haptics"', '<span class="v3-switch' + (window.MedLadderNative.hapticsEnabled() ? ' on' : '') + '" aria-hidden="true"><span></span></span>') : '') +
+          v3AppVersionRow(row) +
           row('grid', 'Classic home', 'Use the earlier home screen', 'id="v2ClassicBtn"') +
           (isAdmin(currentUser) ? row('crown', 'Admin console', 'Students, questions, mock tests', 'id="v3Admin"') : '') +
           (currentUser && !pro ? row('crown', 'Go Pro', 'All ' + totalTopics() + ' topics and past papers', 'id="v2ProBtn"') : '') +
@@ -7937,6 +7949,11 @@ window.addEventListener('error', function (ev) {
         if (si) si.onclick = function () { openAuthModal('signin', { reason: 'Sign in to save your progress.' }); };
         var th = document.getElementById('v3Theme');
         if (th) th.onclick = function (e) { toggleTheme(e); setTimeout(renderProfileV2, 60); };
+        var av = document.getElementById('v3AppVer');
+        if (av) av.onclick = function () {
+          try { window.MedLadderNative.checkForLiveUpdate({ force: true }).then(function () { if (state.screen === 'profile') renderProfileV2(); }); } catch (e) { }
+          setTimeout(function () { if (state.screen === 'profile') renderProfileV2(); }, 400);
+        };
         var hp = document.getElementById('v3Haptics');
         if (hp) hp.onclick = function () { window.MedLadderNative.setHapticsEnabled(!window.MedLadderNative.hapticsEnabled()); renderProfileV2(); };
         var cl = document.getElementById('v2ClassicBtn');

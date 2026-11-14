@@ -294,58 +294,94 @@ function liveUpdateLog() {
   try { console.log.apply(console, ['[MedLadder live update]'].concat([].slice.call(arguments))); } catch (e) {}
 }
 
-async function checkForLiveUpdate() {
+// Status of the last check, shown in Profile -> App -> "App version".
+function setLiveUpdateStatus(patch) {
+  try {
+    var cur = JSON.parse(localStorage.getItem('ml_live_update_status') || '{}');
+    Object.keys(patch).forEach(function (k) { cur[k] = patch[k]; });
+    cur.at = Date.now();
+    localStorage.setItem('ml_live_update_status', JSON.stringify(cur));
+  } catch (e) {}
+}
+function liveUpdateStatus() {
+  try { return JSON.parse(localStorage.getItem('ml_live_update_status') || 'null'); } catch (e) { return null; }
+}
+
+var appStartedAt = Date.now();
+var liveUpdateRunning = false;
+
+// How updates are applied (1.9.10+): a bundle downloaded in an earlier session is
+// switched to as soon as the app starts (during the splash), so it never depends
+// on Android reporting that the app was closed. A bundle downloaded in this
+// session waits for the next start, so nobody is reloaded in the middle of a quiz.
+async function checkForLiveUpdate(opts) {
+  opts = opts || {};
+  if (liveUpdateRunning) return;
+  liveUpdateRunning = true;
   // Confirm this bundle booted fine, otherwise Capgo rolls back to the previous one.
   try { await CapacitorUpdater.notifyAppReady(); } catch (e) { liveUpdateLog('notifyAppReady failed', e); }
 
-  // One check per app session is enough (the bridge loads on every page).
+  // One check per app session (the bridge loads on every page), unless asked.
   try {
-    if (sessionStorage.getItem('ml_live_update_checked') === '1') return;
+    if (!opts.force && sessionStorage.getItem('ml_live_update_checked') === '1') { liveUpdateRunning = false; return; }
     sessionStorage.setItem('ml_live_update_checked', '1');
   } catch (e) {}
 
+  var currentVersion = 'builtin';
   try {
     var info = await App.getInfo();
     var nativeBuild = parseInt(info.build, 10) || 0;
+    var current = await CapacitorUpdater.current();
+    currentVersion = current && current.bundle && current.bundle.version ? current.bundle.version : 'builtin';
+    setLiveUpdateStatus({ native: info.version + ' (' + nativeBuild + ')', current: currentVersion, state: 'checking', error: null });
 
     var res = await fetch(LIVE_UPDATE_MANIFEST_URL + '?t=' + Date.now(), { cache: 'no-store' });
-    if (!res.ok) return;
+    if (!res.ok) throw new Error('manifest HTTP ' + res.status);
     var manifest = await res.json();
-    if (!manifest || !manifest.version || !manifest.url) return;
+    if (!manifest || !manifest.version || !manifest.url) throw new Error('manifest incomplete');
 
-    if (manifest.minNativeVersionCode && nativeBuild < manifest.minNativeVersionCode) {
-      liveUpdateLog('skipped: needs native build', manifest.minNativeVersionCode, 'have', nativeBuild);
+    if ((manifest.minNativeVersionCode && nativeBuild < manifest.minNativeVersionCode) ||
+        (manifest.maxNativeVersionCode && nativeBuild > manifest.maxNativeVersionCode)) {
+      liveUpdateLog('no update for this build', nativeBuild, manifest.version);
+      setLiveUpdateStatus({ latest: manifest.version, state: 'up-to-date' });
       return;
     }
-    if (manifest.maxNativeVersionCode && nativeBuild > manifest.maxNativeVersionCode) return;
-
-    var current = await CapacitorUpdater.current();
-    var currentVersion = current && current.bundle ? current.bundle.version : '';
-    if (currentVersion === manifest.version) return;
+    if (currentVersion === manifest.version) {
+      setLiveUpdateStatus({ latest: manifest.version, state: 'up-to-date' });
+      return;
+    }
 
     var listed = await CapacitorUpdater.list();
     var bundles = (listed && listed.bundles) || [];
     var bundle = null;
     for (var i = 0; i < bundles.length; i++) {
-      if (bundles[i].version === manifest.version && bundles[i].status !== 'error' && bundles[i].status !== 'deleted') {
-        bundle = bundles[i];
-        break;
+      if (bundles[i].version === manifest.version && bundles[i].status !== 'error' && bundles[i].status !== 'deleted') { bundle = bundles[i]; break; }
+    }
+
+    if (bundle) {
+      // Downloaded in an earlier session: switch now if the app has only just started.
+      if (Date.now() - appStartedAt < 20000) {
+        liveUpdateLog('applying', manifest.version);
+        setLiveUpdateStatus({ latest: manifest.version, state: 'applying' });
+        await CapacitorUpdater.set({ id: bundle.id }); // reloads into the new bundle
+        return;
       }
+      setLiveUpdateStatus({ latest: manifest.version, state: 'ready' });
+      return;
     }
 
-    if (!bundle) {
-      liveUpdateLog('downloading', manifest.version);
-      var opts = { url: manifest.url, version: manifest.version };
-      if (manifest.checksum) opts.checksum = manifest.checksum;
-      bundle = await CapacitorUpdater.download(opts);
-    }
-
-    // Apply only after the app is killed and reopened, so nobody loses a quiz in progress.
-    try { await CapacitorUpdater.setMultiDelay({ delayConditions: [{ kind: 'kill' }] }); } catch (e) {}
-    await CapacitorUpdater.next({ id: bundle.id });
-    liveUpdateLog('ready, applies on next app launch:', manifest.version);
+    liveUpdateLog('downloading', manifest.version);
+    setLiveUpdateStatus({ latest: manifest.version, state: 'downloading' });
+    var dl = { url: manifest.url, version: manifest.version };
+    if (manifest.checksum) dl.checksum = manifest.checksum;
+    bundle = await CapacitorUpdater.download(dl);
+    liveUpdateLog('downloaded', manifest.version, bundle && bundle.status);
+    setLiveUpdateStatus({ latest: manifest.version, state: 'ready' });
   } catch (e) {
     liveUpdateLog('check failed', e);
+    setLiveUpdateStatus({ state: 'error', error: String((e && e.message) || e).slice(0, 160) });
+  } finally {
+    liveUpdateRunning = false;
   }
 }
 
@@ -389,6 +425,7 @@ window.MedLadderNative = {
   exitApp: exitApp,
   showToast: showExitToast,
   checkForLiveUpdate: checkForLiveUpdate,
+  liveUpdateStatus: liveUpdateStatus,
   haptic: haptic,
   hapticsEnabled: hapticsEnabled,
   setHapticsEnabled: setHapticsEnabled,
