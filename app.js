@@ -3207,6 +3207,12 @@ window.addEventListener('error', function (ev) {
       // only Home was redrawn, so Profile, Bookmarks, Mock and the topic
       // pages kept showing the old account.)
       var signedOutShown = false;
+      // True on a page the app did not draw itself (topic, subject, PYQ and
+      // guide pages): the app's screens only ever live at "/".
+      function onStaticPage() {
+        var path = (window.location.pathname || '/').replace(/\/index\.html$/, '/');
+        return state.screen === 'seo' || (path !== '/' && (state.screen === 'home' || !state.screen));
+      }
       function redrawSignedOut() {
         reviewData = null;
         v3BmCache = null;
@@ -3215,6 +3221,9 @@ window.addEventListener('error', function (ev) {
         bmSubjectFilter = 'all';
         updateMastheadAuth();
         var sc = state.screen;
+        // Signing out on a static page or mid-quiz only updates the header:
+        // the page stays where it is instead of jumping to Home.
+        if (onStaticPage() || sc === 'quiz' || sc === 'results') return;
         if (!v2On()) {
           if (sc === 'setup') renderSetup(state.subjectId, state.moduleId || 'all');
           else renderHome(true);
@@ -3339,7 +3348,7 @@ window.addEventListener('error', function (ev) {
             if (provisionalUser) {
               provisionalUser = false;
               currentUser = null;
-              if (state.screen === 'home' || /^(subjects|modules|pyq|profile|mock|bookmarks)$/.test(state.screen || '')) renderHome(true);
+              if (!onStaticPage() && (state.screen === 'home' || /^(subjects|modules|pyq|profile|mock|bookmarks)$/.test(state.screen || ''))) renderHome(true);
             }
             // No session: still render the masthead auth controls, so the
             // signed-out Sign In pill also appears on the pre-rendered SEO
