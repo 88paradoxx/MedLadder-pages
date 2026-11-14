@@ -1,6 +1,7 @@
-/* Shared bottom bar + footer for standalone pages (NEET SS books). Matches the
-   app's new-look footer. The page is dark-only, so only dark values. */
+/* Shared bottom bar + footer for standalone pages (NEET SS books, Books).
+   Matches the app's new-look footer, in both themes (light is the default). */
 .ml-chrome { --c-card: #15131f; --c-card2: #1c1929; --c-line: #2a2640; --c-ink: #f4f1ff; --c-ink2: #bab3dc; --c-ink3: #8a84ad; --c-acc: #8b5cf6; }
+html:not(.dark) .ml-chrome { --c-card: #ffffff; --c-card2: #f4f3f8; --c-line: #dcd9e6; --c-ink: #17142b; --c-ink2: #4a4663; --c-ink3: #625e7a; --c-acc: #5b34c9; }
 .ml-foot { margin: 40px 0 0; padding: 0 0 calc(112px + env(safe-area-inset-bottom)); font-family: "Inter", system-ui, -apple-system, sans-serif; }
 .ml-foot p, .ml-foot b, .ml-foot span, .ml-foot a, .ml-tabbar span { font-family: "Inter", system-ui, -apple-system, sans-serif; }
 .ml-foot .f { max-width: 1120px; margin: 0 auto; padding: 22px 18px 18px; border-radius: 24px; background: var(--c-card); border: 1px solid var(--c-line); text-align: center; color: var(--c-ink2); }
