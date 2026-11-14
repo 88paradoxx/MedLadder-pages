@@ -4263,3 +4263,8 @@ html.ml-reading #app .rr-review-cta .rr-review-btn2 { flex: 1 1 auto !important;
   html.ml-reading #app > footer.v3-foot { max-width: none !important; width: auto !important; margin-left: 0 !important; margin-right: 0 !important; padding-left: 236px !important; padding-right: 0 !important; }
   html.ml-reading #app .v3-foot .v3f { max-width: none !important; margin: 0 !important; }
 }
+
+/* Android app footer: only the copyright line, so no divider or top gap. */
+html.ml-reading #app .v3-foot-app .v3f { padding: 14px 18px !important; min-height: 0 !important; }
+html.ml-reading #app .v3-foot-app .v3f > :not(.v3f-copy) { display: none !important; }
+html.ml-reading #app .v3-foot-app .v3f-copy { margin: 0 !important; padding: 0 !important; border-top: 0 !important; }
