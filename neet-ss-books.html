@@ -110,37 +110,41 @@
   </script>
 
   <style>
+    html.dark{--ns-bg:#0f0d1a;--ns-ink:#f1f0fa;--ns-ink1:#d9d4f5;--ns-ink2:#c9c5e4;--ns-ink3:#a7a3c7;--ns-ink4:#8b87a8;--ns-acc1:#c4b5fd;--ns-acc:#a78bfa;--ns-grn:#4ade80;--ns-card:rgba(255,255,255,.03);--ns-line:rgba(148,163,184,.16);--ns-line2:rgba(148,163,184,.18)}
+    html:not(.dark){--ns-bg:#f6f5fb;--ns-ink:#17142b;--ns-ink1:#2a2545;--ns-ink2:#4a4663;--ns-ink3:#5d5978;--ns-ink4:#625e7a;--ns-acc1:#5b34c9;--ns-acc:#5b34c9;--ns-grn:#15803d;--ns-card:#ffffff;--ns-line:#dedbea;--ns-line2:#dedbea}
+    .crumbs a{text-decoration:underline;text-underline-offset:2px}
+
     * { box-sizing: border-box; }
     body {
       margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #0f0d1a; color: #f1f0fa; min-height: 100vh; line-height: 1.65;
+      background: var(--ns-bg); color: var(--ns-ink); min-height: 100vh; line-height: 1.65;
     }
     .wrap { max-width: 860px; margin: 0 auto; padding: 24px 18px 60px; }
     .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-    .brand { font-weight: 800; font-size: 20px; color: #c4b5fd; text-decoration: none; }
-    .back { color: #a78bfa; text-decoration: none; font-size: 14px; font-weight: 600; }
+    .brand { font-weight: 800; font-size: 20px; color: var(--ns-acc1); text-decoration: none; }
+    .back { color: var(--ns-acc); text-decoration: none; font-size: 14px; font-weight: 600; }
     .back:hover { text-decoration: underline; }
-    .crumbs { font-size: 13px; color: #8b87a8; margin-bottom: 18px; }
-    .crumbs a { color: #a78bfa; text-decoration: none; }
+    .crumbs { font-size: 13px; color: var(--ns-ink4); margin-bottom: 18px; }
+    .crumbs a { color: var(--ns-acc); text-decoration: none; }
     h1 { font-size: 30px; margin: 0 0 10px; line-height: 1.25; }
-    .lede { color: #c9c5e4; font-size: 16px; margin: 0 0 26px; }
-    .lede a, .prose a { color: #a78bfa; }
-    .updated { font-size: 12.5px; color: #8b87a8; margin-bottom: 26px; }
+    .lede { color: var(--ns-ink2); font-size: 16px; margin: 0 0 26px; }
+    .lede a, .prose a { color: var(--ns-acc); }
+    .updated { font-size: 12.5px; color: var(--ns-ink4); margin-bottom: 26px; }
     .featured {
       background: linear-gradient(135deg, rgba(123,47,247,.22), rgba(123,47,247,.06));
       border: 1px solid #7b2ff7; border-radius: 16px; padding: 26px; margin-bottom: 34px;
     }
     .featured h2 { margin: 0 0 4px; font-size: 22px; }
     .tag {
-      display: inline-block; font-size: 12px; font-weight: 700; color: #4ade80;
+      display: inline-block; font-size: 12px; font-weight: 700; color: var(--ns-grn);
       background: rgba(34,197,94,.14); border: 1px solid rgba(34,197,94,.5);
       padding: 4px 12px; border-radius: 999px; margin-bottom: 12px;
     }
-    .meta { color: #a7a3c7; font-size: 14px; margin: 8px 0 4px; }
-    .meta b { color: #d9d4f5; }
+    .meta { color: var(--ns-ink3); font-size: 14px; margin: 8px 0 4px; }
+    .meta b { color: var(--ns-ink1); }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 20px; }
     .chip {
-      font-size: 12.5px; color: #c4b5fd; background: rgba(123,47,247,.12);
+      font-size: 12.5px; color: var(--ns-acc1); background: rgba(123,47,247,.12);
       border: 1px solid rgba(123,47,247,.35); padding: 5px 12px; border-radius: 999px;
     }
     .btn {
@@ -149,45 +153,45 @@
       text-decoration: none; border: none; cursor: pointer;
     }
     .btn:hover { background: #8b45ff; }
-    .fine { color: #8b87a8; font-size: 12.5px; margin-top: 12px; }
+    .fine { color: var(--ns-ink4); font-size: 12.5px; margin-top: 12px; }
     h2.section { font-size: 22px; margin: 34px 0 14px; }
-    .prose { color: #c9c5e4; font-size: 15px; }
-    .prose h3 { color: #f1f0fa; font-size: 17px; margin: 22px 0 8px; }
+    .prose { color: var(--ns-ink2); font-size: 15px; }
+    .prose h3 { color: var(--ns-ink); font-size: 17px; margin: 22px 0 8px; }
     .prose ul { padding-left: 20px; margin: 8px 0; }
     .prose li { margin-bottom: 6px; }
     table.pattern { width: 100%; border-collapse: collapse; margin: 12px 0 6px; font-size: 14.5px; }
     table.pattern th, table.pattern td {
-      text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(148,163,184,.16);
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--ns-line);
     }
-    table.pattern th { color: #c4b5fd; font-weight: 700; width: 42%; }
+    table.pattern th { color: var(--ns-acc1); font-weight: 700; width: 42%; }
     .toc-list { columns: 2; column-gap: 24px; padding-left: 20px; margin: 10px 0; font-size: 14.5px; }
     .toc-list li { margin-bottom: 6px; break-inside: avoid; }
     @media (max-width: 560px) { .toc-list { columns: 1; } }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
     .card {
-      background: rgba(255,255,255,.03); border: 1px solid rgba(148,163,184,.18);
+      background: var(--ns-card); border: 1px solid var(--ns-line2);
       border-radius: 12px; padding: 18px;
     }
     .card h3 { margin: 0 0 8px; font-size: 16px; }
     .soon {
-      display: inline-block; font-size: 12px; font-weight: 600; color: #a78bfa;
+      display: inline-block; font-size: 12px; font-weight: 600; color: var(--ns-acc);
       background: rgba(123,47,247,.14); border: 1px solid rgba(123,47,247,.4);
       padding: 5px 12px; border-radius: 999px;
     }
     .faq { margin-top: 8px; }
     .faq details {
-      background: rgba(255,255,255,.03); border: 1px solid rgba(148,163,184,.18);
+      background: var(--ns-card); border: 1px solid var(--ns-line2);
       border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
     }
     .faq summary { cursor: pointer; font-weight: 700; font-size: 15px; }
-    .faq p { color: #c9c5e4; font-size: 14.5px; margin: 10px 0 0; }
+    .faq p { color: var(--ns-ink2); font-size: 14.5px; margin: 10px 0 0; }
     .cta-band {
       margin-top: 34px; padding: 24px; border-radius: 14px; text-align: center;
       background: linear-gradient(135deg, rgba(34,197,94,.14), rgba(34,197,94,.04));
       border: 1px solid rgba(34,197,94,.45);
     }
     .cta-band h3 { margin: 0 0 8px; font-size: 18px; }
-    .cta-band p { color: #a7a3c7; font-size: 14px; margin: 0 0 16px; }
+    .cta-band p { color: var(--ns-ink3); font-size: 14px; margin: 0 0 16px; }
   </style>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap">
   <link rel="stylesheet" href="/pages-rr.css">
