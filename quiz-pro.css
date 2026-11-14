@@ -4253,3 +4253,13 @@ html.ml-reading #app .rr-review-cta .rr-review-btn2 { flex: 1 1 auto !important;
   html.ml-reading #app .rr-review-cta-b { justify-content: stretch !important; }
   html.ml-reading #app .rr-review-cta .btn { width: 100% !important; }
 }
+
+/* Desktop balance: the main area fills the space beside the menu (it used to
+   stop at 900px, leaving an empty strip on the right), the menu fills its
+   column, and the footer lines up with the main area. */
+@media (min-width: 1240px) {
+  html.ml-reading #app .v3 .v2-main { max-width: none !important; width: 100% !important; margin: 0 !important; }
+  html.ml-reading #app .v3 .v3-nav { width: 100% !important; max-width: none !important; box-sizing: border-box !important; }
+  html.ml-reading #app > footer.v3-foot { max-width: none !important; width: auto !important; margin-left: 0 !important; margin-right: 0 !important; padding-left: 236px !important; padding-right: 0 !important; }
+  html.ml-reading #app .v3-foot .v3f { max-width: none !important; margin: 0 !important; }
+}

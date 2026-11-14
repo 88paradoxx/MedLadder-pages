@@ -53,3 +53,19 @@ main > ul li a, .chip {
 .featured *, .card b, .card strong, .meta b, p b, p strong { -webkit-text-fill-color: currentColor !important; }
 .featured h2, .featured b, .featured strong, .meta b { color: var(--pr-ink) !important; }
 .featured .btn, .featured a.btn { color: #fff !important; }
+
+/* Unified look (Nov 2026): same palette and type as the app's Home screen. */
+html {
+  --pr-ground: #F6F4FD; --pr-raised: #FFFFFF; --pr-rule: #E8E3F6; --pr-soft: #F8F6FE;
+  --pr-ink: #1A1433; --pr-dim: #3D3760; --pr-quiet: #6B6590; --pr-accent: #5B2FD6; --pr-accent-fill: #6D3DF0; --pr-accent-soft: #EFE9FE;
+  --pr-serif: var(--pr-sans);
+}
+html.dark {
+  --pr-ground: #0C0920; --pr-raised: #161130; --pr-rule: #2A2350; --pr-soft: #1C1640;
+  --pr-ink: #F4F1FF; --pr-dim: #CFC9EA; --pr-quiet: #9A94BD; --pr-accent: #C4B5FD; --pr-accent-fill: #8B5CF6; --pr-accent-soft: rgba(139, 92, 246, .2);
+}
+h1 { font-weight: 800 !important; letter-spacing: -0.025em !important; }
+h2 { font-weight: 800 !important; letter-spacing: -0.02em !important; }
+.brand span { font-weight: 800 !important; letter-spacing: -0.02em !important; }
+.card { border-radius: 20px !important; box-shadow: 0 1px 2px rgba(40, 20, 90, .04), 0 10px 26px -14px rgba(60, 30, 140, .22) !important; }
+.back, .btn { border-radius: 14px !important; }
