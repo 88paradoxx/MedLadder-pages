@@ -71,12 +71,6 @@ esbuild.buildSync({
 function injectNativeScript(filePath) {
   let html = fs.readFileSync(filePath, 'utf8');
 
-  // Edge to edge: let the page draw behind the camera cutout / navigation bar; the page
-  // keeps its content clear of them with env(safe-area-inset-*).
-  html = html.replace(/<meta\s+name="viewport"\s+content="([^"]*)"/i, function (m, c) {
-    return /viewport-fit/.test(c) ? m : '<meta name="viewport" content="' + c + ', viewport-fit=cover"';
-  });
-
   // SEO directory navigation is for the website only.
   html = html.replace(/<nav\s+aria-label="Browse MedLadder"[\s\S]*?<\/nav>/gi, '');
 

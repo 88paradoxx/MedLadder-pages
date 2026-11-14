@@ -16,10 +16,6 @@
       "resetWhenUpdate": true,
       "autoDeleteFailed": true,
       "autoDeletePrevious": true
-    },
-    "SystemBars": {
-      "insetsHandling": "css",
-      "initialViewportFitValueHint": "cover"
     }
   }
 }

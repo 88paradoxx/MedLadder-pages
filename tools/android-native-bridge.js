@@ -120,15 +120,6 @@ if (isNative) {
   } catch (e) {}
 }
 
-// Edge to edge: the page background runs up behind the camera area; content starts below it.
-if (isNative) {
-  try {
-    var edgeCss = document.createElement('style');
-    edgeCss.textContent = 'html.is-native-app body{padding-top:env(safe-area-inset-top,0px)!important;}';
-    (document.head || document.documentElement).appendChild(edgeCss);
-  } catch (e) {}
-}
-
 var backHandlers = [];
 var lastBackPressTime = 0;
 
