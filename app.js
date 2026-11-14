@@ -507,7 +507,7 @@ window.addEventListener('error', function (ev) {
           '<div class="pro-feature-item">' +
           '<div class="pro-feature-icon">✓</div>' +
           '<div class="pro-feature-text">' +
-          '<strong>' + totalQuestions().toLocaleString('en-US') + ' NEET PG, FMGE &amp; NEET SS MCQs</strong>' +
+          '<strong>' + totalQuestions().toLocaleString('en-US') + ' MBBS, NEET PG, FMGE &amp; NEET SS MCQs</strong>' +
           '<span>Every single question with clinical pearls, rationale &amp; tables.</span>' +
           '</div>' +
           '</div>' +
@@ -2391,7 +2391,7 @@ window.addEventListener('error', function (ev) {
         return '<footer class="credit v3 v3-foot">' +
           '<div class="v3f">' +
           '<div class="v3f-top">' +
-          '<div class="v3f-brand"><img src="/icons/icon-72.webp" alt="" width="44" height="44" loading="lazy"><div><b>MedLadder</b><span>Free question bank for NEET PG, FMGE, INI-CET and NEET SS</span></div></div>' +
+          '<div class="v3f-brand"><img src="/icons/icon-72.webp" alt="" width="44" height="44" loading="lazy"><div><b>MedLadder</b><span>Free question bank for MBBS, NEET PG, FMGE, INI-CET and NEET SS</span></div></div>' +
           '<div class="v3f-cta">' +
           (isNative ? '' : '<a href="https://play.google.com/store/apps/details?id=com.medladder.app" class="v3f-play" target="_blank" rel="noopener">' +
             '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4.2 2.6c-.3.3-.5.8-.5 1.4v16c0 .6.2 1.1.5 1.4l9.2-9.4z"/><path fill="currentColor" opacity=".75" d="M16.5 15.1l-3.1-3.1-9.2 9.4c.4.4 1 .4 1.7.1z"/><path fill="currentColor" opacity=".55" d="M16.5 8.9L5.9 2.5c-.7-.3-1.3-.3-1.7.1l9.2 9.4z"/><path fill="currentColor" opacity=".9" d="M20.2 11l-3.7-2.1-3.1 3.1 3.1 3.1 3.7-2.1c.9-.5.9-1.5 0-2z"/></svg>' +
@@ -3791,7 +3791,7 @@ window.addEventListener('error', function (ev) {
             '<div class="hero-wrap">' +
             '<div class="hero-eyebrow">⚡ FMGE · NEET PG · INI-CET · NEET SS</div>' +
             '<h1 class="title">Med<span class="brand-gradient">Ladder</span></h1>' +
-            '<p class="subtitle">Your climb through FMGE, NEET PG, INICET &amp; NEET SS — ' + SUBJECT_INDEX.length + ' subjects, ' + totalQuestions().toLocaleString() + ' MCQs including Previous Year Questions. Pick a subject or launch a PYQ test.</p>' +
+            '<p class="subtitle">Your climb through MBBS, FMGE, NEET PG, INICET &amp; NEET SS — ' + SUBJECT_INDEX.length + ' subjects, ' + totalQuestions().toLocaleString() + ' MCQs including Previous Year Questions. Pick a subject or launch a PYQ test.</p>' +
             '<div class="bento-bar">' +
             '<div class="bento-stat"><div class="bento-stat-num">' + SUBJECT_INDEX.length + '</div><div class="bento-stat-lbl">Subjects</div></div>' +
             '<div class="bento-stat"><div class="bento-stat-num">' + totalTopics() + '</div><div class="bento-stat-lbl">Topics</div></div>' +
