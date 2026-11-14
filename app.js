@@ -3241,11 +3241,33 @@ window.addEventListener('error', function (ev) {
         // Update the screen at once; the server-side sign-out can take a
         // while on a slow connection and the page looked frozen meanwhile.
         doSignOut();
+        // Forget the session in this browser right now. supabase-js only
+        // deletes its saved session after the server replies, so leaving the
+        // page before that (tapping Home or a link) kept the old session: the
+        // next page showed you signed in, and once the server had revoked it
+        // the following page signed you out. Clear it here, then tell the
+        // server (keepalive survives leaving the page). Scope "local" ends only
+        // this browser's session, not the Android app's or another device's.
+        var accessToken = null;
+        try {
+          Object.keys(localStorage).forEach(function (k) {
+            if (/^sb-.*-auth-token(-code-verifier)?$/.test(k)) {
+              try { var t = JSON.parse(localStorage.getItem(k)); if (t && t.access_token) accessToken = t.access_token; } catch (e) { }
+              localStorage.removeItem(k);
+            }
+          });
+        } catch (e) { }
+        if (accessToken) {
+          try {
+            fetch(SUPABASE_URL + '/auth/v1/logout?scope=local', {
+              method: 'POST', keepalive: true,
+              headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + accessToken }
+            }).catch(function () { });
+          } catch (e) { }
+        }
         if (!supabaseClient) return;
-        supabaseClient.auth.signOut().catch(function (err) {
-          console.warn('Sign out error:', err);
-          try { supabaseClient.auth.signOut({ scope: 'local' }); } catch (e) { }
-        });
+        // Clears the client's in-memory copy (storage is already empty).
+        supabaseClient.auth.signOut({ scope: 'local' }).catch(function (err) { console.warn('Sign out error:', err); });
       }
 
       function launchPendingPyqDeepLink() {

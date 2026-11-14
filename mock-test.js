@@ -776,7 +776,7 @@
       document.removeEventListener('click', closeAuthDropdown);
       document.addEventListener('click', closeAuthDropdown);
       $('authSignOutBtn').onclick = function () {
-        sb.auth.signOut().then(function () { location.reload(); });
+        sb.auth.signOut({ scope: 'local' }).then(function () { location.reload(); });
       };
     } else {
       area.innerHTML =

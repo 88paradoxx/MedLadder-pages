@@ -640,7 +640,7 @@
       area.innerHTML = '<span>' + esc(user.email || '') + '</span>' +
         '<button class="am-btn" id="signOutBtn">Sign out</button>';
       $('signOutBtn').onclick = function () {
-        sb.auth.signOut().then(function () { location.reload(); });
+        sb.auth.signOut({ scope: 'local' }).then(function () { location.reload(); });
       };
     } else {
       area.innerHTML = '<a class="am-btn" href="/">Sign in on main site first</a>';
