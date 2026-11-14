@@ -2391,7 +2391,7 @@ window.addEventListener('error', function (ev) {
         return '<footer class="credit v3 v3-foot">' +
           '<div class="v3f">' +
           '<div class="v3f-top">' +
-          '<div class="v3f-brand"><img src="/icons/icon-72.png" alt="" width="44" height="44" loading="lazy"><div><b>MedLadder</b><span>Free question bank for NEET PG, FMGE, INI-CET and NEET SS</span></div></div>' +
+          '<div class="v3f-brand"><img src="/icons/icon-72.webp" alt="" width="44" height="44" loading="lazy"><div><b>MedLadder</b><span>Free question bank for NEET PG, FMGE, INI-CET and NEET SS</span></div></div>' +
           '<div class="v3f-cta">' +
           (isNative ? '' : '<a href="https://play.google.com/store/apps/details?id=com.medladder.app" class="v3f-play" target="_blank" rel="noopener">' +
             '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4.2 2.6c-.3.3-.5.8-.5 1.4v16c0 .6.2 1.1.5 1.4l9.2-9.4z"/><path fill="currentColor" opacity=".75" d="M16.5 15.1l-3.1-3.1-9.2 9.4c.4.4 1 .4 1.7.1z"/><path fill="currentColor" opacity=".55" d="M16.5 8.9L5.9 2.5c-.7-.3-1.3-.3-1.7.1l9.2 9.4z"/><path fill="currentColor" opacity=".9" d="M20.2 11l-3.7-2.1-3.1 3.1 3.1 3.1 3.7-2.1c.9-.5.9-1.5 0-2z"/></svg>' +
@@ -3784,7 +3784,7 @@ window.addEventListener('error', function (ev) {
 
           app.innerHTML =
             '<header class="masthead glass" role="banner">' +
-            '<a href="/" class="brand" style="text-decoration:none;"><span class="brand-icon" style="overflow:hidden;display:inline-flex;align-items:center;justify-content:center;"><img src="/icons/icon-72.png" alt="MedLadder" width="72" height="72" style="width:100%;height:100%;border-radius:inherit;display:block;object-fit:cover;"></span><span>MedLadder</span></a>' +
+            '<a href="/" class="brand" style="text-decoration:none;"><span class="brand-icon" style="overflow:hidden;display:inline-flex;align-items:center;justify-content:center;"><img src="/icons/icon-72.webp" alt="" width="72" height="72" style="width:100%;height:100%;border-radius:inherit;display:block;object-fit:cover;"></span><span>MedLadder</span></a>' +
             '<span class="right"><span class="stat"><span class="stat-dot"></span>' + totalQuestions().toLocaleString() + ' MCQs</span>' + proHeaderBtnHtml() + authBtnHtml() + themeBtnHtml() + '</span>' +
             '</header>' +
             '<main id="mainContent" role="main">' +
@@ -6395,8 +6395,8 @@ window.addEventListener('error', function (ev) {
       }
       function v2Header(back, crumb) {
         var left = back
-          ? '<button class="rr-back" id="backBtn" aria-label="' + esc(back) + '">' + RR_BACK_SVG + '</button><a href="/" class="v2-brand v3-brand-sm"><img src="/icons/icon-72.png" alt="" width="28" height="28"><span>MedLadder</span></a>'
-          : '<a href="/" class="v2-brand"><img src="/icons/icon-72.png" alt="" width="28" height="28"><span>MedLadder</span></a>';
+          ? '<button class="rr-back" id="backBtn" aria-label="' + esc(back) + '">' + RR_BACK_SVG + '</button><a href="/" class="v2-brand v3-brand-sm"><img src="/icons/icon-72.webp" alt="" width="28" height="28"><span>MedLadder</span></a>'
+          : '<a href="/" class="v2-brand"><img src="/icons/icon-72.webp" alt="" width="28" height="28"><span>MedLadder</span></a>';
         return '<header class="rr-top v2-top" role="banner">' + left +
           '<div class="right rr-top-right">' + proHeaderBtnHtml() + authBtnHtml() + themeBtnHtml() + '</div></header>';
       }

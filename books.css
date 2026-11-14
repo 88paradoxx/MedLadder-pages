@@ -42,3 +42,8 @@ h1 { font-size: 30px; margin: 0 0 8px; line-height: 1.2; }
 .cta-band p { color: var(--bk-ink2); font-size: 14px; margin: 0 0 16px; }
 .btn { display: inline-flex; align-items: center; background: var(--bk-btn); color: #fff; font-weight: 700; font-size: 15px; padding: 13px 26px; border-radius: 10px; text-decoration: none; }
 @media (max-width: 480px) { h1 { font-size: 26px; } .bk-card { padding: 14px; gap: 12px; } .bk-cover { width: 52px; height: 70px; } }
+.bk-exams { margin-top: 36px; }
+.bk-exams h2 { font-size: 22px; margin: 0 0 6px; }
+.bk-exams h3 { font-size: 16.5px; margin: 18px 0 4px; }
+.bk-exams p { margin: 0 0 8px; color: var(--bk-ink2); font-size: 15px; }
+.bk-exams a { color: var(--bk-acc); text-decoration: underline; text-underline-offset: 2px; }
