@@ -313,3 +313,24 @@ html:has(.seo-main) .seo-opt { border-radius: 12px !important; }
 html:has(.seo-main) .bento-bar { background: var(--sr-raised) !important; border-radius: 20px !important; box-shadow: var(--sr-shadow) !important; border: 1px solid var(--sr-rule) !important; overflow: hidden !important; }
 html:has(.seo-main) .seo-main h2 a, html:has(.seo-main) .seo-main h3 a { text-decoration: none !important; color: var(--sr-ink) !important; }
 html:has(.seo-main) .seo-main h2 a:hover, html:has(.seo-main) .seo-main h3 a:hover { color: var(--sr-accent) !important; }
+
+/* Account menu on static pages: above the page (the header is its own layer),
+   solid background, and the study snapshot laid out as three small cards. */
+html:has(.seo-main) .masthead { position: relative !important; z-index: 60 !important; }
+html:has(.seo-main) .auth-dropdown {
+  z-index: 1000 !important; width: 290px !important; padding: 16px !important;
+  background: var(--sr-raised) !important; background-image: none !important; border: 1px solid var(--sr-rule) !important; border-radius: 20px !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: 0 24px 48px -20px rgba(20, 10, 60, .45) !important;
+}
+html:has(.seo-main) .auth-dropdown .dashboard-stat-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; margin: 8px 0 10px !important; }
+html:has(.seo-main) .auth-dropdown .dashboard-stat-card {
+  display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; min-width: 0 !important;
+  padding: 10px !important; border-radius: 12px !important; background: var(--sr-soft) !important; border: 1px solid var(--sr-rule) !important; position: static !important;
+}
+html:has(.seo-main) .auth-dropdown .dashboard-stat-icon {
+  display: grid !important; place-items: center !important; width: 26px !important; height: 26px !important; border-radius: 8px !important;
+  font-size: 10px !important; font-weight: 800 !important; position: static !important; overflow: hidden !important;
+}
+html:has(.seo-main) .auth-dropdown .dashboard-stat-value { display: block !important; font-size: 16px !important; font-weight: 800 !important; color: var(--sr-ink) !important; position: static !important; }
+html:has(.seo-main) .auth-dropdown .dashboard-stat-label { display: block !important; font-size: 10.5px !important; color: var(--sr-quiet) !important; white-space: nowrap !important; position: static !important; }
+html:has(.seo-main) .auth-dropdown .dashboard-progress-note { display: flex !important; align-items: center !important; gap: 8px !important; font-size: 12px !important; color: var(--sr-quiet) !important; margin: 0 0 8px !important; }
