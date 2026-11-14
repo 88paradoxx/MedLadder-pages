@@ -1,10 +1,47 @@
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
-import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 var isNative = Capacitor.isNativePlatform();
+
+// ---------------------------------------------------------------------------
+// Clean URLs inside the app. Capacitor's local server answers every path without a
+// file extension (/privacy, /terms, /books, ...) with index.html, so those links
+// landed on the home screen. index.html loads this script first, so send such
+// paths to the real bundled page (or, for website-only pages, the live site).
+// ---------------------------------------------------------------------------
+var BUNDLED_PAGES = {
+  '/privacy': '/privacy.html',
+  '/terms': '/terms.html',
+  '/mock-test': '/mock-test.html',
+  '/admin-mock': '/admin-mock.html',
+  '/neet-ss-books': '/neet-ss-books.html',
+  '/books': '/books/index.html',
+  '/editorial-team': '/editorial-team/index.html'
+};
+var LIVE_SITE = 'https://medladder.top';
+var WEB_ONLY_PATH = /^\/(neet-pg[^/]*|fmge[^/]*|inicet[^/]*|ini-cet[^/]*|neet-ss(\/.*)?|pyqs(\/.*)?|subjects(\/.*)?|landing[^/]*|best-free-[^/]*|medladder-vs-[^/]*)\/?$/;
+
+function bundledPageFor(pathname) {
+  var p = (pathname || '').replace(/\/+$/, '') || '/';
+  return Object.prototype.hasOwnProperty.call(BUNDLED_PAGES, p) ? BUNDLED_PAGES[p] : null;
+}
+
+if (isNative) {
+  try {
+    var target = bundledPageFor(location.pathname);
+    if (target) {
+      location.replace(target + location.search + location.hash);
+    } else if (WEB_ONLY_PATH.test(location.pathname)) {
+      var live = LIVE_SITE + location.pathname + location.search + location.hash;
+      Browser.open({ url: live }).catch(function () {});
+      location.replace('/');
+    }
+  } catch (e) {}
+}
+
 if (isNative) {
   try {
     document.documentElement.classList.add('is-native-app');
@@ -38,71 +75,49 @@ if (isNative) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Native feel: app-like touch behaviour + status/navigation bars that match
-// the page (light/dark theme) instead of a fixed strip.
-// ---------------------------------------------------------------------------
+// Links: bundled pages go straight to their file; website-only pages open from the live site.
 if (isNative) {
-  try {
-    var nativeCss = document.createElement('style');
-    nativeCss.id = 'medladder-native-css';
-    nativeCss.textContent = [
-      'html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}',
-      // No long-press text selection / link previews on UI chrome (question and explanation text stay selectable)
-      'button,a,nav,header,footer,label,summary,[role="button"],[role="tab"],.opt,.v3-li,.btn,img,svg{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}',
-      'input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text;}',
-      // Pressed state like a native control
-      'button,.opt,.v3-li,.btn,[role="button"]{transition:transform .08s ease,filter .08s ease;}',
-      'button:active:not(:disabled),.opt:active:not(:disabled),.v3-li:active,.btn:active:not(:disabled),[role="button"]:active{transform:scale(.985);filter:brightness(.96);}',
-      // Hide scrollbars like native lists
-      '::-webkit-scrollbar{width:0;height:0;}'
-    ].join('\n');
-    (document.head || document.documentElement).appendChild(nativeCss);
-  } catch (e) {}
-
-  // No pinch-zoom inside the app
-  try {
-    var vp = document.querySelector('meta[name="viewport"]');
-    if (vp && !/maximum-scale/.test(vp.content)) vp.content += ', maximum-scale=1, user-scalable=no';
-  } catch (e) {}
-}
-
-function cssColorToHex(c) {
-  var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(c || '');
-  if (!m || (m[4] !== undefined && parseFloat(m[4]) === 0)) return null;
-  return '#' + [m[1], m[2], m[3]].map(function (n) { return ('0' + parseInt(n, 10).toString(16)).slice(-2); }).join('');
-}
-
-var lastBarsKey = '';
-function syncSystemBars() {
-  if (!isNative) return;
-  try {
-    var dark = document.documentElement.classList.contains('dark');
-    var bg = (document.body && cssColorToHex(getComputedStyle(document.body).backgroundColor)) ||
-      cssColorToHex(getComputedStyle(document.documentElement).backgroundColor) ||
-      (dark ? '#0b0d17' : '#ffffff');
-    var key = bg + (dark ? 'd' : 'l');
-    if (key === lastBarsKey) return;
-    lastBarsKey = key;
-    if (window.MedLadderAndroidApp && typeof window.MedLadderAndroidApp.setBarsColor === 'function') {
-      window.MedLadderAndroidApp.setBarsColor(bg);
-    }
-    // DARK style = light icons (for dark backgrounds), LIGHT style = dark icons
-    SystemBars.setStyle({ style: dark ? SystemBarsStyle.Dark : SystemBarsStyle.Light }).catch(function () {});
-  } catch (e) {}
-}
-
-if (isNative) {
-  var startBarsSync = function () {
-    syncSystemBars();
+  document.addEventListener('click', function (e) {
     try {
-      new MutationObserver(function () { setTimeout(syncSystemBars, 50); })
-        .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    } catch (e) {}
-    App.addListener('resume', function () { lastBarsKey = ''; syncSystemBars(); });
-  };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startBarsSync);
-  else startBarsSync();
+      if (e.defaultPrevented) return;
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a || (a.target && a.target !== '_self')) return;
+      var url = new URL(a.getAttribute('href'), location.href);
+      if (url.origin !== location.origin) return;
+      var page = bundledPageFor(url.pathname);
+      if (page) {
+        e.preventDefault();
+        location.href = page + url.search + url.hash;
+        return;
+      }
+      if (!WEB_ONLY_PATH.test(url.pathname)) return;
+      e.preventDefault();
+      Browser.open({ url: LIVE_SITE + url.pathname + url.search + url.hash }).catch(function () {
+        location.href = LIVE_SITE + url.pathname + url.search + url.hash;
+      });
+    } catch (err) {}
+  }, true);
+}
+
+// Strips around the page (camera cutout at the top, navigation bar) take the page's background.
+function syncStripColor() {
+  try {
+    if (!window.MedLadderAndroidApp || typeof window.MedLadderAndroidApp.setBarsColor !== 'function') return;
+    var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(document.documentElement).backgroundColor || '');
+    var dark = document.documentElement.classList.contains('dark');
+    var hex = m ? '#' + [m[1], m[2], m[3]].map(function (n) { return ('0' + (+n).toString(16)).slice(-2); }).join('') : (dark ? '#140326' : '#F8F3FC');
+    if (hex === syncStripColor.last) return;
+    syncStripColor.last = hex;
+    window.MedLadderAndroidApp.setBarsColor(hex);
+  } catch (e) {}
+}
+if (isNative) {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncStripColor);
+  else syncStripColor();
+  try {
+    new MutationObserver(function () { setTimeout(syncStripColor, 60); })
+      .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
 }
 
 var backHandlers = [];
@@ -377,6 +392,5 @@ window.MedLadderNative = {
   haptic: haptic,
   hapticsEnabled: hapticsEnabled,
   setHapticsEnabled: setHapticsEnabled,
-  syncSystemBars: syncSystemBars,
   Updater: CapacitorUpdater
 };

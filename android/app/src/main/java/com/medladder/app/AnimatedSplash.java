@@ -72,6 +72,7 @@ public class AnimatedSplash {
     private boolean contentReady = false;
     private boolean finished = false;
     private Integer pendingBarsColor = null;
+    private ViewTreeObserver.OnGlobalLayoutListener layoutListener;
 
     public AnimatedSplash(Activity activity) {
         this.activity = activity;
@@ -97,7 +98,8 @@ public class AnimatedSplash {
 
             overlay = new FrameLayout(activity);
             overlay.setBackground(new CenterCropArt(overlay));
-            overlay.setClickable(true); // swallow touches while showing
+            // Swallow touches only while the splash is up; once finishing, let everything through.
+            overlay.setOnTouchListener((v, e) -> !finished);
 
             for (int i = 0; i < RES.length; i++) {
                 ImageView iv = new ImageView(activity);
@@ -118,20 +120,25 @@ public class AnimatedSplash {
             bars.setAppearanceLightStatusBars(true);
             bars.setAppearanceLightNavigationBars(false);
 
-            overlay.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            layoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
                 boolean started = false;
 
                 @Override
                 public void onGlobalLayout() {
+                    // This observer belongs to the whole window and keeps firing after the
+                    // splash is gone, so it must never touch a removed overlay.
+                    FrameLayout ov = overlay;
+                    if (ov == null || finished && ov.getParent() == null) return;
                     layoutPieces();
-                    overlay.invalidate();
+                    ov.invalidate();
                     decor.invalidate();
-                    if (!started && overlay.getWidth() > 0) {
+                    if (!started && ov.getWidth() > 0) {
                         started = true;
                         animateIn();
                     }
                 }
-            });
+            };
+            decor.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
 
             handler.postDelayed(this::finish, MAX_SHOW_MS);
         } catch (Throwable t) {
@@ -182,6 +189,7 @@ public class AnimatedSplash {
     }
 
     private void animateIn() {
+        if (overlay == null) return;
         float density = activity.getResources().getDisplayMetrics().density;
         float slide = overlay.getWidth() * 0.18f;
         List<Animator> all = new ArrayList<>();
@@ -250,6 +258,8 @@ public class AnimatedSplash {
         finished = true;
         handler.removeCallbacksAndMessages(null);
         if (overlay == null) return;
+        // Stop catching touches right away, so the app underneath is usable during the fade.
+        overlay.setOnTouchListener(null);
         overlay.animate()
             .alpha(0f)
             .scaleX(1.04f)
@@ -257,11 +267,18 @@ public class AnimatedSplash {
             .setDuration(300)
             .withEndAction(this::removeOverlay)
             .start();
+        // withEndAction does not run if the animation gets cancelled: always remove anyway.
+        handler.postDelayed(this::removeOverlay, 450);
     }
 
     private void removeOverlay() {
+        if (overlay == null) return;
         try {
             View decor = activity.getWindow().getDecorView();
+            if (layoutListener != null) {
+                decor.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
+                layoutListener = null;
+            }
             decor.setBackground(new ColorDrawable(pendingBarsColor != null ? pendingBarsColor : 0xFFFFFFFF));
             if (overlay != null && overlay.getParent() instanceof ViewGroup) {
                 ((ViewGroup) overlay.getParent()).removeView(overlay);

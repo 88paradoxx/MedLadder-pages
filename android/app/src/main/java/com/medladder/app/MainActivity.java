@@ -12,8 +12,14 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
-import androidx.core.splashscreen.SplashScreen;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.graphics.Insets;
 import android.graphics.Color;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import android.os.Build;
+import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -54,12 +60,15 @@ public class MainActivity extends BridgeActivity {
             runOnUiThread(() -> Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show());
         }
 
-        /** Colour behind the status/navigation bars, matched to the page's theme. */
+        /** Colour of the strips around the page (camera cutout / navigation bar), matched to the page. */
         @android.webkit.JavascriptInterface
         public void setBarsColor(String hex) {
             try {
                 final int color = Color.parseColor(hex);
-                runOnUiThread(() -> applyBarsColor(color));
+                runOnUiThread(() -> {
+                    if (animatedSplash != null && animatedSplash.isShowing()) animatedSplash.setPendingBarsColor(color);
+                    else getWindow().getDecorView().setBackgroundColor(color);
+                });
             } catch (Exception ignored) {}
         }
 
@@ -71,23 +80,15 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // System splash (required on Android 12+) is only a plain background here; it is
-        // removed on the first frame and the animated MedLadder splash takes over.
-        SplashScreen splash = SplashScreen.installSplashScreen(this);
-        splash.setOnExitAnimationListener(provider -> provider.remove());
-
-        super.onCreate(savedInstanceState);
-        // Edge-to-edge on every Android version (Play recommendation). Must run AFTER
-        // super.onCreate so the window is created with the app theme, not the launch theme.
-        // Capacitor's SystemBars pads the WebView so content never sits under the bars.
+        // Edge-to-edge on every Android version (Play recommendation); Capacitor's
+        // SystemBars pads the WebView so content never sits under the bars.
         EdgeToEdge.enable(this);
-
-        if (savedInstanceState == null) { // cold start only, not on rotation / theme recreate
+        super.onCreate(savedInstanceState);
+        hideStatusBar();
+        fixKeyboardGap();
+        if (savedInstanceState == null) { // cold start only
             animatedSplash = new AnimatedSplash(this);
             animatedSplash.show();
-        }
-        if (getBridge() != null && getBridge().getWebView() != null) {
-            getBridge().getWebView().setBackgroundColor(Color.WHITE);
         }
         try {
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
@@ -96,18 +97,47 @@ public class MainActivity extends BridgeActivity {
         setupUpiIntentHandler();
     }
 
-    private void applyBarsColor(int color) {
+    /**
+     * Full screen: hide the status bar (swipe down from the top edge shows it briefly).
+     * The navigation bar stays, so back/home gestures and buttons keep working.
+     */
+    private void hideStatusBar() {
         try {
-            if (animatedSplash != null && animatedSplash.isShowing()) {
-                // Keep the splash art behind the bars; use this colour once it is gone.
-                animatedSplash.setPendingBarsColor(color);
-            } else {
-                getWindow().getDecorView().setBackgroundColor(color);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                // Use the area beside a camera cutout too; Capacitor still pads content clear of it.
+                WindowManager.LayoutParams lp = getWindow().getAttributes();
+                lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                getWindow().setAttributes(lp);
             }
-            if (getBridge() != null && getBridge().getWebView() != null) {
-                getBridge().getWebView().setBackgroundColor(color);
-            }
+            WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            bars.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            bars.hide(WindowInsetsCompat.Type.statusBars());
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * Capacitor pads the window by the keyboard height, and the WebView also shrank its own
+     * viewport for the same keyboard insets, leaving a large empty gap above the keyboard
+     * (e.g. on the sign-in form). Hand the WebView the insets without the keyboard part.
+     */
+    private void fixKeyboardGap() {
+        try {
+            if (getBridge() == null || getBridge().getWebView() == null) return;
+            ViewCompat.setOnApplyWindowInsetsListener(getBridge().getWebView(), (v, insets) -> {
+                WindowInsetsCompat noIme = new WindowInsetsCompat.Builder(insets)
+                    .setInsets(WindowInsetsCompat.Type.ime(), Insets.NONE)
+                    .setVisible(WindowInsetsCompat.Type.ime(), false)
+                    .build();
+                return ViewCompat.onApplyWindowInsets(v, noIme);
+            });
+        } catch (Exception ignored) {}
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // Android can bring the status bar back after dialogs, the keyboard or app switching.
+        if (hasFocus) hideStatusBar();
     }
 
     @Override

@@ -2354,6 +2354,12 @@ window.addEventListener('error', function (ev) {
         } else {
           directoryHtml = '<nav class="footer-directory footer-directory-minimal" aria-label="Site information"><div class="footer-directory-group"><strong>MedLadder</strong><div><a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></div></nav>';
         }
+        // In the Android app the website's directory (exam hubs, PYQs, guides) and social links
+        // are not needed: keep only the copyright line with Privacy / Terms.
+        if (isNative) {
+          return '<footer class="credit v3 v3-foot v3-foot-app"><div class="v3f"><p class="v3f-copy">© ' + new Date().getFullYear() +
+            ' MedLadder · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/terms#cancellation-refund">Refunds</a></p></div></footer>';
+        }
         if (v2On()) return v3FooterHtml(isNative, directoryHtml);
         return '<footer class="credit">' +
           '<div class="footer-content">' +
@@ -3697,7 +3703,15 @@ window.addEventListener('error', function (ev) {
       // Every in-place view change resets the window scroll: without this,
       // opening a subject/topic from the bottom of a list showed the new
       // view scrolled to that same position instead of its top.
-      function scrollToPageTop() { window.scrollTo(0, 0); }
+      // Jump (not glide) to the top: html has scroll-behavior:smooth, which made a new screen
+      // appear at the old scroll position and then slide up.
+      function scrollToPageTop() {
+        var root = document.documentElement;
+        var prev = root.style.scrollBehavior;
+        root.style.scrollBehavior = 'auto';
+        window.scrollTo(0, 0);
+        root.style.scrollBehavior = prev;
+      }
 
       function renderHome(force) {
         // Home is document-dependent (home-only scripts, URL, title, tags):
@@ -6429,12 +6443,15 @@ window.addEventListener('error', function (ev) {
         hideStaticFooter();
       }
       function v2Paint(screen, html) {
+        var newScreen = state.screen !== screen;
         clearTimer();
         releaseQuizPayload();
         state.screen = screen;
         state.idSet = null;
         if (app) app.classList.remove('screen-quiz', 'screen-setup', 'screen-results');
         app.innerHTML = html;
+        // A different screen always opens at the top (re-renders of the same screen keep their place).
+        if (newScreen) scrollToPageTop();
       }
       // Render now from what is in hand, then once more when the history lands.
       function v2WithHistory(screen, again) {
