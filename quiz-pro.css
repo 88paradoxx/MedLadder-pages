@@ -4268,3 +4268,27 @@ html.ml-reading #app .rr-review-cta .rr-review-btn2 { flex: 1 1 auto !important;
 html.ml-reading #app .v3-foot-app .v3f { padding: 14px 18px !important; min-height: 0 !important; }
 html.ml-reading #app .v3-foot-app .v3f > :not(.v3f-copy) { display: none !important; }
 html.ml-reading #app .v3-foot-app .v3f-copy { margin: 0 !important; padding: 0 !important; border-top: 0 !important; }
+
+/* Previous results: list on a topic's start screen, and the note on a
+   reopened result. */
+html.ml-reading #app .rr-past { margin-top: 28px !important; padding-top: 20px !important; border-top: 1px solid var(--rr-rule-soft) !important; }
+html.ml-reading #app .rr-past[hidden] { display: none !important; }
+html.ml-reading #app .rr-past-list { display: flex !important; flex-direction: column !important; gap: 8px !important; }
+html.ml-reading #app .rr-past-row {
+  display: flex !important; align-items: center !important; gap: 12px !important; width: 100% !important; min-height: 56px !important;
+  padding: 10px 14px !important; border: 1px solid var(--rr-rule) !important; border-radius: 14px !important;
+  background: var(--rr-raised) !important; color: var(--rr-ink) !important; text-align: left !important; cursor: pointer !important;
+  font: 500 14px var(--rr-sans) !important; transform: none !important;
+}
+html.ml-reading #app .rr-past-row:hover { border-color: var(--rr-ink-quiet) !important; }
+html.ml-reading #app .rr-past-row > svg { flex: none !important; transform: rotate(-90deg) !important; color: var(--rr-ink-quiet) !important; }
+html.ml-reading #app .rr-past-main { flex: 1 !important; min-width: 0 !important; display: flex !important; flex-direction: column !important; gap: 2px !important; }
+html.ml-reading #app .rr-past-main b { font-weight: 600 !important; color: var(--rr-ink) !important; }
+html.ml-reading #app .rr-past-main span { color: var(--rr-ink-quiet) !important; font-size: 12.5px !important; }
+html.ml-reading #app .rr-past-pct { flex: none !important; font: 700 15px var(--rr-sans) !important; font-variant-numeric: tabular-nums !important; padding: 4px 10px !important; border-radius: 999px !important; }
+html.ml-reading #app .rr-past-pct.ok { color: var(--rr-ok) !important; background: var(--rr-ok-bg) !important; }
+html.ml-reading #app .rr-past-pct.low { color: var(--rr-bad) !important; background: var(--rr-bad-bg) !important; }
+html.ml-reading #app .rr-past-pct.part { color: var(--rr-ink-quiet) !important; font-size: 12px !important; font-weight: 600 !important; border: 1px solid var(--rr-rule) !important; }
+html.ml-reading #app .rr-past-note { margin: 4px 0 14px !important; color: var(--rr-ink-quiet) !important; font: 500 13.5px var(--rr-sans) !important; }
+html.ml-reading #app .v2-recent-go { cursor: pointer !important; }
+html.ml-reading #app .v2-recent-go:hover { border-color: var(--x-line2, var(--rr-ink-quiet)) !important; }

@@ -4908,6 +4908,7 @@ window.addEventListener('error', function (ev) {
           '</div>' +
           '</details>' +
           lastRunHtml +
+          '<section class="rr-past" id="rrPast" hidden></section>' +
           '</main>';
 
         // Every choice re-renders this screen; remember whether the panel was
@@ -4917,6 +4918,7 @@ window.addEventListener('error', function (ev) {
 
         wireTopBar(function () { renderModuleList(subjectId); });
         wireRipples('.type-card, .pill-choice, .btn, .auth-btn');
+        if (pool && typeof pool.moduleDbId === 'number') loadPastAttempts(pool.moduleDbId, function () { renderSetup(subjectId, moduleId); });
 
         app.querySelectorAll('#typeGrid .type-card').forEach(function (btn) {
           btn.addEventListener('click', function () { setupChoice.quizType = btn.getAttribute('data-type'); renderSetup(subjectId, moduleId); });
@@ -5966,9 +5968,11 @@ window.addEventListener('error', function (ev) {
                 try { when = new Date(r.started_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { }
                 var n = r.attempt_answers && r.attempt_answers[0] ? r.attempt_answers[0].count : null;
                 var score = (r.finished_at && r.score_pct != null) ? '<span class="v2-badge ' + (r.score_pct >= 60 ? 'ok' : 'bad') + '">' + r.score_pct + '%</span>' : '<span class="v2-cont-s">' + (n != null ? n + ' of ' + (r.question_count || '?') + ' done' : 'Not finished') + '</span>';
-                return '<div class="v2-card2 v2-weak v2-recent">' + (sx ? v2SubjIcon(sx, 36) : '<span class="v2-subj-ic" style="width:36px;height:36px"></span>') +
+                var nA = r.attempt_answers && r.attempt_answers[0] ? r.attempt_answers[0].count : 0;
+                return '<div class="v2-card2 v2-weak v2-recent' + (nA ? ' v2-recent-go" role="button" tabindex="0" data-attempt="' + esc(String(r.id)) : '') + '">' + (sx ? v2SubjIcon(sx, 36) : '<span class="v2-subj-ic" style="width:36px;height:36px"></span>') +
                   '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(label) + '</span><span class="v2-cont-s">' + esc(when) + (r.question_count ? ' · ' + r.question_count + ' questions' : '') + '</span></span>' + score + '</div>';
               }).join('');
+              wirePastRows(recentEl, function () { renderDashboard(); });
             });
         } catch (e) { console.warn('dashboard recent sessions failed:', e); }
       }
@@ -6242,6 +6246,128 @@ window.addEventListener('error', function (ev) {
       // A practice set built from question ids: today's set, a review set or a
       // mixed subject set. Answers are logged like any other quiz, so the next
       // home screen already knows about them.
+      // ---- previous results ------------------------------------------------------
+      // Every finished or partly finished run is stored (attempts + attempt_answers),
+      // so an earlier result can be shown again on the same end-of-quiz screen:
+      // score, the questions missed, and the full review with explanations.
+      function pastWhen(iso) {
+        try { return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; }
+      }
+      function pastTime(iso) {
+        try { return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; }
+      }
+      // The "Previous results" list on a topic's start screen (signed-in only).
+      function loadPastAttempts(moduleDbId, back) {
+        var el = document.getElementById('rrPast');
+        if (!el || !currentUser || !supabaseClient) return;
+        try {
+          supabaseClient.from('attempts')
+            .select('id,question_count,score_pct,started_at,finished_at,quiz_type,attempt_answers(count)')
+            .eq('user_id', currentUser.id).eq('module_id', moduleDbId)
+            .order('started_at', { ascending: false }).limit(10)
+            .then(function (res) {
+              var host = document.getElementById('rrPast');
+              if (!host || state.screen !== 'setup') return;
+              var rows = ((res && !res.error && res.data) || []).filter(function (r) {
+                return r.attempt_answers && r.attempt_answers[0] && r.attempt_answers[0].count > 0;
+              });
+              if (!rows.length) return;
+              host.innerHTML = '<div class="rr-eyebrow">Previous results</div><div class="rr-past-list">' + rows.map(function (r) {
+                var n = r.attempt_answers[0].count;
+                var pct = r.score_pct != null ? r.score_pct : null;
+                var tag = r.quiz_type === 'timed' ? ' \u00b7 Timed' : '';
+                return '<button class="rr-past-row" data-attempt="' + esc(String(r.id)) + '">' +
+                  '<span class="rr-past-main"><b>' + esc(pastWhen(r.started_at)) + '</b><span>' + esc(pastTime(r.started_at)) + ' \u00b7 ' + n + (r.question_count && r.question_count > n ? ' of ' + r.question_count : '') + ' answered' + tag + '</span></span>' +
+                  (pct != null && r.finished_at ? '<span class="rr-past-pct ' + (pct >= 60 ? 'ok' : 'low') + '">' + pct + '%</span>' : '<span class="rr-past-pct part">Unfinished</span>') +
+                  RR_CHEVRON_SVG + '</button>';
+              }).join('') + '</div>';
+              host.hidden = false;
+              host.querySelectorAll('[data-attempt]').forEach(function (b) {
+                b.addEventListener('click', function () { openAttemptReport(b.getAttribute('data-attempt'), back); });
+              });
+            }, function () { });
+        } catch (e) { }
+      }
+      function wirePastRows(host, back) {
+        if (!host) return;
+        host.querySelectorAll('[data-attempt]').forEach(function (row) {
+          var go = function () { openAttemptReport(row.getAttribute('data-attempt'), back); };
+          row.addEventListener('click', go);
+          row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+        });
+      }
+      function openAttemptReport(attemptId, back) {
+        if (!currentUser || !supabaseClient || quizLoadInFlight) return;
+        if (!quizStylesReady) { ensureQuizStyles().then(function () { openAttemptReport(attemptId, back); }); return; }
+        var fail = function () { showToast('Could not open this result. Please try again.', 'error'); back(); };
+        quizLoadInFlight = true;
+        v2Loading('Previous result', 'Loading your answers', back);
+        supabaseClient.from('attempts')
+          .select('id,subject_id,module_id,question_count,score_pct,started_at,finished_at,quiz_type,attempt_answers(question_id,picked_option,is_correct,skipped,answered_at)')
+          .eq('id', attemptId).eq('user_id', currentUser.id).single()
+          .then(function (res) {
+            if (!res || res.error || !res.data) { quizLoadInFlight = false; fail(); return; }
+            var at = res.data;
+            var answers = {}, ids = [];
+            (at.attempt_answers || []).slice().sort(function (x, y) { return String(x.answered_at).localeCompare(String(y.answered_at)); }).forEach(function (r) {
+              var k = String(r.question_id);
+              if (answers[k]) return;
+              ids.push(r.question_id);
+              answers[k] = { picked: r.skipped ? null : (r.picked_option || null), isCorrect: !!r.is_correct, skipped: !!r.skipped };
+            });
+            if (!ids.length) { quizLoadInFlight = false; showToast('No answers were saved for this run.'); back(); return; }
+            return supabaseClient.from('questions')
+              .select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,module_id')
+              .in('id', ids).then(function (qres) {
+                var byId = {};
+                ((qres && !qres.error && qres.data) || []).forEach(function (r) { byId[r.id] = r; });
+                var rows = ids.map(function (id) { return byId[id]; }).filter(function (r) { return !!r; });
+                if (!rows.length) { quizLoadInFlight = false; fail(); return; }
+                return loadQuestionImages(rows).then(function (imageRows) {
+                  quizLoadInFlight = false;
+                  var imgs = {};
+                  imageRows.forEach(function (image) {
+                    var key = String(image.question_id);
+                    if (!imgs[key]) imgs[key] = { question_text: [], explanation: [] };
+                    if (image.content_field && imgs[key][image.content_field]) imgs[key][image.content_field].push(image);
+                  });
+                  var questions = rows.map(function (r) {
+                    var o = {};
+                    ['A', 'B', 'C', 'D', 'E'].forEach(function (L) { var v = r['option_' + L.toLowerCase()]; if (v) o[L] = v; });
+                    return {
+                      id: r.id, moduleId: r.module_id, num: String(r.id || r.question_num),
+                      question: r.question_text || '', options: o, answer: r.answer || 'A',
+                      explanation: r.explanation || '',
+                      questionImages: (imgs[String(r.id)] || {}).question_text || [],
+                      explanationImages: (imgs[String(r.id)] || {}).explanation || []
+                    };
+                  });
+                  var info = at.module_id != null ? v2ModIndex()[at.module_id] : null;
+                  var sx = info ? info.sx : SUBJECT_INDEX.find(function (x) { return String(x.subjectId) === String(at.subject_id); });
+                  var title = info ? (info.sx.name + ' \u2014 ' + info.m.name) : (sx ? sx.name + ' mixed set' : 'Mixed set');
+                  var answered = questions.length;
+                  var note = 'Your result from ' + pastWhen(at.started_at) + ', ' + pastTime(at.started_at) +
+                    (at.quiz_type === 'timed' ? ' \u00b7 Timed' : '') +
+                    (at.question_count && at.question_count > answered ? ' \u00b7 ' + answered + ' of ' + at.question_count + ' questions answered' : '');
+                  var again = info
+                    ? function () { renderSetup(info.sx.subjectId, info.m.moduleId); }
+                    : back;
+                  state = {
+                    screen: 'results', subjectId: info ? info.sx.subjectId : (sx ? sx.subjectId : null), moduleId: 'past',
+                    poolTitle: title, questions: questions, order: questions.map(function (q, i) { return i; }),
+                    idx: 0, answers: answers, quizType: at.quiz_type === 'timed' ? 'timed' : 'practice', timeLimit: 0, remaining: 0,
+                    timerId: null, progressKey: 'past', idSet: { back: back, again: again }, past: { id: at.id, note: note }
+                  };
+                  renderResults(false);
+                });
+              });
+          }).catch(function (err) {
+            quizLoadInFlight = false;
+            console.warn('openAttemptReport failed:', err);
+            fail();
+          });
+      }
+
       function launchIdQuiz(ids, opts) {
         if (quizLoadInFlight) return;
         if (!ids || !ids.length) { showToast('Nothing to practise here yet.'); opts.back(); return; }
@@ -6731,10 +6857,12 @@ window.addEventListener('error', function (ev) {
                 try { when = new Date(r.started_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { }
                 var n = r.attempt_answers && r.attempt_answers[0] ? r.attempt_answers[0].count : null;
                 var score = (r.finished_at && r.score_pct != null) ? '<span class="v2-badge ' + (r.score_pct >= 60 ? 'ok' : 'bad') + '">' + r.score_pct + '%</span>' : '<span class="v2-cont-s">' + (n != null ? n + ' of ' + (r.question_count || '?') : 'Not finished') + '</span>';
-                return '<div class="v2-card2 v2-weak v2-recent">' + (sx ? v2SubjIcon(sx, 36) : '<span class="v2-subj-ic" style="width:36px;height:36px"></span>') +
+                var nA = r.attempt_answers && r.attempt_answers[0] ? r.attempt_answers[0].count : 0;
+                return '<div class="v2-card2 v2-weak v2-recent' + (nA ? ' v2-recent-go" role="button" tabindex="0" data-attempt="' + esc(String(r.id)) : '') + '">' + (sx ? v2SubjIcon(sx, 36) : '<span class="v2-subj-ic" style="width:36px;height:36px"></span>') +
                   '<span class="v2-cont-main"><span class="v2-cont-t">' + esc(label) + '</span><span class="v2-cont-s">' + esc(when) + (r.question_count ? ' · ' + r.question_count + ' questions' : '') + '</span></span>' + score + '</div>';
               }).join('');
               el.hidden = false;
+              wirePastRows(el, function () { renderHome(true); });
             }, function () { });
         } catch (e) { }
       }
@@ -8436,6 +8564,8 @@ window.addEventListener('error', function (ev) {
         var correct = Object.values(state.answers).filter(function (a) { return a.isCorrect; }).length;
         var pct = Math.round((correct / total) * 100);
         var wrongCount = Object.values(state.answers).filter(function (a) { return !a.isCorrect; }).length;
+        var past = state.past || null;
+        if (!past) {
         saveProgress();
         try { finishAttemptLog(pct); } catch (err) { console.warn('finishAttemptLog failed:', err); }
         trackEvent('quiz_complete', {
@@ -8448,6 +8578,7 @@ window.addEventListener('error', function (ev) {
           timed_out: !!timedOut,
           is_pyq: !!state.isPyqMode
         });
+        }
 
         // Build the review only when the user asks for it. Large modules can
         // contain hundreds of explanations and images; doing this during the
@@ -8504,6 +8635,7 @@ window.addEventListener('error', function (ev) {
         app.innerHTML =
           rrTopBar('Back', resCrumb) +
           '<main id="mainContent" role="main" class="rr-results">' +
+          (past ? '<p class="rr-past-note">' + esc(past.note) + '</p>' : '') +
           rrResultSummary(correct, total, pct, timedOut) +
           // A clear way into the answers and explanations, right under the
           // score (the old "Show full review" link was easy to miss).
@@ -8525,7 +8657,7 @@ window.addEventListener('error', function (ev) {
           '<div id="reviewBlock" class="hidden" data-loaded="false">' + reviewHtml + '</div>' +
           '<div class="result-actions rr-res-actions">' +
           (currentUser && wrongCount ? '<button class="btn" id="retryMissedBtn">Retry the ' + wrongCount + ' missed</button>' : '') +
-          '<button class="btn secondary" id="retryBtn">Retry</button>' +
+          '<button class="btn secondary" id="retryBtn">' + (past ? 'Practise this topic again' : 'Retry') + '</button>' +
           '<button class="btn secondary" id="setupBtn">' + (state.idSet ? 'Done' : state.isPyqMode ? 'Change paper' : 'Change setup') + '</button>' +
           '</div>' +
           '</main>';
