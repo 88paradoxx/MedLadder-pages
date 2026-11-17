@@ -715,6 +715,7 @@
       '<div class="bt-spec-grid"><section class="bt-card"><div class="bt-label"><span class="bt-live-dot">LIVE</span> Leaderboard</div><ol class="bt-lb" id="btLB"></ol></section>' +
       '<section class="bt-card"><div class="bt-label">What’s happening</div><ul class="bt-feed" id="btFeed"><li class="muted">Watching for moves…</li></ul></section></div>' +
       '<p class="bt-note bt-center">Results open for everyone when the last player submits or the clock runs out. You can leave and come back any time with <b>Return to battle</b> or code <b>' + esc(S.code) + '</b>.</p>' +
+      '<section class="bt-card" id="btMyRev"><div class="bt-label">Review your answers</div><p class="bt-sub" style="margin:0">Loading…</p></section>' +
       '<button class="bt-ghost wide" id="btOut">Leave and come back later</button></main>', 'bt-specscr');
     wireBack(home);
     el('btOut').onclick = home;
@@ -738,7 +739,26 @@
       }).catch(function () { });
     }
     poll(); every(poll, 1500);
+    rpc('battle_my_review', { p_code: S.code, p_token: S.token }).then(drawMyReview).catch(function () { var b = el('btMyRev'); if (b) b.remove(); });
     every(function () { var t = el('btTime'); if (t && S.ends) t.textContent = mmss((S.ends - srvNow()) / 1000); }, 500);
+  }
+  // While waiting: your own answers with the right ones, explanations for Pro (or free topics).
+  function drawMyReview(d) {
+    var box = el('btMyRev'); if (!box || !d) return;
+    var qs = d.questions || [];
+    var right = qs.filter(function (q) { return q.mine && q.mine === q.answer; }).length;
+    box.innerHTML = '<div class="bt-label">Review your answers <small>' + right + ' of ' + qs.length + ' right</small></div>' + qs.map(function (q, i) {
+      var opts = q.options.map(function (t, k) {
+        var L = q.letters[k], cls = L === q.answer ? ' ok' : (L === q.mine ? ' bad' : '');
+        return '<div class="bt-ro' + cls + '"><span class="bt-ol">' + L + '</span><span class="bt-ot">' + B.fmt(t) + (L === q.mine ? ' <em>your answer</em>' : '') + '</span></div>';
+      }).join('');
+      var verdict = !q.mine ? 'Not answered' : (q.mine === q.answer ? 'Correct' : 'Wrong');
+      return '<details class="bt-rev ' + (q.mine === q.answer ? 'good' : 'miss') + '"><summary><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span></summary><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' +
+        (q.image ? '<img class="bt-img" alt="Question image" loading="lazy" src="' + esc(q.image) + '">' : '') + opts +
+        (d.explanations_locked ? '<div class="bt-exp bt-exp-lock"><b>🔒 Explanation is in Pro</b><span>Battle explanations are a Pro feature. Pro also unlocks all 740 topics and PYQs.</span><button class="bt-cta inline" data-pro="1">Get Pro</button></div>'
+          : '<div class="bt-exp">' + (q.explanation ? B.fmtExp(q.explanation) : '<em>No explanation for this item.</em>') + '</div>') + '</div></details>';
+    }).join('');
+    box.querySelectorAll('[data-pro]').forEach(function (b) { b.onclick = function () { if (B.user()) B.openPro('battle'); else signUpThen(function () { B.openPro('battle'); }); }; });
   }
   function drawPod(rk) {
     var box = el('btPod'); if (!box) return;
