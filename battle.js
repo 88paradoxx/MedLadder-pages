@@ -148,6 +148,11 @@
       music: music,
       unlock: function () { if (mode !== 'off') { ac(); if (S.wantMusic && !musicTimer) music(true, S.musicSoft); } },
       mode: function () { return mode; },
+      set: function (m) {
+        mode = m; lsSet('mlbt_sound2', mode);
+        if (mode !== 'all') music(false); else if (S.wantMusic) music(true, S.musicSoft);
+        if (mode !== 'off') FX.tap();
+      },
       cycle: function () {
         mode = mode === 'all' ? 'fx' : mode === 'fx' ? 'off' : 'all';
         lsSet('mlbt_sound2', mode);
@@ -158,11 +163,38 @@
       }
     };
   })();
+  var THEME = lsGet('mlbt_theme') || 'night';
+  function applyTheme() {
+    var day = THEME === 'day';
+    document.body.classList.toggle('bt-day', day);
+    document.documentElement.classList.toggle('bt-day', day);
+    var root = document.querySelector('#app > .bt'); if (root) root.classList.toggle('day', day);
+  }
+  function setBtn() { return '<button class="bt-set" data-set="1" aria-label="Sound and theme" title="Sound and theme">' + (THEME === 'day' ? '☀️' : '🌙') + '</button>'; }
+  function openSettings() {
+    closeSheet();
+    var m = SND.mode();
+    var sh = document.createElement('div'); sh.className = 'bt-sheet' + (THEME === 'day' ? ' day' : ''); sh.id = 'btSheet';
+    function opt(group, v, label, on) { return '<button class="bt-opt-p' + (on ? ' on' : '') + '" data-g="' + group + '" data-v="' + v + '">' + label + '</button>'; }
+    sh.innerHTML = '<div class="bt-sheet-bg"></div><div class="bt-sheet-card"><div class="bt-sheet-h">Battle settings<button class="bt-sheet-x" aria-label="Close">✕</button></div>' +
+      '<div class="bt-label">Look</div><div class="bt-opt-row">' + opt('theme', 'night', '🌙 Night', THEME === 'night') + opt('theme', 'day', '☀️ Day', THEME === 'day') + '</div>' +
+      '<div class="bt-label" style="margin-top:16px">Sound</div><div class="bt-opt-row">' + opt('snd', 'all', '🎵 Music + effects', m === 'all') + opt('snd', 'fx', '🔊 Effects only', m === 'fx') + opt('snd', 'off', '🔇 Off', m === 'off') + '</div></div>';
+    document.body.appendChild(sh);
+    sh.querySelector('.bt-sheet-bg').onclick = closeSheet; sh.querySelector('.bt-sheet-x').onclick = closeSheet;
+    sh.addEventListener('click', function (e) {
+      var b = e.target.closest('.bt-opt-p'); if (!b) return;
+      var g = b.getAttribute('data-g'), v = b.getAttribute('data-v');
+      if (g === 'theme') { THEME = v; lsSet('mlbt_theme', v); applyTheme(); document.querySelectorAll('[data-set]').forEach(function (x) { x.textContent = v === 'day' ? '☀️' : '🌙'; }); sh.classList.toggle('day', v === 'day'); }
+      else SND.set(v);
+      sh.querySelectorAll('.bt-opt-p[data-g="' + g + '"]').forEach(function (x) { x.classList.toggle('on', x === b); });
+    });
+  }
   function soundIcon() { var m = SND.mode(); return m === 'all' ? '🎵' : m === 'fx' ? '🔊' : '🔇'; }
   function soundBtn() { return '<button class="bt-snd" data-snd="1" aria-label="Sound: ' + SND.mode() + '" title="Sound">' + soundIcon() + '</button>'; }
   document.addEventListener('pointerdown', function (e) {
     if (!e.target.closest || !e.target.closest('.bt, .bt-sheet')) return;
     SND.unlock();
+    if (e.target.closest('[data-set]')) { openSettings(); return; }
     var b = e.target.closest('[data-snd]');
     if (b) {
       var m = SND.cycle();
@@ -182,16 +214,17 @@
     B.setScreen('battle');
     document.body.classList.add('ml-battle-on'); document.documentElement.classList.add('ml-battle-on');
     app.className = (app.className || '').replace(/\bscreen-[a-z]+\b/g, '').trim() + ' screen-battle';
-    app.innerHTML = '<div class="bt ' + (cls || '') + '">' + html + '</div><div class="bt-fx" id="btFx" aria-live="polite"></div>';
+    app.innerHTML = '<div class="bt ' + (cls || '') + (THEME === 'day' ? ' day' : '') + '">' + html + '</div><div class="bt-fx" id="btFx" aria-live="polite"></div>';
+    applyTheme();
     try { window.scrollTo(0, 0); } catch (e) { }
   }
   // Drop the arena background as soon as another app screen replaces ours.
-  setInterval(function () { if (document.body.classList.contains('ml-battle-on') && !document.querySelector('#app > .bt')) { document.body.classList.remove('ml-battle-on'); document.documentElement.classList.remove('ml-battle-on'); } }, 400);
+  setInterval(function () { if (document.body.classList.contains('ml-battle-on') && !document.querySelector('#app > .bt')) { document.body.classList.remove('ml-battle-on', 'bt-day'); document.documentElement.classList.remove('ml-battle-on', 'bt-day'); } }, 400);
 
   function topBar(title, backLabel) {
     return '<header class="bt-top"><button class="bt-back" id="btBack" aria-label="' + esc(backLabel || 'Back') + '">' +
       '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>' +
-      '<div class="bt-top-title">' + esc(title || 'Quiz Battle') + '</div><span class="bt-logo">⚔️ Quiz Battles</span>' + soundBtn() + '</header>';
+      '<div class="bt-top-title">' + esc(title || 'Quiz Battle') + '</div><span class="bt-logo">⚔️ Quiz Battles</span>' + setBtn() + '</header>';
   }
   function wireBack(fn) { var b = el('btBack'); if (b) b.onclick = function () { stopAll(); fn(); }; }
   function home() { stopAll(); wantMusic(false); B.home(); }
@@ -453,19 +486,24 @@
 
   function liveShell() {
     var R = 22, C = 2 * Math.PI * R;
-    mount('<header class="bt-hud">' +
+    mount('<div class="bt-lv">' +
+      '<header class="bt-hud">' +
       '<button class="bt-hud-x" id="btLeave" aria-label="Leave battle">✕</button>' +
       '<div class="bt-ring" title="Time left"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="' + R + '" class="bg"/><circle cx="26" cy="26" r="' + R + '" class="fg" id="btRing" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="0"/></svg><b id="btTime">0:00</b></div>' +
       '<div class="bt-scorebox"><span class="bt-score" id="btScore">' + S.score + '</span><small>points</small><span class="bt-plus" id="btPlus"></span></div>' +
       '<div class="bt-combo' + (S.streak >= 2 ? ' on' : '') + '" id="btCombo"><span>🔥</span><b id="btStreak">' + S.streak + '</b></div>' +
-      soundBtn() +
+      setBtn() +
       '<button class="bt-rank" id="btRank" aria-label="Live leaderboard"><small>RANK</small><b id="btRankN">–</b></button>' +
-      '<div class="bt-hud-prog"><i id="btProg"></i></div></header>' +
-      '<div class="bt-live-grid"><main class="bt-qwrap" id="btQ"></main>' +
-      '<aside class="bt-side" id="btSide"><div class="bt-side-h"><span class="bt-live-dot">LIVE</span> Leaderboard</div><ol class="bt-lb" id="btLB"></ol></aside></div>', 'bt-live');
+      '</header>' +
+      '<div class="bt-segs" id="btSegs"></div>' +
+      '<div class="bt-live-grid"><main class="bt-stage" id="btQ"></main>' +
+      '<aside class="bt-side" id="btSide"><div class="bt-side-h"><span class="bt-live-dot">LIVE</span> Leaderboard</div><ol class="bt-lb" id="btLB"></ol></aside></div>' +
+      '</div>', 'bt-live');
     S.ringC = C;
     el('btRank').onclick = openBoardSheet;
     el('btLeave').onclick = confirmLeave;
+    el('btSegs').onclick = function (e) { var d = e.target.closest('[data-p]'); if (!d) return; S.pos = parseInt(d.getAttribute('data-p'), 10); drawQuiz(); };
+    if (!window.__btFit) { window.__btFit = true; window.addEventListener('resize', function () { if (el('btQA')) fitQuiz(); }); }
   }
   function tick() {
     var left = (S.ends - srvNow()) / 1000;
@@ -532,7 +570,7 @@
   // Leaderboard as a sheet over the quiz on phones, so the question never moves.
   function openBoardSheet() {
     closeSheet();
-    var sh = document.createElement('div'); sh.className = 'bt-sheet'; sh.id = 'btSheet';
+    var sh = document.createElement('div'); sh.className = 'bt-sheet' + (THEME === 'day' ? ' day' : ''); sh.id = 'btSheet';
     sh.innerHTML = '<div class="bt-sheet-bg"></div><div class="bt-sheet-card"><div class="bt-sheet-h"><span class="bt-live-dot">LIVE</span> Leaderboard<button class="bt-sheet-x" aria-label="Close">✕</button></div><ol class="bt-lb" id="btSheetLB"></ol></div>';
     document.body.appendChild(sh);
     S.sheetOpen = true;
@@ -542,7 +580,7 @@
   function closeSheet() { var sh = el('btSheet'); if (sh) sh.remove(); S.sheetOpen = false; }
   function confirmLeave() {
     closeSheet();
-    var sh = document.createElement('div'); sh.className = 'bt-sheet'; sh.id = 'btSheet';
+    var sh = document.createElement('div'); sh.className = 'bt-sheet' + (THEME === 'day' ? ' day' : ''); sh.id = 'btSheet';
     sh.innerHTML = '<div class="bt-sheet-bg"></div><div class="bt-sheet-card bt-center"><div class="bt-hero-ic">🚪</div><h2 class="bt-h2">Leave the battle?</h2>' +
       '<p class="bt-sub">Your answers are saved and the clock keeps running. Come back any time before it ends with the <b>Return to battle</b> button, the link, or code <b>' + esc(S.code) + '</b>.</p>' +
       '<button class="bt-cta" id="btStay">Keep playing</button><button class="bt-ghost wide" id="btGo">Leave for now</button></div>';
@@ -556,41 +594,69 @@
     var host = el('btQ'); if (!host) return;
     var n = S.qs.length, q = S.qs[S.order[S.pos]];
     var chosen = S.mine[q.id], res = S.res[q.id];
+    var five = q.letters.length > 4;
     var opts = q.options.map(function (t, i) {
-      var L = q.letters[i], cls = TILE[L] || 't-a';
-      if (chosen) cls += chosen === L ? (res ? (res.correct ? ' right' : ' wrong') : ' picked') : (res && res.answer === L ? ' answer' : ' dim');
-      return '<button class="bt-tile ' + cls + '" data-l="' + L + '"' + (chosen ? ' disabled' : '') + '><span class="bt-tl">' + L + '</span><span class="bt-tt">' + B.fmt(t) + '</span><span class="bt-mark"></span></button>';
-    }).join('');
-    var dots = S.order.map(function (qi, p) {
-      var id = S.qs[qi].id, r = S.res[id];
-      var c = S.mine[id] ? (r ? (r.correct ? ' ok' : ' no') : ' done') : '';
-      return '<button class="bt-dot' + c + (p === S.pos ? ' cur' : '') + '" data-p="' + p + '" aria-label="Question ' + (p + 1) + (S.mine[id] ? ', answered' : '') + '">' + (p + 1) + '</button>';
+      var L = q.letters[i], cls = '';
+      if (chosen) cls = chosen === L ? (res ? (res.correct ? ' right' : ' wrong') : ' picked') : (res && res.answer === L ? ' answer' : ' dim');
+      return '<button class="bt-tile' + cls + '" data-l="' + L + '"' + (chosen ? ' disabled' : '') + '><span class="bt-tl">' + L + '</span><span class="bt-tt"><span class="bt-ti">' + B.fmt(t) + '</span></span><span class="bt-mark"></span></button>';
     }).join('');
     var left = n - answeredCount();
-    host.innerHTML = '<div class="bt-qcard"><div class="bt-qno"><span>Question ' + (S.pos + 1) + '<small> / ' + n + '</small></span>' + (chosen ? '<span class="bt-lock">🔒 Locked in</span>' : '') + '</div>' +
-      '<div class="bt-stem">' + B.fmt(q.text) + '</div>' +
-      (q.image ? '<img class="bt-img" alt="Question image" src="' + esc(q.image) + '">' : '') + '</div>' +
-      '<div class="bt-tiles">' + opts + '</div>' +
-      '<div class="bt-nav"><button class="bt-btn" id="btPrev"' + (S.pos === 0 ? ' disabled' : '') + '>‹ Prev</button>' +
-      '<button class="bt-btn submit" id="btFin">' + (left ? 'Submit (' + left + ' left)' : 'Submit') + '</button>' +
-      '<button class="bt-btn" id="btNext"' + (S.pos === n - 1 ? ' disabled' : '') + '>Next ›</button></div>' +
-      '<details class="bt-paldet"' + (window.innerWidth >= 900 ? ' open' : '') + '><summary>All questions · ' + answeredCount() + ' answered</summary><div class="bt-pal">' + dots + '</div></details>';
-    var prog = el('btProg'); if (prog) prog.style.width = (answeredCount() * 100 / n) + '%';
+    host.innerHTML =
+      '<section class="bt-qa" id="btQA">' +
+        '<div class="bt-qno"><span>Question ' + (S.pos + 1) + ' / ' + n + '</span>' + (chosen ? '<span class="bt-lock">🔒 Locked in</span>' : '') + '</div>' +
+        '<div class="bt-qt" id="btQT">' + B.fmt(q.text) + '</div>' +
+        (q.image ? '<div class="bt-qimg"><img alt="Question image, tap to zoom" src="' + esc(q.image) + '"><span>Tap to zoom</span></div>' : '') +
+      '</section>' +
+      '<section class="bt-tray' + (five ? ' five' : '') + '">' +
+        '<div class="bt-tiles">' + opts + '</div>' +
+        '<div class="bt-nav"><button class="bt-btn" id="btPrev" aria-label="Previous question"' + (S.pos === 0 ? ' disabled' : '') + '>‹</button>' +
+        '<button class="bt-btn submit" id="btFin">' + (left ? 'Submit · ' + left + ' left' : 'Submit') + '</button>' +
+        '<button class="bt-btn" id="btNext" aria-label="Next question"' + (S.pos === n - 1 ? ' disabled' : '') + '>›</button></div>' +
+      '</section>';
+    drawSegs();
     el('btPrev').onclick = function () { S.pos--; drawQuiz(); };
     el('btNext').onclick = function () { S.pos++; drawQuiz(); };
     el('btFin').onclick = confirmSubmit;
-    host.querySelector('.bt-pal').onclick = function (e) { var d = e.target.closest('.bt-dot'); if (!d) return; S.pos = parseInt(d.getAttribute('data-p'), 10); drawQuiz(); };
     host.querySelector('.bt-tiles').onclick = function (e) {
       var b = e.target.closest('.bt-tile'); if (!b || b.disabled || S.mine[q.id]) return;
       SND.play('tap');
       answer(q, b.getAttribute('data-l'), S.pos);
     };
+    fitQuiz();
+    var img = host.querySelector('.bt-qa img'); if (img && !img.complete) img.onload = fitQuiz;
+  }
+  // One segment per question: green right, red wrong, violet answered, ring = current.
+  function drawSegs() {
+    var box = el('btSegs'); if (!box || !S.qs) return;
+    var n = S.order.length;
+    box.style.gridTemplateColumns = 'repeat(' + n + ', minmax(0, 1fr))';
+    box.classList.toggle('many', n > 40);
+    box.innerHTML = S.order.map(function (qi, p) {
+      var id = S.qs[qi].id, r = S.res[id];
+      var c = S.mine[id] ? (r ? (r.correct ? 'ok' : 'no') : 'done') : '';
+      return '<button class="' + c + (p === S.pos ? ' cur' : '') + '" data-p="' + p + '" aria-label="Question ' + (p + 1) + '"></button>';
+    }).join('');
+  }
+  // Long questions and answers shrink to fit their fixed space instead of pushing the layout.
+  function fitQuiz() {
+    var qa = el('btQA'), qt = el('btQT');
+    if (qa && qt) {
+      var size = window.innerWidth >= 960 ? 22 : 20;
+      qt.style.fontSize = size + 'px';
+      while (qa.scrollHeight > qa.clientHeight + 1 && size > 12.5) { size -= 0.5; qt.style.fontSize = size + 'px'; }
+      qa.classList.toggle('scroll', qa.scrollHeight > qa.clientHeight + 1);
+    }
+    B.app().querySelectorAll('.bt-tile .bt-tt').forEach(function (box) {
+      var t = box.firstChild, f = 15.5; t.style.fontSize = f + 'px';
+      var room = box.clientHeight - 14;
+      while (t.scrollHeight > room + 1 && f > 11) { f -= 0.5; t.style.fontSize = f + 'px'; }
+    });
   }
   function confirmSubmit() {
     var left = S.qs.length - answeredCount();
     if (!left) return finishNow();
     closeSheet();
-    var sh = document.createElement('div'); sh.className = 'bt-sheet'; sh.id = 'btSheet';
+    var sh = document.createElement('div'); sh.className = 'bt-sheet' + (THEME === 'day' ? ' day' : ''); sh.id = 'btSheet';
     sh.innerHTML = '<div class="bt-sheet-bg"></div><div class="bt-sheet-card bt-center"><div class="bt-hero-ic">🏁</div><h2 class="bt-h2">Submit now?</h2>' +
       '<p class="bt-sub">' + left + ' question' + (left > 1 ? 's are' : ' is') + ' unanswered and will score 0. You can then watch the others live.</p>' +
       '<button class="bt-cta" id="btStay">Keep answering</button><button class="bt-ghost wide" id="btGo">Submit and watch</button></div>';
@@ -625,6 +691,7 @@
       plus(r.points);
       countUp(el('btScore'), S.score, r.score); S.score = r.score;
       setStreak(r.streak);
+      drawSegs();
       if (answeredCount() >= n) { later(function () { callout('All done!', 'gold', 'Watching the others now'); SND.play('done'); }, 700); later(finishNow, 1600); return; }
       if (S.pos === pos) later(function () { if (S.pos === pos) { S.pos = nextOpen(pos); drawQuiz(); fadeIn(); } }, r.correct ? 900 : 1700);
       else drawQuiz();
@@ -765,11 +832,23 @@
       var verdict = !q.mine ? 'Not answered' : (q.mine === q.answer ? 'Correct' : 'Wrong');
       return '<details class="bt-rev ' + (q.mine === q.answer ? 'good' : 'miss') + '"><summary><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span></summary><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' +
         (q.image ? '<img class="bt-img" alt="Question image" loading="lazy" src="' + esc(q.image) + '">' : '') + opts +
-        (d.explanations_locked ? '<div class="bt-exp bt-exp-lock"><b>🔒 Explanation is in Pro</b><span>Battle explanations are a Pro feature. Pro also unlocks all 740 topics and PYQs.</span><button class="bt-cta inline" data-pro="1">Get Pro</button></div>'
-          : '<div class="bt-exp">' + (q.explanation ? B.fmtExp(q.explanation) : '<em>No explanation for this item.</em>') + '</div>') + '</div></details>';
+        expBlock(q, d.explanations_locked) + '</div></details>';
     }).join('');
     box.querySelectorAll('[data-pro]').forEach(function (b) { b.onclick = function () { if (B.user()) B.openPro('battle'); else signUpThen(function () { B.openPro('battle'); }); }; });
   }
+  // Explanations stay folded until the player asks for one.
+  function expBlock(q, locked) {
+    var body = locked
+      ? '<div class="bt-exp bt-exp-lock"><b>🔒 Explanation is in Pro</b><span>Battle explanations are a Pro feature. Pro also unlocks all 740 topics and PYQs.</span><button class="bt-cta inline" data-pro="1">Get Pro</button></div>'
+      : '<div class="bt-exp">' + (q.explanation ? B.fmtExp(q.explanation) : '<em>No explanation for this item.</em>') + '</div>';
+    return '<button class="bt-expbtn" data-exp="1">💡 Show explanation</button><div class="bt-expbox" hidden>' + body + '</div>';
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-exp]'); if (!b) return;
+    var box = b.nextElementSibling; if (!box) return;
+    box.hidden = !box.hidden;
+    b.textContent = box.hidden ? '💡 Show explanation' : 'Hide explanation';
+  });
   function drawPod(rk) {
     var box = el('btPod'); if (!box) return;
     var top = rk.slice(0, 3);
@@ -850,8 +929,7 @@
       var verdict = !q.mine ? 'Not answered' : (q.mine === q.answer ? 'Correct' : 'Wrong');
       return '<details class="bt-rev ' + (q.mine === q.answer ? 'good' : 'miss') + '"><summary><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span><small>' + pct(q.right, q.answered) + '% of the room</small></summary><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' + (q.image ? '<img class="bt-img" alt="Question image" loading="lazy" src="' + esc(q.image) + '">' : '') + opts +
         (q.fastest ? '<p class="bt-fast">⚡ Fastest correct: ' + esc(q.fastest.nickname) + ' in ' + q.fastest.secs + 's</p>' : '') +
-        (r.explanations_locked ? '<div class="bt-exp bt-exp-lock"><b>🔒 Explanation is in Pro</b><span>Battle explanations are a Pro feature. Pro also unlocks all 740 topics and PYQs.</span><button class="bt-cta inline" data-pro="1">Get Pro</button></div>'
-          : '<div class="bt-exp">' + (q.explanation ? B.fmtExp(q.explanation) : '<em>No explanation for this item.</em>') + '</div>') + '</div></details>';
+        expBlock(q, r.explanations_locked) + '</div></details>';
     }).join('') + '</section>' : '';
     var missed = qs.filter(function (q) { return q.mine !== q.answer; }).map(function (q) { return q.id; });
     S.missed = missed;
