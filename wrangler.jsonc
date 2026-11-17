@@ -19,6 +19,7 @@
       "/api/upload-book",
       "/api/delete-book-file",
       "/books",
+      "/battle/*",
       "/",
       "/index.html",
       "/subjects/*",

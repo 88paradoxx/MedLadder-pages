@@ -468,6 +468,11 @@ export default {
       return url.pathname === '/api/upload-book' ? uploadBook(request, env) : deleteBookFile(request, env);
     }
     if (url.pathname === '/books') return serveBooks(request, env, ctx);
+    {
+      // A shared battle link opens the app, which reads ?battle=CODE.
+      const bm = /^\/battle\/([A-Za-z0-9]{4,8})\/?$/.exec(url.pathname);
+      if (bm) return new Response(null, { status: 302, headers: { Location: '/?battle=' + bm[1].toUpperCase(), 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
+    }
     return servePage(request, env, ctx);
   }
 };
