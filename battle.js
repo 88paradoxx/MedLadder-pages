@@ -93,13 +93,13 @@
   // ---------- sound: synthesised, no files. Modes: all (music + effects), fx, off ----------
   var SND = (function () {
     var ctx = null, master = null, musicBus = null, musicTimer = null, step = 0, soft = false;
-    var mode = lsGet('mlbt_sound') || 'fx';
+    var mode = lsGet('mlbt_sound2') || 'all';
     function ac() {
       if (!ctx) {
         var C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
         try { ctx = new C(); } catch (e) { return null; }
-        master = ctx.createGain(); master.gain.value = .55; master.connect(ctx.destination);
-        musicBus = ctx.createGain(); musicBus.gain.value = .5; musicBus.connect(master);
+        master = ctx.createGain(); master.gain.value = .7; master.connect(ctx.destination);
+        musicBus = ctx.createGain(); musicBus.gain.value = 1; musicBus.connect(master);
       }
       if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) { } }
       return ctx;
@@ -130,9 +130,11 @@
     function beat() {
       var bar = Math.floor(step / 16) % 4, root = ROOTS[bar], sh = SHAPE[bar], k = PAT[step % 8];
       var f = root * Math.pow(2, sh[k] / 12) * 2, len = 60 / 112 / 2;
-      tone(f, len * .9, 'triangle', soft ? .05 : .09, 0, null, musicBus);
-      if (step % 8 === 0) tone(root / 2, len * 7, 'sine', soft ? .07 : .12, 0, null, musicBus);
-      if (!soft && step % 4 === 2) tone(90, .07, 'sine', .14, 0, 50, musicBus);
+      tone(f, len * .9, 'triangle', soft ? .09 : .16, 0, null, musicBus);
+      if (step % 8 === 0) tone(root / 2, len * 7, 'sine', soft ? .12 : .2, 0, null, musicBus);
+      if (step % 16 === 8) tone(root * 3, len * 6, 'sine', soft ? .04 : .07, 0, null, musicBus);
+      if (!soft && step % 4 === 2) tone(95, .09, 'sine', .3, 0, 45, musicBus);
+      if (!soft && step % 2 === 1) tone(6000, .02, 'square', .015, 0, null, musicBus);
       step++;
     }
     function music(on, isSoft) {
@@ -144,11 +146,11 @@
     return {
       play: function (n) { if (mode === 'off') return; try { if (FX[n]) FX[n](); } catch (e) { } },
       music: music,
-      unlock: function () { if (mode !== 'off') ac(); },
+      unlock: function () { if (mode !== 'off') { ac(); if (S.wantMusic && !musicTimer) music(true, S.musicSoft); } },
       mode: function () { return mode; },
       cycle: function () {
-        mode = mode === 'fx' ? 'all' : mode === 'all' ? 'off' : 'fx';
-        lsSet('mlbt_sound', mode);
+        mode = mode === 'all' ? 'fx' : mode === 'fx' ? 'off' : 'all';
+        lsSet('mlbt_sound2', mode);
         var playing = !!musicTimer || S.wantMusic;
         if (mode !== 'all') music(false); else if (S.wantMusic) music(true, S.musicSoft);
         if (mode !== 'off') FX.tap();
@@ -357,6 +359,7 @@
     var sh = el('btShare'); if (sh) sh.onclick = function () { navigator.share({ title: st.title, text: msg, url: url }).catch(function () { }); };
     S.seen = {};
     drawLobby(st);
+    wantMusic(true, true);
     every(poll, 1500);
     function poll() {
       rpc('battle_state', { p_code: code, p_token: S.token }).then(function (s) {
@@ -816,7 +819,7 @@
       var verdict = !q.mine ? 'Not answered' : (q.mine === q.answer ? 'Correct' : 'Wrong');
       return '<details class="bt-rev ' + (q.mine === q.answer ? 'good' : 'miss') + '"><summary><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span><small>' + pct(q.right, q.answered) + '% of the room</small></summary><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' + (q.image ? '<img class="bt-img" alt="Question image" loading="lazy" src="' + esc(q.image) + '">' : '') + opts +
         (q.fastest ? '<p class="bt-fast">⚡ Fastest correct: ' + esc(q.fastest.nickname) + ' in ' + q.fastest.secs + 's</p>' : '') +
-        (r.explanations_locked ? '<div class="bt-exp bt-exp-lock"><b>🔒 Explanation is in Pro</b><span>Pro unlocks the explanation for every battle question, plus all 740 topics.</span><button class="bt-cta inline" data-pro="1">' + (B.user() ? 'Upgrade to Pro' : 'Sign up free') + '</button></div>'
+        (r.explanations_locked ? '<div class="bt-exp bt-exp-lock"><b>🔒 Explanation is in Pro</b><span>Battle explanations are a Pro feature. Pro also unlocks all 740 topics and PYQs.</span><button class="bt-cta inline" data-pro="1">Get Pro</button></div>'
           : '<div class="bt-exp">' + (q.explanation ? B.fmtExp(q.explanation) : '<em>No explanation for this item.</em>') + '</div>') + '</div></details>';
     }).join('') + '</section>' : '';
     var missed = qs.filter(function (q) { return q.mine !== q.answer; }).map(function (q) { return q.id; });
@@ -839,7 +842,7 @@
       stopAll();
       openCreate({ moduleIds: r.module_ids || [], title: String(r.title).replace(/ Showdown$/, ''), back: function () { openBattle(S.code); } });
     };
-    B.app().querySelectorAll('[data-pro]').forEach(function (b) { b.onclick = function () { if (B.user()) B.openPro('battle'); else B.openAuth('signup'); }; });
+    B.app().querySelectorAll('[data-pro]').forEach(function (b) { b.onclick = function () { if (B.user()) B.openPro('battle'); else signUpThen(function () { B.openPro('battle'); }); }; });
     drawActions(r, me);
     if (!r.next_code) every(watchRematch, 3000);
     if (rk.length >= 2) later(function () { confetti(me && me.rank === 1); }, 500);
