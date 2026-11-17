@@ -446,3 +446,13 @@ html.ml-battle-on.bt-day, body.ml-battle-on.bt-day { background: #F4F0FF !import
 
 .bt-lv .bt-scorebox { min-width: 0; overflow: visible; }
 @media (max-width: 420px) { .bt-lv .bt-scorebox small { display: none; } .bt-lv .bt-hud { gap: 7px; } }
+
+/* reviews always open */
+.bt-rev.open .bt-rev-h { display: flex; gap: 10px; align-items: center; padding: 13px 14px 6px; }
+.bt-rev.open .bt-rev-h small { margin-left: auto; color: #6B5F8E; }
+.bt-rev.open.good .bt-rev-h span { color: #15803D; font-weight: 800; }
+.bt-rev.open.miss .bt-rev-h span { color: #DC2626; font-weight: 800; }
+/* two small buttons in the HUD: look and sound */
+.bt-lv .bt-hud .bt-set, .bt-lv .bt-hud .bt-snd { width: 36px; height: 36px; font-size: 16px; }
+.bt-top .bt-set + .bt-snd { margin-left: 6px; }
+@media (max-width: 400px) { .bt-lv .bt-hud .bt-set, .bt-lv .bt-hud .bt-snd { width: 32px; height: 32px; font-size: 14px; border-radius: 10px; } .bt-lv .bt-combo { padding: 6px 8px; } }
