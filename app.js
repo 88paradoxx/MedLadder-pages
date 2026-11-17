@@ -4346,6 +4346,8 @@ window.addEventListener('error', function (ev) {
           setScreen: function (n) { state.screen = n; clearTimer(); },
           home: function () { renderHome(true); },
           goTopics: function () { v2Go('qbank'); },
+          pageView: function (path, title) { trackPageView(path, 'battle', title); },
+          event: function (name, params) { trackEvent(name, params || {}); },
           practise: function (ids, title, back) { launchIdQuiz(ids, { title: title, kind: 'battle', back: back }); },
           openAuth: function (tab, opts) { openAuthModal(tab, opts); },
           openPro: function (reason) { openProModal(reason || 'battle', {}); },
