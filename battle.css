@@ -303,3 +303,7 @@ body.ml-battle-on #app.screen-battle { max-width: none !important; padding: 0 !i
   .bt-spec-place { font-size: 38px; }
 }
 @media (prefers-reduced-motion: reduce) { .bt *, .bt-fx * { animation-duration: .01s !important; transition: none !important; } }
+
+.bt-hint { margin: 8px 0 0; font-size: 13px; color: var(--sub); }
+.bt-input.over { animation: btover .5s; }
+@keyframes btover { 30% { border-color: #EF4444; box-shadow: 0 0 0 3px rgba(239,68,68,.35); } }
