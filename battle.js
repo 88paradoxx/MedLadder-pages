@@ -94,13 +94,13 @@
   function mount(html, cls) {
     var app = B.app();
     B.setScreen('battle');
-    document.body.classList.add('ml-battle-on');
+    document.body.classList.add('ml-battle-on'); document.documentElement.classList.add('ml-battle-on');
     app.className = (app.className || '').replace(/\bscreen-[a-z]+\b/g, '').trim() + ' screen-battle';
     app.innerHTML = '<div class="bt ' + (cls || '') + '">' + html + '</div><div class="bt-fx" id="btFx" aria-live="polite"></div>';
     try { window.scrollTo(0, 0); } catch (e) { }
   }
   // Drop the arena background as soon as another app screen replaces ours.
-  setInterval(function () { if (document.body.classList.contains('ml-battle-on') && !document.querySelector('#app > .bt')) document.body.classList.remove('ml-battle-on'); }, 400);
+  setInterval(function () { if (document.body.classList.contains('ml-battle-on') && !document.querySelector('#app > .bt')) { document.body.classList.remove('ml-battle-on'); document.documentElement.classList.remove('ml-battle-on'); } }, 400);
 
   function topBar(title, backLabel) {
     return '<header class="bt-top"><button class="bt-back" id="btBack" aria-label="' + esc(backLabel || 'Back') + '">' +
@@ -796,6 +796,19 @@
     draw(null);
     if (B.user()) rpc('battle_my_battles').then(draw).catch(function () { });
   }
+
+  // Tap a question or explanation image to see it full screen. A tap on an image inside
+  // an answer tile only zooms; it does not pick that answer.
+  document.addEventListener('click', function (e) {
+    var img = e.target.closest && e.target.closest('.bt img');
+    if (!img || !img.src) return;
+    e.preventDefault(); e.stopPropagation();
+    var z = document.createElement('div'); z.className = 'bt-zoom';
+    z.innerHTML = '<img alt="Enlarged image"><button aria-label="Close">\u2715</button>';
+    z.querySelector('img').src = img.currentSrc || img.src;
+    z.onclick = function () { z.remove(); };
+    document.body.appendChild(z);
+  }, true);
 
   window.MLBattle = { openCreate: openCreate, openBattle: openBattle, openHub: openHub, stop: stopAll };
   if (window.__mlBattleQueue) { var q = window.__mlBattleQueue; window.__mlBattleQueue = null; q(); }
