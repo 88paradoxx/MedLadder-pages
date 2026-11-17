@@ -4368,6 +4368,32 @@ window.addEventListener('error', function (ev) {
           (function wait() { if (supabaseClient || tries++ > 40) run(); else setTimeout(wait, 150); })();
         }).catch(function () { showToast('Could not load Quiz Battles. Check your connection.', 'error'); });
       }
+      // "Return to battle": a floating button while a battle this device joined is
+      // in its lobby, running, or has results the player has not opened yet.
+      (function () {
+        function read() { try { return JSON.parse(localStorage.getItem('mlbt_active') || 'null'); } catch (e) { return null; } }
+        function check() {
+          var a = read(), pill = document.getElementById('mlBattlePill');
+          var path = window.location.pathname;
+          var txt = '', now = Date.now();
+          if (a && a.code && !a.dismissed && state.screen !== 'battle' && (path === '/' || path === '/index.html')) {
+            var end = a.ends_at ? Date.parse(a.ends_at) : 0;
+            if (a.status === 'lobby' && now - (a.ts || 0) < 3600000) txt = '⚔️ Battle lobby is open <b>Return</b>';
+            else if (a.status === 'live' && end > now) { var sec = Math.ceil((end - now) / 1000); txt = '<i class="mlbp-dot"></i> Battle live · ' + Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2) + ' left <b>Return</b>'; }
+            else if (a.status === 'live' && end && now - end < 6 * 3600000) txt = '🏆 Battle results are ready <b>View</b>';
+          }
+          if (!txt) { if (pill) pill.remove(); return; }
+          if (!pill) {
+            pill = document.createElement('div'); pill.id = 'mlBattlePill'; pill.className = 'mlbp';
+            pill.innerHTML = '<button class="mlbp-go" type="button"></button><button class="mlbp-x" type="button" aria-label="Hide">✕</button>';
+            document.body.appendChild(pill);
+            pill.querySelector('.mlbp-go').onclick = function () { var b = read(); if (b && b.code) mlBattle('openBattle', b.code); };
+            pill.querySelector('.mlbp-x').onclick = function () { var b = read(); if (b) { b.dismissed = true; try { localStorage.setItem('mlbt_active', JSON.stringify(b)); } catch (e) { } } pill.remove(); };
+          }
+          var go = pill.querySelector('.mlbp-go'); if (go.innerHTML !== txt) go.innerHTML = txt;
+        }
+        setInterval(check, 1000);
+      })();
       function ensureQuizStyles() {
         if (quizStylesReady) return Promise.resolve();
         if (quizStylesPromise) return quizStylesPromise;
