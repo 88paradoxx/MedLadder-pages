@@ -4956,7 +4956,7 @@ window.addEventListener('error', function (ev) {
           '<p class="setup-sub">' + total + ' questions, each with an explained answer.</p>' +
           '<div class="start-btn-wrap">' +
           '<button class="' + startBtnClass + '" id="startBtn">' + startBtnLabel + '</button>' +
-          '<button class="rr-battle" id="battleBtn" type="button"><span aria-hidden="true">\u2694\uFE0F</span> Battle with friends<small>Same questions, one clock, live ranking</small></button>' +
+          '<button class="rr-battle" id="battleBtn" type="button"><span><span aria-hidden="true">\u2694\uFE0F</span> Battle with friends</span><small>Same questions, one clock, live ranking</small></button>' +
           '</div>' +
           '<p class="rr-defaults">' + esc(defaultsLine) + '</p>' +
           setupNoteHtml +
