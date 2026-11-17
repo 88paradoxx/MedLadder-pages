@@ -92,56 +92,102 @@
 
   // ---------- sound: synthesised, no files. Modes: all (music + effects), fx, off ----------
   var SND = (function () {
-    var ctx = null, master = null, musicBus = null, musicTimer = null, step = 0, soft = false;
+    var ctx = null, master, fxBus, musicBus, verbIn, delay, noiseBuf, musicTimer = null, nextT = 0, step = 0, soft = false;
     var mode = lsGet('mlbt_sound2') || 'all';
+    function m2f(m) { return 440 * Math.pow(2, (m - 69) / 12); }
     function ac() {
       if (!ctx) {
         var C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
         try { ctx = new C(); } catch (e) { return null; }
-        master = ctx.createGain(); master.gain.value = .7; master.connect(ctx.destination);
-        musicBus = ctx.createGain(); musicBus.gain.value = 1; musicBus.connect(master);
+        var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3; comp.connect(ctx.destination);
+        master = ctx.createGain(); master.gain.value = .85; master.connect(comp);
+        // Room reverb from a generated impulse: gives every sound a soft, polished tail.
+        var verb = ctx.createConvolver(), len = ctx.sampleRate * 2.4, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+        for (var ch = 0; ch < 2; ch++) { var d = ir.getChannelData(ch); for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+        verb.buffer = ir; verbIn = ctx.createGain(); verbIn.gain.value = .32; verbIn.connect(verb); verb.connect(master);
+        fxBus = ctx.createGain(); fxBus.gain.value = 1; fxBus.connect(master); fxBus.connect(verbIn);
+        musicBus = ctx.createGain(); musicBus.gain.value = .5; musicBus.connect(master);
+        var mv = ctx.createGain(); mv.gain.value = .5; musicBus.connect(mv); mv.connect(verbIn);
+        delay = ctx.createDelay(1); delay.delayTime.value = 60 / 96 * .75; var fb = ctx.createGain(); fb.gain.value = .28;
+        var dl = ctx.createBiquadFilter(); dl.type = 'lowpass'; dl.frequency.value = 2400;
+        delay.connect(dl); dl.connect(fb); fb.connect(delay); dl.connect(musicBus);
+        noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); var nd = noiseBuf.getChannelData(0); for (var k = 0; k < nd.length; k++) nd[k] = Math.random() * 2 - 1;
       }
       if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) { } }
       return ctx;
     }
-    function tone(f, dur, type, vol, when, glide, bus) {
+    // One enveloped oscillator, optionally filtered.
+    function osc(f, o) {
       var c = ac(); if (!c) return;
-      var t = c.currentTime + (when || 0), o = c.createOscillator(), g = c.createGain();
-      o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
-      if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + dur);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || .25, t + .012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o.connect(g); g.connect(bus || master); o.start(t); o.stop(t + dur + .03);
+      o = o || {};
+      var t = (o.at != null ? o.at : c.currentTime) + (o.when || 0), dur = o.dur || .3;
+      var v = c.createOscillator(), g = c.createGain(), out = g;
+      v.type = o.type || 'sine'; v.frequency.setValueAtTime(f, t);
+      if (o.detune) v.detune.value = o.detune;
+      if (o.glide) v.frequency.exponentialRampToValueAtTime(o.glide, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(o.vol || .2, t + (o.att || .006));
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      v.connect(g);
+      if (o.lp) { var fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.setValueAtTime(o.lp, t); if (o.lpTo) fl.frequency.exponentialRampToValueAtTime(o.lpTo, t + dur); fl.Q.value = o.q || .7; g.connect(fl); out = fl; }
+      out.connect(o.bus || fxBus);
+      if (o.send) out.connect(o.send);
+      v.start(t); v.stop(t + dur + .05);
+    }
+    // A bell: inharmonic partials that fade at different speeds.
+    function bell(f, when, vol, bus, at) {
+      [[1, 1, 1.4], [2.756, .38, .7], [5.404, .16, .35], [2, .22, .9]].forEach(function (p) {
+        osc(f * p[0], { when: when, dur: p[2], vol: (vol || .2) * p[1], att: .004, bus: bus, at: at });
+      });
+    }
+    function noise(o) {
+      var c = ac(); if (!c) return;
+      var t = (o.at != null ? o.at : c.currentTime) + (o.when || 0), s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = noiseBuf; f.type = o.type || 'bandpass'; f.frequency.setValueAtTime(o.f || 1000, t); if (o.fTo) f.frequency.exponentialRampToValueAtTime(o.fTo, t + o.dur); f.Q.value = o.q || 1;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || .1, t + (o.att || .005)); g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur);
+      s.connect(f); f.connect(g); g.connect(o.bus || fxBus); s.start(t); s.stop(t + o.dur + .05);
     }
     var FX = {
-      tap: function () { tone(540, .05, 'triangle', .16); },
-      correct: function () { tone(660, .11, 'sine', .28); tone(880, .11, 'sine', .28, .08); tone(1320, .2, 'sine', .2, .16); },
-      wrong: function () { tone(200, .28, 'sawtooth', .1, 0, 110); tone(150, .3, 'square', .05, .05, 90); },
-      streak: function () { tone(330, .4, 'triangle', .16, 0, 1320); tone(1760, .18, 'sine', .14, .34); tone(2093, .25, 'sine', .1, .44); },
-      tick: function () { tone(1150, .035, 'square', .07); },
-      count: function () { tone(440, .16, 'sine', .28); },
-      go: function () { tone(880, .28, 'sine', .32); tone(1320, .34, 'triangle', .18, .04); },
-      join: function () { tone(660, .09, 'sine', .18, 0, 990); },
-      lead: function () { tone(784, .1, 'sine', .22); tone(1047, .22, 'sine', .22, .1); },
-      fanfare: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, .2, 'triangle', .26, i * .12); }); tone(1047, .7, 'triangle', .24, .5); tone(784, .7, 'sine', .16, .5); tone(659, .7, 'sine', .12, .5); },
-      done: function () { tone(784, .15, 'sine', .22); tone(988, .15, 'sine', .22, .12); tone(1175, .3, 'sine', .2, .24); }
+      tap: function () { noise({ type: 'highpass', f: 2500, dur: .04, vol: .09 }); osc(1400, { dur: .05, vol: .05 }); },
+      correct: function () { bell(m2f(84), 0, .2); bell(m2f(91), .09, .17); },
+      wrong: function () { osc(196, { dur: .32, vol: .22, glide: 140, type: 'sine' }); osc(98, { dur: .4, vol: .16, type: 'triangle', lp: 600 }); noise({ type: 'lowpass', f: 400, dur: .12, vol: .06 }); },
+      streak: function () { noise({ f: 300, fTo: 5000, dur: .45, vol: .1, q: 2, att: .2 }); [84, 88, 91, 96].forEach(function (m, i) { bell(m2f(m), .25 + i * .07, .13); }); },
+      tick: function () { osc(1750, { dur: .045, vol: .09, type: 'sine' }); osc(880, { dur: .03, vol: .05, type: 'triangle' }); },
+      count: function () { osc(m2f(72), { dur: .5, vol: .2, type: 'sine' }); osc(m2f(72) * 4, { dur: .12, vol: .05 }); },
+      go: function () { noise({ f: 500, fTo: 6000, dur: .5, vol: .1, q: 1.5, att: .05 }); [72, 76, 79, 84].forEach(function (m) { bell(m2f(m), 0, .12); }); },
+      join: function () { bell(m2f(88), 0, .1); },
+      lead: function () { [79, 84, 88].forEach(function (m, i) { bell(m2f(m), i * .08, .15); }); },
+      done: function () { [84, 91, 96].forEach(function (m, i) { bell(m2f(m), i * .1, .14); }); },
+      fanfare: function () {
+        [60, 64, 67, 72].forEach(function (m) { osc(m2f(m), { dur: 2.4, vol: .06, type: 'sawtooth', att: .3, lp: 900, lpTo: 2400 }); osc(m2f(m), { dur: 2.4, vol: .06, type: 'sawtooth', att: .3, detune: 9, lp: 900, lpTo: 2400 }); });
+        [72, 76, 79, 84, 88].forEach(function (m, i) { bell(m2f(m), i * .11, .14); });
+        bell(m2f(96), .65, .16);
+      }
     };
-    // Background loop: A minor, F, C, G arpeggios with a soft bass, 112 bpm.
-    var ROOTS = [220, 174.61, 261.63, 196], SHAPE = [[0, 3, 7, 12], [0, 4, 7, 12], [0, 4, 7, 12], [0, 4, 7, 12]], PAT = [0, 1, 2, 3, 2, 1, 2, 3];
-    function beat() {
-      var bar = Math.floor(step / 16) % 4, root = ROOTS[bar], sh = SHAPE[bar], k = PAT[step % 8];
-      var f = root * Math.pow(2, sh[k] / 12) * 2, len = 60 / 112 / 2;
-      tone(f, len * .9, 'triangle', soft ? .09 : .16, 0, null, musicBus);
-      if (step % 8 === 0) tone(root / 2, len * 7, 'sine', soft ? .12 : .2, 0, null, musicBus);
-      if (step % 16 === 8) tone(root * 3, len * 6, 'sine', soft ? .04 : .07, 0, null, musicBus);
-      if (!soft && step % 4 === 2) tone(95, .09, 'sine', .3, 0, 45, musicBus);
-      if (!soft && step % 2 === 1) tone(6000, .02, 'square', .015, 0, null, musicBus);
-      step++;
+    // Background: a calm ambient-electronic loop, 96 bpm. Am9, Fmaj7, Cmaj7, G6.
+    var BARS = [{ b: 45, p: [60, 64, 67, 71] }, { b: 41, p: [57, 60, 64, 67] }, { b: 48, p: [55, 59, 64, 67] }, { b: 43, p: [59, 62, 64, 67] }];
+    var ARP = [0, 1, 2, 3, 2, 1, 3, 2];
+    var E8 = 60 / 96 / 2;
+    function schedule() {
+      var c = ac(); if (!c) return;
+      while (nextT < c.currentTime + .25) {
+        var bar = BARS[Math.floor(step / 8) % 4], s8 = step % 8, t = nextT;
+        if (s8 === 0) bar.p.forEach(function (m) {
+          osc(m2f(m), { at: t, dur: E8 * 8 + .4, vol: soft ? .035 : .045, type: 'sawtooth', att: .45, lp: 700, lpTo: 1300, bus: musicBus });
+          osc(m2f(m), { at: t, dur: E8 * 8 + .4, vol: soft ? .035 : .045, type: 'sawtooth', att: .45, detune: 11, lp: 700, lpTo: 1300, bus: musicBus });
+        });
+        if (!soft && (s8 === 0 || s8 === 4)) { osc(m2f(bar.b), { at: t, dur: E8 * 3.5, vol: .16, type: 'triangle', lp: 420, bus: musicBus }); osc(110, { at: t, dur: .28, vol: .32, glide: 42, bus: musicBus }); }
+        if (!soft && (s8 === 2 || s8 === 6)) noise({ at: t, type: 'highpass', f: 7000, dur: .05, vol: .03, bus: musicBus });
+        var m = bar.p[ARP[s8]] + 12;
+        osc(m2f(m), { at: t, dur: .32, vol: soft ? .05 : .07, type: 'triangle', lp: 3200, lpTo: 900, bus: musicBus, send: delay });
+        nextT += E8; step++;
+      }
     }
     function music(on, isSoft) {
       soft = !!isSoft;
       if (!on || mode !== 'all') { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } return; }
-      if (!ac()) return;
-      if (!musicTimer) { step = 0; musicTimer = setInterval(beat, 60 / 112 / 2 * 1000); }
+      var c = ac(); if (!c) return;
+      if (!musicTimer) { step = 0; nextT = c.currentTime + .1; musicTimer = setInterval(schedule, 60); }
     }
     return {
       play: function (n) { if (mode === 'off') return; try { if (FX[n]) FX[n](); } catch (e) { } },
@@ -156,7 +202,6 @@
       cycle: function () {
         mode = mode === 'all' ? 'fx' : mode === 'fx' ? 'off' : 'all';
         lsSet('mlbt_sound2', mode);
-        var playing = !!musicTimer || S.wantMusic;
         if (mode !== 'all') music(false); else if (S.wantMusic) music(true, S.musicSoft);
         if (mode !== 'off') FX.tap();
         return mode;
@@ -170,7 +215,14 @@
     document.documentElement.classList.toggle('bt-day', day);
     var root = document.querySelector('#app > .bt'); if (root) root.classList.toggle('day', day);
   }
-  function setBtn() { return '<button class="bt-set" data-set="1" aria-label="Sound and theme" title="Sound and theme">' + (THEME === 'day' ? '☀️' : '🌙') + '</button>'; }
+  function setBtn() {
+    return '<button class="bt-set" data-theme-t="1" aria-label="Switch to ' + (THEME === 'day' ? 'night' : 'day') + ' look" title="Night / Day">' + (THEME === 'day' ? '☀️' : '🌙') + '</button>' + soundBtn();
+  }
+  function toggleTheme() {
+    THEME = THEME === 'day' ? 'night' : 'day'; lsSet('mlbt_theme', THEME); applyTheme();
+    document.querySelectorAll('[data-theme-t]').forEach(function (x) { x.textContent = THEME === 'day' ? '☀️' : '🌙'; x.setAttribute('aria-label', 'Switch to ' + (THEME === 'day' ? 'night' : 'day') + ' look'); });
+    B.toast(THEME === 'day' ? 'Day look' : 'Night look');
+  }
   function openSettings() {
     closeSheet();
     var m = SND.mode();
@@ -194,7 +246,7 @@
   document.addEventListener('pointerdown', function (e) {
     if (!e.target.closest || !e.target.closest('.bt, .bt-sheet')) return;
     SND.unlock();
-    if (e.target.closest('[data-set]')) { openSettings(); return; }
+    if (e.target.closest('[data-theme-t]')) { toggleTheme(); return; }
     var b = e.target.closest('[data-snd]');
     if (b) {
       var m = SND.cycle();
@@ -830,9 +882,9 @@
         return '<div class="bt-ro' + cls + '"><span class="bt-ol">' + L + '</span><span class="bt-ot">' + B.fmt(t) + (L === q.mine ? ' <em>your answer</em>' : '') + '</span></div>';
       }).join('');
       var verdict = !q.mine ? 'Not answered' : (q.mine === q.answer ? 'Correct' : 'Wrong');
-      return '<details class="bt-rev ' + (q.mine === q.answer ? 'good' : 'miss') + '"><summary><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span></summary><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' +
+      return '<div class="bt-rev open ' + (q.mine === q.answer ? 'good' : 'miss') + '"><div class="bt-rev-h"><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span></div><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' +
         (q.image ? '<img class="bt-img" alt="Question image" loading="lazy" src="' + esc(q.image) + '">' : '') + opts +
-        expBlock(q, d.explanations_locked) + '</div></details>';
+        expBlock(q, d.explanations_locked) + '</div></div>';
     }).join('');
     box.querySelectorAll('[data-pro]').forEach(function (b) { b.onclick = function () { if (B.user()) B.openPro('battle'); else signUpThen(function () { B.openPro('battle'); }); }; });
   }
@@ -927,9 +979,9 @@
         return '<div class="bt-ro' + cls + '"><span class="bt-ol">' + L + '</span><span class="bt-ot">' + B.fmt(t) + (L === q.mine ? ' <em>your answer</em>' : '') + '</span><span class="bt-split">' + pct(cnt, tot) + '%</span></div>';
       }).join('');
       var verdict = !q.mine ? 'Not answered' : (q.mine === q.answer ? 'Correct' : 'Wrong');
-      return '<details class="bt-rev ' + (q.mine === q.answer ? 'good' : 'miss') + '"><summary><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span><small>' + pct(q.right, q.answered) + '% of the room</small></summary><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' + (q.image ? '<img class="bt-img" alt="Question image" loading="lazy" src="' + esc(q.image) + '">' : '') + opts +
+      return '<div class="bt-rev open ' + (q.mine === q.answer ? 'good' : 'miss') + '"><div class="bt-rev-h"><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span><small>' + pct(q.right, q.answered) + '% of the room</small></div><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' + (q.image ? '<img class="bt-img" alt="Question image" loading="lazy" src="' + esc(q.image) + '">' : '') + opts +
         (q.fastest ? '<p class="bt-fast">⚡ Fastest correct: ' + esc(q.fastest.nickname) + ' in ' + q.fastest.secs + 's</p>' : '') +
-        expBlock(q, r.explanations_locked) + '</div></details>';
+        expBlock(q, r.explanations_locked) + '</div></div>';
     }).join('') + '</section>' : '';
     var missed = qs.filter(function (q) { return q.mine !== q.answer; }).map(function (q) { return q.id; });
     S.missed = missed;
