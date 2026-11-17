@@ -144,7 +144,8 @@
       '<p class="bt-sub">' + esc(opts.title || 'Topic') + ' · same questions, one clock, live ranking</p></div>' +
       '<section class="bt-card"><div class="bt-label">Players</div>' + pills('btP', [2, 5, 10, 20, 30, 50], c.players, capP) + '</section>' +
       '<section class="bt-card"><div class="bt-label">Questions' + (avail ? ' <small>this topic has ' + avail + '</small>' : '') + '</div>' + pills('btQ', qVals, c.n, capQ) +
-      '<div class="bt-custom" id="btQC" hidden><input class="bt-input" id="btQIn" type="number" inputmode="numeric" min="3" max="' + Math.min(capQ, avail || capQ) + '" placeholder="3 to ' + Math.min(capQ, avail || capQ) + '"><span>questions</span></div></section>' +
+      '<div class="bt-custom" id="btQC" hidden><input class="bt-input" id="btQIn" type="number" inputmode="numeric" min="3" max="' + Math.min(capQ, avail || capQ) + '" placeholder="3 to ' + Math.min(capQ, avail || capQ) + '"><span>questions</span></div>' +
+      '<p class="bt-hint" id="btQHint" hidden>' + (pro ? 'Up to ' + Math.min(capQ, avail || capQ) + ' questions' + (avail && avail < capQ ? ' (all this topic has)' : '') + '.' : 'Free hosts: up to ' + Math.min(20, avail || 20) + ' questions. <button class="bt-link" data-pro="1">Pro allows up to 100</button>') + '</p></section>' +
       '<section class="bt-card"><div class="bt-label">Time</div>' + pills('btT', [5, 10, 20, 30, 45, 'custom'], c.minutes, 0, function (v) { return v + ' min'; }) +
       '<div class="bt-custom" id="btTC" hidden><input class="bt-input" id="btTIn" type="number" inputmode="numeric" min="3" max="120" placeholder="3 to 120"><span>minutes</span></div></section>' +
       '<section class="bt-card"><label class="bt-switch"><input type="checkbox" id="btNeg"><span><b>Negative marking</b><small>A wrong answer costs 25 points</small></span></label></section>' +
@@ -165,6 +166,19 @@
       });
     }
     bind('btP', 'players'); bind('btQ', 'n', 'btQC'); bind('btT', 'minutes', 'btTC');
+    // Custom boxes stop at the host's limit as they type, instead of failing on Create.
+    function clampBox(input, max, onOver) {
+      input.addEventListener('input', function () {
+        var v = parseInt(input.value, 10);
+        if (v > max) { input.value = max; input.classList.remove('over'); void input.offsetWidth; input.classList.add('over'); if (onOver) onOver(); }
+      });
+      input.addEventListener('blur', function () { var v = parseInt(input.value, 10); if (input.value !== '' && (!v || v < 3)) input.value = 3; });
+    }
+    var maxQ = Math.min(capQ, avail || capQ);
+    clampBox(el('btQIn'), maxQ, function () { if (!pro && (!avail || avail > 20)) B.toast('Free hosts can set up to 20 questions. Pro allows up to 100.', 'error'); else B.toast('This topic has ' + maxQ + ' questions.', 'error'); });
+    clampBox(el('btTIn'), 120);
+    el('btQ').addEventListener('click', function () { el('btQHint').hidden = c.n !== 'custom'; });
+    el('btQHint').addEventListener('click', function (e) { if (e.target.closest('[data-pro]')) B.openPro('battle'); });
     var up = el('btUp'); if (up) up.onclick = function () { B.openPro('battle'); };
     el('btCreate').onclick = function () {
       var btn = el('btCreate');
