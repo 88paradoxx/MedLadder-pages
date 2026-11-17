@@ -653,11 +653,17 @@
       return '<button class="bt-tile' + cls + '" data-l="' + L + '"' + (chosen ? ' disabled' : '') + '><span class="bt-tl">' + L + '</span><span class="bt-tt"><span class="bt-ti">' + B.fmt(t) + '</span></span><span class="bt-mark"></span></button>';
     }).join('');
     var left = n - answeredCount();
+    // Pictures inside the question text move into one large picture area under it.
+    var tmp = document.createElement('div'); tmp.innerHTML = B.fmt(q.text);
+    var pics = []; if (q.image) pics.push(q.image);
+    tmp.querySelectorAll('img').forEach(function (im) { var src = im.getAttribute('src'); if (src) pics.push(src); im.remove(); });
+    var stem = tmp.innerHTML.replace(/(\s*<br\s*\/?>\s*)+$/i, '');
+    S.hasPic = pics.length > 0;
     host.innerHTML =
-      '<section class="bt-qa" id="btQA">' +
+      '<section class="bt-qa' + (pics.length ? ' has-pic' : '') + '" id="btQA">' +
         '<div class="bt-qno"><span>Question ' + (S.pos + 1) + ' / ' + n + '</span>' + (chosen ? '<span class="bt-lock">🔒 Locked in</span>' : '') + '</div>' +
-        '<div class="bt-qt" id="btQT">' + B.fmt(q.text) + '</div>' +
-        (q.image ? '<div class="bt-qimg"><img alt="Question image, tap to zoom" src="' + esc(q.image) + '"><span>Tap to zoom</span></div>' : '') +
+        '<div class="bt-qt" id="btQT">' + stem + '</div>' +
+        (pics.length ? '<div class="bt-qimg' + (pics.length > 1 ? ' multi' : '') + '">' + pics.slice(0, 3).map(function (src) { return '<img alt="Question image, tap to zoom" src="' + esc(src) + '">'; }).join('') + '<span>Tap to enlarge</span></div>' : '') +
       '</section>' +
       '<section class="bt-tray' + (five ? ' five' : '') + '">' +
         '<div class="bt-tiles">' + opts + '</div>' +
@@ -675,7 +681,7 @@
       answer(q, b.getAttribute('data-l'), S.pos);
     };
     fitQuiz();
-    var img = host.querySelector('.bt-qa img'); if (img && !img.complete) img.onload = fitQuiz;
+    host.querySelectorAll('.bt-qa img').forEach(function (img) { if (!img.complete) img.onload = fitQuiz; });
   }
   // One segment per question: green right, red wrong, violet answered, ring = current.
   function drawSegs() {
@@ -693,7 +699,7 @@
   function fitQuiz() {
     var qa = el('btQA'), qt = el('btQT');
     if (qa && qt) {
-      var size = window.innerWidth >= 960 ? 22 : 20;
+      var size = window.innerWidth >= 960 ? (S.hasPic ? 20 : 22) : (S.hasPic ? 17.5 : 20);
       qt.style.fontSize = size + 'px';
       while (qa.scrollHeight > qa.clientHeight + 1 && size > 12.5) { size -= 0.5; qt.style.fontSize = size + 'px'; }
       qa.classList.toggle('scroll', qa.scrollHeight > qa.clientHeight + 1);

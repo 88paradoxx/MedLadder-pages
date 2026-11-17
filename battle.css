@@ -456,3 +456,11 @@ html.ml-battle-on.bt-day, body.ml-battle-on.bt-day { background: #F4F0FF !import
 .bt-lv .bt-hud .bt-set, .bt-lv .bt-hud .bt-snd { width: 36px; height: 36px; font-size: 16px; }
 .bt-top .bt-set + .bt-snd { margin-left: 6px; }
 @media (max-width: 400px) { .bt-lv .bt-hud .bt-set, .bt-lv .bt-hud .bt-snd { width: 32px; height: 32px; font-size: 14px; border-radius: 10px; } .bt-lv .bt-combo { padding: 6px 8px; } }
+
+/* Question pictures fill the space between the question and the answers. */
+.bt-qa.has-pic .bt-qimg { flex: 1 1 auto; min-height: 170px; height: auto; margin-top: 12px; background: #fff; border-radius: 16px; position: relative; overflow: hidden; }
+.bt .bt-qa.has-pic .bt-qimg img { position: absolute; inset: 6px; width: calc(100% - 12px) !important; height: calc(100% - 12px) !important; max-width: none !important; max-height: none !important; object-fit: contain; margin: 0; border-radius: 10px; }
+.bt-qa.has-pic .bt-qimg.multi { display: flex; gap: 6px; padding: 6px; }
+.bt .bt-qa.has-pic .bt-qimg.multi img { position: static; flex: 1 1 0; min-width: 0; width: auto !important; height: 100% !important; }
+.bt-qa.has-pic .bt-qimg span { z-index: 1; }
+@media (min-width: 960px) { .bt-qa.has-pic .bt-qimg { min-height: 220px; } }
