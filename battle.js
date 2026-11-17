@@ -286,14 +286,17 @@
     stopAll();
     rpc('battle_questions', { p_code: S.code, p_token: S.token }).then(function (d) {
       syncClock(d.now);
-      S.qs = d.questions; S.mine = d.mine || {}; S.ends = Date.parse(d.ends_at);
+      S.qs = d.questions; S.mine = d.mine || {}; S.res = {}; S.ends = Date.parse(d.ends_at); S.starts = Date.parse(d.starts_at);
       S.order = seededOrder(S.qs.length, S.token + S.code);
       var firstOpen = 0;
       for (var i = 0; i < S.order.length; i++) if (!S.mine[S.qs[S.order[i]].id]) { firstOpen = i; break; }
-      S.pos = firstOpen; S.confirmFinish = false; S.rankText = '';
+      S.pos = firstOpen; S.confirmFinish = false;
+      S.score = (S.st && S.st.me && S.st.me.score) || 0; S.streak = (S.st && S.st.me && S.st.me.streak) || 0;
+      S.lastRank = 0; S.lbOpen = false;
+      liveShell();
       drawQuiz();
       every(tick, 250);
-      every(livePoll, 4000);
+      every(livePoll, 2500);
       livePoll();
     }).catch(function (e) {
       var k = errKey(e);
@@ -304,71 +307,172 @@
   }
 
   function answeredCount() { return Object.keys(S.mine).length; }
+  function liveShell() {
+    mount('<header class="bt-live-top"><div class="bt-time" id="btTime">0:00</div>' +
+      '<div class="bt-hud"><span class="bt-score" id="btScore">' + S.score + '</span><small>points</small></div>' +
+      '<div class="bt-flame' + (S.streak >= 2 ? ' on' : '') + '" id="btFlame" title="Streak"><span>🔥</span><b id="btStreak">' + S.streak + '</b></div>' +
+      '<button class="bt-finish" id="btFin">Finish</button>' +
+      '<div class="bt-tbar"><i id="btBar"></i></div></header>' +
+      '<div class="bt-live-grid"><main class="bt-qwrap" id="btQ"></main>' +
+      '<aside class="bt-lb" id="btLBWrap"><button class="bt-lb-head" id="btLBHead"><span>Live leaderboard</span><b id="btMyRank"></b><i class="bt-lb-chev">▾</i></button><ol class="bt-lb-list" id="btLB"></ol></aside></div>' +
+      '<div class="bt-fx" id="btFx" aria-live="polite"></div>', 'bt-live');
+    el('btFin').onclick = function () {
+      var left = S.qs.length - answeredCount();
+      if (left === 0 || S.confirmFinish) return finishNow();
+      S.confirmFinish = true;
+      var f = el('btFin'); f.classList.add('sure'); f.textContent = 'Submit? ' + left + ' left';
+      later(function () { var f2 = el('btFin'); if (f2) { S.confirmFinish = false; f2.classList.remove('sure'); f2.textContent = 'Finish'; } }, 3500);
+    };
+    el('btLBHead').onclick = function () { S.lbOpen = !S.lbOpen; el('btLBWrap').classList.toggle('open', S.lbOpen); };
+  }
   function tick() {
     var left = (S.ends - srvNow()) / 1000;
     var t = el('btTime');
     if (t) { t.textContent = mmss(left); t.classList.toggle('low', left <= 60); }
+    var bar = el('btBar');
+    if (bar && S.starts) { var tot = (S.ends - S.starts) / 1000; bar.style.width = Math.max(0, Math.min(100, left * 100 / tot)) + '%'; bar.classList.toggle('low', left <= 60); }
     if (left <= 0) { stopAll(); finishNow(); }
   }
   function livePoll() {
     rpc('battle_state', { p_code: S.code, p_token: S.token }).then(function (st) {
-      syncClock(st.now);
+      syncClock(st.now); S.st = st;
       if (st.status === 'ended') { stopAll(); return loadResults(); }
-      var sorted = st.players.slice().sort(function (a, b) { return b.score - a.score; });
-      var idx = sorted.findIndex(function (p) { return p.id === st.me.id; });
-      S.rankText = idx >= 0 ? 'You’re ' + ordinal(idx + 1) + ' of ' + sorted.length : '';
-      S.finishedCount = st.players.filter(function (p) { return p.finished; }).length; S.total = st.players.length;
-      var r = el('btRank'); if (r) r.textContent = S.rankText;
+      drawLB(st, el('btLB'));
     }).catch(function () { });
   }
 
+  // Leaderboard rows slide to their new place (FLIP) when the order changes.
+  function drawLB(st, list) {
+    if (!list) return;
+    var n = st.n || (S.qs ? S.qs.length : 0);
+    var before = {};
+    list.querySelectorAll('li[data-id]').forEach(function (li) { before[li.getAttribute('data-id')] = li.getBoundingClientRect().top; });
+    var players = st.players.slice().sort(function (a, b) { return b.score - a.score || b.correct - a.correct; });
+    var myRank = 0;
+    list.innerHTML = players.map(function (p) {
+      // Equal scores share a place, so a tie never reads as being overtaken.
+      var rk = 1 + players.filter(function (x) { return x.score > p.score; }).length;
+      var mine = st.me && p.id === st.me.id; if (mine) myRank = rk;
+      var medal = p.score <= 0 && st.status !== 'ended' ? rk : rk === 1 ? '🥇' : rk === 2 ? '🥈' : rk === 3 ? '🥉' : rk;
+      return '<li data-id="' + p.id + '" class="' + (mine ? 'me' : '') + (p.finished ? ' fin' : '') + '"><span class="bt-lb-r">' + medal + '</span>' + avatar(p.nickname) +
+        '<span class="bt-lb-n"><b>' + esc(p.nickname) + (mine ? ' (you)' : '') + '</b><span class="bt-lb-p"><i style="width:' + (n ? Math.round(p.answered * 100 / n) : 0) + '%"></i></span></span>' +
+        (p.streak >= 3 ? '<span class="bt-lb-s" title="' + p.streak + ' in a row">🔥' + p.streak + '</span>' : '') +
+        (p.finished ? '<span class="bt-lb-done" title="Finished">✓</span>' : '') +
+        '<span class="bt-lb-pts">' + p.score + '</span></li>';
+    }).join('');
+    list.querySelectorAll('li[data-id]').forEach(function (li) {
+      var id = li.getAttribute('data-id'); if (before[id] === undefined) return;
+      var dy = before[id] - li.getBoundingClientRect().top;
+      if (Math.abs(dy) > 2) { li.style.transform = 'translateY(' + dy + 'px)'; li.style.transition = 'none'; requestAnimationFrame(function () { li.style.transition = 'transform .5s cubic-bezier(.2,.8,.2,1)'; li.style.transform = ''; }); }
+    });
+    var mr = el('btMyRank'); if (mr && myRank) mr.textContent = ordinal(myRank) + ' of ' + players.length;
+    if (S.lastRank && myRank && myRank < S.lastRank) banner(myRank === 1 ? '👑 You took the lead!' : '⬆ Up to ' + ordinal(myRank) + '!', 'up');
+    else if (S.lastRank && myRank > S.lastRank) banner(S.lastRank === 1 ? 'You lost the lead. Fight back!' : 'Down to ' + ordinal(myRank) + '. Keep going!', 'down');
+    S.lastRank = myRank;
+  }
+
+  function banner(text, kind) {
+    var fx = el('btFx'); if (!fx) return;
+    var b = document.createElement('div'); b.className = 'bt-banner ' + (kind || ''); b.textContent = text;
+    fx.appendChild(b); setTimeout(function () { b.remove(); }, 2200);
+  }
+  function floatAt(node, html, cls) {
+    var fx = el('btFx'); if (!fx || !node) return;
+    var r = node.getBoundingClientRect();
+    var f = document.createElement('div'); f.className = 'bt-float ' + (cls || ''); f.innerHTML = html;
+    f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top + r.height / 2) + 'px';
+    fx.appendChild(f); setTimeout(function () { f.remove(); }, 1300);
+  }
+  function burst(node, n, chars) {
+    var fx = el('btFx'); if (!fx || !node || reduced()) return;
+    var r = node.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (var i = 0; i < n; i++) {
+      var s = document.createElement('span'); s.className = 'bt-star';
+      s.textContent = chars[i % chars.length];
+      var a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 90;
+      s.style.left = cx + 'px'; s.style.top = cy + 'px';
+      s.style.setProperty('--dx', Math.cos(a) * d + 'px'); s.style.setProperty('--dy', Math.sin(a) * d - 30 + 'px');
+      s.style.setProperty('--rot', (Math.random() * 360 | 0) + 'deg');
+      s.style.color = ['#F5B301', '#A78BFA', '#34D399', '#F472B6', '#60A5FA'][i % 5];
+      fx.appendChild(s); (function (x) { setTimeout(function () { x.remove(); }, 900); })(s);
+    }
+  }
+  function reduced() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+  function countUp(node, from, to) {
+    if (!node) return;
+    var t0 = performance.now(), dur = 600;
+    (function step(t) { var k = Math.min(1, (t - t0) / dur); node.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); })(t0);
+    node.classList.remove('bump'); void node.offsetWidth; node.classList.add('bump');
+  }
+  function setStreak(n) {
+    S.streak = n;
+    var f = el('btFlame'), b = el('btStreak'); if (!f || !b) return;
+    b.textContent = n; f.classList.toggle('on', n >= 2); f.classList.toggle('hot', n >= 5);
+    f.classList.remove('bump'); void f.offsetWidth; if (n >= 2) f.classList.add('bump');
+  }
+
   function drawQuiz() {
+    var host = el('btQ'); if (!host) return;
     var n = S.qs.length, q = S.qs[S.order[S.pos]];
-    var chosen = S.mine[q.id];
+    var chosen = S.mine[q.id], res = S.res[q.id];
     var opts = q.options.map(function (t, i) {
-      var L = q.letters[i];
-      return '<button class="bt-opt' + (chosen === L ? ' picked' : '') + '" data-l="' + L + '"' + (chosen ? ' disabled' : '') + '><span class="bt-ol">' + L + '</span><span class="bt-ot">' + B.fmt(t) + '</span></button>';
+      var L = q.letters[i], cls = '';
+      if (chosen === L) cls = res ? (res.correct ? ' right' : ' wrong') : ' picked';
+      return '<button class="bt-opt' + cls + '" data-l="' + L + '"' + (chosen ? ' disabled' : '') + '><span class="bt-ol">' + L + '</span><span class="bt-ot">' + B.fmt(t) + '</span></button>';
     }).join('');
     var dots = S.order.map(function (qi, p) {
-      var id = S.qs[qi].id;
-      return '<button class="bt-dot' + (S.mine[id] ? ' done' : '') + (p === S.pos ? ' cur' : '') + '" data-p="' + p + '" aria-label="Question ' + (p + 1) + (S.mine[id] ? ', answered' : '') + '">' + (p + 1) + '</button>';
+      var id = S.qs[qi].id, r = S.res[id];
+      var c = S.mine[id] ? (r ? (r.correct ? ' ok' : ' no') : ' done') : '';
+      return '<button class="bt-dot' + c + (p === S.pos ? ' cur' : '') + '" data-p="' + p + '" aria-label="Question ' + (p + 1) + (S.mine[id] ? ', answered' : '') + '">' + (p + 1) + '</button>';
     }).join('');
-    var left = n - answeredCount();
-    mount('<header class="bt-live-top"><div class="bt-time" id="btTime">0:00</div><div class="bt-prog"><b>' + answeredCount() + '</b> / ' + n + ' answered<span id="btRank" class="bt-rank">' + esc(S.rankText) + '</span></div>' +
-      '<button class="bt-finish' + (S.confirmFinish ? ' sure' : '') + '" id="btFin">' + (S.confirmFinish ? 'Tap again to submit' + (left ? ' (' + left + ' left)' : '') : 'Finish') + '</button></header>' +
-      '<main class="bt-main bt-qwrap"><div class="bt-qno">Question ' + (S.pos + 1) + ' of ' + n + (chosen ? ' <span class="bt-locked">Answer locked</span>' : '') + '</div>' +
-      '<div class="bt-stem">' + B.fmt(q.text) + '</div>' +
+    host.innerHTML = '<div class="bt-qno">Question ' + (S.pos + 1) + ' of ' + n + '<span class="bt-qprog">' + answeredCount() + ' answered</span></div>' +
+      '<div class="bt-qcard"><div class="bt-stem">' + B.fmt(q.text) + '</div>' +
       (q.image ? '<img class="bt-img" alt="Question image" src="' + esc(q.image) + '">' : '') +
-      '<div class="bt-opts">' + opts + '</div>' +
+      '<div class="bt-opts">' + opts + '</div></div>' +
       '<div class="bt-nav"><button class="bt-ghost" id="btPrev"' + (S.pos === 0 ? ' disabled' : '') + '>Previous</button><button class="bt-ghost" id="btNext"' + (S.pos === n - 1 ? ' disabled' : '') + '>Next</button></div>' +
-      '<div class="bt-pal">' + dots + '</div></main>', 'bt-live');
-    tick();
-    el('btFin').onclick = function () {
-      if (!S.confirmFinish && left === 0) return finishNow();
-      if (S.confirmFinish) return finishNow();
-      S.confirmFinish = true; drawQuiz();
-      later(function () { if (S.confirmFinish && el('btFin')) { S.confirmFinish = false; drawQuiz(); } }, 4000);
-    };
-    el('btPrev').onclick = function () { S.confirmFinish = false; S.pos--; drawQuiz(); };
-    el('btNext').onclick = function () { S.confirmFinish = false; S.pos++; drawQuiz(); };
-    app_query('.bt-pal').onclick = function (e) { var d = e.target.closest('.bt-dot'); if (!d) return; S.confirmFinish = false; S.pos = parseInt(d.getAttribute('data-p'), 10); drawQuiz(); };
-    app_query('.bt-opts').onclick = function (e) {
-      var b = e.target.closest('.bt-opt'); if (!b || b.disabled) return;
-      var L = b.getAttribute('data-l');
-      if (S.mine[q.id]) return;
+      '<div class="bt-pal">' + dots + '</div>';
+    el('btPrev').onclick = function () { S.pos--; drawQuiz(); };
+    el('btNext').onclick = function () { S.pos++; drawQuiz(); };
+    host.querySelector('.bt-pal').onclick = function (e) { var d = e.target.closest('.bt-dot'); if (!d) return; S.pos = parseInt(d.getAttribute('data-p'), 10); drawQuiz(); };
+    host.querySelector('.bt-opts').onclick = function (e) {
+      var b = e.target.closest('.bt-opt'); if (!b || b.disabled || S.mine[q.id]) return;
+      var L = b.getAttribute('data-l'), pos = S.pos;
       S.mine[q.id] = L;
-      try { if (navigator.vibrate) navigator.vibrate(12); } catch (x) { }
-      var auto = S.pos < n - 1;
-      var pos = S.pos;
-      rpc('battle_answer', { p_code: S.code, p_token: S.token, p_qid: q.id, p_choice: L }).catch(function (err) {
+      host.querySelectorAll('.bt-opt').forEach(function (x) { x.disabled = true; });
+      b.classList.add('picked');
+      rpc('battle_answer', { p_code: S.code, p_token: S.token, p_qid: q.id, p_choice: L }).then(function (r) {
+        if (r.dup) return;
+        S.res[q.id] = { correct: r.correct, points: r.points };
+        var optEl = S.pos === pos ? host.querySelector('.bt-opt[data-l="' + L + '"]') : null;
+        if (optEl) { optEl.classList.remove('picked'); optEl.classList.add(r.correct ? 'right' : 'wrong'); }
+        if (r.correct) {
+          var parts = '<b>+' + r.points + '</b>' + (r.speed ? '<small>⚡ speed +' + r.speed + '</small>' : '') + (r.streak_bonus ? '<small>🔥 streak +' + r.streak_bonus + '</small>' : '');
+          floatAt(optEl || el('btScore'), parts, 'good');
+          burst(optEl || el('btScore'), r.streak >= 3 ? 16 : 10, r.streak >= 3 ? ['★', '🔥', '✦'] : ['★', '✦', '✧']);
+          try { if (navigator.vibrate) navigator.vibrate(18); } catch (x) { }
+          if (r.streak === 3) banner('🔥 3 in a row! Streak bonus on', 'up');
+          else if (r.streak > 3 && r.streak % 5 === 0) banner('🔥 ' + r.streak + ' in a row! Unstoppable', 'up');
+        } else {
+          floatAt(optEl || el('btScore'), '<b>' + (r.points < 0 ? r.points : '✗') + '</b>' + (S.streak >= 3 ? '<small>streak lost</small>' : ''), 'bad');
+          try { if (navigator.vibrate) navigator.vibrate([30, 40, 30]); } catch (x) { }
+          var qc = host.querySelector('.bt-qcard'); if (qc && S.pos === pos) { qc.classList.remove('shake'); void qc.offsetWidth; qc.classList.add('shake'); }
+        }
+        countUp(el('btScore'), S.score, r.score); S.score = r.score;
+        setStreak(r.streak);
+        var dot = host.querySelector('.bt-dot[data-p="' + pos + '"]'); if (dot) { dot.classList.remove('done'); dot.classList.add(r.correct ? 'ok' : 'no'); }
+        if (answeredCount() >= n) { later(finishNow, 900); return; }
+        if (S.pos === pos) later(function () { if (S.pos === pos) { S.pos = nextOpen(pos); drawQuiz(); } }, 750);
+      }).catch(function (err) {
         var k = errKey(err);
         if (k === 'closed') { stopAll(); return loadResults(); }
         delete S.mine[q.id]; fail(err); if (S.pos === pos) drawQuiz();
       });
-      if (answeredCount() >= n) return finishNow();
-      drawQuiz();
-      if (auto) later(function () { if (S.pos === pos) { S.pos = pos + 1; drawQuiz(); } }, 380);
     };
+  }
+  function nextOpen(pos) {
+    var n = S.order.length;
+    for (var k = 1; k <= n; k++) { var p = (pos + k) % n; if (!S.mine[S.qs[S.order[p]].id]) return p; }
+    return Math.min(pos + 1, n - 1);
   }
   function app_query(sel) { return B.app().querySelector(sel); }
 
@@ -376,22 +480,43 @@
     stopAll();
     rpc('battle_finish', { p_code: S.code, p_token: S.token }).catch(function () { }).then(waitingScreen);
   }
+  // Finished players watch the race until the clock runs out or everyone is done.
   function waitingScreen() {
     stopAll();
-    mount('<main class="bt-main bt-center"><div class="bt-badge">Submitted</div><h1 class="bt-h1">Waiting for the others</h1>' +
-      '<p class="bt-sub" id="btW">Results appear when everyone finishes or the clock runs out.</p><div class="bt-spin"></div>' +
-      '<div class="bt-time" id="btTime" style="margin-top:14px">0:00</div></main>');
+    mount('<main class="bt-main"><div class="bt-center"><div class="bt-badge">Submitted</div><h1 class="bt-h1">You scored <span id="btMyScore">' + (S.score || 0) + '</span></h1>' +
+      '<p class="bt-sub" id="btW">Watching the others finish…</p><div class="bt-time big" id="btTime">0:00</div></div>' +
+      '<section class="bt-card bt-lb open wide"><div class="bt-label">Live leaderboard <b id="btMyRank" style="float:right;text-transform:none"></b></div><ol class="bt-lb-list" id="btLB"></ol></section>' +
+      '<p class="bt-note bt-center">Results open for everyone together when the last player submits or time runs out.</p></main><div class="bt-fx" id="btFx"></div>', 'bt-wait-scr');
     function poll() {
       rpc('battle_state', { p_code: S.code, p_token: S.token }).then(function (st) {
-        syncClock(st.now);
+        syncClock(st.now); S.st = st;
         if (st.status === 'ended') { stopAll(); loadResults(); return; }
         var f = st.players.filter(function (p) { return p.finished; }).length;
-        var w = el('btW'); if (w) w.textContent = f + ' of ' + st.players.length + ' have finished.';
+        var w = el('btW'); if (w) w.textContent = f + ' of ' + st.players.length + ' finished. Still racing: ' + (st.players.length - f) + '.';
+        var ms = el('btMyScore'); if (ms && st.me) ms.textContent = st.me.score;
         S.ends = Date.parse(st.ends_at);
+        drawLB(st, el('btLB'));
       }).catch(function () { });
     }
     poll(); every(poll, 2000);
     every(function () { if (S.ends) { var t = el('btTime'); if (t) t.textContent = mmss((S.ends - srvNow()) / 1000); } }, 500);
+  }
+
+  // Confetti for the podium: a short canvas shower, skipped for reduced motion.
+  function confetti(big) {
+    if (reduced()) return;
+    var c = document.createElement('canvas'); c.className = 'bt-confetti';
+    var w = c.width = window.innerWidth, h = c.height = window.innerHeight;
+    document.body.appendChild(c);
+    var ctx = c.getContext('2d'), cols = ['#F5B301', '#A78BFA', '#34D399', '#F472B6', '#60A5FA', '#FB923C'];
+    var parts = [];
+    for (var i = 0; i < (big ? 220 : 120); i++) parts.push({ x: w / 2 + (Math.random() - .5) * w * .3, y: h * .35, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: cols[i % cols.length] });
+    var t0 = performance.now();
+    (function frame(t) {
+      ctx.clearRect(0, 0, w, h);
+      parts.forEach(function (p) { p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); });
+      if (t - t0 < 3200) requestAnimationFrame(frame); else c.remove();
+    })(t0);
   }
 
   // ---------- results ----------
@@ -442,6 +567,7 @@
     var sgn = el('btSign'); if (sgn) sgn.onclick = function () { B.openAuth('signup'); };
     drawActions(r, me);
     if (!r.next_code) every(watchRematch, 3000);
+    if (rk.length >= 2) later(function () { confetti(me && me.rank === 1); }, 450);
   }
   function stat(v, l) { return '<div class="bt-stat"><b>' + esc(String(v)) + '</b><span>' + esc(l) + '</span></div>'; }
   function drawActions(r, me) {
