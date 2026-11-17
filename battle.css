@@ -326,3 +326,23 @@ body.ml-battle-on #app.screen-battle { max-width: none !important; padding: 0 !i
 .bt-exp-lock { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; background: #FFF7E0; border: 1px solid #FDE68A; }
 .bt-exp-lock span { font-size: 14px; color: #6B5F8E; }
 .bt-exp-lock .bt-cta.inline { width: auto; margin-top: 4px; min-height: 42px; padding: 8px 18px; font-size: 14px; }
+
+/* sound toggle */
+.bt-snd { flex: none; width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-size: 18px; cursor: pointer; line-height: 1; }
+.bt-hud .bt-snd { width: 38px; height: 38px; }
+@media (max-width: 400px) { .bt-logo { display: none; } }
+/* member / guest marks */
+.bt-ver { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: #3B82F6; color: #fff; font-size: 10px; font-weight: 900; margin-left: 5px; vertical-align: 1px; }
+.bt-gst { display: inline-block; font-size: 9.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--sub); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; margin-left: 6px; vertical-align: 1px; }
+/* growth cards */
+.bt-save { display: flex; gap: 14px; align-items: flex-start; background: linear-gradient(135deg, rgba(255,201,60,.18), rgba(236,72,153,.14)); border-color: rgba(255,201,60,.45); }
+.bt-save-ic { font-size: 34px; line-height: 1; }
+.bt-save b { font-size: 17px; } .bt-save p { margin: 6px 0 0; color: var(--sub); font-size: 14px; line-height: 1.45; }
+.bt-grow { display: grid; gap: 10px; padding: 12px; }
+.bt-grow:empty, .bt-grow:not(:has(button)) { display: none; }
+.bt-growbtn { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 12px; text-align: left; align-items: center; width: 100%; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel2); color: var(--ink); cursor: pointer; font: inherit; }
+.bt-growbtn span { grid-row: 1 / 3; font-size: 26px; }
+.bt-growbtn b { font-size: 15.5px; } .bt-growbtn small { color: var(--sub); font-size: 12.5px; }
+.bt-week-cta { margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(255,201,60,.12); border: 1px dashed rgba(255,201,60,.5); display: flex; flex-direction: column; gap: 4px; }
+.bt-week-cta span { color: var(--sub); font-size: 13px; }
+.bt-week-cta .bt-cta.inline { width: auto; align-self: flex-start; margin-top: 6px; min-height: 42px; padding: 8px 18px; font-size: 14px; }
