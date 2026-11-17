@@ -337,7 +337,7 @@
     stopAll();
     rpc('battle_questions', { p_code: S.code, p_token: S.token }).then(function (d) {
       syncClock(d.now);
-      S.qs = d.questions; S.mine = d.mine || {}; S.res = {}; S.ends = Date.parse(d.ends_at); S.starts = Date.parse(d.starts_at);
+      S.qs = d.questions; S.mine = d.mine || {}; S.res = d.revealed || {}; S.ends = Date.parse(d.ends_at); S.starts = Date.parse(d.starts_at);
       S.order = seededOrder(S.qs.length, S.token + S.code);
       S.pos = 0;
       for (var i = 0; i < S.order.length; i++) if (!S.mine[S.qs[S.order[i]].id]) { S.pos = i; break; }
@@ -461,7 +461,7 @@
     var chosen = S.mine[q.id], res = S.res[q.id];
     var opts = q.options.map(function (t, i) {
       var L = q.letters[i], cls = TILE[L] || 't-a';
-      if (chosen) cls += chosen === L ? (res ? (res.correct ? ' right' : ' wrong') : ' picked') : ' dim';
+      if (chosen) cls += chosen === L ? (res ? (res.correct ? ' right' : ' wrong') : ' picked') : (res && res.answer === L ? ' answer' : ' dim');
       return '<button class="bt-tile ' + cls + '" data-l="' + L + '"' + (chosen ? ' disabled' : '') + '><span class="bt-tl">' + L + '</span><span class="bt-tt">' + B.fmt(t) + '</span><span class="bt-mark"></span></button>';
     }).join('');
     var dots = S.order.map(function (qi, p) {
@@ -509,9 +509,11 @@
     var prevStreak = S.streak;
     rpc('battle_answer', { p_code: S.code, p_token: S.token, p_qid: q.id, p_choice: L }).then(function (r) {
       if (r.dup) return;
-      S.res[q.id] = { correct: r.correct, points: r.points };
+      S.res[q.id] = { correct: r.correct, points: r.points, answer: r.answer };
       var t = S.pos === pos ? host.querySelector('.bt-tile[data-l="' + L + '"]') : null;
       if (t) { t.classList.remove('picked'); t.classList.add(r.correct ? 'right' : 'wrong'); }
+      // Missed it: light up the right answer so the player learns it on the spot.
+      if (!r.correct && r.answer && S.pos === pos) { var ok = host.querySelector('.bt-tile[data-l="' + r.answer + '"]'); if (ok) { ok.classList.remove('dim'); ok.classList.add('answer'); } }
       if (r.correct) {
         callout(word(r), r.streak >= 3 ? 'fire' : 'good', (r.speed ? '⚡ +' + r.speed + ' speed' : '') + (r.streak_bonus ? '  🔥 +' + r.streak_bonus + ' streak' : ''));
         sparkle(el('btScore'), r.streak >= 3 ? 14 : 8);
@@ -524,7 +526,7 @@
       countUp(el('btScore'), S.score, r.score); S.score = r.score;
       setStreak(r.streak);
       if (answeredCount() >= n) { later(function () { callout('All done!', 'gold', 'Watching the others now'); }, 700); later(finishNow, 1600); return; }
-      if (S.pos === pos) later(function () { if (S.pos === pos) { S.pos = nextOpen(pos); drawQuiz(); fadeIn(); } }, 900);
+      if (S.pos === pos) later(function () { if (S.pos === pos) { S.pos = nextOpen(pos); drawQuiz(); fadeIn(); } }, r.correct ? 900 : 1700);
       else drawQuiz();
     }).catch(function (err) {
       var k = errKey(err);
@@ -723,13 +725,15 @@
       var verdict = !q.mine ? 'Not answered' : (q.mine === q.answer ? 'Correct' : 'Wrong');
       return '<details class="bt-rev ' + (q.mine === q.answer ? 'good' : 'miss') + '"><summary><b>Q' + (i + 1) + '</b> <span>' + verdict + '</span><small>' + pct(q.right, q.answered) + '% of the room</small></summary><div class="bt-rev-body"><div class="bt-stem">' + B.fmt(q.text) + '</div>' + (q.image ? '<img class="bt-img" alt="Question image" loading="lazy" src="' + esc(q.image) + '">' : '') + opts +
         (q.fastest ? '<p class="bt-fast">⚡ Fastest correct: ' + esc(q.fastest.nickname) + ' in ' + q.fastest.secs + 's</p>' : '') +
-        '<div class="bt-exp">' + (q.explanation ? B.fmtExp(q.explanation) : '<em>No explanation for this item.</em>') + '</div></div></details>';
+        (r.explanations_locked ? '<div class="bt-exp bt-exp-lock"><b>🔒 Explanation is in Pro</b><span>Pro unlocks the explanation for every battle question, plus all 740 topics.</span><button class="bt-cta inline" data-pro="1">' + (B.user() ? 'Upgrade to Pro' : 'Sign up free') + '</button></div>'
+          : '<div class="bt-exp">' + (q.explanation ? B.fmtExp(q.explanation) : '<em>No explanation for this item.</em>') + '</div>') + '</div></details>';
     }).join('') + '</section>' : '';
     var guest = !B.user() ? '<section class="bt-card bt-guest"><b>Save your result</b><p>Create a free MedLadder account to keep your battle history and practise the questions you missed.</p><button class="bt-cta" id="btSign">Sign up free</button></section>' : '';
     mount(topBar('Results', 'Home') + '<main class="bt-main"><div class="bt-center"><div class="bt-badge">🏆 Battle over</div><h1 class="bt-h1">' + esc(r.title) + '</h1><p class="bt-sub">' + n + ' questions · ' + r.minutes + ' min · ' + r.players + ' players</p></div>' +
       podium + card + '<div class="bt-actions" id="btAct"></div>' + table + insights + review + guest + '</main>', 'bt-res');
     wireBack(home);
     var sgn = el('btSign'); if (sgn) sgn.onclick = function () { B.openAuth('signup'); };
+    B.app().querySelectorAll('[data-pro]').forEach(function (b) { b.onclick = function () { if (B.user()) B.openPro('battle'); else B.openAuth('signup'); }; });
     drawActions(r, me);
     if (!r.next_code) every(watchRematch, 3000);
     if (rk.length >= 2) later(function () { confetti(me && me.rank === 1); }, 500);
