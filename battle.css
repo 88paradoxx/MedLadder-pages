@@ -464,3 +464,9 @@ html.ml-battle-on.bt-day, body.ml-battle-on.bt-day { background: #F4F0FF !import
 .bt .bt-qa.has-pic .bt-qimg.multi img { position: static; flex: 1 1 0; min-width: 0; width: auto !important; height: 100% !important; }
 .bt-qa.has-pic .bt-qimg span { z-index: 1; }
 @media (min-width: 960px) { .bt-qa.has-pic .bt-qimg { min-height: 220px; } }
+
+/* Answer tiles grow with their text (62px minimum) so nothing is cut off. */
+.bt .bt-tray .bt-tile { height: auto; min-height: 62px; padding: 8px 46px 8px 8px; }
+.bt .bt-tray.five .bt-tile { height: auto; min-height: 54px; padding-top: 6px; padding-bottom: 6px; }
+.bt-tray .bt-tt { height: auto; padding: 0; }
+.bt-ti { max-height: none; }

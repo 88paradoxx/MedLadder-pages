@@ -366,7 +366,7 @@
       var tok = uuid();
       rpc('battle_create', {
         p_token: tok, p_nick: nick,
-        p_source: { module_ids: opts.moduleIds, title: opts.title || '' },
+        p_source: (opts.scope === 'all' || (opts.moduleIds || []).length > 120) ? { scope: 'all', title: opts.title || '' } : { module_ids: opts.moduleIds, title: opts.title || '' },
         p_settings: { max_players: c.players, n: n, minutes: mins, neg: el('btNeg').checked, title: title }
       }).then(function (r) { ev('battle_create', { players: c.players, questions: n, minutes: mins, pro: pro }); setToken(r.code, tok); openBattle(r.code); })
         .catch(function (e) { fail(e); btn.disabled = false; btn.textContent = 'Create battle'; });
@@ -697,19 +697,20 @@
   }
   // Long questions and answers shrink to fit their fixed space instead of pushing the layout.
   function fitQuiz() {
-    var qa = el('btQA'), qt = el('btQT');
-    if (qa && qt) {
-      var size = window.innerWidth >= 960 ? (S.hasPic ? 20 : 22) : (S.hasPic ? 17.5 : 20);
-      qt.style.fontSize = size + 'px';
-      while (qa.scrollHeight > qa.clientHeight + 1 && size > 12.5) { size -= 0.5; qt.style.fontSize = size + 'px'; }
-      qa.classList.toggle('scroll', qa.scrollHeight > qa.clientHeight + 1);
-    }
-    B.app().querySelectorAll('.bt-tile .bt-tt').forEach(function (box) {
-      var t = box.firstChild, f = 15.5; t.style.fontSize = f + 'px';
-      var room = box.clientHeight - 14;
-      while (t.scrollHeight > room + 1 && f > 11) { f -= 0.5; t.style.fontSize = f + 'px'; }
-    });
+    var qa = el('btQA'), qt = el('btQT'); if (!qa || !qt) return;
+    var tis = Array.prototype.slice.call(B.app().querySelectorAll('.bt-tray .bt-ti'));
+    var size = window.innerWidth >= 960 ? (S.hasPic ? 20 : 22) : (S.hasPic ? 17.5 : 20), f = 15.5;
+    function over() { return qa.scrollHeight > qa.clientHeight + 1; }
+    function setQ(v) { size = v; qt.style.fontSize = v + 'px'; }
+    function setA(v) { f = v; tis.forEach(function (t) { t.style.fontSize = v + 'px'; }); }
+    setQ(size); setA(f);
+    // Answers keep their full text (tiles grow); the question gives up its spare room first.
+    while (over() && size > 15) setQ(size - 0.5);
+    while (over() && f > 12.5) setA(f - 0.5);
+    while (over() && size > 12.5) setQ(size - 0.5);
+    qa.classList.toggle('scroll', over());
   }
+
   function confirmSubmit() {
     var left = S.qs.length - answeredCount();
     if (!left) return finishNow();
