@@ -172,6 +172,10 @@
   }, true);
   function wantMusic(on, soft) { S.wantMusic = on; S.musicSoft = soft; SND.music(on, soft); }
 
+  // Google Analytics: each battle screen is a page view, key moments are events.
+  function track(screen, title) { try { if (B.pageView) B.pageView('/battle/' + screen, 'Quiz Battle – ' + title); } catch (e) { } }
+  function ev(name, params) { try { if (B.event) B.event(name, params); } catch (e) { } }
+
   // ---------- screen frame ----------
   function mount(html, cls) {
     var app = B.app();
@@ -235,6 +239,7 @@
       '<label class="bt-label" for="btNick" style="margin-top:14px">Your battle name</label><input class="bt-input" id="btNick" maxlength="20" value="' + esc(c.nick) + '"></section>' +
       (pro ? '' : '<p class="bt-note">Free hosts: up to 5 players, 20 questions, 3 battles a day. <button class="bt-link" id="btUp">Get Pro for 50 players</button></p>') +
       '<button class="bt-cta" id="btCreate">Create battle</button></main>');
+    track('create', 'Create');
     wireBack(opts.back || home);
     function bind(id, key, customBox) {
       var host = el(id);
@@ -278,7 +283,7 @@
         p_token: tok, p_nick: nick,
         p_source: { module_ids: opts.moduleIds, title: opts.title || '' },
         p_settings: { max_players: c.players, n: n, minutes: mins, neg: el('btNeg').checked, title: title }
-      }).then(function (r) { setToken(r.code, tok); openBattle(r.code); })
+      }).then(function (r) { ev('battle_create', { players: c.players, questions: n, minutes: mins, pro: pro }); setToken(r.code, tok); openBattle(r.code); })
         .catch(function (e) { fail(e); btn.disabled = false; btn.textContent = 'Create battle'; });
     };
   }
@@ -327,12 +332,13 @@
         '<button class="bt-cta" id="btJoin">Join battle</button><p class="bt-note">No account needed.</p></section>') +
       '</main>');
     wireBack(home);
+    track('join', 'Join');
     if (ended) { el('btHome').onclick = home; return; }
     el('btDice').onclick = function () { el('btNick').value = randNick(); };
     el('btJoin').onclick = function () {
       var btn = el('btJoin'); btn.disabled = true;
       var n = el('btNick').value.trim() || randNick(); rememberNick(n);
-      rpc('battle_join', { p_code: S.code, p_token: S.token, p_nick: n }).then(function () { openBattle(S.code); })
+      rpc('battle_join', { p_code: S.code, p_token: S.token, p_nick: n }).then(function () { ev('battle_join', { signed_in: !!B.user() }); openBattle(S.code); })
         .catch(function (e) { fail(e); btn.disabled = false; });
     };
   }
@@ -358,6 +364,7 @@
     };
     var sh = el('btShare'); if (sh) sh.onclick = function () { navigator.share({ title: st.title, text: msg, url: url }).catch(function () { }); };
     S.seen = {};
+    track('lobby', 'Lobby');
     drawLobby(st);
     wantMusic(true, true);
     every(poll, 1500);
@@ -393,7 +400,7 @@
         var sb = el('btStart');
         if (sb) sb.onclick = function () {
           sb.disabled = true;
-          rpc('battle_start', { p_code: st.code, p_token: S.token }).then(function () { stopAll(); countdown(); }).catch(function (e) { fail(e); sb.disabled = false; });
+          rpc('battle_start', { p_code: st.code, p_token: S.token }).then(function () { ev('battle_start', { players: st.players.length, questions: st.n }); stopAll(); countdown(); }).catch(function (e) { fail(e); sb.disabled = false; });
         };
       }
     } else act.innerHTML = '<p class="bt-wait"><span class="bt-dots"><i></i><i></i><i></i></span> Waiting for the host to start</p>';
@@ -429,6 +436,7 @@
       var me = (S.st && S.st.me) || {};
       S.score = me.score || 0; S.streak = me.streak || 0; S.rank = 0; S.of = 0;
       liveShell();
+      track('play', 'Playing');
       drawQuiz();
       wantMusic(true, false);
       every(tick, 250);
@@ -702,11 +710,13 @@
   // ---------- finished early: live spectator view ----------
   function finishNow() {
     stopAll();
+    ev('battle_finish', { answered: S.mine ? Object.keys(S.mine).length : 0, total: S.qs ? S.qs.length : 0, score: S.score || 0 });
     rpc('battle_finish', { p_code: S.code, p_token: S.token }).catch(function () { }).then(spectate);
   }
   function spectate() {
     stopAll();
     S.prev = null; S.feed = [];
+    track('watch', 'Watching');
     wantMusic(true, true);
     mount(topBar('Live arena', 'Leave') + '<main class="bt-main">' +
       '<div class="bt-spec-hero"><div><div class="bt-badge">✓ You submitted</div><div class="bt-spec-place" id="btPlace">–</div><div class="bt-sub" id="btPlaceSub">Your place so far</div></div>' +
@@ -807,6 +817,7 @@
   }
   function drawResults(r) {
     S.result = r;
+    track('results', 'Results');
     if (S.st) { S.st.status = 'ended'; remember(S.st); }
     var rk = r.ranking, me = rk.find(function (p) { return p.is_me; });
     var n = r.n;
@@ -853,17 +864,20 @@
     mount(topBar('Results', 'Home') + '<main class="bt-main"><div class="bt-center"><div class="bt-badge">🏆 Battle over</div><h1 class="bt-h1">' + esc(r.title) + '</h1><p class="bt-sub">' + n + ' questions · ' + r.minutes + ' min · ' + r.players + ' players</p></div>' +
       podium + card + guest + '<div class="bt-actions" id="btAct"></div>' + grow + table + week + insights + review + '</main>', 'bt-res');
     wireBack(home);
-    var sgn = el('btSign'); if (sgn) sgn.onclick = function () { signUpThen(function () { loadResults(); B.toast('Result saved to your account'); }); };
+    var sgn = el('btSign'); if (sgn) sgn.onclick = function () { ev('battle_signup_click', { from: 'save_result' }); signUpThen(function () { loadResults(); B.toast('Result saved to your account'); }); };
     var mb = el('btMissed'); if (mb) mb.onclick = function () {
+      ev('battle_practise_missed', { count: S.missed.length, signed_in: !!B.user() });
       var go = function () { stopAll(); B.practise(S.missed, 'Missed in ' + String(r.title).replace(/ Showdown$/, ''), function () { openBattle(S.code); }); };
       if (B.user()) go(); else signUpThen(go);
     };
     var ho = el('btHostOwn'); if (ho) ho.onclick = function () {
+      ev('battle_host_own_click', {});
       stopAll();
       openCreate({ moduleIds: r.module_ids || [], title: String(r.title).replace(/ Showdown$/, ''), back: function () { openBattle(S.code); } });
     };
     B.app().querySelectorAll('[data-pro]').forEach(function (b) { b.onclick = function () { if (B.user()) B.openPro('battle'); else signUpThen(function () { B.openPro('battle'); }); }; });
     drawActions(r, me);
+    if (me) ev('battle_result', { rank: me.rank, players: rk.length, score: me.score, accuracy: pct(me.correct, n), signed_in: !!B.user() });
     if (!r.next_code) every(watchRematch, 3000);
     if (rk.length >= 2) later(function () { confetti(me && me.rank === 1); }, 500);
     later(function () { SND.play(me && me.rank <= 3 ? 'fanfare' : 'done'); }, 450);
@@ -937,6 +951,7 @@
       '<section class="bt-card" id="btWeek"><div class="bt-label">🏆 This week’s top battlers</div><p class="bt-sub" style="margin:0">Loading…</p></section></main>');
     rpc('battle_weekly', { p_score: null }).then(function (w) { drawWeekly(w, null, el('btWeek')); }).catch(function () { });
     wireBack(home);
+    track('hub', 'Quiz Battles');
     el('btGo').onclick = function () { var c = el('btCodeIn').value.trim(); if (c.length < 4) { B.toast('Enter the 6-letter code.', 'error'); return; } openBattle(c); };
     el('btCodeIn').addEventListener('keydown', function (e) { if (e.key === 'Enter') el('btGo').click(); });
     el('btPick').onclick = function () { stopAll(); B.goTopics(); };
