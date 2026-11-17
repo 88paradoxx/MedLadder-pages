@@ -3396,6 +3396,7 @@ window.addEventListener('error', function (ev) {
 
         supabaseClient.auth.onAuthStateChange(function (event, session) {
           var prevUser = currentUser;
+          if (event === 'SIGNED_IN') setTimeout(mlClaimBattles, 600);
 
           if (event === 'SIGNED_OUT') {
             var wasIn = !!currentUser;
@@ -4345,12 +4346,22 @@ window.addEventListener('error', function (ev) {
           setScreen: function (n) { state.screen = n; clearTimer(); },
           home: function () { renderHome(true); },
           goTopics: function () { v2Go('qbank'); },
+          practise: function (ids, title, back) { launchIdQuiz(ids, { title: title, kind: 'battle', back: back }); },
           openAuth: function (tab, opts) { openAuthModal(tab, opts); },
           openPro: function (reason) { openProModal(reason || 'battle', {}); },
           fmt: sanitizeQuestionHtml,
           fmtExp: function (t) { return formatExplanation(t, []); },
           userFirstName: function () { try { return currentUser ? String(getUserDisplayName(currentUser) || '').split(/[\s@]/)[0].slice(0, 20) : ''; } catch (e) { return ''; } }
         };
+      }
+      // A guest who signs up keeps the battles they played on this device.
+      function mlClaimBattles() {
+        try {
+          if (!supabaseClient || !currentUser) return;
+          var t = [];
+          for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/^mlbt_[A-Z0-9]{6}$/.test(k)) t.push(localStorage.getItem(k)); }
+          if (t.length) supabaseClient.rpc('battle_claim', { p_tokens: t.slice(-50) }).then(function () { }, function () { });
+        } catch (e) { }
       }
       function mlBattle(fn, arg) {
         mlBattleBridge();
