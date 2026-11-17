@@ -4,4 +4,5 @@ Allow: /
 # Keep the public app, landing page, subject pages, and exam guides discoverable.
 Disallow: /supabase/
 Disallow: /tools/
+Disallow: /battle/
 Sitemap: https://medladder.top/sitemap.xml

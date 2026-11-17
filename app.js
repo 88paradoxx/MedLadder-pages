@@ -699,6 +699,9 @@ window.addEventListener('error', function (ev) {
         if (reason === 'locked_module' && context && context.moduleName) {
           titleEl.textContent = 'Unlock ' + context.moduleName;
           subEl.innerHTML = 'Free registered accounts include the <strong>first 8 topics</strong> in this subject. Upgrade to MedLadder Pro to unlock ' + esc(context.moduleName) + ' and all ' + totalTopics() + ' topics!';
+        } else if (reason === 'battle') {
+          titleEl.textContent = 'Host bigger battles with Pro';
+          subEl.innerHTML = 'Free hosts can start <strong>3 battles a day</strong> with up to <strong>5 players</strong> and 20 questions. <strong>Pro</strong> hosts unlimited battles with up to <strong>50 players</strong>, any topic and 50 questions.';
         } else if (reason === 'all_topics') {
           titleEl.textContent = 'Full Subject Exam is Pro Only';
           subEl.innerHTML = 'The <strong>\"All topics\"</strong> cumulative grand test is a MedLadder Pro feature. Upgrade now to practice full-length multi-topic exams!';
@@ -3243,7 +3246,7 @@ window.addEventListener('error', function (ev) {
         var sc = state.screen;
         // Signing out on a static page or mid-quiz only updates the header:
         // the page stays where it is instead of jumping to Home.
-        if (onStaticPage() || sc === 'quiz' || sc === 'results') return;
+        if (onStaticPage() || sc === 'quiz' || sc === 'results' || sc === 'battle') return;
         if (!v2On()) {
           if (sc === 'setup') renderSetup(state.subjectId, state.moduleId || 'all');
           else renderHome(true);
@@ -4329,6 +4332,42 @@ window.addEventListener('error', function (ev) {
       // ---------- MODULE LIST (sub-topics within a subject) ----------
       var quizStylesReady = false;
       var quizStylesPromise = null;
+      // Quiz Battles live in battle.js/battle.css, fetched on first use.
+      var mlBattlePromise = null;
+      function mlBattleBridge() {
+        window.MLBridge = window.MLBridge || {
+          sb: function () { return supabaseClient; },
+          user: function () { return currentUser; },
+          isPro: function () { return isUserPro(currentUser); },
+          esc: esc,
+          toast: showToast,
+          app: function () { return app; },
+          setScreen: function (n) { state.screen = n; clearTimer(); },
+          home: function () { renderHome(true); },
+          goTopics: function () { v2Go('qbank'); },
+          openAuth: function (tab, opts) { openAuthModal(tab, opts); },
+          openPro: function (reason) { openProModal(reason || 'battle', {}); },
+          fmt: sanitizeQuestionHtml,
+          fmtExp: function (t) { return formatExplanation(t, []); },
+          userFirstName: function () { try { return currentUser ? String(getUserDisplayName(currentUser) || '').split(/[\s@]/)[0].slice(0, 20) : ''; } catch (e) { return ''; } }
+        };
+      }
+      function mlBattle(fn, arg) {
+        mlBattleBridge();
+        var run = function () { if (window.MLBattle && window.MLBattle[fn]) window.MLBattle[fn](arg); };
+        if (!mlBattlePromise) {
+          mlBattlePromise = new Promise(function (resolve, reject) {
+            var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/battle.css'; document.head.appendChild(l);
+            var sc = document.createElement('script'); sc.src = '/battle.js'; sc.onload = resolve; sc.onerror = function () { mlBattlePromise = null; reject(new Error('load')); };
+            document.head.appendChild(sc);
+          });
+        }
+        var tries = 0;
+        mlBattlePromise.then(function () {
+          // The Supabase client may still be starting when a shared link opens.
+          (function wait() { if (supabaseClient || tries++ > 40) run(); else setTimeout(wait, 150); })();
+        }).catch(function () { showToast('Could not load Quiz Battles. Check your connection.', 'error'); });
+      }
       function ensureQuizStyles() {
         if (quizStylesReady) return Promise.resolve();
         if (quizStylesPromise) return quizStylesPromise;
@@ -4891,6 +4930,7 @@ window.addEventListener('error', function (ev) {
           '<p class="setup-sub">' + total + ' questions, each with an explained answer.</p>' +
           '<div class="start-btn-wrap">' +
           '<button class="' + startBtnClass + '" id="startBtn">' + startBtnLabel + '</button>' +
+          '<button class="rr-battle" id="battleBtn" type="button"><span aria-hidden="true">\u2694\uFE0F</span> Battle with friends<small>Same questions, one clock, live ranking</small></button>' +
           '</div>' +
           '<p class="rr-defaults">' + esc(defaultsLine) + '</p>' +
           setupNoteHtml +
@@ -4941,6 +4981,12 @@ window.addEventListener('error', function (ev) {
         });
         app.querySelectorAll('#whichRow .pill-choice').forEach(function (btn) {
           btn.addEventListener('click', function () { setupChoice.which = btn.getAttribute('data-which'); renderSetup(subjectId, moduleId); });
+        });
+        var battleBtn = document.getElementById('battleBtn');
+        if (battleBtn) battleBtn.addEventListener('click', function () {
+          var ids = (typeof pool.moduleDbId === 'number') ? [pool.moduleDbId] : (pool.moduleDbIds || []);
+          if (!ids.length) { showToast('Pick a topic first.', 'error'); return; }
+          mlBattle('openCreate', { moduleIds: ids, title: String(pool.title || '').replace(/^.*? \u2014 /, ''), maxQ: pool.questionCount, back: function () { renderSetup(subjectId, moduleId); } });
         });
         document.getElementById('startBtn').addEventListener('click', function () {
           if (isLocked) {
@@ -7373,7 +7419,17 @@ window.addEventListener('error', function (ev) {
           return m[1];
         } catch (e) { return null; }
       })();
+      // A shared battle link (/battle/GX7K2P is redirected to /?battle=GX7K2P).
+      var v3PendingBattle = (function () {
+        try {
+          var m = /[?&]battle=([A-Za-z0-9]{4,8})\b/.exec(window.location.search || '');
+          if (!m) return null;
+          history.replaceState(null, '', window.location.pathname + window.location.hash);
+          return m[1].toUpperCase();
+        } catch (e) { return null; }
+      })();
       function renderHomeV2() {
+        if (v3PendingBattle) { var bc = v3PendingBattle; v3PendingBattle = null; mlBattle('openBattle', bc); return; }
         if (v3PendingGo && (v3PendingGo !== 'bookmarks' || currentUser)) {
           var go = v3PendingGo; v3PendingGo = null;
           if (!quizStylesReady) { ensureQuizStyles().then(function () { v2Go(go); }); } else v2Go(go);
@@ -7618,6 +7674,9 @@ window.addEventListener('error', function (ev) {
         app.querySelectorAll('[data-nav-go]').forEach(function (b) {
           b.onclick = function () { v2Go(b.getAttribute('data-nav-go')); };
         });
+        app.querySelectorAll('[data-battle-hub]').forEach(function (b) {
+          b.onclick = function () { mlBattle('openHub'); };
+        });
         app.querySelectorAll('[data-pyq]').forEach(function (b) {
           b.onclick = function () { renderPYQSetup(b.getAttribute('data-pyq')); };
         });
@@ -7661,7 +7720,9 @@ window.addEventListener('error', function (ev) {
           '<button class="v3-card v3-way" data-nav-go="pyq"><span class="v3-way-ic w-doc">' + v3Ic('doc', 26) + '</span><span>Past papers</span>' + v3Ic('chev', 18) + '</button>' +
           '<a class="v3-card v3-way" href="/books"><span class="v3-way-ic w-book">' + v3Ic('book', 26) + '</span><span>Books <small>Free PDFs to download</small></span>' + v3Ic('chev', 18) + '</a>' +
           '<button class="v3-card v3-way" data-nav-go="review"><span class="v3-way-ic w-ref">' + v3Ic('refresh', 26) + '</span><span>Review' + (ix.due.length ? ' <small>' + ix.due.length + ' due</small>' : '') + '</span>' + v3Ic('chev', 18) + '</button>' +
-          '</div></section>';
+          '</div>' +
+          '<button class="v3-card v3-battle" data-battle-hub="1"><span class="v3-battle-ic" aria-hidden="true">\u2694\uFE0F</span><span class="v3-battle-tx"><b>Battle with friends</b><small>Pick a topic, share a code, race the same questions on one clock</small></span><span class="v3-battle-go">Start or join</span></button>' +
+          '</section>';
         body = '<div class="v2-bold v3-page">' + body + '</div>';
         v2Paint('subjects', v2Shell('qbank', v2Header(), body, ix.due.length));
         wireV2Shell();
