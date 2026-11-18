@@ -4466,3 +4466,108 @@ html.dark.ml-reading #app .v3-foot .v3f {
   background: linear-gradient(160deg, rgba(79, 184, 160, .26), rgba(120, 165, 235, .10) 80%), #20302F !important;
   border-color: rgba(79, 184, 160, .40) !important;
 }
+
+/* ---- Clinical teal dark: contrast inside tinted tiles (Nov 2026) ---------
+   Inner chips/icon boxes sit on a dark neutral backing instead of picking up
+   the tile tint, text stays neutral, and tiles get a clearer edge. */
+html.dark.ml-reading #app .v3 :where(.v3-card, .v3-subj, .v3-topic, .v3-custom) {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important;
+}
+html.dark.ml-reading #app .v3 :where(.v3-card, .v3-subj, .v3-topic, .v3-custom) :is(
+  .v2-subj-ic, .v3-pyq-ic, .v3-set-ic, .v3-cont-ic .v2-subj-ic, .v3-custom-ic, .v3-duecard-ic, .v3-way-ic,
+  .v3-pyq-y, .v3-chip, .v3-tag, .v3-tc, .v3-stat, .v3-thumb, .v3-mock-badge) {
+  background: rgba(10, 16, 18, .55) !important;
+  border: 1px solid rgba(255, 255, 255, .09) !important;
+  background-image: none !important;
+}
+html.dark.ml-reading #app .v3 :where(.v3-card, .v3-subj, .v3-topic, .v3-custom) :is(.v3-pyq-y, .v3-chip, .v3-tag) { color: #F1F6F5 !important; }
+html.dark.ml-reading #app .v3 :where(.v3-card, .v3-subj, .v3-topic, .v3-custom) :is(b, strong, h2, h3, .v3-cont-main b, .v3-li-t b) { color: #F4F8F7 !important; }
+html.dark.ml-reading #app .v3 :where(.v3-card, .v3-subj, .v3-topic, .v3-custom) :is(small, .v3-muted, .v3-stat span) { color: #C4CFCC !important; }
+html.dark.ml-reading #app .v3 .v3-subj .v2-ring-track { stroke: rgba(10, 16, 18, .55) !important; }
+html.dark.ml-reading #app .v3 .v3-subj .v2-ring-in { color: #F4F8F7 !important; }
+/* contrast audit fixes: calmer tile washes, brighter secondary text, darker selected tab */
+html.dark.ml-reading #app .v3 .v3-qt,
+html.dark.ml-reading #app .v3 .v3-subj {
+  background: linear-gradient(150deg, rgba(var(--tint), .34), rgba(var(--tint), .10)), #1F2A2D !important;
+  border-color: rgba(var(--tint), .62) !important;
+}
+html.dark.ml-reading #app .v3 :where(.v3-card:not(.v3-battle):not(.v3-pro)) {
+  background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important;
+  border-color: rgba(var(--tint), .55) !important;
+}
+html.dark.ml-reading #app .v3 .v3-bdg { background: linear-gradient(150deg, rgba(var(--tint), .34), rgba(var(--tint), .10)), #1F2A2D !important; }
+html.dark.ml-reading #app .v3 :where(.v3-card, .v3-subj, .v3-topic, .v3-custom) :is(small, .v3-muted, .v3-stat span) { color: #D6DFDC !important; }
+html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] { background: rgba(var(--tint), .36) !important; border-color: rgba(var(--tint), .9) !important; }
+html.dark.ml-reading #app .v3-foot, html.dark.ml-reading #app .v3-foot :is(small, p, span, a, h2, h3, li) { color: #B9C9C5 !important; }
+html.dark.ml-reading #app .v3-foot .footer-directory-group :is(h2, h3, summary, b, strong) { color: #DCE8E5 !important; }
+html.dark.ml-reading #app .v3-foot .v3f-play, html.dark.ml-reading #app .v3-foot .v3f-play * { color: #10302A !important; }
+html.dark.ml-reading #app .v3 .v3-tc:not(.pro) { color: #E2EAE8 !important; }
+html.dark.ml-reading #app .v3-foot a { color: #E2EAE8 !important; }
+/* quiz, setup and results: brighter reading text on the teal dark ground */
+html.dark.ml-reading {
+  --rr-ink: #F2F7F5; --rr-ink-dim: #E2EBE8; --rr-ink-quiet: #B3C5C1;
+}
+html.dark.ml-reading #app :is(.qtext, .rr-q, .opt, .opt span, .explain, .rexplain) { color: #F2F7F5 !important; }
+html.dark.ml-reading #app .opt .letter { color: #C9D8D4 !important; }
+html.dark.ml-reading #app .opt.dim { opacity: .68 !important; }
+html.dark.ml-reading #app .screen-quiz .opt.dim span { color: #CFDCD8 !important; }
+
+/* ---- Clinical teal dark: setup and results screens in the home look ------
+   Same sans headings, tinted cards and dark chips as the v3 home screens. */
+html.dark.ml-reading #app :is(.rr-setup, .rr-results) :is(h1, h2, .setup-chapname) {
+  font-family: var(--rr-sans) !important; font-weight: 800 !important; letter-spacing: -0.02em !important; color: #F4F8F7 !important;
+}
+html.dark.ml-reading #app :is(.rr-setup, .rr-results) :is(.setup-sub, p) { font-family: var(--rr-sans) !important; color: #C9D6D2 !important; }
+html.dark.ml-reading #app .rr-setup :is(.rr-defaults, .rr-note)          { --tint: 79, 184, 160; }
+html.dark.ml-reading #app .rr-setup .rr-settings                         { --tint: 120, 165, 235; }
+html.dark.ml-reading #app .rr-setup .rr-past                             { --tint: 176, 150, 230; }
+html.dark.ml-reading #app .rr-setup .type-card:nth-child(1)              { --tint: 79, 184, 160; }
+html.dark.ml-reading #app .rr-setup .type-card:nth-child(2)              { --tint: 224, 181, 98; }
+html.dark.ml-reading #app .rr-setup .type-card:nth-child(3)              { --tint: 233, 154, 174; }
+html.dark.ml-reading #app .rr-results :is(.rr-sum, .rr-score)            { --tint: 79, 184, 160; }
+html.dark.ml-reading #app .rr-results .rr-misses                         { --tint: 232, 140, 120; }
+html.dark.ml-reading #app .rr-results .rr-review-cta                     { --tint: 224, 181, 98; }
+html.dark.ml-reading #app .rr-results .rr-last, html.dark.ml-reading #app .rr-results .rr-res-guest { --tint: 176, 150, 230; }
+
+html.dark.ml-reading #app .rr-setup :is(.rr-defaults, .rr-note, .rr-settings, .rr-past),
+html.dark.ml-reading #app .rr-setup .type-card,
+html.dark.ml-reading #app .rr-results :is(.rr-sum, .rr-score, .rr-misses, .rr-review-cta, .rr-last, .rr-res-guest) {
+  background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important;
+  border: 1px solid rgba(var(--tint), .55) !important; border-radius: 20px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important;
+}
+html.dark.ml-reading #app .rr-setup :is(.rr-defaults, .rr-note) { padding: 14px 16px !important; margin: 12px 0 !important; color: #DCE6E3 !important; }
+html.dark.ml-reading #app .rr-setup .rr-settings { padding: 4px 16px 10px !important; margin: 12px 0 !important; }
+html.dark.ml-reading #app .rr-setup .rr-settings summary { color: #F4F8F7 !important; border: 0 !important; }
+html.dark.ml-reading #app .rr-setup .setup-section { border-color: rgba(255, 255, 255, .08) !important; }
+html.dark.ml-reading #app .rr-setup .setup-label { color: #C9D6D2 !important; }
+html.dark.ml-reading #app .rr-setup .type-card .tname { color: #F4F8F7 !important; }
+html.dark.ml-reading #app .rr-setup .type-card .tdesc { color: #D6DFDC !important; }
+html.dark.ml-reading #app .rr-setup .type-card.active { border-width: 2px !important; border-color: rgba(var(--tint), .95) !important; }
+html.dark.ml-reading #app .rr-setup .pill-choice {
+  background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(255, 255, 255, .10) !important; color: #E6EEEC !important; border-radius: 12px !important;
+}
+html.dark.ml-reading #app .rr-setup .pill-choice.active { background: #4FB8A0 !important; border-color: #4FB8A0 !important; color: #0F1F1C !important; }
+html.dark.ml-reading #app :is(.rr-setup, .rr-results) .btn.start,
+html.dark.ml-reading #app .rr-results .btn:not(.secondary) {
+  background: #4FB8A0 !important; color: #0F1F1C !important; border-radius: 18px !important; box-shadow: none !important; font-family: var(--rr-sans) !important; font-weight: 700 !important;
+}
+html.dark.ml-reading #app .rr-results :is(.rr-sum, .rr-score) { padding: 16px !important; box-sizing: border-box !important; overflow: hidden !important; }
+html.dark.ml-reading #app .rr-results .rr-sum > * { max-width: 100% !important; }
+
+/* ---- Clinical teal dark: battle tile as a subtle yellow tile like the rest */
+html.dark.ml-reading #app .v3 .v3-battle,
+html.dark.ml-reading #app .rr-battle {
+  background: linear-gradient(160deg, rgba(224, 181, 98, .34), rgba(224, 181, 98, .10) 75%), #1F2A2D !important;
+  border: 1px solid rgba(224, 181, 98, .62) !important; border-radius: 20px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; color: #F4F8F7 !important; transform: none !important;
+}
+html.dark.ml-reading #app .v3 .v3-battle-tx b,
+html.dark.ml-reading #app .rr-battle > span { color: #F4F8F7 !important; }
+html.dark.ml-reading #app .v3 .v3-battle-tx small,
+html.dark.ml-reading #app .rr-battle small { color: #D6DFDC !important; opacity: 1 !important; }
+html.dark.ml-reading #app .v3 .v3-battle-go {
+  background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(224, 181, 98, .55) !important;
+  color: #F7DCA6 !important; box-shadow: none !important;
+}
+html.dark.ml-reading #app .rr-battle:active { transform: none !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
