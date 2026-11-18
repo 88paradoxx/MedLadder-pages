@@ -4371,3 +4371,48 @@ html.dark.ml-reading #app .v3 .v3-qt-layers .v3-qt-ic,
 html.dark.ml-reading #app .v3 .v3-qt-chart .v3-qt-ic { color: #63C6AE !important; }
 html.dark.ml-reading #app .v3 .v3-qt-trophy .v3-qt-ic { color: #E0B562 !important; }
 html.dark.ml-reading #app .v3 .v2-hero.v3-mission::after { background: radial-gradient(circle, rgba(255, 255, 255, .06), transparent 70%) !important; }
+
+/* ---- Clinical teal dark: coloured tiles and menu bar (Nov 2026) ----------
+   Only tile backgrounds/edges and the bottom bar are tinted; contents keep
+   their existing colours. Each tile picks a hue via --tint (r, g, b). */
+html.dark .v3 .v3-qt-bolt,   html.dark .v3 .v3-nav .v2-nav-item[data-nav="home"]      { --tint: 79, 184, 160; --tint-ink: #A6EBD9; }
+html.dark .v3 .v3-qt-trophy, html.dark .v3 .v3-nav .v2-nav-item[data-nav="mock"]      { --tint: 224, 181, 98; --tint-ink: #F7DCA6; }
+html.dark .v3 .v3-qt-layers, html.dark .v3 .v3-nav .v2-nav-item[data-nav="qbank"]     { --tint: 120, 165, 235; --tint-ink: #C9DCFA; }
+html.dark .v3 .v3-qt-chart,  html.dark .v3 .v3-nav .v2-nav-item[data-nav="pyq"]       { --tint: 233, 154, 174; --tint-ink: #F7CCD7; }
+html.dark .v3 .v3-nav .v2-nav-item[data-nav="bookmarks"] { --tint: 176, 150, 230; --tint-ink: #DCD0F7; }
+html.dark .v3 .v3-nav .v2-nav-item[data-nav="profile"]   { --tint: 232, 140, 120; --tint-ink: #F7C9BE; }
+html.dark .v3 .v3-prog   { --tint: 120, 165, 235; }
+html.dark .v3 .v3-streak { --tint: 176, 150, 230; }
+html.dark .v3 .v3-subj:nth-of-type(6n + 1) { --tint: 232, 140, 120; }
+html.dark .v3 .v3-subj:nth-of-type(6n + 2) { --tint: 120, 165, 235; }
+html.dark .v3 .v3-subj:nth-of-type(6n + 3) { --tint: 176, 150, 230; }
+html.dark .v3 .v3-subj:nth-of-type(6n + 4) { --tint: 79, 184, 160; }
+html.dark .v3 .v3-subj:nth-of-type(6n + 5) { --tint: 224, 181, 98; }
+html.dark .v3 .v3-subj:nth-of-type(6n + 6) { --tint: 233, 154, 174; }
+
+/* tiles */
+html.dark.ml-reading #app .v3 .v3-qt,
+html.dark.ml-reading #app .v3 .v3-subj {
+  background: linear-gradient(150deg, rgba(var(--tint), .48), rgba(var(--tint), .14)), var(--x-card) !important;
+  border-color: rgba(var(--tint), .58) !important;
+}
+html.dark.ml-reading #app .v3 .v3-qt .v3-qt-ic { color: var(--tint-ink) !important; }
+html.dark.ml-reading #app .v3 .v3-qt:hover,
+html.dark.ml-reading #app .v3 .v3-subj:hover { border-color: rgba(var(--tint), .8) !important; }
+html.dark.ml-reading #app .v3 .v3-subj small { color: rgba(232, 240, 238, .78) !important; }
+html.dark.ml-reading #app .v3 .v3-prog,
+html.dark.ml-reading #app .v3 .v3-streak {
+  background: linear-gradient(160deg, rgba(var(--tint), .40), rgba(var(--tint), .12) 75%), var(--x-card) !important;
+  border-color: rgba(var(--tint), .50) !important;
+}
+
+/* menu bar: each tab in its own colour, selected tab a solid pill */
+html.dark.ml-reading #app .v3 .v3-nav {
+  background: linear-gradient(90deg, rgba(79,184,160,.16), rgba(120,165,235,.14), rgba(224,181,98,.14), rgba(233,154,174,.14), rgba(176,150,230,.16)), #1C2628 !important;
+  border-color: rgba(255, 255, 255, .10) !important;
+}
+html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item { color: rgb(var(--tint)) !important; border: 1px solid transparent !important; }
+html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item:hover { background: rgba(var(--tint), .14) !important; color: var(--tint-ink) !important; }
+html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] {
+  background: rgba(var(--tint), .55) !important; border-color: rgba(var(--tint), .8) !important; color: #fff !important;
+}
