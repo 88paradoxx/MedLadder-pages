@@ -1,0 +1,27 @@
+name: Generate image MCQs for SEO pages (one-off)
+on:
+  push:
+    branches: [content/image-mcqs-gen]
+permissions:
+  contents: write
+jobs:
+  gen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch one image MCQ per topic
+        run: |
+          curl -sS --fail -H "x-export-token: ZBQIPJTc-aQUv_cBxk-YGE69qvyrCQ3i" https://groeibwykzrliphzzruk.supabase.co/functions/v1/ml-seo-image-mcqs-export -o /tmp/rows.json
+          python3 -c "import json;d=json.load(open('/tmp/rows.json'));print('rows',len(d))"
+      - name: Add cards to topic pages
+        run: python3 scripts/add-image-mcq.py /tmp/rows.json
+      - name: Commit result to content/image-mcqs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git checkout -b content/image-mcqs
+          git rm -q .github/workflows/image-mcqs-gen.yml
+          git add -A subjects scripts
+          git commit -q -m "SEO topic pages: one image MCQ per page from the question bank"
+          git push -q -f origin content/image-mcqs
