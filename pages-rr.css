@@ -71,7 +71,7 @@ h2 { font-weight: 800 !important; letter-spacing: -0.02em !important; }
 .back, .btn { border-radius: 14px !important; }
 
 /* Clinical teal dark theme (Nov 2026) */
-html.dark { --pr-ground: #172124; --pr-raised: #20302F; --pr-rule: #2D403E; --pr-soft: #243634; --pr-ink: #DCE8E5; --pr-dim: #C2D3CF; --pr-quiet: #8FA6A1; --pr-accent: #63C6AE; --pr-accent-fill: #3FA28B; --pr-accent-soft: rgba(79, 184, 160, .14); }
+html.dark { --pr-ground: #172124; --pr-raised: #20302F; --pr-rule: #2D403E; --pr-soft: #243634; --pr-ink: #DCE8E5; --pr-dim: #C2D3CF; --pr-quiet: #8FA6A1; --pr-accent: #63C6AE; --pr-accent-fill: #3FA28B; --pr-accent-soft: rgba(79, 184, 160, .10); }
 html.dark .card { box-shadow: none !important; }
 /* tinted cards like the app's home screen */
 html.dark .card { --tint: 79, 184, 160; }
@@ -79,7 +79,7 @@ html.dark .card:nth-of-type(5n + 2) { --tint: 120, 165, 235; }
 html.dark .card:nth-of-type(5n + 3) { --tint: 176, 150, 230; }
 html.dark .card:nth-of-type(5n + 4) { --tint: 232, 140, 120; }
 html.dark .card:nth-of-type(5n + 5) { --tint: 224, 181, 98; }
-html.dark .card { background: linear-gradient(160deg, rgba(var(--tint), .26), rgba(var(--tint), .07) 75%), #1F2A2D !important; border-color: rgba(var(--tint), .50) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
+html.dark .card { background: linear-gradient(160deg, rgba(var(--tint), .18), rgba(var(--tint), .05) 75%), #1F2A2D !important; border-color: rgba(var(--tint), .34) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
 html :is(.chip, .tag) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; }
 html.dark :is(.chip, .tag) { background: rgba(10, 16, 18, .55) !important; border-color: rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important; }
 html.dark .btn { background: #4FB8A0 !important; color: #0F1F1C !important; }
