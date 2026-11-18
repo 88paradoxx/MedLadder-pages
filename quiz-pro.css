@@ -4571,3 +4571,26 @@ html.dark.ml-reading #app .v3 .v3-battle-go {
   color: #F7DCA6 !important; box-shadow: none !important;
 }
 html.dark.ml-reading #app .rr-battle:active { transform: none !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
+
+/* ---- Clinical teal dark: Start quiz + Battle as a matching pair of strong
+   tiles (teal and yellow), and crisper quiz text before an answer. The
+   question still drops to the quiet colour once answered (rule above). */
+html.dark.ml-reading #app :is(.rr-setup .btn.start, #startBtn, .rr-battle) {
+  min-height: 64px !important; border-radius: 20px !important; font-family: var(--rr-sans) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; transform: none !important;
+}
+html.dark.ml-reading #app :is(.rr-setup .btn.start, #startBtn) {
+  background: linear-gradient(160deg, rgba(79, 184, 160, .62), rgba(79, 184, 160, .32)), #1F2A2D !important;
+  border: 1px solid rgba(79, 184, 160, .95) !important; color: #FFFFFF !important; font-size: 17px !important; font-weight: 800 !important;
+}
+html.dark.ml-reading #app .rr-battle {
+  background: linear-gradient(160deg, rgba(224, 181, 98, .55), rgba(224, 181, 98, .26)), #1F2A2D !important;
+  border: 1px solid rgba(224, 181, 98, .95) !important;
+}
+html.dark.ml-reading #app .rr-battle > span { color: #FFFFFF !important; font-size: 17px !important; font-weight: 800 !important; }
+html.dark.ml-reading #app .rr-battle small { color: #FFF4DD !important; }
+
+html.dark.ml-reading #app .rr-q:not(:has(.opt.locked)) .qtext { color: #FFFFFF !important; font-weight: 500 !important; }
+html.dark.ml-reading #app .rr-q:not(:has(.opt.locked)) .opt > span:not(.letter) { color: #FFFFFF !important; font-weight: 500 !important; }
+html.dark.ml-reading #app .rr-q:not(:has(.opt.locked)) .opt .letter { color: #E2EBE8 !important; }
+html.dark.ml-reading #app .rr-q .opt { border-color: rgba(255, 255, 255, .14) !important; }
