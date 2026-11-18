@@ -7460,23 +7460,22 @@ window.addEventListener('error', function (ev) {
           return m[1];
         } catch (e) { return null; }
       })();
-      // Refresh keeps your place: each app screen writes a short route into the
-      // address (#/qbank, #/subject/<id>, #/topic/<id>/<module>, #/pyq/<exam> ...)
-      // and a reload reopens it. Read it now, before the first renderHome().
+      // Refresh keeps your place without touching the address: each app screen
+      // saves a short route in this tab's sessionStorage, and only a real reload
+      // of the plain home address (no ?battle=, ?go=, ?action= ... links) reopens it.
+      var ML_ROUTE_KEY = 'ml_last_route';
+      function mlIsSpaPage() { var p = window.location.pathname; return p === '/' || p === '/index.html'; }
       var mlPendingRoute = (function () {
         try {
-          var h = window.location.hash || '';
-          if (h.indexOf('#/') !== 0) return null;
-          return decodeURIComponent(h.slice(2)) || null;
+          if (!mlIsSpaPage() || window.location.search || window.location.hash) return null;
+          var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+          if (!nav || nav.type !== 'reload') return null;
+          return sessionStorage.getItem(ML_ROUTE_KEY) || null;
         } catch (e) { return null; }
       })();
-      function mlIsSpaPage() { var p = window.location.pathname; return p === '/' || p === '/index.html'; }
       function mlRoute(r) {
         if (!mlIsSpaPage()) return;
-        try {
-          var url = window.location.pathname + window.location.search + (r ? '#/' + r : '');
-          if (window.location.pathname + window.location.search + window.location.hash !== url) history.replaceState(history.state, '', url);
-        } catch (e) { }
+        try { if (r) sessionStorage.setItem(ML_ROUTE_KEY, r); else sessionStorage.removeItem(ML_ROUTE_KEY); } catch (e) { }
       }
       function mlFindSubject(id) { return (SUBJECT_INDEX || []).find(function (s) { return String(s.subjectId) === String(id); }); }
       function mlOpenRoute(r) {
@@ -7509,16 +7508,17 @@ window.addEventListener('error', function (ev) {
         } catch (e) { return null; }
       })();
       function renderHomeV2() {
+        // The saved screen is used at most once, and only if no shared link is pending.
+        var pr = mlPendingRoute; mlPendingRoute = null;
         if (v3PendingBattle) { var bc = v3PendingBattle; v3PendingBattle = null; mlBattle('openBattle', bc); return; }
-        if (mlPendingRoute) {
-          var pr = mlPendingRoute; mlPendingRoute = null;
-          var openPr = function () { var ok = false; try { ok = mlOpenRoute(pr); } catch (e) { console.warn('route restore failed:', e); } if (!ok) renderHomeV2(); };
-          if (!quizStylesReady) ensureQuizStyles().then(openPr); else openPr();
-          return;
-        }
         if (v3PendingGo && (v3PendingGo !== 'bookmarks' || currentUser)) {
           var go = v3PendingGo; v3PendingGo = null;
           if (!quizStylesReady) { ensureQuizStyles().then(function () { v2Go(go); }); } else v2Go(go);
+          return;
+        }
+        if (pr) {
+          var openPr = function () { var ok = false; try { ok = mlOpenRoute(pr); } catch (e) { console.warn('route restore failed:', e); } if (!ok) renderHomeV2(); };
+          if (!quizStylesReady) ensureQuizStyles().then(openPr); else openPr();
           return;
         }
         if (!quizStylesReady) { ensureQuizStyles().then(function () { if (state.screen === 'home') renderHomeV2(); }); return; }
