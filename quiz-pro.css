@@ -4416,3 +4416,53 @@ html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item:hover { background: rgba(var(
 html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] {
   background: rgba(var(--tint), .55) !important; border-color: rgba(var(--tint), .8) !important; color: #fff !important;
 }
+
+/* ---- Clinical teal dark: every card carries a tint, so nothing looks left
+   out next to the coloured tiles. Low specificity (:where) so the tile
+   rules above keep their own colours and strength. */
+html.dark .v3 :where(.v3-card) { --tint: 79, 184, 160; }
+html.dark .v3 .v3-cont      { --tint: 233, 154, 174; }
+html.dark .v3 .v3-qotd-card { --tint: 176, 150, 230; }
+html.dark .v3 .v3-duecard   { --tint: 224, 181, 98; }
+html.dark .v3 .v3-list      { --tint: 232, 140, 120; }
+html.dark .v3 .v3-list:has(.v3-set) { --tint: 120, 165, 235; }
+html.dark .v3 .v3-me        { --tint: 176, 150, 230; }
+html.dark .v3 .v3-mock      { --tint: 224, 181, 98; }
+html.dark .v3 .v3-pyq, html.dark .v3 .v3-pyq-opts { --tint: 120, 165, 235; }
+html.dark .v3 .v3-bms       { --tint: 176, 150, 230; }
+html.dark .v3 .v3-bdg:nth-of-type(4n + 1) { --tint: 176, 150, 230; }
+html.dark .v3 .v3-bdg:nth-of-type(4n + 2) { --tint: 120, 165, 235; }
+html.dark .v3 .v3-bdg:nth-of-type(4n + 3) { --tint: 232, 140, 120; }
+html.dark .v3 .v3-bdg:nth-of-type(4n + 4) { --tint: 233, 154, 174; }
+html.dark .v3 .v3-custom    { --tint: 120, 165, 235; }
+html.dark .v3 .v3-topic     { --tint: 79, 184, 160; }
+
+html.dark.ml-reading #app .v3 :where(.v3-card:not(.v3-battle):not(.v3-pro)) {
+  background: linear-gradient(160deg, rgba(var(--tint), .40), rgba(var(--tint), .12) 75%), var(--x-card) !important;
+  border-color: rgba(var(--tint), .52) !important;
+}
+html.dark.ml-reading #app .v3 .v3-bdg {
+  background: linear-gradient(150deg, rgba(var(--tint), .45), rgba(var(--tint), .12)), var(--x-card) !important;
+  border-color: rgba(var(--tint), .55) !important;
+}
+html.dark.ml-reading #app .v3 .v3-custom,
+html.dark.ml-reading #app .v3 .v3-topic {
+  background: linear-gradient(150deg, rgba(var(--tint), .30), rgba(var(--tint), .08)), var(--x-card) !important;
+  border-color: rgba(var(--tint), .42) !important;
+}
+html.dark.ml-reading #app .v3 .v3-topic.is-next { border-color: rgba(var(--tint), .85) !important; }
+html.dark.ml-reading #app .v3 :where(.v3-card) small,
+html.dark.ml-reading #app .v3 .v3-muted { color: rgba(232, 240, 238, .78) !important; }
+html.dark.ml-reading #app .v3 .v3-list .v3-li { border-color: rgba(255, 255, 255, .08) !important; }
+html.dark .v3 .v3-pyq2:nth-of-type(5n + 1) { --tint: 120, 165, 235; }
+html.dark .v3 .v3-pyq2:nth-of-type(5n + 2) { --tint: 176, 150, 230; }
+html.dark .v3 .v3-pyq2:nth-of-type(5n + 3) { --tint: 79, 184, 160; }
+html.dark .v3 .v3-pyq2:nth-of-type(5n + 4) { --tint: 232, 140, 120; }
+html.dark .v3 .v3-pyq2:nth-of-type(5n + 5) { --tint: 224, 181, 98; }
+html.dark .v3 .v3-sec:nth-of-type(even) .v3-list:has(.v3-set) { --tint: 176, 150, 230; }
+html.dark .v3 .v3-list:has(.v3-set) { --tint: 176, 150, 230; }
+html.dark .v3 .v3-list:has(#v3Theme) { --tint: 120, 165, 235; }
+html.dark.ml-reading #app .v3-foot .v3f {
+  background: linear-gradient(160deg, rgba(79, 184, 160, .26), rgba(120, 165, 235, .10) 80%), #20302F !important;
+  border-color: rgba(79, 184, 160, .40) !important;
+}
