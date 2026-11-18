@@ -4621,3 +4621,10 @@ html.dark.ml-reading #app .rr-results .rr-review-cta .btn.secondary,
 html.dark.ml-reading #app .rr-results .rr-review-cta button:not(.btn-primary):not(:first-of-type) {
   background: rgba(10, 16, 18, .45) !important; border: 1px solid rgba(255, 255, 255, .16) !important; color: #FFFFFF !important;
 }
+/* missed list: plain like the full review (no tinted card), divider between items */
+html.dark.ml-reading #app .rr-results .rr-miss {
+  background: none !important; border: 0 !important; border-bottom: 1px solid rgba(255, 255, 255, .10) !important;
+  border-radius: 0 !important; box-shadow: none !important; padding: 16px 0 !important; margin: 0 !important;
+}
+html.dark.ml-reading #app .rr-results .rr-misses .rr-h2 { padding: 0 0 4px !important; border-bottom: 1px solid rgba(255, 255, 255, .10) !important; }
+html.dark.ml-reading #app .rr-results .rr-miss-n { color: #C9D6D2 !important; }
