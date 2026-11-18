@@ -19,7 +19,7 @@
   }
   function errKey(e) {
     var m = String((e && (e.message || e)) || '');
-    var keys = ['sign_in_required', 'daily_limit', 'pro_required', 'no_questions', 'not_found', 'ended', 'too_late', 'full', 'not_host', 'need_players', 'already_started', 'closed', 'not_ended', 'not_started', 'bad_source'];
+    var keys = ['expired', 'sign_in_required', 'daily_limit', 'pro_required', 'no_questions', 'not_found', 'ended', 'too_late', 'full', 'not_host', 'need_players', 'already_started', 'closed', 'not_ended', 'not_started', 'bad_source'];
     for (var i = 0; i < keys.length; i++) if (m.indexOf(keys[i]) !== -1) return keys[i];
     return 'network';
   }
@@ -39,6 +39,7 @@
     not_ended: 'The battle is still running.',
     not_started: 'The battle has not started yet.',
     bad_source: 'Could not set up that topic.',
+    expired: 'This battle closed because nobody joined within 3 hours.',
     network: 'Connection problem. Please try again.'
   };
   function fail(e) { var k = errKey(e); B.toast(ERR[k] || ERR.network, 'error'); return k; }
@@ -400,13 +401,14 @@
   function route(st) {
     if (st.me) remember(st);
     if (!st.me) return joinScreen(st);
+    if (st.status === 'expired') return expiredScreen(st);
     if (st.status === 'ended') return loadResults();
     if (st.status === 'live') return st.me.finished ? spectate() : beginLive();
     lobbyScreen(st);
   }
 
   function joinScreen(st) {
-    var ended = st.status === 'ended';
+    var ended = st.status === 'ended' || st.status === 'expired';
     mount(topBar('Battle invite') + '<main class="bt-main bt-center bt-pad">' +
       '<div class="bt-hero-ic">⚔️</div><div class="bt-badge">You’re invited</div><h1 class="bt-h1">' + esc(st.title) + '</h1>' +
       '<p class="bt-sub">' + st.n + ' questions · ' + st.minutes + ' min · ' + st.players.length + ' of ' + st.max_players + ' joined' + (st.status === 'live' ? ' · <b class="bt-live-dot">LIVE</b>' : '') + '</p>' +
@@ -458,6 +460,7 @@
         S.st = s; syncClock(s.now);
         if (!s.me) { stopAll(); mount(topBar('Quiz Battle') + '<main class="bt-main bt-center bt-pad"><h1 class="bt-h1">You were removed from this battle</h1><button class="bt-cta" id="btHome">Go to MedLadder</button></main>'); wireBack(home); el('btHome').onclick = home; return; }
         if (s.status === 'live') { stopAll(); remember(s); countdown(); return; }
+        if (s.status === 'expired') { stopAll(); remember(s); expiredScreen(s); return; }
         if (s.status === 'ended') { stopAll(); loadResults(); return; }
         drawLobby(s);
       }).catch(function () { });
@@ -480,15 +483,49 @@
     var act = el('btAction');
     if (host) {
       var ok = st.players.length >= 2;
-      if (!el('btStart') || el('btStart').disabled === ok) {
-        act.innerHTML = '<button class="bt-cta big" id="btStart"' + (ok ? '' : ' disabled') + '>' + (ok ? '▶ Start battle' : 'Waiting for a friend to join…') + '</button>';
+      var key = ok ? 'go' : 'solo';
+      if (act.getAttribute('data-k') !== key) {
+        act.setAttribute('data-k', key);
+        act.innerHTML = ok
+          ? '<button class="bt-cta big" id="btStart">▶ Start battle</button>'
+          : '<p class="bt-wait"><span class="bt-dots"><i></i><i></i><i></i></span> Waiting for friends to join</p>' +
+            '<button class="bt-ghost wide" id="btSolo">🎯 Play solo now</button>' +
+            '<p class="bt-note bt-center" id="btClose"></p>';
         var sb = el('btStart');
         if (sb) sb.onclick = function () {
           sb.disabled = true;
-          rpc('battle_start', { p_code: st.code, p_token: S.token }).then(function () { ev('battle_start', { players: st.players.length, questions: st.n }); stopAll(); countdown(); }).catch(function (e) { fail(e); sb.disabled = false; });
+          rpc('battle_start', { p_code: st.code, p_token: S.token }).then(function () { ev('battle_start', { players: S.st ? S.st.players.length : 2, questions: st.n }); stopAll(); countdown(); }).catch(function (e) { fail(e); sb.disabled = false; });
+        };
+        var so = el('btSolo');
+        if (so) so.onclick = function () {
+          so.disabled = true;
+          rpc('battle_start_solo', { p_code: st.code, p_token: S.token }).then(function () { ev('battle_start', { players: 1, questions: st.n, solo: true }); stopAll(); countdown(); })
+            .catch(function (e) { var k = fail(e); so.disabled = false; if (k === 'expired') { stopAll(); expiredScreen(st); } });
         };
       }
+      // Empty lobbies close 3 hours after they were made.
+      var cl = el('btClose');
+      if (cl && st.created_at) {
+        var leftMs = Date.parse(st.created_at) + 3 * 3600000 - srvNow();
+        var h = Math.floor(leftMs / 3600000), m = Math.max(0, Math.ceil((leftMs % 3600000) / 60000));
+        cl.textContent = leftMs > 0 ? 'The link stays open for ' + (h ? h + ' h ' : '') + m + ' min. Friends can join any time before then; you can also play solo and they can join while it runs.' : '';
+      }
     } else act.innerHTML = '<p class="bt-wait"><span class="bt-dots"><i></i><i></i><i></i></span> Waiting for the host to start</p>';
+  }
+
+  // Nobody joined in time.
+  function expiredScreen(st) {
+    stopAll(); wantMusic(false);
+    var isHost = st.me && st.me.is_host;
+    mount(topBar('Battle closed') + '<main class="bt-main bt-center bt-pad"><div class="bt-hero-ic">⏳</div>' +
+      '<h1 class="bt-h1">' + (isHost ? 'Nobody joined in time' : 'This battle has closed') + '</h1>' +
+      '<p class="bt-sub">' + esc(st.title) + ' was open for 3 hours without a second player, so it closed.</p>' +
+      (isHost && st.module_ids && st.module_ids.length ? '<button class="bt-cta" id="btAgain">⚔️ Start a new battle on this topic</button>' : '') +
+      '<button class="bt-ghost wide" id="btHome">Go to MedLadder</button></main>');
+    wireBack(home);
+    el('btHome').onclick = home;
+    var ag = el('btAgain');
+    if (ag) ag.onclick = function () { stopAll(); openCreate({ moduleIds: st.module_ids, title: String(st.title).replace(/ Showdown$/, ''), back: home }); };
   }
 
   // ---------- countdown ----------
@@ -967,7 +1004,7 @@
       }).join('') + '</div>';
     }
     var avgAcc = rk.length ? Math.round(rk.reduce(function (s, p) { return s + p.correct / n; }, 0) * 100 / rk.length) : 0;
-    var title = !me ? '' : me.rank === 1 ? 'Victory!' : me.rank <= 3 ? 'On the podium!' : 'Good fight!';
+    var title = !me ? '' : rk.length === 1 ? 'Solo run done' : me.rank === 1 ? 'Victory!' : me.rank <= 3 ? 'On the podium!' : 'Good fight!';
     var card = me ? '<section class="bt-card bt-me"><div class="bt-me-top"><div class="bt-me-rank">' + ordinal(me.rank) + '<small> of ' + rk.length + '</small></div><div class="bt-me-title">' + title + '</div></div><div class="bt-stats">' +
       stat(me.score, 'points') + stat(pct(me.correct, n) + '%', 'accuracy · room ' + avgAcc + '%') + stat(r.avg_secs != null ? r.avg_secs + 's' : '–', 'per question') + stat('🔥' + me.best_streak, 'best streak') + '</div></section>' : '';
     var table = '<section class="bt-card"><div class="bt-label">Final ranking</div><table class="bt-tbl"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Right</th><th>Time</th></tr></thead><tbody>' +
@@ -1101,7 +1138,7 @@
       var ul = el('btMine'); if (!ul) return;
       if (!list.length) { ul.innerHTML = '<li class="muted">No battles yet. Host one or join with a code.</li>'; return; }
       ul.innerHTML = list.slice(0, 12).map(function (x) {
-        var live = x.status !== 'ended' && (!x.ends_at || Date.parse(x.ends_at) > Date.now());
+        var live = x.status !== 'ended' && x.status !== 'expired' && (!x.ends_at || Date.parse(x.ends_at) > Date.now());
         var tag = live ? '<span class="bt-live-dot">' + (x.status === 'lobby' ? 'LOBBY' : 'LIVE') + '</span>' : (x.rank ? '<span class="bt-rk">' + ordinal(x.rank) + (x.players ? ' of ' + x.players : '') + '</span>' : '<span class="bt-rk">Ended</span>');
         return '<li><button data-code="' + esc(x.code) + '"><span class="bt-mine-t"><b>' + esc(x.title || x.code) + '</b><small>' + esc(x.code) + (x.ts ? ' · ' + ago(x.ts) : '') + '</small></span>' + tag + '<span class="bt-go">' + (live ? 'Return' : 'Results') + ' ›</span></button></li>';
       }).join('');
