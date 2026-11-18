@@ -69,3 +69,10 @@ h2 { font-weight: 800 !important; letter-spacing: -0.02em !important; }
 .brand span { font-weight: 800 !important; letter-spacing: -0.02em !important; }
 .card { border-radius: 20px !important; box-shadow: 0 1px 2px rgba(40, 20, 90, .04), 0 10px 26px -14px rgba(60, 30, 140, .22) !important; }
 .back, .btn { border-radius: 14px !important; }
+
+/* Clinical teal dark theme (Nov 2026) */
+html.dark {
+  --pr-ground: #172124; --pr-raised: #20302F; --pr-rule: #2D403E; --pr-soft: #243634;
+  --pr-ink: #DCE8E5; --pr-dim: #C2D3CF; --pr-quiet: #8FA6A1; --pr-accent: #63C6AE; --pr-accent-fill: #3FA28B; --pr-accent-soft: rgba(79, 184, 160, .14);
+}
+html.dark .card { box-shadow: none !important; }

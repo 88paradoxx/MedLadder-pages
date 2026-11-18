@@ -36,3 +36,6 @@ html:not(.dark) .ml-chrome { --c-card: #ffffff; --c-card2: #f4f3f8; --c-line: #d
   .ml-tabbar svg { width: 22px; height: 22px; }
 }
 .ml-foot .f-copy a { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+/* Clinical teal dark theme (Nov 2026) */
+html.dark .ml-chrome { --c-card: #20302F; --c-card2: #243634; --c-line: #2D403E; --c-ink: #DCE8E5; --c-ink2: #A9BDB8; --c-ink3: #8FA6A1; --c-acc: #4FB8A0; }

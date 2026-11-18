@@ -4314,3 +4314,60 @@ html.ml-reading #app .rr-battle small { font-weight: 600; font-size: 12.5px; col
 @keyframes mlbpIn { from { transform: translate(-50%, 20px); opacity: 0; } }
 @keyframes mlbpBlink { 50% { opacity: .3; } }
 @media (min-width: 1024px) { .mlbp { bottom: 28px; } }
+
+/* ==========================================================================
+   Clinical teal dark theme (Nov 2026)
+   Replaces the violet dark mode, which was too saturated and glowy for long
+   study sessions: off-white text, calm teal accent, no neon glows.
+   Light mode is unchanged. Delete this block to go back to violet.
+   ========================================================================== */
+html.dark .v3 {
+  --x-bg: #172124; --x-card: #20302F; --x-card2: #243634; --x-line: #2D403E; --x-line2: #3B5250;
+  --x-ink: #DCE8E5; --x-ink2: #A9BDB8; --x-ink3: #8FA6A1;
+  --x-acc: #4FB8A0; --x-acc2: #63C6AE; --x-accs: rgba(79, 184, 160, .16); --x-acc-ink: #8FD9C6;
+  --x-sh: 0 2px 10px rgba(0, 0, 0, .28);
+  --x-ok: #8BC98A; --x-okb: rgba(139, 201, 138, .14); --x-bad: #E58A7F; --x-badb: rgba(229, 138, 127, .14); --x-mid: #E0B562; --x-midb: rgba(224, 181, 98, .14);
+  --x-hero: linear-gradient(140deg, #24524A 0%, #1D433D 55%, #183832 100%);
+  --rr-tick: #2D403E;
+}
+html.dark.ml-reading {
+  --rr-ground: #172124; --rr-raised: #1B2829; --rr-card: #20302F; --rr-rule: #2D403E; --rr-rule-soft: #243634; --rr-tick: #2D403E;
+  --rr-ink: #DCE8E5; --rr-ink-dim: #C2D3CF; --rr-ink-quiet: #8FA6A1;
+  --rr-accent: #63C6AE; --rr-accent-fill: #3FA28B; --rr-accent-ink: #0F1F1C; --rr-accent-soft: rgba(79, 184, 160, .14);
+  --rr-ok: #8BC98A; --rr-ok-bg: rgba(139, 201, 138, .12); --rr-bad: #E58A7F; --rr-bad-bg: rgba(229, 138, 127, .12);
+}
+html.dark:has(#app > .v3) body { background: #172124 !important; }
+html.dark.ml-reading #app .v3 .rr-top-right .auth-btn,
+html.dark.ml-reading #app .v3 .rr-top-right .auth-avatar,
+html.dark.ml-reading #app .v3 .v3-play,
+html.dark.ml-reading #app .v3 .v3-filter[aria-pressed="true"],
+html.dark.ml-reading #app .v3 .v3-nextbtn,
+html.dark.ml-reading #app .v3 .v3-start {
+  background: #4FB8A0 !important; color: #0F1F1C !important; box-shadow: none !important;
+}
+html.dark.ml-reading #app .v3 .v3-seg-b[aria-pressed="true"] { background: #4FB8A0 !important; color: #0F1F1C !important; }
+html.dark.ml-reading #app .v3 .v3-nav { box-shadow: 0 8px 24px -12px rgba(0, 0, 0, .5) !important; }
+html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] { background: #2A4A44 !important; color: #CFF1E8 !important; }
+html.dark.ml-reading #app .v3 .v2-hero.v3-mission { border-color: #2F5A52 !important; box-shadow: none !important; }
+html.dark.ml-reading #app .v3 .v3-mission-btn { background: #CFF1E8 !important; color: #10302A !important; box-shadow: none !important; }
+html.dark.ml-reading #app .v3 .v3-art-glow { display: none !important; }
+html.dark.ml-reading #app .v3 .v3-qt-bolt .v3-qt-ic svg { fill: rgba(79, 184, 160, .2) !important; }
+html.dark.ml-reading #app .v3 .v3-stat.s-acc { background: linear-gradient(160deg, rgba(79, 184, 160, .12), transparent 70%) !important; }
+html.dark.ml-reading #app .v3 .v3-stat.s-ok svg { color: #8BC98A !important; }
+html.dark.ml-reading #app .v3 .v3-day.now .v3-day-c { box-shadow: 0 0 0 3px var(--x-card), 0 0 0 5px #4FB8A0 !important; }
+html.dark.ml-reading #app .v3 .v3-custom { border-color: rgba(79, 184, 160, .3) !important; background: rgba(79, 184, 160, .08) !important; }
+html.dark.ml-reading #app .v3 .v3-pro { background: linear-gradient(110deg, rgba(79, 184, 160, .18), rgba(224, 181, 98, .10)) !important; border-color: #3B5250 !important; }
+html.dark.ml-reading #app .v3 .v3-pill.pro,
+html.dark.ml-reading #app .v3 .v3-tc.pro { color: #E0B562 !important; }
+html.dark.ml-reading #app .v3 .v3-duecard-ic { background: rgba(224, 181, 98, .14) !important; color: #E0B562 !important; }
+html.dark.ml-reading #app .v3 .v3-mock.v3-mock-focus { box-shadow: 0 0 0 3px var(--x-acc) !important; }
+html.dark.ml-reading #app .v3-foot .v3f-play { background: #CFF1E8 !important; color: #10302A !important; }
+html.dark .screen-quiz .explain { border-left-color: #4FB8A0 !important; }
+html.dark .screen-quiz .opt.correct   { background-color: rgba(139, 201, 138, .13) !important; }
+html.dark .screen-quiz .opt.incorrect { background-color: rgba(229, 138, 127, .13) !important; }
+html.dark .item .num { background: rgba(79, 184, 160, .14) !important; border-color: rgba(79, 184, 160, .22) !important; }
+html.dark.ml-reading #app .v3 .v3-qt-bolt .v3-qt-ic,
+html.dark.ml-reading #app .v3 .v3-qt-layers .v3-qt-ic,
+html.dark.ml-reading #app .v3 .v3-qt-chart .v3-qt-ic { color: #63C6AE !important; }
+html.dark.ml-reading #app .v3 .v3-qt-trophy .v3-qt-ic { color: #E0B562 !important; }
+html.dark.ml-reading #app .v3 .v2-hero.v3-mission::after { background: radial-gradient(circle, rgba(255, 255, 255, .06), transparent 70%) !important; }

@@ -23,6 +23,16 @@
     }
   } catch (_) { document.documentElement.classList.remove('dark'); }
 
+  // Browser/status bar colour follows the theme (dark = Clinical teal background).
+  var LIGHT_BAR = null;
+  function syncThemeColor() {
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (!m) return;
+    if (LIGHT_BAR === null) LIGHT_BAR = m.getAttribute('content') || '#7B2FF7';
+    m.setAttribute('content', document.documentElement.classList.contains('dark') ? '#172124' : LIGHT_BAR);
+  }
+  syncThemeColor();
+
   window.medladderToggleTheme = function () {
     document.documentElement.classList.add('theme-switching');
     var isDark = document.documentElement.classList.toggle('dark');
@@ -35,6 +45,7 @@
       b.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
       b.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
     });
+    syncThemeColor();
     if (typeof window.__onThemeToggle === 'function') {
       try { window.__onThemeToggle(isDark); } catch (_) {}
     }
@@ -47,6 +58,7 @@
   };
 
   function initThemeBtn() {
+    syncThemeColor();
     var isDark = document.documentElement.classList.contains('dark');
     var btns = document.querySelectorAll('.theme-toggle, #themeToggle');
     btns.forEach(function (b) {

@@ -334,3 +334,17 @@ html:has(.seo-main) .auth-dropdown .dashboard-stat-icon {
 html:has(.seo-main) .auth-dropdown .dashboard-stat-value { display: block !important; font-size: 16px !important; font-weight: 800 !important; color: var(--sr-ink) !important; position: static !important; }
 html:has(.seo-main) .auth-dropdown .dashboard-stat-label { display: block !important; font-size: 10.5px !important; color: var(--sr-quiet) !important; white-space: nowrap !important; position: static !important; }
 html:has(.seo-main) .auth-dropdown .dashboard-progress-note { display: flex !important; align-items: center !important; gap: 8px !important; font-size: 12px !important; color: var(--sr-quiet) !important; margin: 0 0 8px !important; }
+
+/* Clinical teal dark theme (Nov 2026) */
+html.dark:has(.seo-main) {
+  --sr-ground: #172124; --sr-raised: #20302F; --sr-rule: #2D403E; --sr-soft: #243634; --sr-tick: #2D403E;
+  --sr-ink: #DCE8E5; --sr-dim: #C2D3CF; --sr-quiet: #8FA6A1;
+  --sr-accent: #3FA28B; --sr-accent-ink: #FFFFFF; --sr-accent-soft: rgba(79, 184, 160, .14);
+  --sr-ok: #8BC98A; --sr-ok-bg: rgba(139, 201, 138, .12); --sr-bad: #E58A7F; --sr-bad-bg: rgba(229, 138, 127, .12);
+  --sr-shadow: 0 2px 10px rgba(0, 0, 0, .28);
+}
+html.dark:has(.seo-main) .masthead .auth-btn,
+html.dark:has(.seo-main) .seo-main .btn:not(.secondary), html.dark:has(.seo-main) .seo-main a.btn:not(.secondary), html.dark:has(.seo-main) .pyq-subject-bank-primary {
+  background: #4FB8A0 !important; color: #0F1F1C !important; box-shadow: none !important;
+}
+html.dark:has(.seo-main) .masthead .auth-btn svg { color: #0F1F1C !important; stroke: #0F1F1C !important; }
