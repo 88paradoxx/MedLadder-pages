@@ -336,17 +336,9 @@ html:has(.seo-main) .auth-dropdown .dashboard-stat-label { display: block !impor
 html:has(.seo-main) .auth-dropdown .dashboard-progress-note { display: flex !important; align-items: center !important; gap: 8px !important; font-size: 12px !important; color: var(--sr-quiet) !important; margin: 0 0 8px !important; }
 
 /* Clinical teal dark theme (Nov 2026) */
-html.dark:has(.seo-main) {
-  --sr-ground: #172124; --sr-raised: #20302F; --sr-rule: #2D403E; --sr-soft: #243634; --sr-tick: #2D403E;
-  --sr-ink: #DCE8E5; --sr-dim: #C2D3CF; --sr-quiet: #8FA6A1;
-  --sr-accent: #3FA28B; --sr-accent-ink: #FFFFFF; --sr-accent-soft: rgba(79, 184, 160, .14);
-  --sr-ok: #8BC98A; --sr-ok-bg: rgba(139, 201, 138, .12); --sr-bad: #E58A7F; --sr-bad-bg: rgba(229, 138, 127, .12);
-  --sr-shadow: 0 2px 10px rgba(0, 0, 0, .28);
-}
+html.dark:has(.seo-main) { --sr-ground: #172124; --sr-raised: #20302F; --sr-rule: #2D403E; --sr-soft: #243634; --sr-tick: #2D403E; --sr-ink: #DCE8E5; --sr-dim: #C2D3CF; --sr-quiet: #8FA6A1; --sr-accent: #3FA28B; --sr-accent-ink: #FFFFFF; --sr-accent-soft: rgba(79, 184, 160, .14); --sr-ok: #8BC98A; --sr-ok-bg: rgba(139, 201, 138, .12); --sr-bad: #E58A7F; --sr-bad-bg: rgba(229, 138, 127, .12); --sr-shadow: 0 2px 10px rgba(0, 0, 0, .28); }
 html.dark:has(.seo-main) .masthead .auth-btn,
-html.dark:has(.seo-main) .seo-main .btn:not(.secondary), html.dark:has(.seo-main) .seo-main a.btn:not(.secondary), html.dark:has(.seo-main) .pyq-subject-bank-primary {
-  background: #4FB8A0 !important; color: #0F1F1C !important; box-shadow: none !important;
-}
+html.dark:has(.seo-main) .seo-main .btn:not(.secondary), html.dark:has(.seo-main) .seo-main a.btn:not(.secondary), html.dark:has(.seo-main) .pyq-subject-bank-primary { background: #4FB8A0 !important; color: #0F1F1C !important; box-shadow: none !important; }
 html.dark:has(.seo-main) .masthead .auth-btn svg { color: #0F1F1C !important; stroke: #0F1F1C !important; }
 
 /* ---- Clinical teal dark: SEO pages in the home look (Nov 2026) ----------
@@ -362,17 +354,13 @@ html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-
 html.dark:has(.seo-main) .pyq-preview-notice { --tint: 224, 181, 98; }
 html.dark:has(.seo-main) .seo-full-bank-cta { --tint: 79, 184, 160; }
 
-html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat, .seo-full-bank-cta, .pyq-preview-notice, section[aria-label="Bank counts and free tier"] > div, .seo-main details[style*="border"]) {
-  background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important;
-  border: 1px solid rgba(var(--tint), .55) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important;
-}
+html:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat, .seo-full-bank-cta, .pyq-preview-notice, section[aria-label="Bank counts and free tier"] > div, .seo-main details[style*="border"]) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; }
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat, .seo-full-bank-cta, .pyq-preview-notice, section[aria-label="Bank counts and free tier"] > div, .seo-main details[style*="border"]) { background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important; border-color: rgba(var(--tint), .55) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
 html.dark:has(.seo-main) .bento-stat-num { color: #F4F8F7 !important; }
 html.dark:has(.seo-main) :is(.bento-stat-lbl, .seo-card small, .seo-card span:not([class])) { color: #D6DFDC !important; }
 html.dark:has(.seo-main) :is(.seo-card, .seo-qcard, .pyq-q, .seo-faq-card) :is(b, strong, h3, .pyq-qtext) { color: #F4F8F7 !important; }
-html.dark:has(.seo-main) :is(.seo-opt, .pyq-opt):not(.correct):not(.incorrect):not(.is-correct):not(.is-wrong) {
-  background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important;
-}
+html:has(.seo-main) :is(.seo-opt, .pyq-opt):not(.correct):not(.incorrect):not(.is-correct):not(.is-wrong) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; }
+html.dark:has(.seo-main) :is(.seo-opt, .pyq-opt):not(.correct):not(.incorrect):not(.is-correct):not(.is-wrong) { background: rgba(10, 16, 18, .55) !important; border-color: rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important; }
 html.dark:has(.seo-main) :is(.seo-opt, .pyq-opt) :is(.seo-letter, .pyq-letter) { color: #C9D8D4 !important; }
 html.dark:has(.seo-main) :is(.seo-main p, .subtitle) { color: #D6DFDC !important; }
 html.dark:has(.seo-main) { --sr-quiet: #B9C9C5; }

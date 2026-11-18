@@ -58,9 +58,8 @@ html.dark .bk-card:nth-child(5n + 1) { --tint: 232, 140, 120; }
 html.dark .bk-card:nth-child(5n + 2) { --tint: 120, 165, 235; }
 html.dark .bk-card:nth-child(5n + 3) { --tint: 176, 150, 230; }
 html.dark .bk-card:nth-child(5n + 5) { --tint: 224, 181, 98; }
-html.dark :is(.bk-card, .cta-band) {
-  background: linear-gradient(160deg, rgba(var(--tint, 79, 184, 160), .30), rgba(var(--tint, 79, 184, 160), .08) 75%), #1F2A2D !important;
-  border: 1px solid rgba(var(--tint, 79, 184, 160), .55) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important;
-}
+html :is(.bk-card, .cta-band) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; }
+html.dark :is(.bk-card, .cta-band) { background: linear-gradient(160deg, rgba(var(--tint, 79, 184, 160), .30), rgba(var(--tint, 79, 184, 160), .08) 75%), #1F2A2D !important; border-color: rgba(var(--tint, 79, 184, 160), .55) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
 html.dark :is(.btn, .bk-dl) { background: #4FB8A0 !important; color: #0F1F1C !important; }
-html.dark :is(.bk-tag, .bk-tag-s) { background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important; }
+html :is(.bk-tag, .bk-tag-s) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; }
+html.dark :is(.bk-tag, .bk-tag-s) { background: rgba(10, 16, 18, .55) !important; border-color: rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important; }

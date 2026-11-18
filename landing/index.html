@@ -195,16 +195,14 @@
     html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 4) { --tint: 79, 184, 160; }
     html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 5) { --tint: 224, 181, 98; }
     html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 6) { --tint: 233, 154, 174; }
-    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step) {
-      background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important;
-      border: 1px solid rgba(var(--tint), .55) !important; border-radius: 18px !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important;
-    }
-    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step) :is(.plan-price-box, .n, .sec-badge, .pyq-badge, .plan-badge) {
-      background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important;
-    }
-    html.dark :is(.btn-main, .nav-cta) { background: #4FB8A0 !important; color: #0F1F1C !important; border-radius: 14px !important; }
-    html.dark h1, html.dark h2, html.dark h3, html.dark .brand { font-family: var(--sans); font-weight: 800; letter-spacing: -0.02em; }
-    html.dark :is(.hero .sub, .step p) { font-family: var(--sans); }
+    html :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; border-radius: 18px !important; }
+html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step) { background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important; border-color: rgba(var(--tint), .55) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
+    html :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step) :is(.plan-price-box, .n, .sec-badge, .pyq-badge, .plan-badge) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; }
+html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step) :is(.plan-price-box, .n, .sec-badge, .pyq-badge, .plan-badge) { background: rgba(10, 16, 18, .55) !important; border-color: rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important; }
+    html :is(.btn-main, .nav-cta) { border-radius: 14px !important; }
+html.dark :is(.btn-main, .nav-cta) { background: #4FB8A0 !important; color: #0F1F1C !important; }
+    html h1, html h2, html h3, html .brand { font-family: var(--sans); font-weight: 800; letter-spacing: -0.02em; }
+    html :is(.hero .sub, .step p) { font-family: var(--sans); }
 </style>
 
   <!-- Schema.org EducationalOrganization structured data -->
