@@ -4554,3 +4554,20 @@ html.dark.ml-reading #app .rr-results .btn:not(.secondary) {
 }
 html.dark.ml-reading #app .rr-results :is(.rr-sum, .rr-score) { padding: 16px !important; box-sizing: border-box !important; overflow: hidden !important; }
 html.dark.ml-reading #app .rr-results .rr-sum > * { max-width: 100% !important; }
+
+/* ---- Clinical teal dark: battle tile as a subtle yellow tile like the rest */
+html.dark.ml-reading #app .v3 .v3-battle,
+html.dark.ml-reading #app .rr-battle {
+  background: linear-gradient(160deg, rgba(224, 181, 98, .34), rgba(224, 181, 98, .10) 75%), #1F2A2D !important;
+  border: 1px solid rgba(224, 181, 98, .62) !important; border-radius: 20px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; color: #F4F8F7 !important; transform: none !important;
+}
+html.dark.ml-reading #app .v3 .v3-battle-tx b,
+html.dark.ml-reading #app .rr-battle > span { color: #F4F8F7 !important; }
+html.dark.ml-reading #app .v3 .v3-battle-tx small,
+html.dark.ml-reading #app .rr-battle small { color: #D6DFDC !important; opacity: 1 !important; }
+html.dark.ml-reading #app .v3 .v3-battle-go {
+  background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(224, 181, 98, .55) !important;
+  color: #F7DCA6 !important; box-shadow: none !important;
+}
+html.dark.ml-reading #app .rr-battle:active { transform: none !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
