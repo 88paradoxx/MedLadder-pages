@@ -7460,6 +7460,44 @@ window.addEventListener('error', function (ev) {
           return m[1];
         } catch (e) { return null; }
       })();
+      // Refresh keeps your place without touching the address: each app screen
+      // saves a short route in this tab's sessionStorage, and only a real reload
+      // of the plain home address (no ?battle=, ?go=, ?action= ... links) reopens it.
+      var ML_ROUTE_KEY = 'ml_last_route';
+      function mlIsSpaPage() { var p = window.location.pathname; return p === '/' || p === '/index.html'; }
+      var mlPendingRoute = (function () {
+        try {
+          if (!mlIsSpaPage() || window.location.search || window.location.hash) return null;
+          var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+          if (!nav || nav.type !== 'reload') return null;
+          return sessionStorage.getItem(ML_ROUTE_KEY) || null;
+        } catch (e) { return null; }
+      })();
+      function mlRoute(r) {
+        if (!mlIsSpaPage()) return;
+        try { if (r) sessionStorage.setItem(ML_ROUTE_KEY, r); else sessionStorage.removeItem(ML_ROUTE_KEY); } catch (e) { }
+      }
+      function mlFindSubject(id) { return (SUBJECT_INDEX || []).find(function (s) { return String(s.subjectId) === String(id); }); }
+      function mlOpenRoute(r) {
+        var parts = String(r || '').split('/');
+        var k = parts[0];
+        if (parts.length === 1 && ['qbank', 'pyq', 'mock', 'profile', 'bookmarks', 'progress', 'review'].indexOf(k) !== -1) { v2Go(k); return true; }
+        if (k === 'custom') { renderCustomSetup(); return true; }
+        if (k === 'pyq' && parts[1]) { renderPYQSetup(parts.slice(1).join('/')); return true; }
+        var sx = (k === 'subject' || k === 'topic') ? mlFindSubject(parts[1]) : null;
+        if (!sx) return false;
+        if (k === 'subject' || !parts[2]) { renderModuleList(sx.subjectId); return true; }
+        var mid = parts.slice(2).join('/');
+        if (mid === 'custom') { renderCustomSetup(); return true; }
+        if (mid === 'bookmarks') { v2Go('bookmarks'); return true; }
+        if (mid !== 'all') {
+          var m = getSubjectModules(sx.subjectId).find(function (x) { return String(x.moduleId) === mid; });
+          if (!m) { renderModuleList(sx.subjectId); return true; }
+          mid = m.moduleId;
+        }
+        renderSetup(sx.subjectId, mid);
+        return true;
+      }
       // A shared battle link (/battle/GX7K2P is redirected to /?battle=GX7K2P).
       var v3PendingBattle = (function () {
         try {
@@ -7470,10 +7508,17 @@ window.addEventListener('error', function (ev) {
         } catch (e) { return null; }
       })();
       function renderHomeV2() {
+        // The saved screen is used at most once, and only if no shared link is pending.
+        var pr = mlPendingRoute; mlPendingRoute = null;
         if (v3PendingBattle) { var bc = v3PendingBattle; v3PendingBattle = null; mlBattle('openBattle', bc); return; }
         if (v3PendingGo && (v3PendingGo !== 'bookmarks' || currentUser)) {
           var go = v3PendingGo; v3PendingGo = null;
           if (!quizStylesReady) { ensureQuizStyles().then(function () { v2Go(go); }); } else v2Go(go);
+          return;
+        }
+        if (pr) {
+          var openPr = function () { var ok = false; try { ok = mlOpenRoute(pr); } catch (e) { console.warn('route restore failed:', e); } if (!ok) renderHomeV2(); };
+          if (!quizStylesReady) ensureQuizStyles().then(openPr); else openPr();
           return;
         }
         if (!quizStylesReady) { ensureQuizStyles().then(function () { if (state.screen === 'home') renderHomeV2(); }); return; }
@@ -9388,6 +9433,30 @@ window.addEventListener('error', function (ev) {
         if (isSeoUrl && !document.getElementById('seoStartBtn')) { window.location.reload(); return; }
         handleSeoRoute();
       });
+      // Write each screen's route into the address after it renders (see mlRoute).
+      function mlAfter(fn, after) { return function () { var r = fn.apply(this, arguments); try { after.apply(this, arguments); } catch (e) { } return r; }; }
+      renderHome = mlAfter(renderHome, function () { if (state.screen === 'home') mlRoute(''); });
+      renderSubjectsV2 = mlAfter(renderSubjectsV2, function () { mlRoute('qbank'); });
+      renderPyqV2 = mlAfter(renderPyqV2, function () { mlRoute('pyq'); });
+      renderMockV2 = mlAfter(renderMockV2, function () { mlRoute('mock'); });
+      renderProfileV2 = mlAfter(renderProfileV2, function () { mlRoute('profile'); });
+      renderReviewV2 = mlAfter(renderReviewV2, function () { mlRoute('review'); });
+      renderBookmarks = mlAfter(renderBookmarks, function () { mlRoute('bookmarks'); });
+      renderDashboard = mlAfter(renderDashboard, function () { mlRoute('progress'); });
+      renderCustomSetup = mlAfter(renderCustomSetup, function () { mlRoute('custom'); });
+      renderModuleList = mlAfter(renderModuleList, function (sid) { if (sid != null) mlRoute('subject/' + sid); });
+      renderTopicsV2 = mlAfter(renderTopicsV2, function (sid) { if (sid != null) mlRoute('subject/' + sid); });
+      renderSetup = mlAfter(renderSetup, function (sid, mid) { if (sid != null) mlRoute('topic/' + sid + '/' + (mid == null ? 'all' : mid)); });
+      // Past papers can stop at the sign-in or Pro prompt; only route once the paper screen is up.
+      renderPYQSetup = (function (fn) {
+        return function (ex) {
+          var before = state.pyqExam, r = fn.apply(this, arguments);
+          var done = function () { if (ex && state.isPyqMode && state.pyqExam === ex && !document.querySelector('.v3-nav')) mlRoute('pyq/' + encodeURIComponent(ex)); };
+          if (r && typeof r.then === 'function') r.then(done, function () { }); else done();
+          return r;
+        };
+      })(renderPYQSetup);
+
       handleSeoRoute();
       document.documentElement.classList.add('app-ready');
       initAuth();
