@@ -4321,7 +4321,7 @@ html.ml-reading #app .rr-battle small { font-weight: 600; font-size: 12.5px; col
    study sessions: off-white text, calm teal accent, no neon glows.
    Light mode is unchanged. Delete this block to go back to violet.
    ========================================================================== */
-html.dark .v3 { --x-bg: #172124; --x-card: #20302F; --x-card2: #243634; --x-line: #2D403E; --x-line2: #3B5250; --x-ink: #DCE8E5; --x-ink2: #A9BDB8; --x-ink3: #8FA6A1; --x-acc: #4FB8A0; --x-acc2: #63C6AE; --x-accs: rgba(79, 184, 160, .16); --x-acc-ink: #8FD9C6; --x-sh: 0 2px 10px rgba(0, 0, 0, .28); --x-ok: #8BC98A; --x-okb: rgba(139, 201, 138, .14); --x-bad: #E58A7F; --x-badb: rgba(229, 138, 127, .14); --x-mid: #E0B562; --x-midb: rgba(224, 181, 98, .14); --x-hero: linear-gradient(140deg, #24524A 0%, #1D433D 55%, #183832 100%); --rr-tick: #2D403E; }
+html.dark .v3 { --x-bg: #172124; --x-card: #20302F; --x-card2: #243634; --x-line: #2D403E; --x-line2: #3B5250; --x-ink: #DCE8E5; --x-ink2: #A9BDB8; --x-ink3: #8FA6A1; --x-acc: #4FB8A0; --x-acc2: #63C6AE; --x-accs: rgba(79, 184, 160, .16); --x-acc-ink: #8FD9C6; --x-sh: 0 2px 10px rgba(0, 0, 0, .28); --x-ok: #8BC98A; --x-okb: rgba(139, 201, 138, .14); --x-bad: #E58A7F; --x-badb: rgba(229, 138, 127, .14); --x-mid: #E0B562; --x-midb: rgba(224, 181, 98, .14); --x-hero: linear-gradient(140deg, #1F443E 0%, #1B3A35 55%, #18322E 100%); --rr-tick: #2D403E; }
 html.dark.ml-reading { --rr-ground: #172124; --rr-raised: #1B2829; --rr-card: #20302F; --rr-rule: #2D403E; --rr-rule-soft: #243634; --rr-tick: #2D403E; --rr-ink: #DCE8E5; --rr-ink-dim: #C2D3CF; --rr-ink-quiet: #8FA6A1; --rr-accent: #63C6AE; --rr-accent-fill: #3FA28B; --rr-accent-ink: #0F1F1C; --rr-accent-soft: rgba(79, 184, 160, .14); --rr-ok: #8BC98A; --rr-ok-bg: rgba(139, 201, 138, .12); --rr-bad: #E58A7F; --rr-bad-bg: rgba(229, 138, 127, .12); }
 html.dark:has(#app > .v3) body { background: #172124 !important; }
 html.dark.ml-reading #app .v3 .rr-top-right .auth-btn,
@@ -4336,21 +4336,21 @@ html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] { backgr
 html.dark.ml-reading #app .v3 .v2-hero.v3-mission { border-color: #2F5A52 !important; box-shadow: none !important; }
 html.dark.ml-reading #app .v3 .v3-mission-btn { background: #CFF1E8 !important; color: #10302A !important; box-shadow: none !important; }
 html.ml-reading #app .v3 .v3-art-glow { display: none !important; }
-html.dark.ml-reading #app .v3 .v3-qt-bolt .v3-qt-ic svg { fill: rgba(79, 184, 160, .2) !important; }
-html.dark.ml-reading #app .v3 .v3-stat.s-acc { background: linear-gradient(160deg, rgba(79, 184, 160, .12), transparent 70%) !important; }
+html.dark.ml-reading #app .v3 .v3-qt-bolt .v3-qt-ic svg { fill: rgba(79, 184, 160, .14) !important; }
+html.dark.ml-reading #app .v3 .v3-stat.s-acc { background: linear-gradient(160deg, rgba(79, 184, 160, .08), transparent 70%) !important; }
 html.dark.ml-reading #app .v3 .v3-stat.s-ok svg { color: #8BC98A !important; }
 html.dark.ml-reading #app .v3 .v3-day.now .v3-day-c { box-shadow: 0 0 0 3px var(--x-card), 0 0 0 5px #4FB8A0 !important; }
-html.dark.ml-reading #app .v3 .v3-custom { border-color: rgba(79, 184, 160, .3) !important; background: rgba(79, 184, 160, .08) !important; }
-html.dark.ml-reading #app .v3 .v3-pro { background: linear-gradient(110deg, rgba(79, 184, 160, .18), rgba(224, 181, 98, .10)) !important; border-color: #3B5250 !important; }
+html.dark.ml-reading #app .v3 .v3-custom { border-color: rgba(79, 184, 160, .20) !important; background: rgba(79, 184, 160, .05) !important; }
+html.dark.ml-reading #app .v3 .v3-pro { background: linear-gradient(110deg, rgba(79, 184, 160, .12), rgba(224, 181, 98, .07)) !important; border-color: #3B5250 !important; }
 html.dark.ml-reading #app .v3 .v3-pill.pro,
 html.dark.ml-reading #app .v3 .v3-tc.pro { color: #E0B562 !important; }
-html.dark.ml-reading #app .v3 .v3-duecard-ic { background: rgba(224, 181, 98, .14) !important; color: #E0B562 !important; }
+html.dark.ml-reading #app .v3 .v3-duecard-ic { background: rgba(224, 181, 98, .10) !important; color: #E0B562 !important; }
 html.dark.ml-reading #app .v3 .v3-mock.v3-mock-focus { box-shadow: 0 0 0 3px var(--x-acc) !important; }
 html.dark.ml-reading #app .v3-foot .v3f-play { background: #CFF1E8 !important; color: #10302A !important; }
 html.dark .screen-quiz .explain { border-left-color: #4FB8A0 !important; }
 html.dark .screen-quiz .opt.correct { background-color: rgba(139, 201, 138, .13) !important; }
 html.dark .screen-quiz .opt.incorrect { background-color: rgba(229, 138, 127, .13) !important; }
-html.dark .item .num { background: rgba(79, 184, 160, .14) !important; border-color: rgba(79, 184, 160, .22) !important; }
+html.dark .item .num { background: rgba(79, 184, 160, .10) !important; border-color: rgba(79, 184, 160, .15) !important; }
 html.dark.ml-reading #app .v3 .v3-qt-bolt .v3-qt-ic,
 html.dark.ml-reading #app .v3 .v3-qt-layers .v3-qt-ic,
 html.dark.ml-reading #app .v3 .v3-qt-chart .v3-qt-ic { color: #63C6AE !important; }
@@ -4377,20 +4377,20 @@ html.dark .v3 .v3-subj:nth-of-type(6n + 6) { --tint: 233, 154, 174; }
 
 /* tiles */
 html.dark.ml-reading #app .v3 .v3-qt,
-html.dark.ml-reading #app .v3 .v3-subj { background: linear-gradient(150deg, rgba(var(--tint), .48), rgba(var(--tint), .14)), var(--x-card) !important; border-color: rgba(var(--tint), .58) !important; }
+html.dark.ml-reading #app .v3 .v3-subj { background: linear-gradient(150deg, rgba(var(--tint), .33), rgba(var(--tint), .10)), var(--x-card) !important; border-color: rgba(var(--tint), .39) !important; }
 html.dark.ml-reading #app .v3 .v3-qt .v3-qt-ic { color: var(--tint-ink) !important; }
 html.dark.ml-reading #app .v3 .v3-qt:hover,
-html.dark.ml-reading #app .v3 .v3-subj:hover { border-color: rgba(var(--tint), .8) !important; }
+html.dark.ml-reading #app .v3 .v3-subj:hover { border-color: rgba(var(--tint), .54) !important; }
 html.dark.ml-reading #app .v3 .v3-subj small { color: rgba(232, 240, 238, .78) !important; }
 html.dark.ml-reading #app .v3 .v3-prog,
-html.dark.ml-reading #app .v3 .v3-streak { background: linear-gradient(160deg, rgba(var(--tint), .40), rgba(var(--tint), .12) 75%), var(--x-card) !important; border-color: rgba(var(--tint), .50) !important; }
+html.dark.ml-reading #app .v3 .v3-streak { background: linear-gradient(160deg, rgba(var(--tint), .27), rgba(var(--tint), .08) 75%), var(--x-card) !important; border-color: rgba(var(--tint), .34) !important; }
 
 /* menu bar: each tab in its own colour, selected tab a solid pill */
-html.dark.ml-reading #app .v3 .v3-nav { background: linear-gradient(90deg, rgba(79,184,160,.16), rgba(120,165,235,.14), rgba(224,181,98,.14), rgba(233,154,174,.14), rgba(176,150,230,.16)), #1C2628 !important; border-color: rgba(255, 255, 255, .10) !important; }
+html.dark.ml-reading #app .v3 .v3-nav { background: linear-gradient(90deg, rgba(79,184,160, .11), rgba(120,165,235, .10), rgba(224,181,98, .10), rgba(233,154,174, .10), rgba(176,150,230, .11)), #1C2628 !important; border-color: rgba(255, 255, 255, .10) !important; }
 html.ml-reading #app .v3 .v3-nav .v2-nav-item { border-width: 1px !important; border-style: solid !important; border-color: transparent !important; }
 html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item { color: rgb(var(--tint)) !important; border-color: transparent !important; }
-html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item:hover { background: rgba(var(--tint), .14) !important; color: var(--tint-ink) !important; }
-html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] { background: rgba(var(--tint), .55) !important; border-color: rgba(var(--tint), .8) !important; color: #fff !important; }
+html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item:hover { background: rgba(var(--tint), .10) !important; color: var(--tint-ink) !important; }
+html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] { background: rgba(var(--tint), .37) !important; border-color: rgba(var(--tint), .54) !important; color: #fff !important; }
 
 /* ---- Clinical teal dark: every card carries a tint, so nothing looks left
    out next to the coloured tiles. Low specificity (:where) so the tile
@@ -4412,11 +4412,11 @@ html.dark .v3 .v3-bdg:nth-of-type(4n + 4) { --tint: 233, 154, 174; }
 html.dark .v3 .v3-custom { --tint: 120, 165, 235; }
 html.dark .v3 .v3-topic { --tint: 79, 184, 160; }
 
-html.dark.ml-reading #app .v3 :where(.v3-card:not(.v3-battle):not(.v3-pro)) { background: linear-gradient(160deg, rgba(var(--tint), .40), rgba(var(--tint), .12) 75%), var(--x-card) !important; border-color: rgba(var(--tint), .52) !important; }
-html.dark.ml-reading #app .v3 .v3-bdg { background: linear-gradient(150deg, rgba(var(--tint), .45), rgba(var(--tint), .12)), var(--x-card) !important; border-color: rgba(var(--tint), .55) !important; }
+html.dark.ml-reading #app .v3 :where(.v3-card:not(.v3-battle):not(.v3-pro)) { background: linear-gradient(160deg, rgba(var(--tint), .27), rgba(var(--tint), .08) 75%), var(--x-card) !important; border-color: rgba(var(--tint), .35) !important; }
+html.dark.ml-reading #app .v3 .v3-bdg { background: linear-gradient(150deg, rgba(var(--tint), .31), rgba(var(--tint), .08)), var(--x-card) !important; border-color: rgba(var(--tint), .37) !important; }
 html.dark.ml-reading #app .v3 .v3-custom,
-html.dark.ml-reading #app .v3 .v3-topic { background: linear-gradient(150deg, rgba(var(--tint), .30), rgba(var(--tint), .08)), var(--x-card) !important; border-color: rgba(var(--tint), .42) !important; }
-html.dark.ml-reading #app .v3 .v3-topic.is-next { border-color: rgba(var(--tint), .85) !important; }
+html.dark.ml-reading #app .v3 .v3-topic { background: linear-gradient(150deg, rgba(var(--tint), .20), rgba(var(--tint), .05)), var(--x-card) !important; border-color: rgba(var(--tint), .29) !important; }
+html.dark.ml-reading #app .v3 .v3-topic.is-next { border-color: rgba(var(--tint), .58) !important; }
 html.dark.ml-reading #app .v3 :where(.v3-card) small,
 html.dark.ml-reading #app .v3 .v3-muted { color: rgba(232, 240, 238, .78) !important; }
 html.dark.ml-reading #app .v3 .v3-list .v3-li { border-color: rgba(255, 255, 255, .08) !important; }
@@ -4428,7 +4428,7 @@ html.dark .v3 .v3-pyq2:nth-of-type(5n + 5) { --tint: 224, 181, 98; }
 html.dark .v3 .v3-sec:nth-of-type(even) .v3-list:has(.v3-set) { --tint: 176, 150, 230; }
 html.dark .v3 .v3-list:has(.v3-set) { --tint: 176, 150, 230; }
 html.dark .v3 .v3-list:has(#v3Theme) { --tint: 120, 165, 235; }
-html.dark.ml-reading #app .v3-foot .v3f { background: linear-gradient(160deg, rgba(79, 184, 160, .26), rgba(120, 165, 235, .10) 80%), #20302F !important; border-color: rgba(79, 184, 160, .40) !important; }
+html.dark.ml-reading #app .v3-foot .v3f { background: linear-gradient(160deg, rgba(79, 184, 160, .18), rgba(120, 165, 235, .07) 80%), #20302F !important; border-color: rgba(79, 184, 160, .27) !important; }
 
 /* ---- Clinical teal dark: contrast inside tinted tiles (Nov 2026) ---------
    Inner chips/icon boxes sit on a dark neutral backing instead of picking up
@@ -4447,11 +4447,11 @@ html.dark.ml-reading #app .v3 .v3-subj .v2-ring-track { stroke: rgba(10, 16, 18,
 html.dark.ml-reading #app .v3 .v3-subj .v2-ring-in { color: #F4F8F7 !important; }
 /* contrast audit fixes: calmer tile washes, brighter secondary text, darker selected tab */
 html.dark.ml-reading #app .v3 .v3-qt,
-html.dark.ml-reading #app .v3 .v3-subj { background: linear-gradient(150deg, rgba(var(--tint), .34), rgba(var(--tint), .10)), #1F2A2D !important; border-color: rgba(var(--tint), .62) !important; }
-html.dark.ml-reading #app .v3 :where(.v3-card:not(.v3-battle):not(.v3-pro)) { background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important; border-color: rgba(var(--tint), .55) !important; }
-html.dark.ml-reading #app .v3 .v3-bdg { background: linear-gradient(150deg, rgba(var(--tint), .34), rgba(var(--tint), .10)), #1F2A2D !important; }
+html.dark.ml-reading #app .v3 .v3-subj { background: linear-gradient(150deg, rgba(var(--tint), .23), rgba(var(--tint), .07)), #1F2A2D !important; border-color: rgba(var(--tint), .42) !important; }
+html.dark.ml-reading #app .v3 :where(.v3-card:not(.v3-battle):not(.v3-pro)) { background: linear-gradient(160deg, rgba(var(--tint), .20), rgba(var(--tint), .05) 75%), #1F2A2D !important; border-color: rgba(var(--tint), .37) !important; }
+html.dark.ml-reading #app .v3 .v3-bdg { background: linear-gradient(150deg, rgba(var(--tint), .23), rgba(var(--tint), .07)), #1F2A2D !important; }
 html.dark.ml-reading #app .v3 :where(.v3-card, .v3-subj, .v3-topic, .v3-custom) :is(small, .v3-muted, .v3-stat span) { color: #D6DFDC !important; }
-html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] { background: rgba(var(--tint), .36) !important; border-color: rgba(var(--tint), .9) !important; }
+html.dark.ml-reading #app .v3 .v3-nav .v2-nav-item[aria-current="page"] { background: rgba(var(--tint), .24) !important; border-color: rgba(var(--tint), .61) !important; }
 html.dark.ml-reading #app .v3-foot, html.dark.ml-reading #app .v3-foot :is(small, p, span, a, h2, h3, li) { color: #B9C9C5 !important; }
 html.dark.ml-reading #app .v3-foot .footer-directory-group :is(h2, h3, summary, b, strong) { color: #DCE8E5 !important; }
 html.dark.ml-reading #app .v3-foot .v3f-play, html.dark.ml-reading #app .v3-foot .v3f-play * { color: #10302A !important; }
@@ -4488,7 +4488,7 @@ html.ml-reading #app .rr-setup .type-card,
 html.ml-reading #app .rr-results :is(.rr-sum, .rr-score, .rr-misses, .rr-review-cta, .rr-last, .rr-res-guest) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; border-radius: 20px !important; }
 html.dark.ml-reading #app .rr-setup :is(.rr-defaults, .rr-note, .rr-settings, .rr-past),
 html.dark.ml-reading #app .rr-setup .type-card,
-html.dark.ml-reading #app .rr-results :is(.rr-sum, .rr-score, .rr-misses, .rr-review-cta, .rr-last, .rr-res-guest) { background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important; border-color: rgba(var(--tint), .55) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
+html.dark.ml-reading #app .rr-results :is(.rr-sum, .rr-score, .rr-misses, .rr-review-cta, .rr-last, .rr-res-guest) { background: linear-gradient(160deg, rgba(var(--tint), .20), rgba(var(--tint), .05) 75%), #1F2A2D !important; border-color: rgba(var(--tint), .37) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
 html.ml-reading #app .rr-setup :is(.rr-defaults, .rr-note) { padding: 14px 16px !important; margin: 12px 0 !important; }
 html.dark.ml-reading #app .rr-setup :is(.rr-defaults, .rr-note) { color: #DCE6E3 !important; }
 html.ml-reading #app .rr-setup .rr-settings { padding: 4px 16px 10px !important; margin: 12px 0 !important; }
@@ -4499,7 +4499,7 @@ html.dark.ml-reading #app .rr-setup .setup-label { color: #C9D6D2 !important; }
 html.dark.ml-reading #app .rr-setup .type-card .tname { color: #F4F8F7 !important; }
 html.dark.ml-reading #app .rr-setup .type-card .tdesc { color: #D6DFDC !important; }
 html.ml-reading #app .rr-setup .type-card.active { border-width: 2px !important; }
-html.dark.ml-reading #app .rr-setup .type-card.active { border-color: rgba(var(--tint), .95) !important; }
+html.dark.ml-reading #app .rr-setup .type-card.active { border-color: rgba(var(--tint), .65) !important; }
 html.ml-reading #app .rr-setup .pill-choice { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; border-radius: 12px !important; }
 html.dark.ml-reading #app .rr-setup .pill-choice { background: rgba(10, 16, 18, .55) !important; border-color: rgba(255, 255, 255, .10) !important; color: #E6EEEC !important; }
 html.dark.ml-reading #app .rr-setup .pill-choice.active { background: #4FB8A0 !important; border-color: #4FB8A0 !important; color: #0F1F1C !important; }
@@ -4515,13 +4515,13 @@ html.ml-reading #app .v3 .v3-battle,
 html.ml-reading #app .rr-battle { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; border-radius: 20px !important; transform: none !important; }
 /* ---- Clinical teal dark: battle tile as a subtle yellow tile like the rest */
 html.dark.ml-reading #app .v3 .v3-battle,
-html.dark.ml-reading #app .rr-battle { background: linear-gradient(160deg, rgba(224, 181, 98, .34), rgba(224, 181, 98, .10) 75%), #1F2A2D !important; border-color: rgba(224, 181, 98, .62) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; color: #F4F8F7 !important; }
+html.dark.ml-reading #app .rr-battle { background: linear-gradient(160deg, rgba(224, 181, 98, .23), rgba(224, 181, 98, .07) 75%), #1F2A2D !important; border-color: rgba(224, 181, 98, .42) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; color: #F4F8F7 !important; }
 html.dark.ml-reading #app .v3 .v3-battle-tx b,
 html.dark.ml-reading #app .rr-battle > span { color: #F4F8F7 !important; }
 html.dark.ml-reading #app .v3 .v3-battle-tx small,
 html.dark.ml-reading #app .rr-battle small { color: #D6DFDC !important; opacity: 1 !important; }
 html.ml-reading #app .v3 .v3-battle-go { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; }
-html.dark.ml-reading #app .v3 .v3-battle-go { background: rgba(10, 16, 18, .55) !important; border-color: rgba(224, 181, 98, .55) !important; color: #F7DCA6 !important; box-shadow: none !important; }
+html.dark.ml-reading #app .v3 .v3-battle-go { background: rgba(10, 16, 18, .55) !important; border-color: rgba(224, 181, 98, .37) !important; color: #F7DCA6 !important; box-shadow: none !important; }
 html.ml-reading #app .rr-battle:active { transform: none !important; }
 html.dark.ml-reading #app .rr-battle:active { box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
 
@@ -4534,9 +4534,9 @@ html.ml-reading #app :is(.rr-setup .btn.start, #startBtn, .rr-battle) { min-heig
    question still drops to the quiet colour once answered (rule above). */
 html.dark.ml-reading #app :is(.rr-setup .btn.start, #startBtn, .rr-battle) { box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
 html.ml-reading #app :is(.rr-setup .btn.start, #startBtn) { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; font-size: 17px !important; font-weight: 800 !important; }
-html.dark.ml-reading #app :is(.rr-setup .btn.start, #startBtn) { background: linear-gradient(160deg, rgba(79, 184, 160, .62), rgba(79, 184, 160, .32)), #1F2A2D !important; border-color: rgba(79, 184, 160, .95) !important; color: #FFFFFF !important; }
+html.dark.ml-reading #app :is(.rr-setup .btn.start, #startBtn) { background: linear-gradient(160deg, rgba(79, 184, 160, .42), rgba(79, 184, 160, .22)), #1F2A2D !important; border-color: rgba(79, 184, 160, .65) !important; color: #FFFFFF !important; }
 html.ml-reading #app .rr-battle { border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; }
-html.dark.ml-reading #app .rr-battle { background: linear-gradient(160deg, rgba(224, 181, 98, .55), rgba(224, 181, 98, .26)), #1F2A2D !important; border-color: rgba(224, 181, 98, .95) !important; }
+html.dark.ml-reading #app .rr-battle { background: linear-gradient(160deg, rgba(224, 181, 98, .37), rgba(224, 181, 98, .18)), #1F2A2D !important; border-color: rgba(224, 181, 98, .65) !important; }
 html.ml-reading #app .rr-battle > span { font-size: 17px !important; font-weight: 800 !important; }
 html.dark.ml-reading #app .rr-battle > span { color: #FFFFFF !important; }
 html.dark.ml-reading #app .rr-battle small { color: #FFF4DD !important; }
@@ -4558,7 +4558,7 @@ html.ml-reading #app .rr-results .rr-misses { border-width: 0 !important; border
 html.dark.ml-reading #app .rr-results .rr-misses { background: none !important; box-shadow: none !important; }
 html.ml-reading #app .rr-results .rr-misses .rr-h2 { margin: 0 0 10px !important; padding: 0 2px !important; }
 html.ml-reading #app .rr-results .rr-miss { display: block !important; margin: 0 0 10px !important; padding: 14px 16px !important; box-sizing: border-box !important; overflow: hidden !important; border-width: 1px !important; border-style: solid !important; border-color: rgba(18, 23, 21, .12) !important; border-radius: 18px !important; }
-html.dark.ml-reading #app .rr-results .rr-miss { background: linear-gradient(160deg, rgba(232, 140, 120, .26), rgba(232, 140, 120, .07) 75%), #1F2A2D !important; border-color: rgba(232, 140, 120, .55) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
+html.dark.ml-reading #app .rr-results .rr-miss { background: linear-gradient(160deg, rgba(232, 140, 120, .18), rgba(232, 140, 120, .05) 75%), #1F2A2D !important; border-color: rgba(232, 140, 120, .37) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important; }
 html.ml-reading #app .rr-results .rr-miss summary { padding: 0 !important; border-width: 0 !important; border-style: none !important; }
 html.dark.ml-reading #app .rr-results .rr-miss-n { color: #E7C2B8 !important; }
 html.dark.ml-reading #app .rr-results .rr-miss-q { color: #FFFFFF !important; }
