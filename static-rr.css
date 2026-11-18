@@ -348,3 +348,32 @@ html.dark:has(.seo-main) .seo-main .btn:not(.secondary), html.dark:has(.seo-main
   background: #4FB8A0 !important; color: #0F1F1C !important; box-shadow: none !important;
 }
 html.dark:has(.seo-main) .masthead .auth-btn svg { color: #0F1F1C !important; stroke: #0F1F1C !important; }
+
+/* ---- Clinical teal dark: SEO pages in the home look (Nov 2026) ----------
+   Cards, topic rows, stats, FAQs and MCQ cards get their own soft tint;
+   chips/options sit on a dark backing; text stays neutral. */
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat, .seo-full-bank-cta, .pyq-preview-notice, section[aria-label="Bank counts and free tier"] > div) { --tint: 79, 184, 160; }
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat):nth-child(6n + 1) { --tint: 232, 140, 120; }
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat):nth-child(6n + 2) { --tint: 120, 165, 235; }
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat):nth-child(6n + 3) { --tint: 176, 150, 230; }
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat):nth-child(6n + 4) { --tint: 79, 184, 160; }
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat):nth-child(6n + 5) { --tint: 224, 181, 98; }
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat):nth-child(6n + 6) { --tint: 233, 154, 174; }
+html.dark:has(.seo-main) .pyq-preview-notice { --tint: 224, 181, 98; }
+html.dark:has(.seo-main) .seo-full-bank-cta { --tint: 79, 184, 160; }
+
+html.dark:has(.seo-main) :is(.seo-card, .seo-faq-card, .seo-qcard, .pyq-q, .pyq-card, .bento-stat, .seo-full-bank-cta, .pyq-preview-notice, section[aria-label="Bank counts and free tier"] > div, .seo-main details[style*="border"]) {
+  background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important;
+  border: 1px solid rgba(var(--tint), .55) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important;
+}
+html.dark:has(.seo-main) .bento-stat-num { color: #F4F8F7 !important; }
+html.dark:has(.seo-main) :is(.bento-stat-lbl, .seo-card small, .seo-card span:not([class])) { color: #D6DFDC !important; }
+html.dark:has(.seo-main) :is(.seo-card, .seo-qcard, .pyq-q, .seo-faq-card) :is(b, strong, h3, .pyq-qtext) { color: #F4F8F7 !important; }
+html.dark:has(.seo-main) :is(.seo-opt, .pyq-opt):not(.correct):not(.incorrect):not(.is-correct):not(.is-wrong) {
+  background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important;
+}
+html.dark:has(.seo-main) :is(.seo-opt, .pyq-opt) :is(.seo-letter, .pyq-letter) { color: #C9D8D4 !important; }
+html.dark:has(.seo-main) :is(.seo-main p, .subtitle) { color: #D6DFDC !important; }
+html.dark:has(.seo-main) { --sr-quiet: #B9C9C5; }
+html.dark:has(.seo-main) :is(.qnum-eyebrow, .exlabel, .seo-full-bank-eyebrow) { color: #C4D3CF !important; }

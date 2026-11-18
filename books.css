@@ -49,3 +49,18 @@ h1 { font-size: 30px; margin: 0 0 8px; line-height: 1.2; }
 .bk-exams a { color: var(--bk-acc); text-decoration: underline; text-underline-offset: 2px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--bk-ink); font-size: 22px; letter-spacing: -0.02em; }
 .brand img { width: 34px; height: 34px; border-radius: 10px; }
+
+/* Clinical teal dark (Nov 2026): matches the app's home screen */
+html.dark { --bk-bg: #172124; --bk-card: #1F2A2D; --bk-line: #2D403E; --bk-ink: #F2F7F5; --bk-ink2: #D6DFDC; --bk-ink3: #B3C5C1; --bk-acc: #63C6AE; --bk-btn: #3FA28B; }
+html.dark body { background: #172124 !important; }
+html.dark .bk-card { --tint: 79, 184, 160; }
+html.dark .bk-card:nth-child(5n + 1) { --tint: 232, 140, 120; }
+html.dark .bk-card:nth-child(5n + 2) { --tint: 120, 165, 235; }
+html.dark .bk-card:nth-child(5n + 3) { --tint: 176, 150, 230; }
+html.dark .bk-card:nth-child(5n + 5) { --tint: 224, 181, 98; }
+html.dark :is(.bk-card, .cta-band) {
+  background: linear-gradient(160deg, rgba(var(--tint, 79, 184, 160), .30), rgba(var(--tint, 79, 184, 160), .08) 75%), #1F2A2D !important;
+  border: 1px solid rgba(var(--tint, 79, 184, 160), .55) !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important;
+}
+html.dark :is(.btn, .bk-dl) { background: #4FB8A0 !important; color: #0F1F1C !important; }
+html.dark :is(.bk-tag, .bk-tag-s) { background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important; }

@@ -38,10 +38,10 @@
       color-scheme: light;
     }
     html.dark {
-      --g: #0E1317; --raised: #141B20; --rule: #27313A; --soft: #1C242A; --tick: #26303A;
-      --ink: #E7EBE8; --dim: #C7CFD2; --quiet: #93A1AA;
-      --accent: #A893F5; --accent-fill: #6F52D9; --accent-soft: rgba(168, 147, 245, .12);
-      --ok: #4FA97A; --ok-soft: rgba(79, 169, 122, .12);
+      --g: #172124; --raised: #1F2A2D; --rule: #2D403E; --soft: #243634; --tick: #2D403E;
+      --ink: #F2F7F5; --dim: #D6DFDC; --quiet: #B3C5C1;
+      --accent: #63C6AE; --accent-fill: #3FA28B; --accent-soft: rgba(79, 184, 160, .14);
+      --ok: #8BC98A; --ok-soft: rgba(139, 201, 138, .12);
       color-scheme: dark;
     }
     * { box-sizing: border-box; }
@@ -187,7 +187,25 @@
     .landing-toast { padding: 10px 14px; border-radius: 8px; background: var(--ink); color: var(--g); font-size: 14px; opacity: 0; transition: opacity .2s; }
     .landing-toast.visible { opacity: 1; }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  </style>
+      /* Clinical teal dark (Nov 2026): tinted cards like the app's home screen */
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step, .stats > div) { --tint: 79, 184, 160; }
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 1) { --tint: 232, 140, 120; }
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 2) { --tint: 120, 165, 235; }
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 3) { --tint: 176, 150, 230; }
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 4) { --tint: 79, 184, 160; }
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 5) { --tint: 224, 181, 98; }
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step):nth-child(6n + 6) { --tint: 233, 154, 174; }
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step) {
+      background: linear-gradient(160deg, rgba(var(--tint), .30), rgba(var(--tint), .08) 75%), #1F2A2D !important;
+      border: 1px solid rgba(var(--tint), .55) !important; border-radius: 18px !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .32) !important;
+    }
+    html.dark :is(.subj-card, .pyq-card, .plan-card, .feat-card, .step) :is(.plan-price-box, .n, .sec-badge, .pyq-badge, .plan-badge) {
+      background: rgba(10, 16, 18, .55) !important; border: 1px solid rgba(255, 255, 255, .09) !important; color: #F1F6F5 !important;
+    }
+    html.dark :is(.btn-main, .nav-cta) { background: #4FB8A0 !important; color: #0F1F1C !important; border-radius: 14px !important; }
+    html.dark h1, html.dark h2, html.dark h3, html.dark .brand { font-family: var(--sans); font-weight: 800; letter-spacing: -0.02em; }
+    html.dark :is(.hero .sub, .step p) { font-family: var(--sans); }
+</style>
 
   <!-- Schema.org EducationalOrganization structured data -->
   <script type="application/ld+json">
