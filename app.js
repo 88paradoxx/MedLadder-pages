@@ -4391,7 +4391,7 @@ window.addEventListener('error', function (ev) {
           var txt = '', now = Date.now();
           if (a && a.code && !a.dismissed && state.screen !== 'battle' && (path === '/' || path === '/index.html')) {
             var end = a.ends_at ? Date.parse(a.ends_at) : 0;
-            if (a.status === 'lobby' && now - (a.ts || 0) < 3600000) txt = '⚔️ Battle lobby is open <b>Return</b>';
+            if (a.status === 'lobby' && now - (a.ts || 0) < 3 * 3600000) txt = '⚔️ Battle lobby is open <b>Return</b>';
             else if (a.status === 'live' && end > now) { var sec = Math.ceil((end - now) / 1000); txt = '<i class="mlbp-dot"></i> Battle live · ' + Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2) + ' left <b>Return</b>'; }
             else if (a.status === 'live' && end && now - end < 6 * 3600000) txt = '🏆 Battle results are ready <b>View</b>';
           }
