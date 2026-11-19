@@ -701,7 +701,7 @@ window.addEventListener('error', function (ev) {
           subEl.innerHTML = 'Free registered accounts include the <strong>first 8 topics</strong> in this subject. Upgrade to MedLadder Pro to unlock ' + esc(context.moduleName) + ' and all ' + totalTopics() + ' topics!';
         } else if (reason === 'battle') {
           titleEl.textContent = 'Host bigger battles with Pro';
-          subEl.innerHTML = 'Free hosts can start <strong>3 battles a day</strong> with up to <strong>5 players</strong> and 20 questions. <strong>Pro</strong> hosts unlimited battles with up to <strong>50 players</strong>, any topic and 50 questions.';
+          subEl.innerHTML = 'Free hosts can start <strong>3 battles a day</strong> with up to <strong>5 players</strong> and 20 questions. <strong>Pro</strong> hosts unlimited battles with up to <strong>50 players</strong>, any topic and up to 100 questions.';
         } else if (reason === 'all_topics') {
           titleEl.textContent = 'Full Subject Exam is Pro Only';
           subEl.innerHTML = 'The <strong>\"All topics\"</strong> cumulative grand test is a MedLadder Pro feature. Upgrade now to practice full-length multi-topic exams!';
