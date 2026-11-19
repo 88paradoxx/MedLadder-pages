@@ -37,3 +37,5 @@ jobs:
           supabase functions deploy razorpay-webhook        --project-ref "$PROJECT_REF" --use-api --no-verify-jwt --yes
           supabase functions deploy razorpay-refund-webhook --project-ref "$PROJECT_REF" --use-api --no-verify-jwt --yes
           supabase functions deploy admin-grant-pro         --project-ref "$PROJECT_REF" --use-api --no-verify-jwt --yes
+          supabase functions deploy play-verify             --project-ref "$PROJECT_REF" --use-api --no-verify-jwt --yes
+          supabase functions deploy play-rtdn               --project-ref "$PROJECT_REF" --use-api --no-verify-jwt --yes
