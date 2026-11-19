@@ -271,10 +271,10 @@ window.addEventListener('error', function (ev) {
           name: '3 Months',
           durationLabel: '3 Months',
           days: 90,
-          price: 399,
-          pricePaise: 39900,
+          price: 499,
+          pricePaise: 49900,
           originalPrice: 999,
-          perMonth: '₹133/mo',
+          perMonth: '₹166/mo',
           tag: 'POPULAR',
           desc: '90 days targeted revision'
         },
@@ -295,10 +295,10 @@ window.addEventListener('error', function (ev) {
           name: '1 Year',
           durationLabel: '1 Year',
           days: 365,
-          price: 999,
-          pricePaise: 99900,
+          price: 1299,
+          pricePaise: 129900,
           originalPrice: 2999,
-          perMonth: '₹83/mo',
+          perMonth: '₹108/mo',
           tag: 'MAX SAVINGS',
           desc: '365 days full medical ladder'
         }
