@@ -530,7 +530,7 @@
 
   // ---------- countdown ----------
   function countdown() {
-    rpc('battle_state', { p_code: S.code, p_token: S.token }).then(function (st) {
+    rpc('battle_live_state', { p_code: S.code, p_token: S.token, p_top: LIVE_TOP }).then(function (st) {
       S.st = st; syncClock(st.now);
       if (st.status === 'ended') return loadResults();
       var startsAt = Date.parse(st.starts_at);
@@ -608,18 +608,22 @@
     if (left <= 0) { stopAll(); finishNow(); }
   }
   function livePoll() {
-    rpc('battle_state', { p_code: S.code, p_token: S.token }).then(function (st) {
+    rpc('battle_live_state', { p_code: S.code, p_token: S.token, p_top: LIVE_TOP }).then(function (st) {
       syncClock(st.now); S.st = st;
       if (st.status === 'ended') { stopAll(); return loadResults(); }
       var rk = ranks(st);
       var mine = rk.find(function (p) { return st.me && p.id === st.me.id; });
-      if (mine) setRank(mine.place, rk.length);
+      if (mine) setRank(mine.place, roomSize(st, rk));
       drawBoard(st, el('btLB'));
       if (S.sheetOpen) drawBoard(st, el('btSheetLB'));
     }).catch(function () { });
   }
-  // Equal scores share a place.
+  // Equal scores share a place. The lighter in-game state arrives ranked by the server
+  // (top LIVE_TOP players plus you), so it is used as it comes.
+  var LIVE_TOP = 10;
+  function roomSize(st, rk) { return st.total || rk.length; }
   function ranks(st) {
+    if (st.lite) return st.players.slice();
     var ps = st.players.slice().sort(function (a, b) { return b.score - a.score || (b.correct || 0) - (a.correct || 0); });
     ps.forEach(function (p) { p.place = 1 + ps.filter(function (x) { return x.score > p.score; }).length; });
     return ps;
@@ -638,10 +642,13 @@
     var n = st.n || (S.qs ? S.qs.length : 0);
     var before = {};
     list.querySelectorAll('li[data-id]').forEach(function (li) { before[li.getAttribute('data-id')] = li.getBoundingClientRect().top; });
-    list.innerHTML = ranks(st).map(function (p) {
+    var rows = ranks(st);
+    var gapAt = st.lite && rows.length > LIVE_TOP && st.me && rows[rows.length - 1].id === st.me.id ? rows.length - 1 : -1;
+    list.innerHTML = rows.map(function (p, i) {
       var mine = st.me && p.id === st.me.id;
+      var gap = i === gapAt ? '<li class="bt-lb-gap" aria-hidden="true" style="justify-content:center;opacity:.55;min-height:0;padding:2px 0">⋯</li>' : '';
       var medal = p.score > 0 && p.place <= 3 ? ['🥇', '🥈', '🥉'][p.place - 1] : p.place;
-      return '<li data-id="' + p.id + '" class="' + (mine ? 'me' : '') + (p.finished ? ' fin' : '') + '"><span class="bt-lb-r">' + medal + '</span>' + avatar(p.nickname) +
+      return gap + '<li data-id="' + p.id + '" class="' + (mine ? 'me' : '') + (p.finished ? ' fin' : '') + '"><span class="bt-lb-r">' + medal + '</span>' + avatar(p.nickname) +
         '<span class="bt-lb-n"><b>' + esc(p.nickname) + badge(p) + (mine ? ' (you)' : '') + '</b><span class="bt-lb-p"><i style="width:' + (n ? Math.round(p.answered * 100 / n) : 0) + '%"></i></span><small>' + p.answered + '/' + n + (p.finished ? ' · done' : '') + '</small></span>' +
         (p.streak >= 3 ? '<span class="bt-lb-s">🔥' + p.streak + '</span>' : '') +
         '<span class="bt-lb-pts">' + p.score + '</span></li>';
@@ -893,18 +900,18 @@
     wireBack(home);
     el('btOut').onclick = home;
     function poll() {
-      rpc('battle_state', { p_code: S.code, p_token: S.token }).then(function (st) {
+      rpc('battle_live_state', { p_code: S.code, p_token: S.token, p_top: LIVE_TOP }).then(function (st) {
         syncClock(st.now); S.st = st; remember(st);
         if (st.status === 'ended') { stopAll(); loadResults(); return; }
         S.ends = Date.parse(st.ends_at);
         var rk = ranks(st), mine = rk.find(function (p) { return st.me && p.id === st.me.id; });
         if (mine) {
           var pl = el('btPlace');
-          if (pl) { if (S.myPlace && mine.place !== S.myPlace) { pl.classList.remove('up', 'down'); void pl.offsetWidth; pl.classList.add(mine.place < S.myPlace ? 'up' : 'down'); } pl.innerHTML = ordinal(mine.place) + '<small> of ' + rk.length + '</small>'; }
+          if (pl) { if (S.myPlace && mine.place !== S.myPlace) { pl.classList.remove('up', 'down'); void pl.offsetWidth; pl.classList.add(mine.place < S.myPlace ? 'up' : 'down'); } pl.innerHTML = ordinal(mine.place) + '<small> of ' + roomSize(st, rk) + '</small>'; }
           var ps = el('btPlaceSub'); if (ps) ps.textContent = mine.score + ' points · place can still change';
           S.myPlace = mine.place;
         }
-        var still = st.players.filter(function (p) { return !p.finished; }).length;
+        var still = st.still != null ? st.still : st.players.filter(function (p) { return !p.finished; }).length;
         var lf = el('btLeft'); if (lf) lf.textContent = still + ' still playing';
         drawPod(rk);
         drawBoard(st, el('btLB'));
@@ -964,7 +971,7 @@
     var items = [];
     st.players.forEach(function (p) {
       var o = prev[p.id]; var who = esc(p.nickname) + (st.me && p.id === st.me.id ? ' (you)' : '');
-      if (!o) { items.push('👋 <b>' + who + '</b> joined'); return; }
+      if (!o) { if (!st.lite) items.push('👋 <b>' + who + '</b> joined'); return; }
       var gained = p.score - o.score, rightNow = (p.correct || 0) - o.correct, did = p.answered - o.answered;
       if (did > 0) {
         if (rightNow > 0 && gained > 0) items.push('✅ <b>' + who + '</b> +' + gained + (did > 1 ? ' (' + rightNow + '/' + did + ' right)' : ''));
