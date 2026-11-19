@@ -296,7 +296,7 @@
     }
     stopAll();
     var pro = B.isPro();
-    var capP = pro ? 50 : 5, capQ = pro ? 100 : 20;
+    var capP = pro ? 100 : 5, capQ = pro ? 200 : 20;
     var avail = Math.max(opts.maxQ || 0, 0);
     var c = { players: Math.min(10, capP), n: 20, minutes: 20, neg: false, title: (opts.title || 'Quiz') + ' Showdown', nick: B.userFirstName() || savedNick() };
     if (avail && c.n > avail) c.n = avail;
@@ -308,22 +308,22 @@
         return '<button class="bt-pill' + (v === cur ? ' on' : '') + (lock ? ' lock' : '') + '" data-v="' + v + '">' + label + (lock ? ' <span class="bt-pro">PRO</span>' : '') + '</button>';
       }).join('') + '</div>';
     }
-    var qVals = [10, 20, 30, 50].filter(function (v) { return !avail || v < avail; });
+    var qVals = [10, 20, 50, 100].filter(function (v) { return !avail || v < avail; });
     if (avail) qVals.push('all');
     qVals.push('custom');
     mount(topBar('New battle', 'Back') +
       '<main class="bt-main"><div class="bt-hero"><div class="bt-hero-ic">⚔️</div><h1 class="bt-h1">Battle with friends</h1>' +
       '<p class="bt-sub">' + esc(opts.title || 'Topic') + ' · same questions, one clock, live ranking</p></div>' +
-      '<section class="bt-card"><div class="bt-label">Players</div>' + pills('btP', [2, 5, 10, 20, 30, 50], c.players, capP) + '</section>' +
+      '<section class="bt-card"><div class="bt-label">Players</div>' + pills('btP', [2, 5, 10, 20, 50, 100], c.players, capP) + '</section>' +
       '<section class="bt-card"><div class="bt-label">Questions' + (avail ? ' <small>this topic has ' + avail + '</small>' : '') + '</div>' + pills('btQ', qVals, c.n, capQ) +
       '<div class="bt-custom" id="btQC" hidden><input class="bt-input" id="btQIn" type="number" inputmode="numeric" min="3" max="' + Math.min(capQ, avail || capQ) + '" placeholder="3 to ' + Math.min(capQ, avail || capQ) + '"><span>questions</span></div>' +
-      '<p class="bt-hint" id="btQHint" hidden>' + (pro ? 'Up to ' + Math.min(capQ, avail || capQ) + ' questions' + (avail && avail < capQ ? ' (all this topic has)' : '') + '.' : 'Free hosts: up to ' + Math.min(20, avail || 20) + ' questions. <button class="bt-link" data-pro="1">Pro allows up to 100</button>') + '</p></section>' +
+      '<p class="bt-hint" id="btQHint" hidden>' + (pro ? 'Up to ' + Math.min(capQ, avail || capQ) + ' questions' + (avail && avail < capQ ? ' (all this topic has)' : '') + '.' : 'Free hosts: up to ' + Math.min(20, avail || 20) + ' questions. <button class="bt-link" data-pro="1">Pro allows up to 200</button>') + '</p></section>' +
       '<section class="bt-card"><div class="bt-label">Time</div>' + pills('btT', [5, 10, 20, 30, 45, 'custom'], c.minutes, 0, function (v) { return v + ' min'; }) +
       '<div class="bt-custom" id="btTC" hidden><input class="bt-input" id="btTIn" type="number" inputmode="numeric" min="3" max="120" placeholder="3 to 120"><span>minutes</span></div></section>' +
       '<section class="bt-card"><label class="bt-switch"><input type="checkbox" id="btNeg"><span><b>Negative marking</b><small>A wrong answer costs 25 points</small></span></label></section>' +
       '<section class="bt-card"><label class="bt-label" for="btTitle">Room name</label><input class="bt-input" id="btTitle" maxlength="60" value="' + esc(c.title) + '">' +
       '<label class="bt-label" for="btNick" style="margin-top:14px">Your battle name</label><input class="bt-input" id="btNick" maxlength="20" value="' + esc(c.nick) + '"></section>' +
-      (pro ? '' : '<p class="bt-note">Free hosts: up to 5 players, 20 questions, 3 battles a day. <button class="bt-link" id="btUp">Get Pro for 50 players</button></p>') +
+      (pro ? '' : '<p class="bt-note">Free hosts: up to 5 players, 20 questions, 3 battles a day. <button class="bt-link" id="btUp">Get Pro for 100 players</button></p>') +
       '<button class="bt-cta" id="btCreate">Create battle</button></main>');
     track('create', 'Create');
     wireBack(opts.back || home);
@@ -348,7 +348,7 @@
       input.addEventListener('blur', function () { var v = parseInt(input.value, 10); if (input.value !== '' && (!v || v < 3)) input.value = 3; });
     }
     var maxQ = Math.min(capQ, avail || capQ);
-    clampBox(el('btQIn'), maxQ, function () { if (!pro && (!avail || avail > 20)) B.toast('Free hosts can set up to 20 questions. Pro allows up to 100.', 'error'); else B.toast('This topic has ' + maxQ + ' questions.', 'error'); });
+    clampBox(el('btQIn'), maxQ, function () { if (!pro && (!avail || avail > 20)) B.toast('Free hosts can set up to 20 questions. Pro allows up to 200.', 'error'); else B.toast('This topic has ' + maxQ + ' questions.', 'error'); });
     clampBox(el('btTIn'), 120);
     el('btQ').addEventListener('click', function () { el('btQHint').hidden = c.n !== 'custom'; });
     el('btQHint').addEventListener('click', function (e) { if (e.target.closest('[data-pro]')) B.openPro('battle'); });
@@ -358,7 +358,7 @@
       var n = c.n === 'all' ? Math.min(avail, capQ) : c.n === 'custom' ? parseInt(el('btQIn').value, 10) : c.n;
       var mins = c.minutes === 'custom' ? parseInt(el('btTIn').value, 10) : c.minutes;
       var maxN = Math.min(capQ, avail || capQ);
-      if (!n || n < 3 || n > maxN) { B.toast('Questions: pick 3 to ' + maxN + '.' + (!pro && n > 20 ? ' Pro allows up to 100.' : ''), 'error'); return; }
+      if (!n || n < 3 || n > maxN) { B.toast('Questions: pick 3 to ' + maxN + '.' + (!pro && n > 20 ? ' Pro allows up to 200.' : ''), 'error'); return; }
       if (!mins || mins < 3 || mins > 120) { B.toast('Time: pick 3 to 120 minutes.', 'error'); return; }
       var title = el('btTitle').value.trim() || 'Quiz Battle';
       var nick = el('btNick').value.trim() || randNick();
