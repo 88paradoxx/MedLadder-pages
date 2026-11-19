@@ -22,3 +22,9 @@ verify_jwt = false
 
 [functions.admin-grant-pro]
 verify_jwt = false
+
+[functions.play-verify]
+verify_jwt = false
+
+[functions.play-rtdn]
+verify_jwt = false
