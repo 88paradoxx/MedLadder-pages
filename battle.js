@@ -962,7 +962,7 @@
     var order = [top[1], top[0], top[2]].filter(Boolean);
     box.innerHTML = order.map(function (p) {
       var i = rk.indexOf(p);
-      return '<div class="bt-lp p' + (i + 1) + '">' + (i === 0 ? '<span class="bt-crown">👑</span>' : '') + avatar(p.nickname, true) + '<b>' + esc(p.nickname) + '</b><span>' + p.score + '</span></div>';
+      return '<div class="bt-lp p' + (i + 1) + '">' + (i === 0 ? '<span class="bt-crown">👑</span>' : '') + avatar(p.nickname, true) + '<b>' + esc(p.nickname) + '</b><span>' + p.score + (p.bonus ? ' <small style="opacity:.75">+' + p.bonus + '</small>' : '') + '</span></div>';
     }).join('');
   }
   // A running commentary built from what changed since the last look.
@@ -1010,7 +1010,7 @@
     if (rk.length >= 2) {
       var order = [rk[1], rk[0], rk[2]].filter(Boolean);
       podium = '<div class="bt-podium">' + order.map(function (p) {
-        return '<div class="bt-pod p' + p.rank + '"><div class="bt-pod-n">' + (p.rank === 1 ? '<span class="bt-crown">👑</span>' : '') + avatar(p.nickname, true) + '<b>' + esc(p.nickname) + '</b><span>' + p.score + ' pts · ' + pct(p.correct, n) + '%</span></div><div class="bt-pod-b">' + p.rank + '</div></div>';
+        return '<div class="bt-pod p' + p.rank + '"><div class="bt-pod-n">' + (p.rank === 1 ? '<span class="bt-crown">👑</span>' : '') + avatar(p.nickname, true) + '<b>' + esc(p.nickname) + '</b><span>' + p.score + (p.bonus ? ' <small style="opacity:.75">+' + p.bonus + '</small>' : '') + ' pts · ' + pct(p.correct, n) + '%</span></div><div class="bt-pod-b">' + p.rank + '</div></div>';
       }).join('') + '</div>';
     }
     var avgAcc = rk.length ? Math.round(rk.reduce(function (s, p) { return s + p.correct / n; }, 0) * 100 / rk.length) : 0;
