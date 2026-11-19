@@ -1,0 +1,24 @@
+# MedLadder Supabase project configuration.
+# Each function verifies the caller itself (auth.getUser for browser calls,
+# HMAC signature for the Razorpay webhook), so Supabase's built-in JWT
+# verification is disabled.
+
+project_id = "groeibwykzrliphzzruk"
+
+[auth]
+additional_redirect_urls = ["com.medladder.app://auth/callback"]
+
+[functions.razorpay-order]
+verify_jwt = false
+
+[functions.razorpay-verify]
+verify_jwt = false
+
+[functions.razorpay-webhook]
+verify_jwt = false
+
+[functions.razorpay-refund-webhook]
+verify_jwt = false
+
+[functions.admin-grant-pro]
+verify_jwt = false
