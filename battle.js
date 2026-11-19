@@ -320,7 +320,8 @@
       '<p class="bt-hint" id="btQHint" hidden>' + (pro ? 'Up to ' + Math.min(capQ, avail || capQ) + ' questions' + (avail && avail < capQ ? ' (all this topic has)' : '') + '.' : 'Free hosts: up to ' + Math.min(20, avail || 20) + ' questions. <button class="bt-link" data-pro="1">Pro allows up to 200</button>') + '</p></section>' +
       '<section class="bt-card"><div class="bt-label">Time</div>' + pills('btT', [5, 10, 20, 30, 45, 'custom'], c.minutes, 0, function (v) { return v + ' min'; }) +
       '<div class="bt-custom" id="btTC" hidden><input class="bt-input" id="btTIn" type="number" inputmode="numeric" min="3" max="120" placeholder="3 to 120"><span>minutes</span></div></section>' +
-      '<section class="bt-card"><label class="bt-switch"><input type="checkbox" id="btNeg"><span><b>Negative marking</b><small>A wrong answer costs 25 points</small></span></label></section>' +
+      '<section class="bt-card"><label class="bt-switch"><input type="checkbox" id="btNeg"><span><b>Negative marking</b><small>A wrong answer costs 25 points</small></span></label>' +
+      '<p class="bt-note" style="margin-top:10px">Each right answer scores 100 points, so the most right answers wins. Speed and streaks earn bonus points that break ties.</p></section>' +
       '<section class="bt-card"><label class="bt-label" for="btTitle">Room name</label><input class="bt-input" id="btTitle" maxlength="60" value="' + esc(c.title) + '">' +
       '<label class="bt-label" for="btNick" style="margin-top:14px">Your battle name</label><input class="bt-input" id="btNick" maxlength="20" value="' + esc(c.nick) + '"></section>' +
       (pro ? '' : '<p class="bt-note">Free hosts: up to 5 players, 20 questions, 3 battles a day. <button class="bt-link" id="btUp">Get Pro for 100 players</button></p>') +
@@ -556,7 +557,7 @@
       S.pos = 0;
       for (var i = 0; i < S.order.length; i++) if (!S.mine[S.qs[S.order[i]].id]) { S.pos = i; break; }
       var me = (S.st && S.st.me) || {};
-      S.score = me.score || 0; S.streak = me.streak || 0; S.rank = 0; S.of = 0;
+      S.score = me.score || 0; S.bonus = me.bonus || 0; S.streak = me.streak || 0; S.rank = 0; S.of = 0;
       liveShell();
       track('play', 'Playing');
       drawQuiz();
@@ -579,7 +580,7 @@
       '<header class="bt-hud">' +
       '<button class="bt-hud-x" id="btLeave" aria-label="Leave battle">✕</button>' +
       '<div class="bt-ring" title="Time left"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="' + R + '" class="bg"/><circle cx="26" cy="26" r="' + R + '" class="fg" id="btRing" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="0"/></svg><b id="btTime">0:00</b></div>' +
-      '<div class="bt-scorebox"><span class="bt-score" id="btScore">' + S.score + '</span><small>points</small><span class="bt-plus" id="btPlus"></span></div>' +
+      '<div class="bt-scorebox"><span class="bt-score" id="btScore">' + S.score + '</span><small>points</small><small id="btBonusTxt" style="opacity:.75">' + (S.bonus ? '+' + S.bonus + ' bonus' : '') + '</small><span class="bt-plus" id="btPlus"></span></div>' +
       '<div class="bt-combo' + (S.streak >= 2 ? ' on' : '') + '" id="btCombo"><span>🔥</span><b id="btStreak">' + S.streak + '</b></div>' +
       setBtn() +
       '<button class="bt-rank" id="btRank" aria-label="Live leaderboard"><small>RANK</small><b id="btRankN">–</b></button>' +
@@ -624,8 +625,9 @@
   function roomSize(st, rk) { return st.total || rk.length; }
   function ranks(st) {
     if (st.lite) return st.players.slice();
-    var ps = st.players.slice().sort(function (a, b) { return b.score - a.score || (b.correct || 0) - (a.correct || 0); });
-    ps.forEach(function (p) { p.place = 1 + ps.filter(function (x) { return x.score > p.score; }).length; });
+    // Points come only from right answers; speed and streak bonus breaks ties.
+    var ps = st.players.slice().sort(function (a, b) { return b.score - a.score || (b.bonus || 0) - (a.bonus || 0) || (b.correct || 0) - (a.correct || 0); });
+    ps.forEach(function (p) { p.place = 1 + ps.filter(function (x) { return x.score > p.score || (x.score === p.score && (x.bonus || 0) > (p.bonus || 0)); }).length; });
     return ps;
   }
   function setRank(r, of) {
@@ -651,7 +653,7 @@
       return gap + '<li data-id="' + p.id + '" class="' + (mine ? 'me' : '') + (p.finished ? ' fin' : '') + '"><span class="bt-lb-r">' + medal + '</span>' + avatar(p.nickname) +
         '<span class="bt-lb-n"><b>' + esc(p.nickname) + badge(p) + (mine ? ' (you)' : '') + '</b><span class="bt-lb-p"><i style="width:' + (n ? Math.round(p.answered * 100 / n) : 0) + '%"></i></span><small>' + p.answered + '/' + n + (p.finished ? ' · done' : '') + '</small></span>' +
         (p.streak >= 3 ? '<span class="bt-lb-s">🔥' + p.streak + '</span>' : '') +
-        '<span class="bt-lb-pts">' + p.score + '</span></li>';
+        '<span class="bt-lb-pts">' + p.score + (p.bonus ? '<small style="display:block;font-size:10px;opacity:.7;font-weight:600">+' + p.bonus + ' bonus</small>' : '') + '</span></li>';
     }).join('');
     if (reduced()) return;
     list.querySelectorAll('li[data-id]').forEach(function (li) {
@@ -782,7 +784,7 @@
       // Missed it: light up the right answer so the player learns it on the spot.
       if (!r.correct && r.answer && S.pos === pos) { var ok = host.querySelector('.bt-tile[data-l="' + r.answer + '"]'); if (ok) { ok.classList.remove('dim'); ok.classList.add('answer'); } }
       if (r.correct) {
-        callout(word(r), r.streak >= 3 ? 'fire' : 'good', (r.speed ? '⚡ +' + r.speed + ' speed' : '') + (r.streak_bonus ? '  🔥 +' + r.streak_bonus + ' streak' : ''));
+        callout(word(r), r.streak >= 3 ? 'fire' : 'good', (r.speed ? '⚡ +' + r.speed + ' speed bonus' : '') + (r.streak_bonus ? '  🔥 +' + r.streak_bonus + ' streak bonus' : ''));
         sparkle(el('btScore'), r.streak >= 3 ? 14 : 8);
         SND.play(r.streak === 3 || (r.streak > 3 && r.streak % 2 === 1) ? 'streak' : 'correct');
         buzz(15);
@@ -793,6 +795,7 @@
       }
       plus(r.points);
       countUp(el('btScore'), S.score, r.score); S.score = r.score;
+      if (r.total_bonus != null) { S.bonus = r.total_bonus; var bt = el('btBonusTxt'); if (bt) bt.textContent = S.bonus ? '+' + S.bonus + ' bonus' : ''; }
       setStreak(r.streak);
       drawSegs();
       if (answeredCount() >= n) { later(function () { callout('All done!', 'gold', 'Watching the others now'); SND.play('done'); }, 700); later(finishNow, 1600); return; }
@@ -1013,9 +1016,9 @@
     var avgAcc = rk.length ? Math.round(rk.reduce(function (s, p) { return s + p.correct / n; }, 0) * 100 / rk.length) : 0;
     var title = !me ? '' : rk.length === 1 ? 'Solo run done' : me.rank === 1 ? 'Victory!' : me.rank <= 3 ? 'On the podium!' : 'Good fight!';
     var card = me ? '<section class="bt-card bt-me"><div class="bt-me-top"><div class="bt-me-rank">' + ordinal(me.rank) + '<small> of ' + rk.length + '</small></div><div class="bt-me-title">' + title + '</div></div><div class="bt-stats">' +
-      stat(me.score, 'points') + stat(pct(me.correct, n) + '%', 'accuracy · room ' + avgAcc + '%') + stat(r.avg_secs != null ? r.avg_secs + 's' : '–', 'per question') + stat('🔥' + me.best_streak, 'best streak') + '</div></section>' : '';
+      stat(me.score, 'points' + (me.bonus ? ' · +' + me.bonus + ' bonus' : '')) + stat(pct(me.correct, n) + '%', 'accuracy · room ' + avgAcc + '%') + stat(r.avg_secs != null ? r.avg_secs + 's' : '–', 'per question') + stat('🔥' + me.best_streak, 'best streak') + '</div></section>' : '';
     var table = '<section class="bt-card"><div class="bt-label">Final ranking</div><table class="bt-tbl"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Right</th><th>Time</th></tr></thead><tbody>' +
-      rk.map(function (p) { return '<tr' + (p.is_me ? ' class="me"' : '') + '><td>' + p.rank + '</td><td>' + esc(p.nickname) + '</td><td>' + p.score + '</td><td>' + p.correct + '/' + n + '</td><td>' + mmss(p.time_used) + '</td></tr>'; }).join('') + '</tbody></table></section>';
+      rk.map(function (p) { return '<tr' + (p.is_me ? ' class="me"' : '') + '><td>' + p.rank + '</td><td>' + esc(p.nickname) + '</td><td>' + p.score + (p.bonus ? ' <small style="opacity:.7">+' + p.bonus + '</small>' : '') + '</td><td>' + p.correct + '/' + n + '</td><td>' + mmss(p.time_used) + '</td></tr>'; }).join('') + '</tbody></table></section>';
     var qs = r.questions || [];
     var stats = qs.map(function (q, i) { return { i: i, p: pct(q.right, q.answered), a: q.answered }; }).filter(function (x) { return x.a > 0; });
     var hardest = stats.slice().sort(function (a, b) { return a.p - b.p; }).slice(0, 3);
