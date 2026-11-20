@@ -444,8 +444,13 @@ window.addEventListener('error', function (ev) {
                 userId: uid,
                 isPro: true,
                 expiresAt: expiresAt,
-                planId: row.plan_id || null
+                planId: row.plan_id || null,
+                source: null
               };
+              supabaseClient.rpc('my_pro_source').then(function (r2) {
+                var src = r2 && r2.data;
+                if (src && proState.userId === uid) proState.source = src.source || null;
+              }).catch(function () {});
             } else {
               // expires_at is null, invalid, or in the past — treat as not Pro
               console.warn('Invalid or expired expires_at from server:', expiresAt);
@@ -526,25 +531,30 @@ window.addEventListener('error', function (ev) {
             return '<div class="pro-plan-card ' + (isActive ? 'active' : '') + '" data-plan="' + p.id + '">' +
               (p.tag ? '<span class="pro-plan-badge">' + p.tag + '</span>' : '') +
               '<div class="pro-plan-duration"><span>' + p.name + '</span><span class="pro-plan-radio"></span></div>' +
-              '<div class="pro-plan-prices"><span class="pro-plan-price">₹' + p.price + '</span><span class="pro-plan-old">₹' + p.originalPrice + '</span></div>' +
-              '<div class="pro-plan-sub">' + p.perMonth + ' · ' + p.desc + '</div>' +
+              '<div class="pro-plan-prices">' + (usePlayBilling()
+                ? '<span class="pro-plan-price" data-play-price="' + p.id + '">' + esc(planPriceLabel(p)) + '</span>'
+                : '<span class="pro-plan-price">₹' + p.price + '</span><span class="pro-plan-old">₹' + p.originalPrice + '</span>') + '</div>' +
+              '<div class="pro-plan-sub">' + (usePlayBilling() ? p.desc : p.perMonth + ' · ' + p.desc) + '</div>' +
               '</div>';
           }).join('') +
           '</div>' +
           '<div id="proAuthPrompt"></div>' +
           '<div class="pro-modal-alert hidden" id="proModalAlert"></div>' +
           '<button class="pro-cta-btn" id="proCheckoutBtn">' +
-          '<span>⚡ Unlock MedLadder Pro (₹' + plan.price + ' · ' + plan.durationLabel + ')</span>' +
+          '<span>⚡ Unlock MedLadder Pro (' + esc(planPriceLabel(plan)) + ' · ' + plan.durationLabel + ')</span>' +
           '</button>' +
           '<div class="pro-secure-note">' +
           '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>' +
-          '<span>100% Secure Checkout via Razorpay · UPI (GPay, PhonePe, Paytm), Cards, NetBanking</span>' +
+          '<span>' + (usePlayBilling()
+            ? 'Secure payment through Google Play · UPI, cards, net banking. Renews automatically until you cancel in Google Play.'
+            : '100% Secure Checkout via Razorpay · UPI (GPay, PhonePe, Paytm), Cards, NetBanking') + '</span>' +
           '</div>' +
           '<div class="pro-legal-links" style="font-size:11px;color:var(--ink-soft);text-align:center;margin-top:8px;line-height:1.45;">' +
           'By subscribing, you agree to our <a href="/terms" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a>, <a href="/privacy" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy</a> &amp; <a href="/terms#cancellation-refund" target="_blank" style="color:var(--accent);text-decoration:underline;">Cancellation/Refund Policy</a>.<br>' +
           'Instant digital activation · Billing support: <a href="mailto:99medladder@gmail.com" style="color:var(--accent);text-decoration:underline;">99medladder@gmail.com</a>' +
           '</div>' +
 
+          (usePlayBilling() ? playRestoreHtml() : (
           '<div class="pro-restore-wrap" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);text-align:center;">' +
           '<a href="#" id="proRestoreLink" style="font-size:12px;color:var(--ink-soft);text-decoration:underline;cursor:pointer;">Already paid? Restore access / enter Payment ID →</a>' +
           '<div id="proRestoreBox" style="display:none;margin-top:10px;">' +
@@ -554,7 +564,7 @@ window.addEventListener('error', function (ev) {
           '</div>' +
           '<div id="proRestoreStatus" style="font-size:11px;margin-top:6px;color:var(--ink-soft);"></div>' +
           '</div>' +
-          '</div>' +
+          '</div>')) +
 
           '</div>' +
           '</div>' +
@@ -565,7 +575,8 @@ window.addEventListener('error', function (ev) {
         document.getElementById('proModalOverlay').addEventListener('click', function (e) {
           if (e.target === this) closeProModal();
         });
-        document.getElementById('proCheckoutBtn').addEventListener('click', openRazorpayCheckout);
+        document.getElementById('proCheckoutBtn').addEventListener('click', startProCheckout);
+        wirePlayRestoreLinks();
 
         // Restore purchases / Enter Payment ID listener
         var restoreLink = document.getElementById('proRestoreLink');
@@ -652,7 +663,7 @@ window.addEventListener('error', function (ev) {
             '</div>' +
             '</div>';
           cta.classList.add('btn-needs-auth');
-          cta.innerHTML = '<span>🔒 Sign In to Unlock Pro (₹' + plan.price + ' · ' + plan.durationLabel + ')</span>';
+          cta.innerHTML = '<span>🔒 Sign In to Unlock Pro (' + esc(planPriceLabel(plan)) + ' · ' + plan.durationLabel + ')</span>';
 
           var link = document.getElementById('proAuthInlineLink');
           if (link) {
@@ -671,7 +682,7 @@ window.addEventListener('error', function (ev) {
             '</div>' +
             '</div>';
           cta.classList.remove('btn-needs-auth');
-          cta.innerHTML = '<span>⚡ Unlock MedLadder Pro (₹' + plan.price + ' · ' + plan.durationLabel + ')</span>';
+          cta.innerHTML = '<span>⚡ Unlock MedLadder Pro (' + esc(planPriceLabel(plan)) + ' · ' + plan.durationLabel + ')</span>';
         }
       }
 
@@ -683,7 +694,7 @@ window.addEventListener('error', function (ev) {
           reason: 'Please sign in or create an account before completing payment to link your Pro subscription.',
           onSuccess: function () {
             openProModal(savedReason, savedContext);
-            openRazorpayCheckout();
+            startProCheckout();
           }
         });
       }
@@ -692,6 +703,7 @@ window.addEventListener('error', function (ev) {
         currentProReason = reason;
         currentProContext = context;
         ensureProModalDOMElements();
+        loadPlayPrices();
         setProModalAlert(null);
         var titleEl = document.getElementById('proModalTitle');
         var subEl = document.getElementById('proModalSub');
@@ -846,6 +858,197 @@ window.addEventListener('error', function (ev) {
           console.warn('verifyRazorpayPayment edge fn failed:', e.message);
           return null; // null = could not verify (never treated as a pass)
         }
+      }
+
+      // ─── GOOGLE PLAY BILLING (Android app) ────────────────────────────────────
+      // In the Android app, Pro is sold through Google Play (Play policy for digital
+      // goods); the website keeps Razorpay. Older app builds without the billing plugin
+      // keep the Razorpay flow. The server (play-verify) checks every purchase with
+      // Google before granting Pro; play-rtdn keeps renewals, expiry and refunds in step.
+      var PLAY_PLANS = {
+        '1_month': { product: 'pro_1m', base: 'monthly' },
+        '3_months': { product: 'pro_3m', base: 'three-months' },
+        '6_months': { product: 'pro_6m', base: 'six-months' },
+        '1_year': { product: 'pro_1y', base: 'yearly' }
+      };
+      var PLAY_VERIFY_URL = 'https://groeibwykzrliphzzruk.supabase.co/functions/v1/play-verify';
+      var playPrices = {};
+      var playPricesLoaded = false;
+
+      function playPlugin() {
+        try {
+          var C = window.Capacitor;
+          if (C && typeof C.isNativePlatform === 'function' && C.isNativePlatform() &&
+              typeof C.getPlatform === 'function' && C.getPlatform() === 'android' &&
+              typeof C.isPluginAvailable === 'function' && C.isPluginAvailable('NativePurchases') &&
+              C.Plugins && C.Plugins.NativePurchases) {
+            return C.Plugins.NativePurchases;
+          }
+        } catch (e) { }
+        return null;
+      }
+      function usePlayBilling() { return !!playPlugin(); }
+
+      // Price as Google shows it (local currency) in the app; rupees on the website.
+      function planPriceLabel(plan) {
+        if (usePlayBilling()) return playPrices[plan.id] || '₹' + plan.price;
+        return '₹' + plan.price;
+      }
+
+      function loadPlayPrices() {
+        var P = playPlugin();
+        if (!P || playPricesLoaded) return;
+        playPricesLoaded = true;
+        var ids = Object.keys(PLAY_PLANS).map(function (k) { return PLAY_PLANS[k].product; });
+        P.getProducts({ productIdentifiers: ids, productType: 'subs' }).then(function (res) {
+          (res && res.products || []).forEach(function (pr) {
+            // Android subscriptions: identifier = base plan id, planIdentifier = product id
+            Object.keys(PLAY_PLANS).forEach(function (k) {
+              var m = PLAY_PLANS[k];
+              if (pr.planIdentifier === m.product && pr.identifier === m.base && pr.priceString) playPrices[k] = pr.priceString;
+            });
+          });
+          document.querySelectorAll('[data-play-price]').forEach(function (el) {
+            var k = el.getAttribute('data-play-price');
+            if (playPrices[k]) el.textContent = playPrices[k];
+          });
+          updateProModalUI();
+        }).catch(function (e) {
+          playPricesLoaded = false;
+          console.warn('Play prices unavailable:', e && e.message);
+        });
+      }
+
+      async function playVerify(purchaseToken, productId) {
+        var session = supabaseClient && supabaseClient.auth ? await supabaseClient.auth.getSession() : null;
+        var token = session && session.data && session.data.session ? session.data.session.access_token : null;
+        if (!token) throw new Error('Please sign in again.');
+        var res = await fetch(PLAY_VERIFY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ purchase_token: purchaseToken, product_id: productId })
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || ('Verification failed (' + res.status + ')'));
+        return data;
+      }
+
+      function playErrorText(e) {
+        return String((e && e.code) || '') + ' ' + String((e && e.message) || e || '');
+      }
+
+      async function startPlayPurchase() {
+        var P = playPlugin();
+        var ctaBtn = document.getElementById('proCheckoutBtn');
+        var plan = getSelectedPlan();
+        var m = PLAY_PLANS[plan.id];
+        var resetCta = function () { if (ctaBtn) { ctaBtn.disabled = false; updateProModalUI(); } };
+        setProModalAlert(null);
+        if (!currentUser) { triggerProAuthRedirect(); return; }
+        if (!P || !m) { setProModalAlert('Google Play billing is not available on this device.', 'error'); return; }
+        if (ctaBtn) {
+          ctaBtn.disabled = true;
+          ctaBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span class="auth-spinner"></span> Opening Google Play...</span>';
+        }
+        trackEvent('begin_checkout', { currency: 'INR', value: plan.price, payment_type: 'google_play', items: [{ item_id: plan.id, item_name: 'MedLadder Pro - ' + plan.name, item_category: 'Subscription' }] });
+        var tx;
+        try {
+          tx = await P.purchaseProduct({
+            productIdentifier: m.product,
+            planIdentifier: m.base,
+            productType: 'subs',
+            appAccountToken: currentUser.id
+          });
+        } catch (e) {
+          resetCta();
+          var t = playErrorText(e);
+          if (/USER_CANCELED|cancel/i.test(t)) { showToast('Purchase cancelled.', 'info'); return; }
+          if (/ITEM_ALREADY_OWNED/i.test(t)) { setProModalAlert('You already have this subscription on Google Play. Restoring it...', 'info'); restorePlayPurchases(); return; }
+          console.warn('Play purchase failed:', t);
+          setProModalAlert('Google Play could not complete the purchase. Please try again.', 'error');
+          return;
+        }
+        if (ctaBtn) ctaBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span class="auth-spinner"></span> Activating Pro...</span>';
+        try {
+          var v = await playVerify(tx && tx.purchaseToken, m.product);
+          await refreshProStatus();
+          if (v && v.verified && proState.isPro) {
+            trackEvent('purchase', { transaction_id: (tx && (tx.orderId || tx.transactionId)) || '', currency: 'INR', value: plan.price, payment_type: 'google_play', items: [{ item_id: plan.id, item_name: 'MedLadder Pro - ' + plan.name, item_category: 'Subscription' }] });
+            closeProModal();
+            updateMastheadAuth();
+            rerenderLockedScreens();
+            showToast('⭐ MedLadder Pro is now active. Everything is unlocked!', 'success');
+            return;
+          }
+          resetCta();
+          setProModalAlert(v && v.status === 'pending'
+            ? 'Your payment is pending with Google Play. Pro turns on automatically as soon as it completes.'
+            : 'Payment received. Pro is being activated and will appear shortly. Use "Restore purchases" if it does not.', 'info');
+        } catch (e) {
+          resetCta();
+          console.warn('play-verify failed:', e && e.message);
+          setProModalAlert('Payment received. We could not confirm it just now; Pro will turn on automatically within a few minutes. You can also tap "Restore purchases".', 'info');
+        }
+      }
+
+      async function restorePlayPurchases() {
+        var P = playPlugin();
+        var status = document.getElementById('proRestoreStatus');
+        var say = function (msg) { if (status) status.textContent = msg; };
+        if (!currentUser) { triggerProAuthRedirect(); return; }
+        if (!P) return;
+        say('Checking Google Play...');
+        try {
+          var res = await P.getPurchases({ productType: 'subs' });
+          var list = (res && res.purchases) || [];
+          for (var i = 0; i < list.length; i++) {
+            var tk = list[i].purchaseToken;
+            if (!tk) continue;
+            try { await playVerify(tk, null); }
+            catch (e) {
+              if (/another MedLadder account/i.test(e.message || '')) {
+                say('This Google Play subscription belongs to another MedLadder account. Sign in with that account to use it.');
+                return;
+              }
+            }
+          }
+          var pro = await refreshProStatus();
+          if (pro) { say(''); closeProModal(); rerenderLockedScreens(); showToast('⭐ Pro access restored!', 'success'); return; }
+          say(list.length ? 'No active MedLadder Pro subscription found on Google Play.' : 'No MedLadder subscription found for this Google account on Google Play.');
+        } catch (e) {
+          console.warn('restore failed:', playErrorText(e));
+          say('Could not reach Google Play. Please try again.');
+        }
+      }
+
+      function managePlaySubscription() {
+        var P = playPlugin();
+        if (P) {
+          P.manageSubscriptions().catch(function () { showToast('Open Google Play → Payments & subscriptions to manage it.', 'info'); });
+          return;
+        }
+        showToast('You subscribed in the MedLadder Android app. Manage or cancel it in Google Play → Payments & subscriptions.', 'info');
+      }
+
+      function playRestoreHtml() {
+        return '<div class="pro-restore-wrap" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);text-align:center;">' +
+          '<a href="#" id="proPlayRestore" style="font-size:12px;color:var(--ink-soft);text-decoration:underline;cursor:pointer;">Already subscribed? Restore purchases</a>' +
+          '<span style="font-size:12px;color:var(--ink-soft);"> · </span>' +
+          '<a href="#" id="proPlayManage" style="font-size:12px;color:var(--ink-soft);text-decoration:underline;cursor:pointer;">Manage subscription</a>' +
+          '<div id="proRestoreStatus" style="font-size:11px;margin-top:6px;color:var(--ink-soft);"></div>' +
+          '</div>';
+      }
+
+      function wirePlayRestoreLinks() {
+        var a = document.getElementById('proPlayRestore');
+        if (a) a.addEventListener('click', function (e) { e.preventDefault(); restorePlayPurchases(); });
+        var b = document.getElementById('proPlayManage');
+        if (b) b.addEventListener('click', function (e) { e.preventDefault(); managePlaySubscription(); });
+      }
+
+      function startProCheckout() {
+        if (usePlayBilling()) return startPlayPurchase();
+        return openRazorpayCheckout();
       }
 
       // ─── MAIN RAZORPAY CHECKOUT ORCHESTRATOR ──────────────────────────────────
@@ -8214,6 +8417,9 @@ window.addEventListener('error', function (ev) {
           row('grid', 'Classic home', 'Use the earlier home screen', 'id="v2ClassicBtn"') +
           (isAdmin(currentUser) ? row('crown', 'Admin console', 'Students, questions, mock tests', 'id="v3Admin"') : '') +
           (currentUser && !pro ? row('crown', 'Go Pro', 'All ' + totalTopics() + ' topics and past papers', 'id="v2ProBtn"') : '') +
+          (currentUser && pro && !isAdmin(currentUser) && proState.expiresAt ? row('crown', 'Subscription',
+            'Pro until ' + new Date(proState.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) +
+            (proState.source === 'google_play' ? ' · Google Play' : ''), 'id="v3SubBtn"') : '') +
           (currentUser ? row('out', 'Sign out', '', 'id="v3SignOut"', '') : '') +
           '</div></section>';
         v2Paint('profile', v2Shell('profile', v2Header(), '<div class="v2-bold v3-page"><h1 class="v3-title">Profile</h1>' + body + '</div>', ix.due.length));
@@ -8237,6 +8443,11 @@ window.addEventListener('error', function (ev) {
         if (ad) ad.onclick = function () { window.location.href = '/admin-mock'; };
         var pb = document.getElementById('v2ProBtn');
         if (pb) pb.onclick = function () { openProModal('banner', {}); };
+        var sb = document.getElementById('v3SubBtn');
+        if (sb) sb.onclick = function () {
+          if (proState.source === 'google_play') { managePlaySubscription(); return; }
+          showToast('MedLadder Pro is active until ' + new Date(proState.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) + '.', 'info');
+        };
         var so = document.getElementById('v3SignOut');
         if (so) so.onclick = function () { handleSignOut(); };
         var gb = document.getElementById('v2GoalBtn'), gpk = document.getElementById('v2GoalPick');
