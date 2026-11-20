@@ -426,6 +426,15 @@ window.addEventListener('error', function (ev) {
         } catch (e) { console.warn('rerenderLockedScreens:', e); }
       }
 
+      // "12 days left" under the Pro Active label, from the server's expiry date.
+      function proDaysLeftHtml() {
+        var exp = proState && proState.expiresAt ? new Date(proState.expiresAt).getTime() : NaN;
+        if (!isFinite(exp)) return '';
+        var d = Math.ceil((exp - Date.now()) / 86400000);
+        var txt = d > 1 ? d + ' days left' : d === 1 ? '1 day left' : 'ends today';
+        return '<span style="display:block;font-size:12px;font-weight:600;opacity:.75;margin-top:2px;">' + txt + '</span>';
+      }
+
       function refreshProStatus() {
         if (!supabaseClient || !currentUser) { resetProState(); return Promise.resolve(false); }
         var uid = currentUser.id;
@@ -2419,7 +2428,7 @@ window.addEventListener('error', function (ev) {
         var accuracyPct = totalDone > 0 ? Math.round((totalCorrect / totalDone) * 100) : 0;
 
         var planSectionHtml = isPro
-          ? '<div class="dropdown-stat-row"><span class="dropdown-stat-label">Membership</span><span class="dropdown-stat-val" style="color:#FFB23D;font-weight:800;">⭐ Pro Active</span></div>'
+          ? '<div class="dropdown-stat-row"><span class="dropdown-stat-label">Membership</span><span class="dropdown-stat-val" style="color:#FFB23D;font-weight:800;text-align:right;">⭐ Pro Active' + proDaysLeftHtml() + '</span></div>'
           : '<div class="dropdown-stat-row"><span class="dropdown-stat-label">Plan</span><span class="dropdown-stat-val">Free (8 topics/subj)</span></div>' +
           '<button class="dropdown-action-btn" id="dropdownUpgradeBtn" style="color:#FF7A3D;font-weight:700;">⚡ Upgrade to Pro (₹' + PRO_CONFIG.PRICE_INR + ')</button>';
 
