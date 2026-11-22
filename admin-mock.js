@@ -1805,6 +1805,13 @@
     ['csfStatus', 'csfLevel', 'csfTopic'].forEach(function (id) { $(id).onchange = csRenderList; });
     $('csfRegion').onchange = function () { csFillTopicFilter(); csRenderList(); };
     $('ceRegion').onchange = csFillTopicList;
+    $('ceTopic').addEventListener('input', csTopicHint);
+    $('ceTopic').addEventListener('change', function () {
+      // Use the list's spelling when only the case differs ("hypertension" -> "Hypertension").
+      var v = $('ceTopic').value.trim(), same = csTopicsFor($('ceRegion').value).filter(function (t) { return t.toLowerCase() === v.toLowerCase(); })[0];
+      if (same && same !== v) $('ceTopic').value = same;
+      csTopicHint();
+    });
     $('ceAddStep').onclick = function () { var st = csReadSteps(); st.push(csBlankStep()); csRenderSteps(st); csFocusStep(st.length - 1); };
     $('ceSave').onclick = function () { csSave(false); };
     $('ceSavePub').onclick = function () { csSave(true); };
@@ -1875,6 +1882,15 @@
   }
   function csFillTopicList() {
     $('ceTopicList').innerHTML = csTopicsFor($('ceRegion').value).map(function (t) { return '<option value="' + esc(t) + '">'; }).join('');
+    csTopicHint();
+  }
+  // Under the Topic box: say whether the typed topic is new for this region, or empty.
+  function csTopicHint() {
+    var h = $('ceTopicHint'); if (!h) return;
+    var v = $('ceTopic').value.trim(), list = csTopicsFor($('ceRegion').value);
+    var same = list.filter(function (t) { return t.toLowerCase() === v.toLowerCase(); })[0];
+    h.className = 'am-hint ce-topic-hint' + (v && !same ? ' new' : '');
+    h.textContent = !v ? 'No topic: it will show under “Other”.' : same ? '' : 'New topic for this region: it will be added to the topic list. Check the spelling if you meant an existing one.';
   }
   function csFillTopicFilter() {
     var fr = $('csfRegion').value, cur = $('csfTopic').value;
@@ -1965,6 +1981,7 @@
       csFillTopicList();
       $('ceTopic').value = c ? (c.topic || '') : ($('csfTopic').value && $('csfTopic').value !== '-' ? $('csfTopic').value : '');
       $('ceKeywords').value = c ? (c.keywords || '') : '';
+      csTopicHint();
       $('ceCaseTitle').value = c ? c.title : ''; $('ceSummary').value = c ? c.summary : '';
       $('ceTags').value = c ? (c.exam_tags || []).join(', ') : '';
       $('ceMinutes').value = c ? c.est_minutes : 8; $('ceSort').value = c ? c.sort : 0;
@@ -2018,7 +2035,17 @@
    * List: "Paste cases (bulk)" checks several cases (split by ---) and saves
    * the ones without problems as drafts. Images are added afterwards in the
    * editor with + Image. */
-  function csParse(text) { return window.MLCaseParse ? window.MLCaseParse.parse(text, cs.regions) : []; }
+  // Regions for the parser, with the topics already used by saved cases (so a pasted
+  // topic matches an existing custom topic too, and only truly new ones are flagged).
+  function csParse(text) {
+    if (!window.MLCaseParse) return [];
+    var regs = cs.regions.map(function (r) {
+      var used = [];
+      cs.rows.forEach(function (c) { if (c.region_id === r.id && c.topic && used.indexOf(c.topic) === -1) used.push(c.topic); });
+      return Object.assign({}, r, { usedTopics: used });
+    });
+    return window.MLCaseParse.parse(text, regs);
+  }
   function csIssuesHtml(r) {
     var h = '';
     if (r.errors.length) h += '<ul class="cs-issues bad">' + r.errors.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>';
@@ -2052,6 +2079,7 @@
       csFillTopicList();
       if (d.topic) $('ceTopic').value = d.topic;
       if (d.keywords) $('ceKeywords').value = d.keywords;
+      csTopicHint();
       $('ceTags').value = d.exam_tags.join(', ');
       $('ceMinutes').value = d.est_minutes; $('ceFree').checked = d.is_free;
       $('ceVignette').value = d.vignette;

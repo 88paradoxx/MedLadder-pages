@@ -124,20 +124,62 @@
     });
     var mb = el('csMoreBtn'); if (mb) mb.onclick = function () { fetchList(false); };
   }
-  function drawTopics() {
-    var box = el('csTopics');
-    if (!box) return;
-    var L = S.list, sum = 0;
-    (L.topics || []).forEach(function (t) { sum += t.n; });
-    var chips = [['', 'All', sum]].concat((L.topics || []).map(function (t) { return [t.topic || '-', t.topic || 'Other', t.n]; }));
-    if (S.f.topic && !chips.some(function (c) { return c[0] === S.f.topic; })) chips.push([S.f.topic, S.f.topic === '-' ? 'Other' : S.f.topic, 0]);
-    box.innerHTML = chips.length > 2 || S.f.topic ? '<div class="cs-chips" role="group" aria-label="Topics">' + chips.map(function (c) {
-      return '<button class="cs-chip" data-topic="' + esc(c[0]) + '" aria-pressed="' + (S.f.topic === c[0]) + '">' + esc(c[1]) + ' <small>' + c[2] + '</small></button>';
-    }).join('') + '</div>' : '';
-    box.querySelectorAll('[data-topic]').forEach(function (b) {
-      b.onclick = function () { S.f.topic = b.getAttribute('data-topic'); fetchList(true); };
-    });
+  // Topic side panel for a region: every topic of the region in its standard
+  // order with its case count (under the current search and filters), then any
+  // other topics in use and "Other". Topics with no cases yet are shown greyed.
+  // Wide screens: a column beside the list. Phones: a drawer from the left,
+  // opened by the "Topics" bar above the list.
+  function topicRows() {
+    var r = regionById(S.f.region) || {}, L = S.list, counts = {}, sum = 0;
+    (L.topics || []).forEach(function (t) { counts[t.topic || '-'] = t.n; sum += t.n; });
+    var rows = [['', 'All topics', sum]];
+    var seen = {};
+    (r.topics || []).forEach(function (t) { seen[t] = 1; rows.push([t, t, counts[t] || 0]); });
+    (L.topics || []).forEach(function (t) { var k = t.topic || '-'; if (!seen[k] && k !== '-') { seen[k] = 1; rows.push([k, k, t.n]); } });
+    if (counts['-']) rows.push(['-', 'Other', counts['-']]);
+    if (S.f.topic && !rows.some(function (x) { return x[0] === S.f.topic; })) rows.push([S.f.topic, S.f.topic === '-' ? 'Other' : S.f.topic, 0]);
+    return rows;
   }
+  function drawTopics() {
+    var side = el('csSide');
+    if (!side) return;
+    var rows = topicRows(), r = regionById(S.f.region) || {};
+    var cur = rows.filter(function (x) { return x[0] === S.f.topic; })[0] || rows[0];
+    side.innerHTML = '<div class="cs-side-h"><span aria-hidden="true">' + esc(r.icon || '') + '</span><b>' + esc(r.name || 'Topics') + '</b>' +
+      '<button class="cs-side-x" id="csSideX" type="button" aria-label="Close topics">✕</button></div>' +
+      '<ul class="cs-side-list">' + rows.map(function (x, i) {
+        var on = S.f.topic === x[0], empty = i > 0 && !x[2] && !on;
+        return '<li><button class="cs-side-i' + (on ? ' on' : '') + (empty ? ' empty' : '') + (i === 0 ? ' all' : '') + '" data-topic="' + esc(x[0]) + '"' +
+          (on ? ' aria-current="true"' : '') + (empty ? ' disabled' : '') + '><span>' + esc(x[1]) + '</span><small>' + (x[2] || (i === 0 ? 0 : '–')) + '</small></button></li>';
+      }).join('') + '</ul>';
+    var bar = el('csTopicBar');
+    if (bar) bar.innerHTML = '<span class="cs-tb-ic" aria-hidden="true">☰</span><span class="cs-tb-t"><small>Topic</small><b>' + esc(cur[1]) + '</b></span><span class="cs-tb-n">' + plural(cur[2], 'case') + '</span>';
+    side.querySelectorAll('[data-topic]').forEach(function (b) {
+      b.onclick = function () {
+        var t = b.getAttribute('data-topic');
+        closeTopics();
+        if (t === S.f.topic) return;
+        S.f.topic = t; fetchList(true);
+        var top = el('csTopicBar') || el('csResults');
+        if (top) { var y = top.getBoundingClientRect().top + window.scrollY - 80; if (window.scrollY > y) window.scrollTo(0, Math.max(0, y)); }
+      };
+    });
+    var x = el('csSideX'); if (x) x.onclick = closeTopics;
+  }
+  function openTopics() {
+    var side = el('csSide'), scrim = el('csScrim');
+    if (!side) return;
+    side.classList.add('open'); if (scrim) scrim.hidden = false;
+    document.documentElement.classList.add('cs-noscroll');
+    var on = side.querySelector('.cs-side-i.on'); if (on) try { on.focus({ preventScroll: true }); } catch (e) { }
+  }
+  function closeTopics() {
+    var side = el('csSide'), scrim = el('csScrim');
+    if (side) side.classList.remove('open');
+    if (scrim) scrim.hidden = true;
+    document.documentElement.classList.remove('cs-noscroll');
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTopics(); });
   // reset: start from the first page; otherwise load the next 20.
   // keep: reload as many as were showing (returning from a case), then restore the scroll position.
   function fetchList(reset, keep) {
@@ -300,14 +342,21 @@
     var body = '<section class="cs-head cs-head-sm"><span class="cs-region-ic big" aria-hidden="true">' + esc(r.icon) + '</span><div><h1>' + esc(r.name) + '</h1><p>' + esc(r.blurb) + '</p>' +
       (r.total ? '<p class="cs-sub">' + plural(r.total, 'case') + (r.done ? ' · ' + r.done + ' done' : '') + '</p>' : '') + '</div></section>' +
       searchBox('Search in ' + r.name + '…') +
-      '<div id="csTopics"></div><div id="csFilters">' + filterBar() + '</div><div id="csResults"></div>';
-    paint('cases', body, function () { S.f.q = ''; openHub(); });
+      '<div class="cs-rwrap"><aside class="cs-side" id="csSide" aria-label="' + esc(r.name) + ' topics"></aside>' +
+      '<div class="cs-rmain"><button class="cs-topicbar" id="csTopicBar" type="button" aria-haspopup="true"></button>' +
+      '<div id="csFilters">' + filterBar() + '</div><div id="csResults"></div></div></div>' +
+      '<div class="cs-scrim" id="csScrim" hidden></div>';
+    paint('cases', body, function () { closeTopics(); S.f.q = ''; openHub(); });
     wireBrowse(null);
+    drawTopics();
+    el('csTopicBar').onclick = openTopics;
+    el('csScrim').onclick = closeTopics;
     fetchList(!keep, keep);
   }
 
   // ---------- player ----------
   function openCase(id) {
+    closeTopics();
     paint('cases-play', '<p class="cs-muted cs-pad">Opening case…</p>', backToList);
     rpc('case_open', { p_case: id }).then(function (c) {
       B.route(S.from === 'region' && S.f.region ? 'cases/' + S.f.region : 'cases');

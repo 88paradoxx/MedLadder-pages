@@ -167,7 +167,8 @@
     if (!t) return '';
     var norm = function (x) { return x.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, ' ').trim(); };
     var r = (regions || []).filter(function (x) { return x.id === regionId; })[0];
-    var hit = r && r.topics ? r.topics.filter(function (x) { return norm(x) === norm(t) || norm(x).replace(/s$/, '') === norm(t).replace(/s$/, ''); })[0] : null;
+    var known = r ? (r.topics || []).concat(r.usedTopics || []) : [];
+    var hit = known.filter(function (x) { return norm(x) === norm(t) || norm(x).replace(/s$/, '') === norm(t).replace(/s$/, ''); })[0] || null;
     return hit || t;
   }
   function matchLevel(v) {
@@ -304,6 +305,13 @@
     if (!head.region) errors.push('Region is missing (e.g. "Region: Cardiovascular").');
     else if (!regionId) errors.push('Region “' + head.region + '” not recognised. Use one of: ' + (regions || []).map(function (r) { return r.name; }).join(', ') + '.');
     var level = matchLevel(head.level);
+    // Topic: a known one (spelling matched to the region's list), a new one (kept, with a
+    // warning so a typo does not quietly make a second topic), or none ("Other").
+    var topic = matchTopic(head.topic, regionId, regions);
+    var reg = (regions || []).filter(function (x) { return x.id === regionId; })[0];
+    if (regionId && !topic) warnings.push('No topic given; the case will show under “Other” in ' + (reg ? reg.name : 'its region') + '.');
+    else if (topic && reg && reg.topics && reg.topics.length && reg.topics.indexOf(topic) === -1 && (reg.usedTopics || []).indexOf(topic) === -1)
+      warnings.push('“' + topic + '” is a new topic for ' + reg.name + '. It will be added; check the spelling if you meant an existing one.');
     if (!head.level) { level = 'core'; warnings.push('No level given; set to Core.'); }
     else if (!level) { level = 'core'; warnings.push('Level “' + head.level + '” not recognised; set to Core.'); }
     var title = plain([head.title || head.headingTitle || '']);
@@ -338,7 +346,7 @@
       index: n,
       data: {
         id: null, region_id: regionId || '', level: level, title: title,
-        topic: matchTopic(head.topic, regionId, regions), keywords: plain([head.keywords || '']),
+        topic: topic, keywords: plain([head.keywords || '']),
         summary: plain(head.summaryLines || []), exam_tags: tags,
         vignette: vig, est_minutes: minutes > 0 ? Math.min(minutes, 120) : Math.max(4, Math.min(30, outSteps.length * 2 + 2)),
         sort: 0, is_free: /^(y|yes|true|1|free)/i.test(String(head.free || '').trim()), published: false,
