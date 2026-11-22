@@ -1807,6 +1807,7 @@
     $('ceSave').onclick = function () { csSave(false); };
     $('ceSavePub').onclick = function () { csSave(true); };
     $('ceDelete').onclick = csDelete;
+    csWirePaste();
     $('csList').onclick = function (e) {
       var b = e.target.closest('[data-cs]');
       if (!b) return;
@@ -1926,6 +1927,7 @@
     showView('caseEditView');
     $('ceMsg').textContent = id ? 'Loading…' : '';
     $('ceDelete').hidden = !id;
+    $('cePaste').hidden = true; $('cePasteText').value = ''; $('cePasteRes').innerHTML = '';
     cs.snapshot = null;
     csLoadRegions().then(function () {
       return id ? sb.rpc('admin_case_get', { p_id: id }) : { data: null };
@@ -1982,6 +1984,97 @@
       cs.snapshot = null;
       loadCases();
     });
+  }
+
+  /* ---------- Clinical cases: paste as text (admin-cases-parse.js) ----------
+   * Editor: "Paste whole case" fills the form; nothing is saved until Save.
+   * List: "Paste cases (bulk)" checks several cases (split by ---) and saves
+   * the ones without problems as drafts. Images are added afterwards in the
+   * editor with + Image. */
+  function csParse(text) { return window.MLCaseParse ? window.MLCaseParse.parse(text, cs.regions) : []; }
+  function csIssuesHtml(r) {
+    var h = '';
+    if (r.errors.length) h += '<ul class="cs-issues bad">' + r.errors.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>';
+    if (r.warnings.length) h += '<ul class="cs-issues warn">' + r.warnings.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>';
+    return h;
+  }
+  function csWirePaste() {
+    var ex = window.MLCaseParse ? window.MLCaseParse.example : '';
+    ['csBulkEx', 'ceEx'].forEach(function (id) { $(id).textContent = ex; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-fmt]'), function (b) {
+      b.onclick = function () {
+        var pre = $(b.getAttribute('data-fmt'));
+        pre.hidden = !pre.hidden;
+        b.textContent = pre.hidden ? 'Show the format' : 'Hide the format';
+      };
+    });
+    // editor
+    $('cePasteBtn').onclick = function () { $('cePaste').hidden = !$('cePaste').hidden; if (!$('cePaste').hidden) $('cePasteText').focus(); };
+    $('cePasteClose').onclick = function () { $('cePaste').hidden = true; };
+    $('cePasteGo').onclick = function () {
+      var text = $('cePasteText').value;
+      if (!text.trim()) { $('cePasteRes').innerHTML = '<p class="am-hint">Paste the case text first.</p>'; return; }
+      var all = csParse(text);
+      if (!all.length) { $('cePasteRes').innerHTML = '<p class="am-hint">Nothing found in that text.</p>'; return; }
+      var hasContent = $('ceCaseTitle').value.trim() || $('ceVignette').value.trim();
+      if (hasContent && !window.confirm('Replace what is in the form now with the pasted case?')) return;
+      var r = all[0], d = r.data;
+      if (d.region_id) $('ceRegion').value = d.region_id;
+      $('ceLevel').value = d.level;
+      $('ceCaseTitle').value = d.title; $('ceSummary').value = d.summary;
+      $('ceTags').value = d.exam_tags.join(', ');
+      $('ceMinutes').value = d.est_minutes; $('ceFree').checked = d.is_free;
+      $('ceVignette').value = d.vignette;
+      if ($('ceVignette')._rf) $('ceVignette')._rf.refresh();
+      csRenderSteps(d.steps.length ? d.steps : [csBlankStep()]);
+      var head = r.errors.length
+        ? '<p class="am-hint"><b>Filled in, with ' + r.errors.length + ' thing' + (r.errors.length === 1 ? '' : 's') + ' to fix before saving:</b></p>'
+        : '<p class="am-hint cs-ok"><b>Filled in.</b> Check it below, add any images with ＋ Image, then Save.</p>';
+      var more = all.length > 1 ? '<p class="am-hint">Only the first of ' + all.length + ' cases was used. To add several at once, use “Paste cases (bulk)” on the cases list.</p>' : '';
+      $('cePasteRes').innerHTML = head + csIssuesHtml(r) + more;
+    };
+    // bulk
+    var bulk = [];
+    $('caseBulkBtn').onclick = function () { $('csBulk').hidden = !$('csBulk').hidden; if (!$('csBulk').hidden) $('csBulkText').focus(); };
+    $('csBulkText').oninput = function () { $('csBulkSave').hidden = true; $('csBulkMsg').textContent = ''; };
+    $('csBulkCheck').onclick = function () {
+      bulk = csParse($('csBulkText').value);
+      $('csBulkSave').hidden = true;
+      if (!bulk.length) { $('csBulkRes').innerHTML = ''; $('csBulkMsg').textContent = 'Paste at least one case.'; return; }
+      var ok = bulk.filter(function (r) { return !r.errors.length; }).length;
+      $('csBulkRes').innerHTML = bulk.map(function (r) {
+        var d = r.data;
+        return '<div class="cs-prev ' + (r.errors.length ? 'bad' : 'ok') + '"><div class="cs-prev-h"><b>' + r.index + '. ' + esc(d.title || '(no title)') + '</b>' +
+          '<small>' + esc(d.region_id ? csRegionName(d.region_id) : 'no region') + ' · ' + (d.level === 'advanced' ? 'Advanced' : 'Core') + ' · ' +
+          d.steps.length + ' step' + (d.steps.length === 1 ? '' : 's') + (d.is_free ? ' · Free' : '') + '</small>' +
+          '<span class="bk-state ' + (r.errors.length ? 'off">Fix first' : 'on">Ready') + '</span></div>' + csIssuesHtml(r) + '</div>';
+      }).join('');
+      $('csBulkMsg').textContent = ok + ' of ' + bulk.length + ' ready.' + (ok < bulk.length ? ' Fix the others in the text and press Check again, or save the ready ones now.' : '');
+      if (ok) { $('csBulkSave').hidden = false; $('csBulkSave').textContent = 'Save ' + ok + ' as draft' + (ok === 1 ? '' : 's'); }
+    };
+    $('csBulkSave').onclick = function () {
+      var todo = bulk.filter(function (r) { return !r.errors.length; });
+      if (!todo.length || cs.busy) return;
+      cs.busy = true; $('csBulkSave').disabled = $('csBulkCheck').disabled = true;
+      var done = 0, failed = [];
+      todo.reduce(function (p, r) {
+        return p.then(function () {
+          $('csBulkMsg').textContent = 'Saving ' + (done + failed.length + 1) + ' of ' + todo.length + '…';
+          return sb.rpc('admin_case_save', { p: r.data }).then(function (res) {
+            if (res.error) failed.push(r.index + '. ' + (r.data.title || '') + ': ' + csErr(res.error)); else done++;
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        cs.busy = false; $('csBulkSave').disabled = $('csBulkCheck').disabled = false;
+        $('csBulkSave').hidden = true;
+        $('csBulkMsg').textContent = done + ' case' + (done === 1 ? '' : 's') + ' saved as draft' + (done === 1 ? '' : 's') + '.' + (failed.length ? ' Not saved: ' + failed.join('; ') : ' Open each one to check it and add images, then publish.');
+        if (!failed.length) { $('csBulkText').value = ''; $('csBulkRes').innerHTML = ''; }
+        if (done) { toast(done + ' draft' + (done === 1 ? '' : 's') + ' added.'); csReloadList(); }
+      });
+    };
+  }
+  function csReloadList() {
+    sb.rpc('admin_cases_list').then(function (r) { if (!r.error) { cs.rows = r.data || []; csRenderList(); } });
   }
 
   function proCall(action) {
