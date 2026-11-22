@@ -4646,3 +4646,13 @@ html.ml-reading #app .v3 .v3-cases-go { flex: none; display: inline-flex; align-
 html.dark .v3 .v3-cases-card { --tint: 120, 165, 235; }
 html.dark.ml-reading #app .v3 .v3-cases-ic { background: rgba(120, 165, 235, .18); color: #A9C4F2; }
 html.dark.ml-reading #app .v3 .v3-cases-go { background: rgba(10, 16, 18, .5); color: #BCD2F5; border: 1px solid rgba(120, 165, 235, .35); }
+
+/* ---- Resume an unfinished quiz (topic / custom setup) */
+html.ml-reading #app .rr-resume { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 12px 16px !important; margin: 14px 0 18px !important; padding: 14px 16px !important; border-radius: 18px !important; border: 1px solid var(--rr-accent-fill, #13806B) !important; background: var(--rr-accent-soft, rgba(19, 128, 107, .09)) !important; }
+html.ml-reading #app .rr-resume-t { flex: 1 1 220px !important; min-width: 0 !important; display: grid !important; gap: 3px !important; }
+html.ml-reading #app .rr-resume-t b { font: 700 16px var(--rr-sans) !important; color: var(--rr-ink) !important; }
+html.ml-reading #app .rr-resume-t small { font-size: 13.5px !important; color: var(--rr-ink-quiet, #5F6A66) !important; line-height: 1.4 !important; }
+html.ml-reading #app .rr-resume-b { display: flex !important; align-items: center !important; gap: 10px !important; flex: 0 0 auto !important; }
+html.ml-reading #app .rr-resume .btn.start { width: auto !important; min-width: 120px !important; margin: 0 !important; min-height: 46px !important; padding: 0 20px !important; }
+html.ml-reading #app .rr-resume-x { background: none !important; border: 0 !important; padding: 8px 4px !important; color: var(--rr-ink-quiet, #5F6A66) !important; font: 600 14px var(--rr-sans) !important; text-decoration: underline !important; cursor: pointer !important; }
+@media (max-width: 480px) { html.ml-reading #app .rr-resume-b { width: 100% !important; } html.ml-reading #app .rr-resume .btn.start { flex: 1 !important; } }
