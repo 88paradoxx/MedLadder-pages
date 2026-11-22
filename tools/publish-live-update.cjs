@@ -37,6 +37,14 @@ const R2_PREFIX = 'app-updates/android';
 const PUBLIC_BASE = 'https://pub-5e62ac2b4d1c43fcb7fb6b025a52e189.r2.dev';
 const MANIFEST_KEY = `${R2_PREFIX}/latest.json`;
 
+// Oldest installed app (versionCode) that may receive web bundles. A bundle goes to
+// every app from this build up to the current one, so people on an older APK keep
+// getting web updates. Raise it when the web code starts needing a native plugin or
+// android/ change that older builds do not have. Override: LIVE_UPDATE_MIN_NATIVE=24.
+// 21 = 1.9.10, the last build before Play Billing (1.10.x); the web code handles the
+// billing plugin being absent, so 21–24 share the same bundles.
+const LOWEST_COMPATIBLE_NATIVE = 21;
+
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const notesIdx = args.indexOf('--notes');
@@ -122,7 +130,8 @@ async function main() {
     throw new Error(`Version ${version} is already live. Pass a different version.`);
   }
 
-  console.log(`Native app: ${native.name} (versionCode ${native.code})`);
+  const minNative = Math.min(native.code, parseInt(process.env.LIVE_UPDATE_MIN_NATIVE, 10) || LOWEST_COMPATIBLE_NATIVE);
+  console.log(`Native app: ${native.name} (versionCode ${native.code}); bundle goes to versionCode ${minNative}–${native.code}`);
   console.log(`Live now:   ${current ? current.version : '(none)'}`);
   console.log(`Publishing: ${version}${dryRun ? ' [dry run]' : ''}\n`);
 
@@ -147,7 +156,7 @@ async function main() {
     version,
     url: `${PUBLIC_BASE}/${bundleKey}`,
     checksum,
-    minNativeVersionCode: native.code,
+    minNativeVersionCode: minNative,
     maxNativeVersionCode: native.code,
     nativeVersionName: native.name,
     notes,
@@ -167,7 +176,7 @@ async function main() {
   await upload(MANIFEST_KEY, manifestPath, 'application/json', 'no-cache, max-age=0');
 
   console.log(`\nLive update ${version} published.`);
-  console.log('Users on versionCode ' + native.code + ' get it in the background and see it after reopening the app.');
+  console.log('Apps on versionCode ' + minNative + '–' + native.code + ' get it in the background and see it after reopening the app.');
 }
 
 main().catch((err) => {
