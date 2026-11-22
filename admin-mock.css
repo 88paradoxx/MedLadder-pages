@@ -365,3 +365,18 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .ce-actions { gap: 10px; align-items: center; margin: 18px 0 40px; flex-wrap: wrap; }
 #ceAddStep { margin-bottom: 8px; }
 @media (max-width: 760px) { #caseEditView .am-form { grid-template-columns: 1fr; } }
+
+/* ---- Clinical cases: paste as text */
+.cs-paste textarea { width: 100%; box-sizing: border-box; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); resize: vertical; }
+.cs-paste-acts { gap: 10px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+.cs-fmt { white-space: pre-wrap; font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--panel-2); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; max-height: 320px; overflow: auto; user-select: all; }
+.am-linkbtn { background: none; border: 0; padding: 0; color: var(--accent-2); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.cs-issues { margin: 6px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.5; }
+.cs-issues.bad { color: var(--red); }
+.cs-issues.warn { color: #b45309; }
+.cs-ok b { color: #16a34a; }
+.cs-prev { border: 1px solid var(--border); border-left-width: 4px; border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
+.cs-prev.ok { border-left-color: #16a34a; }
+.cs-prev.bad { border-left-color: var(--red); }
+.cs-prev-h { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.cs-prev-h small { color: var(--muted); flex: 1; }

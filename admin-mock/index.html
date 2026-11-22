@@ -13,6 +13,7 @@
   <!-- Subject/topic picker data (same file the main site uses). Must load
        before admin-mock.js so window.SYLLABUS_DATA is ready at init. -->
   <script src="/syllabus.js" defer></script>
+  <script src="/admin-cases-parse.js" defer></script>
   <script src="/admin-mock.js" defer></script>
   <script src="/gtag-init.js" defer></script>
 </head>
@@ -139,7 +140,22 @@
       <!-- Clinical cases: list -->
       <section id="casesView" class="am-view" hidden>
         <div class="am-row"><button id="casesBackBtn" class="am-btn">&larr; Admin home</button><h1>Clinical cases</h1>
+          <button id="caseBulkBtn" class="am-btn">Paste cases (bulk)</button>
           <button id="caseNewBtn" class="am-btn am-btn-primary">+ New case</button></div>
+        <div id="csBulk" class="am-card cs-paste" hidden>
+          <h3 style="margin-top:0">Paste one or more cases</h3>
+          <p class="am-hint">Paste plain text (typed, from Word, or from ChatGPT). Separate cases with a line of <code>---</code>.
+            Every case is saved as a <b>draft</b>; check it in the editor, add images, then publish.
+            <button type="button" class="am-linkbtn" data-fmt="csBulkEx">Show the format</button></p>
+          <pre class="cs-fmt" id="csBulkEx" hidden></pre>
+          <textarea id="csBulkText" rows="14" spellcheck="false" placeholder="Title: …&#10;Region: …&#10;Level: Core&#10;&#10;Case:&#10;…&#10;&#10;Step 1&#10;Q: …&#10;A. …&#10;B. …&#10;Answer: B&#10;Explanation: …&#10;Key point: …&#10;&#10;---&#10;&#10;Title: (next case)"></textarea>
+          <div class="am-row cs-paste-acts">
+            <button id="csBulkCheck" class="am-btn am-btn-primary" type="button">Check</button>
+            <button id="csBulkSave" class="am-btn" type="button" hidden>Save as drafts</button>
+            <span id="csBulkMsg" class="am-hint"></span>
+          </div>
+          <div id="csBulkRes"></div>
+        </div>
         <p class="am-hint">Drafts are visible only to admins in the app (Home → Clinical cases), with a Draft badge, so you can play them before publishing.
           Students see a case only after it is published. Free cases are open to everyone; the rest need Pro.</p>
         <div class="am-row cs-adm-filters">
@@ -152,7 +168,19 @@
 
       <!-- Clinical cases: editor -->
       <section id="caseEditView" class="am-view" hidden>
-        <div class="am-row"><button id="ceBackBtn" class="am-btn">&larr; All cases</button><h1 id="ceTitle">New case</h1></div>
+        <div class="am-row"><button id="ceBackBtn" class="am-btn">&larr; All cases</button><h1 id="ceTitle">New case</h1>
+          <button id="cePasteBtn" class="am-btn" type="button">Paste whole case</button></div>
+        <div id="cePaste" class="am-card cs-paste" hidden>
+          <p class="am-hint" style="margin-top:0">Paste the whole case as text. It fills the form below; nothing is saved until you press Save.
+            <button type="button" class="am-linkbtn" data-fmt="ceEx">Show the format</button></p>
+          <pre class="cs-fmt" id="ceEx" hidden></pre>
+          <textarea id="cePasteText" rows="12" spellcheck="false" placeholder="Title: …&#10;Region: …&#10;Level: Core&#10;&#10;Case:&#10;…&#10;&#10;Step 1&#10;Q: …&#10;A. …&#10;B. …&#10;Answer: B&#10;Explanation: …&#10;Key point: …"></textarea>
+          <div class="am-row cs-paste-acts">
+            <button id="cePasteGo" class="am-btn am-btn-primary" type="button">Fill the form</button>
+            <button id="cePasteClose" class="am-btn" type="button">Close</button>
+          </div>
+          <div id="cePasteRes"></div>
+        </div>
         <div class="am-card">
           <div class="am-form">
             <label>Region <select id="ceRegion"></select></label>
