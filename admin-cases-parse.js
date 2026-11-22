@@ -333,10 +333,24 @@
     };
   }
 
-  // Split on lines that are only --- (3 or more dashes, or ===).
+  // Split on lines that are only --- (3 or more dashes, or ===), and also start
+  // a new case at every further "Title:" line, so --- is optional.
   function parse(text, regions) {
     var parts = String(text || '').replace(/\r\n?/g, '\n').split(/\n[ \t]*(?:-{3,}|={3,})[ \t]*\n/);
-    return parts.filter(function (p) { return p.trim(); }).map(function (p, i) { return parseOne(p, regions, i + 1); });
+    var out = [];
+    parts.forEach(function (p) {
+      var chunk = [], seenTitle = false;
+      p.split('\n').forEach(function (line) {
+        var lb = labelOf(line);
+        if (lb && lb.key === 'title') {
+          if (seenTitle) { out.push(chunk.join('\n')); chunk = []; }
+          seenTitle = true;
+        }
+        chunk.push(line);
+      });
+      out.push(chunk.join('\n'));
+    });
+    return out.filter(function (p) { return p.trim(); }).map(function (p, i) { return parseOne(p, regions, i + 1); });
   }
 
   var EXAMPLE = [
