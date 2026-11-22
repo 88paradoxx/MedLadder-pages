@@ -1787,7 +1787,7 @@
   function csRegionName(id) { var r = cs.regions.filter(function (x) { return x.id === id; })[0]; return r ? r.icon + ' ' + r.name : id; }
   function csLoadRegions() {
     if (cs.regions.length) return Promise.resolve(cs.regions);
-    return sb.rpc('cases_catalog').then(function (r) {
+    return sb.rpc('cases_overview').then(function (r) {
       cs.regions = (r.data && r.data.regions) || [];
       var opts = cs.regions.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.icon + ' ' + x.name) + '</option>'; }).join('');
       $('csfRegion').innerHTML = '<option value="">All regions</option>' + opts;
@@ -1802,7 +1802,9 @@
       loadCases();
     };
     $('caseNewBtn').onclick = function () { openCaseEditor(null); };
-    ['csfRegion', 'csfStatus', 'csfLevel'].forEach(function (id) { $(id).onchange = csRenderList; });
+    ['csfStatus', 'csfLevel', 'csfTopic'].forEach(function (id) { $(id).onchange = csRenderList; });
+    $('csfRegion').onchange = function () { csFillTopicFilter(); csRenderList(); };
+    $('ceRegion').onchange = csFillTopicList;
     $('ceAddStep').onclick = function () { var st = csReadSteps(); st.push(csBlankStep()); csRenderSteps(st); csFocusStep(st.length - 1); };
     $('ceSave').onclick = function () { csSave(false); };
     $('ceSavePub').onclick = function () { csSave(true); };
@@ -1842,25 +1844,46 @@
     csLoadRegions().then(function () { return sb.rpc('admin_cases_list'); }).then(function (r) {
       if (r.error) { $('csList').innerHTML = '<p class="am-hint">' + esc(csErr(r.error)) + '</p>'; return; }
       cs.rows = r.data || [];
+      csFillTopicFilter();
       csRenderList();
     }).catch(function (e) { $('csList').innerHTML = '<p class="am-hint">' + esc(csErr(e)) + '</p>'; });
   }
   function csRenderList() {
-    var fr = $('csfRegion').value, fs = $('csfStatus').value, fl = $('csfLevel').value;
+    var fr = $('csfRegion').value, fs = $('csfStatus').value, fl = $('csfLevel').value, ft = $('csfTopic').value;
     var rows = cs.rows.filter(function (c) {
-      return (!fr || c.region_id === fr) && (!fl || c.level === fl) && (!fs || (fs === 'live') === !!c.published);
+      return (!fr || c.region_id === fr) && (!fl || c.level === fl) && (!fs || (fs === 'live') === !!c.published) &&
+        (!ft || (ft === '-' ? !c.topic : c.topic === ft));
     });
     if (!cs.rows.length) { $('csList').innerHTML = '<p class="am-hint">No cases yet. Use “+ New case” to write the first one.</p>'; return; }
     if (!rows.length) { $('csList').innerHTML = '<p class="am-hint">No cases match these filters.</p>'; return; }
     $('csList').innerHTML = rows.map(function (c) {
       return '<div class="am-card cs-row"><div class="cs-row-main"><b>' + esc(c.title) + '</b>' +
-        '<small>' + esc(csRegionName(c.region_id)) + ' · ' + (c.level === 'advanced' ? 'Advanced' : 'Core') + ' · ' + c.steps + ' step' + (c.steps === 1 ? '' : 's') +
+        '<small>' + esc(csRegionName(c.region_id)) + ' · ' + (c.topic ? esc(c.topic) : '<i>no topic</i>') + ' · ' + (c.level === 'advanced' ? 'Advanced' : 'Core') + ' · ' + c.steps + ' step' + (c.steps === 1 ? '' : 's') +
         (c.has_images ? ' · has images' : '') + (c.is_free ? ' · Free' : ' · Pro') + (c.attempts ? ' · ' + c.attempts + ' student' + (c.attempts === 1 ? '' : 's') + ' played' : '') + '</small>' +
         (c.summary ? '<small class="cs-row-sum">' + esc(c.summary) + '</small>' : '') + '</div>' +
         '<span class="bk-state ' + (c.published ? 'on">Live' : 'off">Draft') + '</span>' +
         '<div class="bk-acts"><button class="am-btn" data-cs="edit" data-id="' + c.id + '">Edit</button>' +
         '<button class="am-btn" data-cs="toggle" data-id="' + c.id + '">' + (c.published ? 'Unpublish' : 'Publish') + '</button></div></div>';
     }).join('');
+  }
+  // Topic suggestions: the region's standard topics, then any others already used there.
+  function csTopicsFor(regionId) {
+    var r = cs.regions.filter(function (x) { return x.id === regionId; })[0];
+    var list = (r && r.topics ? r.topics.slice() : []);
+    cs.rows.forEach(function (c) { if (c.region_id === regionId && c.topic && list.indexOf(c.topic) === -1) list.push(c.topic); });
+    return list;
+  }
+  function csFillTopicList() {
+    $('ceTopicList').innerHTML = csTopicsFor($('ceRegion').value).map(function (t) { return '<option value="' + esc(t) + '">'; }).join('');
+  }
+  function csFillTopicFilter() {
+    var fr = $('csfRegion').value, cur = $('csfTopic').value;
+    var list = fr ? csTopicsFor(fr).filter(function (t) { return cs.rows.some(function (c) { return c.region_id === fr && c.topic === t; }); }) : [];
+    var noTopic = cs.rows.some(function (c) { return (!fr || c.region_id === fr) && !c.topic; });
+    $('csfTopic').innerHTML = '<option value="">All topics</option>' + list.map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('') +
+      (noTopic ? '<option value="-">No topic yet</option>' : '');
+    $('csfTopic').value = Array.prototype.some.call($('csfTopic').options, function (o) { return o.value === cur; }) ? cur : '';
+    $('csfTopic').disabled = !fr && !noTopic;
   }
   function csBlankStep() { return { reveal: '', stem: '', options: CS_KEYS.slice(0, 4).map(function (k) { return { key: k, text: '' }; }), correct_key: 'A', explanation: '', learning_point: '' }; }
   function csStepHtml(s, i, n) {
@@ -1914,6 +1937,7 @@
     return {
       id: cs.editing ? cs.editing.id : null,
       region_id: $('ceRegion').value, level: $('ceLevel').value,
+      topic: $('ceTopic').value.trim(), keywords: $('ceKeywords').value.trim(),
       title: $('ceCaseTitle').value.trim(), summary: $('ceSummary').value.trim(),
       exam_tags: $('ceTags').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean),
       vignette: $('ceVignette').value.trim(), est_minutes: parseInt($('ceMinutes').value, 10) || 8,
@@ -1938,6 +1962,9 @@
       $('ceTitle').textContent = c ? 'Edit: ' + c.title : 'New case';
       $('ceRegion').value = c ? c.region_id : ($('csfRegion').value || (cs.regions[0] && cs.regions[0].id) || '');
       $('ceLevel').value = c ? c.level : ($('csfLevel').value || 'core');
+      csFillTopicList();
+      $('ceTopic').value = c ? (c.topic || '') : ($('csfTopic').value && $('csfTopic').value !== '-' ? $('csfTopic').value : '');
+      $('ceKeywords').value = c ? (c.keywords || '') : '';
       $('ceCaseTitle').value = c ? c.title : ''; $('ceSummary').value = c ? c.summary : '';
       $('ceTags').value = c ? (c.exam_tags || []).join(', ') : '';
       $('ceMinutes').value = c ? c.est_minutes : 8; $('ceSort').value = c ? c.sort : 0;
@@ -2022,6 +2049,9 @@
       if (d.region_id) $('ceRegion').value = d.region_id;
       $('ceLevel').value = d.level;
       $('ceCaseTitle').value = d.title; $('ceSummary').value = d.summary;
+      csFillTopicList();
+      if (d.topic) $('ceTopic').value = d.topic;
+      if (d.keywords) $('ceKeywords').value = d.keywords;
       $('ceTags').value = d.exam_tags.join(', ');
       $('ceMinutes').value = d.est_minutes; $('ceFree').checked = d.is_free;
       $('ceVignette').value = d.vignette;
@@ -2046,7 +2076,7 @@
       $('csBulkRes').innerHTML = bulk.map(function (r) {
         var d = r.data;
         return '<div class="cs-prev ' + (r.errors.length ? 'bad' : 'ok') + '"><div class="cs-prev-h"><b>' + r.index + '. ' + esc(d.title || '(no title)') + '</b>' +
-          '<small>' + esc(d.region_id ? csRegionName(d.region_id) : 'no region') + ' · ' + (d.level === 'advanced' ? 'Advanced' : 'Core') + ' · ' +
+          '<small>' + esc(d.region_id ? csRegionName(d.region_id) : 'no region') + (d.topic ? ' · ' + esc(d.topic) : '') + ' · ' + (d.level === 'advanced' ? 'Advanced' : 'Core') + ' · ' +
           d.steps.length + ' step' + (d.steps.length === 1 ? '' : 's') + (d.is_free ? ' · Free' : '') + '</small>' +
           '<span class="bk-state ' + (r.errors.length ? 'off">Fix first' : 'on">Ready') + '</span></div>' + csIssuesHtml(r) + '</div>';
       }).join('');

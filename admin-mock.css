@@ -380,3 +380,4 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .cs-prev.bad { border-left-color: var(--red); }
 .cs-prev-h { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
 .cs-prev-h small { color: var(--muted); flex: 1; }
+.ce-kw input { font-style: italic; }
