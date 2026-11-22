@@ -2036,10 +2036,11 @@
     // bulk
     var bulk = [];
     $('caseBulkBtn').onclick = function () { $('csBulk').hidden = !$('csBulk').hidden; if (!$('csBulk').hidden) $('csBulkText').focus(); };
-    $('csBulkText').oninput = function () { $('csBulkSave').hidden = true; $('csBulkMsg').textContent = ''; };
+    function bulkBtns(show) { $('csBulkSave').hidden = $('csBulkPub').hidden = !show; }
+    $('csBulkText').oninput = function () { bulkBtns(false); $('csBulkMsg').textContent = ''; };
     $('csBulkCheck').onclick = function () {
       bulk = csParse($('csBulkText').value);
-      $('csBulkSave').hidden = true;
+      bulkBtns(false);
       if (!bulk.length) { $('csBulkRes').innerHTML = ''; $('csBulkMsg').textContent = 'Paste at least one case.'; return; }
       var ok = bulk.filter(function (r) { return !r.errors.length; }).length;
       $('csBulkRes').innerHTML = bulk.map(function (r) {
@@ -2050,28 +2051,39 @@
           '<span class="bk-state ' + (r.errors.length ? 'off">Fix first' : 'on">Ready') + '</span></div>' + csIssuesHtml(r) + '</div>';
       }).join('');
       $('csBulkMsg').textContent = ok + ' of ' + bulk.length + ' ready.' + (ok < bulk.length ? ' Fix the others in the text and press Check again, or save the ready ones now.' : '');
-      if (ok) { $('csBulkSave').hidden = false; $('csBulkSave').textContent = 'Save ' + ok + ' as draft' + (ok === 1 ? '' : 's'); }
+      if (ok) {
+        bulkBtns(true);
+        $('csBulkPub').textContent = 'Publish ' + ok + ' now';
+        $('csBulkSave').textContent = 'Save ' + ok + ' as draft' + (ok === 1 ? '' : 's');
+      }
     };
-    $('csBulkSave').onclick = function () {
+    // publish = true: students see the cases straight away; false: drafts to review first.
+    function bulkSave(publish) {
       var todo = bulk.filter(function (r) { return !r.errors.length; });
       if (!todo.length || cs.busy) return;
-      cs.busy = true; $('csBulkSave').disabled = $('csBulkCheck').disabled = true;
+      if (publish && !window.confirm('Publish ' + todo.length + ' case' + (todo.length === 1 ? '' : 's') + ' now? Students will see ' + (todo.length === 1 ? 'it' : 'them') + ' straight away.')) return;
+      cs.busy = true; $('csBulkSave').disabled = $('csBulkPub').disabled = $('csBulkCheck').disabled = true;
       var done = 0, failed = [];
       todo.reduce(function (p, r) {
         return p.then(function () {
-          $('csBulkMsg').textContent = 'Saving ' + (done + failed.length + 1) + ' of ' + todo.length + '…';
-          return sb.rpc('admin_case_save', { p: r.data }).then(function (res) {
+          $('csBulkMsg').textContent = (publish ? 'Publishing ' : 'Saving ') + (done + failed.length + 1) + ' of ' + todo.length + '…';
+          var data = Object.assign({}, r.data, { published: !!publish });
+          return sb.rpc('admin_case_save', { p: data }).then(function (res) {
             if (res.error) failed.push(r.index + '. ' + (r.data.title || '') + ': ' + csErr(res.error)); else done++;
           });
         });
       }, Promise.resolve()).then(function () {
-        cs.busy = false; $('csBulkSave').disabled = $('csBulkCheck').disabled = false;
-        $('csBulkSave').hidden = true;
-        $('csBulkMsg').textContent = done + ' case' + (done === 1 ? '' : 's') + ' saved as draft' + (done === 1 ? '' : 's') + '.' + (failed.length ? ' Not saved: ' + failed.join('; ') : ' Open each one to check it and add images, then publish.');
+        cs.busy = false; $('csBulkSave').disabled = $('csBulkPub').disabled = $('csBulkCheck').disabled = false;
+        bulkBtns(false);
+        var what = publish ? 'published' : 'saved as draft' + (done === 1 ? '' : 's');
+        $('csBulkMsg').textContent = done + ' case' + (done === 1 ? '' : 's') + ' ' + what + '.' +
+          (failed.length ? ' Not saved: ' + failed.join('; ') : (publish ? ' Students can see ' + (done === 1 ? 'it' : 'them') + ' now.' : ' Open each one to check it and add images, then publish.'));
         if (!failed.length) { $('csBulkText').value = ''; $('csBulkRes').innerHTML = ''; }
-        if (done) { toast(done + ' draft' + (done === 1 ? '' : 's') + ' added.'); csReloadList(); }
+        if (done) { toast(done + ' case' + (done === 1 ? '' : 's') + ' ' + what + '.'); csReloadList(); }
       });
-    };
+    }
+    $('csBulkPub').onclick = function () { bulkSave(true); };
+    $('csBulkSave').onclick = function () { bulkSave(false); };
   }
   function csReloadList() {
     sb.rpc('admin_cases_list').then(function (r) { if (!r.error) { cs.rows = r.data || []; csRenderList(); } });
