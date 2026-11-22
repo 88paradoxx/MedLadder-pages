@@ -1777,7 +1777,10 @@
     var map = {
       BAD_REGION: 'Pick a region.', BAD_LEVEL: 'Pick Core or Advanced.', BAD_TITLE: 'Give the case a title.',
       BAD_VIGNETTE: 'Write the case presentation.', NO_STEPS: 'Add at least one step.', TOO_MANY_STEPS: 'A case can have at most 15 steps.',
-      CASE_NOT_FOUND: 'This case no longer exists.'
+      CASE_NOT_FOUND: 'This case no longer exists.',
+      TOPIC_REQUIRED: 'Choose a topic for this case (or add a new one).',
+      TOPIC_NOT_IN_LIST: 'That topic is not in this region’s list. Choose one from the list or add it as a new topic.',
+      BAD_TOPIC: 'A topic name needs 2 to 80 characters.'
     };
     for (var k in map) if (m.indexOf(k) !== -1) return map[k];
     var st = /(BAD_STEM|BAD_OPTIONS|BAD_ANSWER) (\d+)/.exec(m);
@@ -1804,14 +1807,23 @@
     $('caseNewBtn').onclick = function () { openCaseEditor(null); };
     ['csfStatus', 'csfLevel', 'csfTopic'].forEach(function (id) { $(id).onchange = csRenderList; });
     $('csfRegion').onchange = function () { csFillTopicFilter(); csRenderList(); };
-    $('ceRegion').onchange = csFillTopicList;
-    $('ceTopic').addEventListener('input', csTopicHint);
-    $('ceTopic').addEventListener('change', function () {
-      // Use the list's spelling when only the case differs ("hypertension" -> "Hypertension").
-      var v = $('ceTopic').value.trim(), same = csTopicsFor($('ceRegion').value).filter(function (t) { return t.toLowerCase() === v.toLowerCase(); })[0];
-      if (same && same !== v) $('ceTopic').value = same;
+    $('ceRegion').onchange = function () { csFillTopicList(csTopicValue()); };
+    $('ceTopic').onchange = function () {
+      if ($('ceTopic').value === '__new') { $('ceTopic').value = cs.lastTopic || ''; csShowNewTopic(''); }
+      else { cs.lastTopic = $('ceTopic').value; $('ceNewTopic').hidden = true; }
       csTopicHint();
-    });
+    };
+    $('ceNewTopicCancel').onclick = function () { $('ceNewTopic').hidden = true; };
+    $('ceNewTopicIn').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); $('ceNewTopicAdd').click(); } };
+    $('ceNewTopicAdd').onclick = function () {
+      var name = $('ceNewTopicIn').value.trim(), btn = $('ceNewTopicAdd');
+      if (name.length < 2) { $('ceNewTopicMsg').textContent = 'Type the topic name.'; return; }
+      btn.disabled = true; $('ceNewTopicMsg').textContent = 'Adding…';
+      csAddTopic($('ceRegion').value, name).then(function (t) {
+        csFillTopicList(t); $('ceNewTopic').hidden = true; $('ceNewTopicIn').value = ''; $('ceNewTopicMsg').textContent = '';
+        toast('Topic “' + t + '” added to ' + csRegionName($('ceRegion').value).replace(/^\S+\s/, '') + '.');
+      }).catch(function (e) { $('ceNewTopicMsg').textContent = csErr(e); }).then(function () { btn.disabled = false; });
+    };
     $('ceAddStep').onclick = function () { var st = csReadSteps(); st.push(csBlankStep()); csRenderSteps(st); csFocusStep(st.length - 1); };
     $('ceSave').onclick = function () { csSave(false); };
     $('ceSavePub').onclick = function () { csSave(true); };
@@ -1874,23 +1886,44 @@
     }).join('');
   }
   // Topic suggestions: the region's standard topics, then any others already used there.
+  // A region's topics: its fixed list (13+ broad topics and Miscellaneous), plus any
+  // added from here. Only these are accepted when a case is saved.
   function csTopicsFor(regionId) {
     var r = cs.regions.filter(function (x) { return x.id === regionId; })[0];
-    var list = (r && r.topics ? r.topics.slice() : []);
-    cs.rows.forEach(function (c) { if (c.region_id === regionId && c.topic && list.indexOf(c.topic) === -1) list.push(c.topic); });
-    return list;
+    return r && r.topics ? r.topics.slice() : [];
   }
-  function csFillTopicList() {
-    $('ceTopicList').innerHTML = csTopicsFor($('ceRegion').value).map(function (t) { return '<option value="' + esc(t) + '">'; }).join('');
+  function csTopicIn(regionId, name) {
+    var v = String(name || '').trim().toLowerCase();
+    return csTopicsFor(regionId).filter(function (t) { return t.toLowerCase() === v; })[0] || '';
+  }
+  function csTopicValue() { var v = $('ceTopic').value; return v === '__new' ? '' : v; }
+  function csFillTopicList(want) {
+    var region = $('ceRegion').value, list = csTopicsFor(region), pick = csTopicIn(region, want);
+    $('ceTopic').innerHTML = '<option value="">— Choose a topic —</option>' +
+      list.map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + '</option>'; }).join('') +
+      '<option value="__new">＋ Add a new topic…</option>';
+    $('ceTopic').value = pick;
+    cs.lastTopic = pick;
     csTopicHint();
   }
-  // Under the Topic box: say whether the typed topic is new for this region, or empty.
+  function csShowNewTopic(name) {
+    $('ceNewTopic').hidden = false; $('ceNewTopicIn').value = name || ''; $('ceNewTopicMsg').textContent = '';
+    $('ceNewTopicIn').focus();
+  }
+  // Add a topic to a region's list (server), keep cs.regions in step; resolves to the listed name.
+  function csAddTopic(regionId, name) {
+    return sb.rpc('admin_region_add_topic', { p_region: regionId, p_topic: name }).then(function (r) {
+      if (r.error) throw r.error;
+      var reg = cs.regions.filter(function (x) { return x.id === regionId; })[0];
+      if (reg) reg.topics = r.data || reg.topics;
+      return csTopicIn(regionId, name) || name.trim();
+    });
+  }
   function csTopicHint() {
     var h = $('ceTopicHint'); if (!h) return;
-    var v = $('ceTopic').value.trim(), list = csTopicsFor($('ceRegion').value);
-    var same = list.filter(function (t) { return t.toLowerCase() === v.toLowerCase(); })[0];
-    h.className = 'am-hint ce-topic-hint' + (v && !same ? ' new' : '');
-    h.textContent = !v ? 'No topic: it will show under “Other”.' : same ? '' : 'New topic for this region: it will be added to the topic list. Check the spelling if you meant an existing one.';
+    var v = csTopicValue();
+    h.className = 'am-hint ce-topic-hint' + (v ? '' : ' new');
+    h.textContent = v ? '' : 'Choose a topic from the list, or “＋ Add a new topic…”.';
   }
   function csFillTopicFilter() {
     var fr = $('csfRegion').value, cur = $('csfTopic').value;
@@ -1953,7 +1986,7 @@
     return {
       id: cs.editing ? cs.editing.id : null,
       region_id: $('ceRegion').value, level: $('ceLevel').value,
-      topic: $('ceTopic').value.trim(), keywords: $('ceKeywords').value.trim(),
+      topic: csTopicValue(), keywords: $('ceKeywords').value.trim(),
       title: $('ceCaseTitle').value.trim(), summary: $('ceSummary').value.trim(),
       exam_tags: $('ceTags').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean),
       vignette: $('ceVignette').value.trim(), est_minutes: parseInt($('ceMinutes').value, 10) || 8,
@@ -1978,10 +2011,9 @@
       $('ceTitle').textContent = c ? 'Edit: ' + c.title : 'New case';
       $('ceRegion').value = c ? c.region_id : ($('csfRegion').value || (cs.regions[0] && cs.regions[0].id) || '');
       $('ceLevel').value = c ? c.level : ($('csfLevel').value || 'core');
-      csFillTopicList();
-      $('ceTopic').value = c ? (c.topic || '') : ($('csfTopic').value && $('csfTopic').value !== '-' ? $('csfTopic').value : '');
+      $('ceNewTopic').hidden = true;
+      csFillTopicList(c ? c.topic : ($('csfTopic').value && $('csfTopic').value !== '-' ? $('csfTopic').value : ''));
       $('ceKeywords').value = c ? (c.keywords || '') : '';
-      csTopicHint();
       $('ceCaseTitle').value = c ? c.title : ''; $('ceSummary').value = c ? c.summary : '';
       $('ceTags').value = c ? (c.exam_tags || []).join(', ') : '';
       $('ceMinutes').value = c ? c.est_minutes : 8; $('ceSort').value = c ? c.sort : 0;
@@ -2000,6 +2032,7 @@
     var p = csCollect(publish);
     // Quick checks here; the server checks everything again.
     if (!p.title) { $('ceMsg').textContent = 'Give the case a title.'; return; }
+    if (!p.topic) { $('ceMsg').textContent = 'Choose a topic for this case (or add a new one).'; $('ceTopic').focus(); return; }
     if (p.vignette.replace(/<[^>]+>/g, '').trim().length < 10 && !/<img/i.test(p.vignette)) { $('ceMsg').textContent = 'Write the case presentation.'; return; }
     for (var i = 0; i < p.steps.length; i++) {
       var s = p.steps[i];
@@ -2076,10 +2109,9 @@
       if (d.region_id) $('ceRegion').value = d.region_id;
       $('ceLevel').value = d.level;
       $('ceCaseTitle').value = d.title; $('ceSummary').value = d.summary;
-      csFillTopicList();
-      if (d.topic) $('ceTopic').value = d.topic;
+      csFillTopicList(d.topic);
+      $('ceNewTopic').hidden = true;
       if (d.keywords) $('ceKeywords').value = d.keywords;
-      csTopicHint();
       $('ceTags').value = d.exam_tags.join(', ');
       $('ceMinutes').value = d.est_minutes; $('ceFree').checked = d.is_free;
       $('ceVignette').value = d.vignette;
@@ -2089,35 +2121,54 @@
         ? '<p class="am-hint"><b>Filled in, with ' + r.errors.length + ' thing' + (r.errors.length === 1 ? '' : 's') + ' to fix before saving:</b></p>'
         : '<p class="am-hint cs-ok"><b>Filled in.</b> Check it below, add any images with ＋ Image, then Save.</p>';
       var more = all.length > 1 ? '<p class="am-hint">Only the first of ' + all.length + ' cases was used. To add several at once, use “Paste cases (bulk)” on the cases list.</p>' : '';
-      $('cePasteRes').innerHTML = head + csIssuesHtml(r) + more;
+      $('cePasteRes').innerHTML = head + csIssuesHtml(r) + csTopicAsk(r, -1) + more;
+      csWireTopicAsk($('cePasteRes'), function (i, t) {
+        csFillTopicList(t);
+        var box = $('cePasteRes').querySelector('.cs-topicask'); if (box) box.remove();
+      });
     };
     // bulk
     var bulk = [];
+    cs._bulkRegion = function (i) { return bulk[i] && bulk[i].data.region_id; };
     $('caseBulkBtn').onclick = function () { $('csBulk').hidden = !$('csBulk').hidden; if (!$('csBulk').hidden) $('csBulkText').focus(); };
     function bulkBtns(show) { $('csBulkSave').hidden = $('csBulkPub').hidden = !show; }
     $('csBulkText').oninput = function () { bulkBtns(false); $('csBulkMsg').textContent = ''; };
+    function ready(r) { return !r.errors.length && !r.topicIssue; }
+    function bulkRender() {
+      var ok = bulk.filter(ready).length;
+      $('csBulkRes').innerHTML = bulk.map(function (r, i) {
+        var d = r.data, good = ready(r);
+        return '<div class="cs-prev ' + (good ? 'ok' : 'bad') + '"><div class="cs-prev-h"><b>' + r.index + '. ' + esc(d.title || '(no title)') + '</b>' +
+          '<small>' + esc(d.region_id ? csRegionName(d.region_id) : 'no region') + (d.topic && !r.topicIssue ? ' · ' + esc(d.topic) : '') + ' · ' + (d.level === 'advanced' ? 'Advanced' : 'Core') + ' · ' +
+          d.steps.length + ' step' + (d.steps.length === 1 ? '' : 's') + (d.is_free ? ' · Free' : '') + '</small>' +
+          '<span class="bk-state ' + (good ? 'on">Ready' : 'off">Fix first') + '</span></div>' + csIssuesHtml(r) + (r.topicIssue ? csTopicAsk(r, i) : '') + '</div>';
+      }).join('');
+      csWireTopicAsk($('csBulkRes'), function (i, t, added) {
+        // One answer fixes every case in the paste with the same region and topic.
+        var src = bulk[i], raw = String(src.data.topic || '').toLowerCase(), reg = src.data.region_id;
+        bulk.forEach(function (r) {
+          if (r.topicIssue && r.data.region_id === reg && (r === src || (raw && String(r.data.topic || '').toLowerCase() === raw))) { r.data.topic = t; r.topicIssue = null; }
+          else if (added && r.topicIssue === 'new' && r.data.region_id === reg && csTopicIn(reg, r.data.topic)) { r.data.topic = csTopicIn(reg, r.data.topic); r.topicIssue = null; }
+        });
+        bulkRender();
+      });
+      $('csBulkMsg').textContent = ok + ' of ' + bulk.length + ' ready.' + (ok < bulk.length ? ' Fix the others (topic choices are just above), or save the ready ones now.' : '');
+      bulkBtns(ok > 0);
+      if (ok) {
+        $('csBulkPub').textContent = 'Publish ' + ok + ' now';
+        $('csBulkSave').textContent = 'Save ' + ok + ' as draft' + (ok === 1 ? '' : 's');
+      }
+    }
     $('csBulkCheck').onclick = function () {
       bulk = csParse($('csBulkText').value);
       bulkBtns(false);
       if (!bulk.length) { $('csBulkRes').innerHTML = ''; $('csBulkMsg').textContent = 'Paste at least one case.'; return; }
-      var ok = bulk.filter(function (r) { return !r.errors.length; }).length;
-      $('csBulkRes').innerHTML = bulk.map(function (r) {
-        var d = r.data;
-        return '<div class="cs-prev ' + (r.errors.length ? 'bad' : 'ok') + '"><div class="cs-prev-h"><b>' + r.index + '. ' + esc(d.title || '(no title)') + '</b>' +
-          '<small>' + esc(d.region_id ? csRegionName(d.region_id) : 'no region') + (d.topic ? ' · ' + esc(d.topic) : '') + ' · ' + (d.level === 'advanced' ? 'Advanced' : 'Core') + ' · ' +
-          d.steps.length + ' step' + (d.steps.length === 1 ? '' : 's') + (d.is_free ? ' · Free' : '') + '</small>' +
-          '<span class="bk-state ' + (r.errors.length ? 'off">Fix first' : 'on">Ready') + '</span></div>' + csIssuesHtml(r) + '</div>';
-      }).join('');
-      $('csBulkMsg').textContent = ok + ' of ' + bulk.length + ' ready.' + (ok < bulk.length ? ' Fix the others in the text and press Check again, or save the ready ones now.' : '');
-      if (ok) {
-        bulkBtns(true);
-        $('csBulkPub').textContent = 'Publish ' + ok + ' now';
-        $('csBulkSave').textContent = 'Save ' + ok + ' as draft' + (ok === 1 ? '' : 's');
-      }
+      bulk.forEach(function (r) { r.topicIssue = r.data.region_id && r.topicStatus !== 'ok' ? r.topicStatus : null; });
+      bulkRender();
     };
     // publish = true: students see the cases straight away; false: drafts to review first.
     function bulkSave(publish) {
-      var todo = bulk.filter(function (r) { return !r.errors.length; });
+      var todo = bulk.filter(ready);
       if (!todo.length || cs.busy) return;
       if (publish && !window.confirm('Publish ' + todo.length + ' case' + (todo.length === 1 ? '' : 's') + ' now? Students will see ' + (todo.length === 1 ? 'it' : 'them') + ' straight away.')) return;
       cs.busy = true; $('csBulkSave').disabled = $('csBulkPub').disabled = $('csBulkCheck').disabled = true;
@@ -2142,6 +2193,32 @@
     }
     $('csBulkPub').onclick = function () { bulkSave(true); };
     $('csBulkSave').onclick = function () { bulkSave(false); };
+  }
+  // "Topic X is not in the list: add it, or choose one" (editor paste: i = -1; bulk: case index).
+  function csTopicAsk(r, i) {
+    var d = r.data, reg = d.region_id, status = r.topicIssue || (r.topicStatus !== 'ok' ? r.topicStatus : null);
+    if (!reg || !status) return '';
+    var name = csRegionName(reg).replace(/^\S+\s/, '');
+    var opts = '<option value="">Choose from the list…</option>' + csTopicsFor(reg).map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + '</option>'; }).join('');
+    return '<div class="cs-topicask" data-i="' + i + '">' +
+      (status === 'new'
+        ? '<p><b>Topic “' + esc(d.topic) + '” is not in ' + esc(name) + '’s list.</b> Add it as a new topic, or choose one from the list.</p>' +
+          '<div class="cs-topicask-b"><button class="am-btn am-btn-primary" type="button" data-ta="add" data-name="' + esc(d.topic) + '">Add “' + esc(d.topic) + '” to ' + esc(name) + '</button>'
+        : '<p><b>No topic given.</b> Choose one from ' + esc(name) + '’s list.</p><div class="cs-topicask-b">') +
+      '<select data-ta="pick">' + opts + '</select><span class="am-hint" data-ta="msg"></span></div></div>';
+  }
+  function csWireTopicAsk(root, done) {
+    Array.prototype.forEach.call(root.querySelectorAll('.cs-topicask'), function (box) {
+      var i = parseInt(box.getAttribute('data-i'), 10), msg = box.querySelector('[data-ta=msg]');
+      var reg = i >= 0 ? null : $('ceRegion').value;
+      var add = box.querySelector('[data-ta=add]'), pick = box.querySelector('[data-ta=pick]');
+      if (add) add.onclick = function () {
+        add.disabled = true; msg.textContent = 'Adding…';
+        csAddTopic(reg || cs._bulkRegion(i), add.getAttribute('data-name')).then(function (t) { done(i, t, true); toast('Topic “' + t + '” added.'); })
+          .catch(function (e) { add.disabled = false; msg.textContent = csErr(e); });
+      };
+      if (pick) pick.onchange = function () { if (pick.value) done(i, pick.value, false); };
+    });
   }
   function csReloadList() {
     sb.rpc('admin_cases_list').then(function (r) { if (!r.error) { cs.rows = r.data || []; csRenderList(); } });

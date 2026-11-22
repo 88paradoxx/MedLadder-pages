@@ -305,13 +305,13 @@
     if (!head.region) errors.push('Region is missing (e.g. "Region: Cardiovascular").');
     else if (!regionId) errors.push('Region “' + head.region + '” not recognised. Use one of: ' + (regions || []).map(function (r) { return r.name; }).join(', ') + '.');
     var level = matchLevel(head.level);
-    // Topic: a known one (spelling matched to the region's list), a new one (kept, with a
-    // warning so a typo does not quietly make a second topic), or none ("Other").
+    // Topic: "ok" when it is one of the region's listed topics (spelling taken from the
+    // list), "new" when it is not in the list, "missing" when no Topic line was given.
+    // The admin panel asks to add the new topic or choose one from the list.
     var topic = matchTopic(head.topic, regionId, regions);
     var reg = (regions || []).filter(function (x) { return x.id === regionId; })[0];
-    if (regionId && !topic) warnings.push('No topic given; the case will show under “Other” in ' + (reg ? reg.name : 'its region') + '.');
-    else if (topic && reg && reg.topics && reg.topics.length && reg.topics.indexOf(topic) === -1 && (reg.usedTopics || []).indexOf(topic) === -1)
-      warnings.push('“' + topic + '” is a new topic for ' + reg.name + '. It will be added; check the spelling if you meant an existing one.');
+    var known = reg ? (reg.topics || []).concat(reg.usedTopics || []) : [];
+    var topicStatus = !topic ? 'missing' : known.indexOf(topic) !== -1 ? 'ok' : 'new';
     if (!head.level) { level = 'core'; warnings.push('No level given; set to Core.'); }
     else if (!level) { level = 'core'; warnings.push('Level “' + head.level + '” not recognised; set to Core.'); }
     var title = plain([head.title || head.headingTitle || '']);
@@ -343,7 +343,7 @@
     var tags = String(head.tags || '').split(/[,;|/]/).map(function (t) { return t.replace(/\*\*|__/g, '').trim(); }).filter(Boolean);
     var minutes = parseInt(head.minutes, 10);
     return {
-      index: n,
+      index: n, topicStatus: topicStatus,
       data: {
         id: null, region_id: regionId || '', level: level, title: title,
         topic: topic, keywords: plain([head.keywords || '']),

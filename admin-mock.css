@@ -383,3 +383,10 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .ce-kw input { font-style: italic; }
 .ce-topic-hint { font-size: 12px; min-height: 1em; }
 .ce-topic-hint.new { color: #b45309; }
+#caseEditView select#ceTopic { width: 100%; }
+.ce-newtopic { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; border: 1px dashed var(--accent); border-radius: 10px; }
+.ce-newtopic input { flex: 1 1 240px; }
+.cs-topicask { margin-top: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid #b45309; background: rgba(217, 119, 6, .08); }
+.cs-topicask p { margin: 0 0 8px; font-size: 13.5px; }
+.cs-topicask-b { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cs-topicask select { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); max-width: 100%; }
