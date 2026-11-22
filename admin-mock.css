@@ -344,3 +344,24 @@ h1, h2, h3, .mt-test-title, .mt-hero h1, .mt-score, .mt-big-rank {
 .bk-state.on { color: #16a34a; background: rgba(22, 163, 74, .12); }
 .bk-state.off { color: #b45309; background: rgba(217, 119, 6, .12); }
 .bk-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---- Clinical cases (list + editor) */
+.ah-t-cases { --t1: #2563eb; --t2: #1e3a8a; }
+.cs-adm-filters { gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.cs-adm-filters label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.cs-adm-filters select { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); }
+.cs-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 10px; }
+.cs-row-main { flex: 1 1 300px; min-width: 0; }
+.cs-row-main b { display: block; }
+.cs-row-main small { display: block; color: var(--muted); margin-top: 2px; }
+.cs-row-sum { font-style: italic; }
+.ce-flags { display: flex; gap: 18px; align-items: end; flex-wrap: wrap; }
+.am-form .ce-check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); }
+.ce-check input { width: 18px; height: 18px; }
+.ce-step { border-left: 4px solid var(--accent); }
+.ce-step-head { align-items: center; gap: 8px; margin-bottom: 10px; }
+.ce-step-head .ce-sp { flex: 1; }
+.ce-step-head .am-btn { padding: 6px 10px; }
+.ce-actions { gap: 10px; align-items: center; margin: 18px 0 40px; flex-wrap: wrap; }
+#ceAddStep { margin-bottom: 8px; }
+@media (max-width: 760px) { #caseEditView .am-form { grid-template-columns: 1fr; } }

@@ -64,7 +64,7 @@
       'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
   function showView(id) {
-    ['gateView', 'homeView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView', 'editQView', 'proView', 'usageView', 'booksView'].forEach(function (v) {
+    ['gateView', 'homeView', 'testsView', 'editorView', 'bankView', 'flaggedView', 'qotdView', 'editQView', 'proView', 'usageView', 'booksView', 'casesView', 'caseEditView'].forEach(function (v) {
       $(v).hidden = v !== id;
     });
     window.scrollTo(0, 0);
@@ -913,6 +913,7 @@
     $('proBackBtn').onclick = loadHome;
     $('usageBackBtn').onclick = loadHome;
     wireBooks();
+    wireCases();
     $('proGrantBtn').onclick = function () { proCall('grant'); };
     $('proRevokeBtn').onclick = function () { proCall('revoke'); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-go]'), function (b) {
@@ -1574,6 +1575,11 @@
         var live = r.data.filter(function (b) { return b.published; }).length;
         setChip('books', r.data.length ? live + ' live' + (r.data.length > live ? ' · ' + (r.data.length - live) + ' hidden' : '') : 'None yet', r.data.length ? '' : 'warn');
       });
+      sb.rpc('admin_cases_list').then(function (r) {
+        if (r.error || !r.data) return;
+        var live = r.data.filter(function (x) { return x.published; }).length, dr = r.data.length - live;
+        setChip('cases', r.data.length ? live + ' live' + (dr ? ' · ' + dr + ' draft' + (dr === 1 ? '' : 's') : '') : 'None yet', dr ? 'warn' : '');
+      });
       setChip('qotd', (c.qotd_today ? 'Today set' : 'Today not set') + (c.qotd_days_ahead ? ' · +' + c.qotd_days_ahead : ''), c.qotd_today ? 'ok' : 'warn');
     });
   }
@@ -1587,6 +1593,7 @@
     else if (k === 'pro') { showView('proView'); $('proMsg').textContent = ''; }
     else if (k === 'usage') loadUsage();
     else if (k === 'books') loadBooks();
+    else if (k === 'cases') loadCases();
   }
   /* ---------- Books: upload a PDF/Word file to R2 and list it on /books ----------
    * The file goes to the Worker (/api/upload-book), which checks the admin
@@ -1754,6 +1761,226 @@
       // The NEET SS Pediatrics PDF is also linked from /neet-ss-books: keep that file.
       if (b.file_key && b.file_key !== 'books/neet-ss-pediatrics-book.pdf') bkDeleteFile(b.file_key);
       loadBooks();
+    });
+  }
+
+  /* ---------- Clinical cases: write, review and publish ----------
+   * A case = presentation (vignette) + ordered steps. Each step may reveal new
+   * findings, then asks one question with 2–5 options. Vignette, findings,
+   * question and explanation are rich fields, so images (ECG, X-ray, photos)
+   * upload to R2 exactly like bank questions. Saves go through admin_case_save,
+   * which replaces the case's steps in one transaction. */
+  var CS_KEYS = ['A', 'B', 'C', 'D', 'E'];
+  var cs = { rows: [], regions: [], editing: null, busy: false };
+  function csErr(e) {
+    var m = (e && e.message) || '';
+    var map = {
+      BAD_REGION: 'Pick a region.', BAD_LEVEL: 'Pick Core or Advanced.', BAD_TITLE: 'Give the case a title.',
+      BAD_VIGNETTE: 'Write the case presentation.', NO_STEPS: 'Add at least one step.', TOO_MANY_STEPS: 'A case can have at most 15 steps.',
+      CASE_NOT_FOUND: 'This case no longer exists.'
+    };
+    for (var k in map) if (m.indexOf(k) !== -1) return map[k];
+    var st = /(BAD_STEM|BAD_OPTIONS|BAD_ANSWER) (\d+)/.exec(m);
+    if (st) return 'Step ' + st[2] + ': ' + ({ BAD_STEM: 'write the question.', BAD_OPTIONS: 'fill in at least two options.', BAD_ANSWER: 'the correct answer must be one of the filled options.' })[st[1]];
+    return rpcErr(e);
+  }
+  function csRegionName(id) { var r = cs.regions.filter(function (x) { return x.id === id; })[0]; return r ? r.icon + ' ' + r.name : id; }
+  function csLoadRegions() {
+    if (cs.regions.length) return Promise.resolve(cs.regions);
+    return sb.rpc('cases_catalog').then(function (r) {
+      cs.regions = (r.data && r.data.regions) || [];
+      var opts = cs.regions.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.icon + ' ' + x.name) + '</option>'; }).join('');
+      $('csfRegion').innerHTML = '<option value="">All regions</option>' + opts;
+      $('ceRegion').innerHTML = opts;
+      return cs.regions;
+    });
+  }
+  function wireCases() {
+    $('casesBackBtn').onclick = loadHome;
+    $('ceBackBtn').onclick = function () {
+      if (csDirty() && !window.confirm('Leave without saving? Your changes to this case will be lost.')) return;
+      loadCases();
+    };
+    $('caseNewBtn').onclick = function () { openCaseEditor(null); };
+    ['csfRegion', 'csfStatus', 'csfLevel'].forEach(function (id) { $(id).onchange = csRenderList; });
+    $('ceAddStep').onclick = function () { var st = csReadSteps(); st.push(csBlankStep()); csRenderSteps(st); csFocusStep(st.length - 1); };
+    $('ceSave').onclick = function () { csSave(false); };
+    $('ceSavePub').onclick = function () { csSave(true); };
+    $('ceDelete').onclick = csDelete;
+    $('csList').onclick = function (e) {
+      var b = e.target.closest('[data-cs]');
+      if (!b) return;
+      var id = b.getAttribute('data-id'), row = cs.rows.filter(function (r) { return r.id === id; })[0];
+      var act = b.getAttribute('data-cs');
+      if (act === 'edit') openCaseEditor(id);
+      else if (act === 'toggle' && row) {
+        b.disabled = true;
+        sb.rpc('admin_case_set_published', { p_id: id, p_published: !row.published }).then(function (r) {
+          if (r.error) { window.alert(csErr(r.error)); b.disabled = false; return; }
+          toast(row.published ? 'Moved back to draft.' : 'Published. Students can see it now.');
+          loadCases();
+        });
+      }
+    };
+    $('ceSteps').onclick = function (e) {
+      var b = e.target.closest('[data-step]');
+      if (!b) return;
+      var i = parseInt(b.getAttribute('data-i'), 10), act = b.getAttribute('data-step'), st = csReadSteps();
+      if (act === 'up' && i > 0) { st.splice(i - 1, 0, st.splice(i, 1)[0]); csRenderSteps(st); csFocusStep(i - 1); }
+      else if (act === 'down' && i < st.length - 1) { st.splice(i + 1, 0, st.splice(i, 1)[0]); csRenderSteps(st); csFocusStep(i + 1); }
+      else if (act === 'remove') {
+        if (st.length === 1) { toast('A case needs at least one step.'); return; }
+        if (!window.confirm('Remove step ' + (i + 1) + '?')) return;
+        st.splice(i, 1); csRenderSteps(st);
+      }
+    };
+  }
+  function loadCases() {
+    showView('casesView');
+    $('csList').innerHTML = '<p class="am-hint">Loading…</p>';
+    csLoadRegions().then(function () { return sb.rpc('admin_cases_list'); }).then(function (r) {
+      if (r.error) { $('csList').innerHTML = '<p class="am-hint">' + esc(csErr(r.error)) + '</p>'; return; }
+      cs.rows = r.data || [];
+      csRenderList();
+    }).catch(function (e) { $('csList').innerHTML = '<p class="am-hint">' + esc(csErr(e)) + '</p>'; });
+  }
+  function csRenderList() {
+    var fr = $('csfRegion').value, fs = $('csfStatus').value, fl = $('csfLevel').value;
+    var rows = cs.rows.filter(function (c) {
+      return (!fr || c.region_id === fr) && (!fl || c.level === fl) && (!fs || (fs === 'live') === !!c.published);
+    });
+    if (!cs.rows.length) { $('csList').innerHTML = '<p class="am-hint">No cases yet. Use “+ New case” to write the first one.</p>'; return; }
+    if (!rows.length) { $('csList').innerHTML = '<p class="am-hint">No cases match these filters.</p>'; return; }
+    $('csList').innerHTML = rows.map(function (c) {
+      return '<div class="am-card cs-row"><div class="cs-row-main"><b>' + esc(c.title) + '</b>' +
+        '<small>' + esc(csRegionName(c.region_id)) + ' · ' + (c.level === 'advanced' ? 'Advanced' : 'Core') + ' · ' + c.steps + ' step' + (c.steps === 1 ? '' : 's') +
+        (c.has_images ? ' · has images' : '') + (c.is_free ? ' · Free' : ' · Pro') + (c.attempts ? ' · ' + c.attempts + ' student' + (c.attempts === 1 ? '' : 's') + ' played' : '') + '</small>' +
+        (c.summary ? '<small class="cs-row-sum">' + esc(c.summary) + '</small>' : '') + '</div>' +
+        '<span class="bk-state ' + (c.published ? 'on">Live' : 'off">Draft') + '</span>' +
+        '<div class="bk-acts"><button class="am-btn" data-cs="edit" data-id="' + c.id + '">Edit</button>' +
+        '<button class="am-btn" data-cs="toggle" data-id="' + c.id + '">' + (c.published ? 'Unpublish' : 'Publish') + '</button></div></div>';
+    }).join('');
+  }
+  function csBlankStep() { return { reveal: '', stem: '', options: CS_KEYS.slice(0, 4).map(function (k) { return { key: k, text: '' }; }), correct_key: 'A', explanation: '', learning_point: '' }; }
+  function csStepHtml(s, i, n) {
+    var opt = {}; (s.options || []).forEach(function (o) { opt[String(o.key).toUpperCase()] = o.text; });
+    return '<div class="am-card ce-step" data-idx="' + i + '">' +
+      '<div class="am-row ce-step-head"><b>Step ' + (i + 1) + '</b><span class="ce-sp"></span>' +
+      '<button class="am-btn" type="button" data-step="up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move up">&uarr;</button>' +
+      '<button class="am-btn" type="button" data-step="down" data-i="' + i + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="Move down">&darr;</button>' +
+      '<button class="am-btn am-btn-danger" type="button" data-step="remove" data-i="' + i + '">Remove</button></div>' +
+      '<div class="am-form">' +
+      '<label class="am-wide">New findings revealed before this question (optional: results, a scan, how the patient changed)<textarea data-f="reveal" rows="3"></textarea></label>' +
+      '<label class="am-wide">Question<textarea data-f="stem" rows="3"></textarea></label>' +
+      CS_KEYS.map(function (k) {
+        return '<label class="ce-opt">Option ' + k + (k === 'E' ? ' (optional)' : k === 'C' || k === 'D' ? ' (optional)' : '') +
+          '<input data-o="' + k + '" maxlength="300" value="' + esc(opt[k] || '') + '"></label>';
+      }).join('') +
+      '<label>Correct answer <select data-f="correct">' + CS_KEYS.map(function (k) {
+        return '<option' + (String(s.correct_key).toUpperCase() === k ? ' selected' : '') + '>' + k + '</option>';
+      }).join('') + '</select></label>' +
+      '<label class="am-wide">Explanation<textarea data-f="explanation" rows="4"></textarea></label>' +
+      '<label class="am-wide">Key point (one line, shown in the case summary)<input data-f="lp" maxlength="240" value="' + esc(s.learning_point || '') + '"></label>' +
+      '</div></div>';
+  }
+  function csRenderSteps(steps) {
+    var box = $('ceSteps');
+    box.innerHTML = steps.map(function (s, i) { return csStepHtml(s, i, steps.length); }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('.ce-step'), function (card, i) {
+      var s = steps[i];
+      var ta = function (f) { return card.querySelector('textarea[data-f="' + f + '"]'); };
+      ta('reveal').value = s.reveal || ''; ta('stem').value = s.stem || ''; ta('explanation').value = s.explanation || '';
+      richField(ta('reveal'), { alt: 'Clinical finding', placeholder: 'e.g. Ten minutes later BP is 78/50 mmHg…' });
+      richField(ta('stem'), { alt: 'Question image', placeholder: 'e.g. What is the next best step?' });
+      richField(ta('explanation'), { alt: 'Explanation image', placeholder: 'Why the answer is right, and why the others are not…' });
+    });
+  }
+  function csFocusStep(i) {
+    var c = $('ceSteps').querySelectorAll('.ce-step')[i];
+    if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function csReadSteps() {
+    return Array.prototype.map.call($('ceSteps').querySelectorAll('.ce-step'), function (card) {
+      var v = function (f) { var el = card.querySelector('[data-f="' + f + '"]'); return el ? el.value : ''; };
+      return {
+        reveal: v('reveal').trim(), stem: v('stem').trim(),
+        options: CS_KEYS.map(function (k) { return { key: k, text: card.querySelector('[data-o="' + k + '"]').value.trim() }; }).filter(function (o) { return o.text; }),
+        correct_key: v('correct'), explanation: v('explanation').trim(), learning_point: v('lp').trim()
+      };
+    });
+  }
+  function csCollect(publish) {
+    return {
+      id: cs.editing ? cs.editing.id : null,
+      region_id: $('ceRegion').value, level: $('ceLevel').value,
+      title: $('ceCaseTitle').value.trim(), summary: $('ceSummary').value.trim(),
+      exam_tags: $('ceTags').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean),
+      vignette: $('ceVignette').value.trim(), est_minutes: parseInt($('ceMinutes').value, 10) || 8,
+      sort: parseInt($('ceSort').value, 10) || 0, is_free: $('ceFree').checked,
+      published: publish ? true : $('cePublished').checked,
+      steps: csReadSteps()
+    };
+  }
+  function csDirty() { return cs.snapshot != null && JSON.stringify(csCollect(false)) !== cs.snapshot; }
+  function openCaseEditor(id) {
+    showView('caseEditView');
+    $('ceMsg').textContent = id ? 'Loading…' : '';
+    $('ceDelete').hidden = !id;
+    cs.snapshot = null;
+    csLoadRegions().then(function () {
+      return id ? sb.rpc('admin_case_get', { p_id: id }) : { data: null };
+    }).then(function (r) {
+      if (r.error) { $('ceMsg').textContent = csErr(r.error); return; }
+      var c = r.data;
+      cs.editing = c;
+      $('ceTitle').textContent = c ? 'Edit: ' + c.title : 'New case';
+      $('ceRegion').value = c ? c.region_id : ($('csfRegion').value || (cs.regions[0] && cs.regions[0].id) || '');
+      $('ceLevel').value = c ? c.level : ($('csfLevel').value || 'core');
+      $('ceCaseTitle').value = c ? c.title : ''; $('ceSummary').value = c ? c.summary : '';
+      $('ceTags').value = c ? (c.exam_tags || []).join(', ') : '';
+      $('ceMinutes').value = c ? c.est_minutes : 8; $('ceSort').value = c ? c.sort : 0;
+      $('ceFree').checked = c ? !!c.is_free : false; $('cePublished').checked = c ? !!c.published : false;
+      var ta = $('ceVignette');
+      ta.value = c ? c.vignette : '';
+      if (ta._rf) ta._rf.refresh(); else richField(ta, { alt: 'Clinical image', placeholder: 'A 58-year-old man presents with…' });
+      csRenderSteps(c && c.steps && c.steps.length ? c.steps : [csBlankStep()]);
+      $('ceMsg').textContent = '';
+      cs.snapshot = JSON.stringify(csCollect(false));
+      window.scrollTo(0, 0);
+    });
+  }
+  function csSave(publish) {
+    if (cs.busy) return;
+    var p = csCollect(publish);
+    // Quick checks here; the server checks everything again.
+    if (!p.title) { $('ceMsg').textContent = 'Give the case a title.'; return; }
+    if (p.vignette.replace(/<[^>]+>/g, '').trim().length < 10 && !/<img/i.test(p.vignette)) { $('ceMsg').textContent = 'Write the case presentation.'; return; }
+    for (var i = 0; i < p.steps.length; i++) {
+      var s = p.steps[i];
+      if (!s.stem) { $('ceMsg').textContent = 'Step ' + (i + 1) + ': write the question.'; csFocusStep(i); return; }
+      if (s.options.length < 2) { $('ceMsg').textContent = 'Step ' + (i + 1) + ': fill in at least two options.'; csFocusStep(i); return; }
+      if (!s.options.some(function (o) { return o.key === s.correct_key; })) { $('ceMsg').textContent = 'Step ' + (i + 1) + ': option ' + s.correct_key + ' is marked correct but is empty.'; csFocusStep(i); return; }
+      if (!s.explanation) { if (!window.confirm('Step ' + (i + 1) + ' has no explanation. Save anyway?')) { csFocusStep(i); return; } }
+    }
+    cs.busy = true; $('ceSave').disabled = $('ceSavePub').disabled = true;
+    $('ceMsg').textContent = 'Saving…';
+    sb.rpc('admin_case_save', { p: p }).then(function (r) {
+      if (r.error) throw r.error;
+      toast(p.published ? 'Saved and published.' : 'Saved as draft.');
+      openCaseEditor(r.data);
+    }).catch(function (e) {
+      $('ceMsg').textContent = csErr(e);
+    }).then(function () { cs.busy = false; $('ceSave').disabled = $('ceSavePub').disabled = false; });
+  }
+  function csDelete() {
+    var c = cs.editing;
+    if (!c) return;
+    if (!window.confirm('Delete “' + c.title + '”? This removes the case, its steps and students’ scores for it. This cannot be undone.')) return;
+    sb.rpc('admin_case_delete', { p_id: c.id }).then(function (r) {
+      if (r.error) { window.alert(csErr(r.error)); return; }
+      toast('Case deleted.');
+      cs.snapshot = null;
+      loadCases();
     });
   }
 

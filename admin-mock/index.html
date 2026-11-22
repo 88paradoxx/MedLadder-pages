@@ -84,6 +84,11 @@
             <span class="ah-card-t"><b>Books</b><small>Upload PDF or Word books and publish them on the Books page</small></span>
             <span class="ah-card-f"><span class="ah-chip" id="ahChip-books">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
           </button>
+          <button class="ah-card ah-t-cases" data-go="cases" type="button">
+            <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v6a4 4 0 008 0V3"/><path d="M10 13v3a5 5 0 0010 0v-2"/><circle cx="20" cy="12" r="2"/></svg></span>
+            <span class="ah-card-t"><b>Clinical cases</b><small>Write, review and publish long unfolding cases, with images</small></span>
+            <span class="ah-card-f"><span class="ah-chip" id="ahChip-cases">&nbsp;</span><span class="ah-arrow" aria-hidden="true">&rarr;</span></span>
+          </button>
           <button class="ah-card ah-t-pro" data-go="pro" type="button">
             <span class="ah-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg></span>
             <span class="ah-card-t"><b>Pro access</b><small>Grant or revoke Pro for a student</small></span>
@@ -129,6 +134,53 @@
         </div>
         <h2 class="ah-h2">All books</h2>
         <div id="bkList" class="am-list"><p class="am-hint">Loading…</p></div>
+      </section>
+
+      <!-- Clinical cases: list -->
+      <section id="casesView" class="am-view" hidden>
+        <div class="am-row"><button id="casesBackBtn" class="am-btn">&larr; Admin home</button><h1>Clinical cases</h1>
+          <button id="caseNewBtn" class="am-btn am-btn-primary">+ New case</button></div>
+        <p class="am-hint">Drafts are visible only to admins in the app (Home → Clinical cases), with a Draft badge, so you can play them before publishing.
+          Students see a case only after it is published. Free cases are open to everyone; the rest need Pro.</p>
+        <div class="am-row cs-adm-filters">
+          <label>Region <select id="csfRegion"><option value="">All regions</option></select></label>
+          <label>Status <select id="csfStatus"><option value="">All</option><option value="draft">Drafts</option><option value="live">Published</option></select></label>
+          <label>Level <select id="csfLevel"><option value="">All</option><option value="core">Core</option><option value="advanced">Advanced</option></select></label>
+        </div>
+        <div id="csList" class="am-list"><p class="am-hint">Loading…</p></div>
+      </section>
+
+      <!-- Clinical cases: editor -->
+      <section id="caseEditView" class="am-view" hidden>
+        <div class="am-row"><button id="ceBackBtn" class="am-btn">&larr; All cases</button><h1 id="ceTitle">New case</h1></div>
+        <div class="am-card">
+          <div class="am-form">
+            <label>Region <select id="ceRegion"></select></label>
+            <label>Level <select id="ceLevel"><option value="core">Core</option><option value="advanced">Advanced</option></select></label>
+            <label>Minutes (estimate) <input id="ceMinutes" type="number" min="1" max="120" value="8" inputmode="numeric"></label>
+            <label class="am-wide">Title (no spoilers: describe the presentation, not the diagnosis)
+              <input id="ceCaseTitle" maxlength="140" placeholder="e.g. Crushing chest pain and a falling BP"></label>
+            <label class="am-wide">One-line summary shown on the list
+              <input id="ceSummary" maxlength="200" placeholder="e.g. A 58-year-old smoker with 40 minutes of central chest pain."></label>
+            <label>Exam tags (comma separated) <input id="ceTags" placeholder="NEET SS, INI-CET, USMLE"></label>
+            <label>Order in region <input id="ceSort" type="number" value="0" inputmode="numeric"></label>
+            <div class="ce-flags">
+              <label class="ce-check"><input type="checkbox" id="ceFree"> Free for everyone</label>
+              <label class="ce-check"><input type="checkbox" id="cePublished"> Published</label>
+            </div>
+            <label class="am-wide">Case presentation (history, examination, first investigations). Images welcome: ECG, X-ray, photo.
+              <textarea id="ceVignette" rows="6"></textarea></label>
+          </div>
+        </div>
+        <h2 class="ah-h2">Steps <small class="am-hint">Each step can reveal new findings, then asks one question. Students see later findings only after answering.</small></h2>
+        <div id="ceSteps"></div>
+        <button id="ceAddStep" class="am-btn" type="button">+ Add step</button>
+        <div class="am-row ce-actions">
+          <button id="ceSave" class="am-btn am-btn-primary" type="button">Save</button>
+          <button id="ceSavePub" class="am-btn" type="button">Save and publish</button>
+          <button id="ceDelete" class="am-btn am-btn-danger" type="button" hidden>Delete case</button>
+          <span id="ceMsg" class="am-hint"></span>
+        </div>
       </section>
 
       <!-- Pro access -->

@@ -723,6 +723,9 @@ window.addEventListener('error', function (ev) {
         } else if (reason === 'battle') {
           titleEl.textContent = 'Host bigger battles with Pro';
           subEl.innerHTML = 'Free hosts can start <strong>3 battles a day</strong> with up to <strong>5 players</strong> and 20 questions. <strong>Pro</strong> hosts unlimited battles with up to <strong>100 players</strong>, any topic and up to 200 questions.';
+        } else if (reason === 'cases') {
+          titleEl.textContent = 'Unlock every clinical case';
+          subEl.innerHTML = 'Some cases in each region are free. <strong>MedLadder Pro</strong> opens every <strong>Core and Advanced</strong> case in all body regions, plus the full QBank and past papers.';
         } else if (reason === 'all_topics') {
           titleEl.textContent = 'Full Subject Exam is Pro Only';
           subEl.innerHTML = 'The <strong>\"All topics\"</strong> cumulative grand test is a MedLadder Pro feature. Upgrade now to practice full-length multi-topic exams!';
@@ -3459,6 +3462,7 @@ window.addEventListener('error', function (ev) {
         // Signing out on a static page or mid-quiz only updates the header:
         // the page stays where it is instead of jumping to Home.
         if (onStaticPage() || sc === 'quiz' || sc === 'results' || sc === 'battle') return;
+        if (sc === 'cases' || sc === 'cases-play') { if (sc === 'cases' && window.MLCases) window.MLCases.refresh(); return; }
         if (!v2On()) {
           if (sc === 'setup') renderSetup(state.subjectId, state.moduleId || 'all');
           else renderHome(true);
@@ -4565,6 +4569,13 @@ window.addEventListener('error', function (ev) {
           openPro: function (reason) { openProModal(reason || 'battle', {}); },
           fmt: sanitizeQuestionHtml,
           fmtExp: function (t) { return formatExplanation(t, []); },
+          // Clinical Cases (cases.js) paint inside the normal app shell, under the QBank tab.
+          paintShell: function (screen, body, back) {
+            v2Paint(screen, v2Shell('qbank', v2Header('Back'), '<div class="v2-bold v3-page">' + body + '</div>'));
+            wireV2Shell(back || function () { renderHome(true); });
+          },
+          route: function (r) { mlRoute(r); },
+          casesView: function (path, title) { trackPageView(path, 'cases', title); },
           userFirstName: function () { try { return currentUser ? String(getUserDisplayName(currentUser) || '').split(/[\s@]/)[0].slice(0, 20) : ''; } catch (e) { return ''; } }
         };
       }
@@ -4592,6 +4603,28 @@ window.addEventListener('error', function (ev) {
           // The Supabase client may still be starting when a shared link opens.
           (function wait() { if (supabaseClient || tries++ > 40) run(); else setTimeout(wait, 150); })();
         }).catch(function () { showToast('Could not load Quiz Battles. Check your connection.', 'error'); });
+      }
+      // Clinical Cases live in cases.js/cases.css, fetched on first use (needs quiz-pro.css for the shell).
+      var mlCasesPromise = null;
+      function mlCases(fn, arg) {
+        mlBattleBridge();
+        if (!mlCasesPromise) {
+          mlCasesPromise = Promise.all([
+            quizStylesReady ? Promise.resolve() : ensureQuizStyles(),
+            new Promise(function (resolve, reject) {
+              var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/cases.css'; document.head.appendChild(l);
+              var sc = document.createElement('script'); sc.src = '/cases.js'; sc.onload = resolve; sc.onerror = function () { mlCasesPromise = null; reject(new Error('load')); };
+              document.head.appendChild(sc);
+            })
+          ]);
+        }
+        var tries = 0;
+        mlCasesPromise.then(function () {
+          (function wait() {
+            if (supabaseClient || tries++ > 40) { if (window.MLCases && window.MLCases[fn]) window.MLCases[fn](arg); }
+            else setTimeout(wait, 150);
+          })();
+        }).catch(function () { showToast('Could not load Clinical Cases. Check your connection.', 'error'); });
       }
       // "Return to battle": a floating button while a battle this device joined is
       // in its lobby, running, or has results the player has not opened yet.
@@ -7695,6 +7728,7 @@ window.addEventListener('error', function (ev) {
         var k = parts[0];
         if (parts.length === 1 && ['qbank', 'pyq', 'mock', 'profile', 'bookmarks', 'progress', 'review'].indexOf(k) !== -1) { v2Go(k); return true; }
         if (k === 'custom') { renderCustomSetup(); return true; }
+        if (k === 'cases') { mlCases('openRoute', parts.slice(1).join('/')); return true; }
         if (k === 'pyq' && parts[1]) { renderPYQSetup(parts.slice(1).join('/')); return true; }
         var sx = (k === 'subject' || k === 'topic') ? mlFindSubject(parts[1]) : null;
         if (!sx) return false;
@@ -7812,7 +7846,7 @@ window.addEventListener('error', function (ev) {
         colA += '<nav class="v3-quick" aria-label="Quick actions">' + qa.map(function (q) {
           return '<button class="v3-card v3-qt v3-qt-' + q[0] + '" ' + q[3] + '><span class="v3-qt-ic">' + v3Ic(q[0], 30) +
             (q[2] ? '<span class="v3-qt-badge">' + q[2] + '</span>' : '') + '</span><span>' + q[1] + '</span></button>';
-        }).join('') + '</nav>';
+        }).join('') + '</nav>' + v3CasesCard();
 
         // ---- continue learning
         var active = v2ActiveSubjects(ix);
@@ -7975,9 +8009,21 @@ window.addEventListener('error', function (ev) {
         app.querySelectorAll('[data-battle-hub]').forEach(function (b) {
           b.onclick = function () { mlBattle('openHub'); };
         });
+        app.querySelectorAll('[data-cases-hub]').forEach(function (b) {
+          b.onclick = function () { mlCases('openHub'); };
+        });
         app.querySelectorAll('[data-pyq]').forEach(function (b) {
           b.onclick = function () { renderPYQSetup(b.getAttribute('data-pyq')); };
         });
+      }
+
+      // Entry card for Clinical Cases (Home and QBank). Styles are in quiz-pro.css so
+      // the card looks right before cases.css has loaded.
+      function v3CasesCard() {
+        return '<button class="v3-card v3-cases-card" data-cases-hub="1">' +
+          '<span class="v3-cases-ic" aria-hidden="true">' + v3Ic('steth', 26) + '</span>' +
+          '<span class="v3-cases-tx"><b>Clinical cases</b><small>Long unfolding vignettes by body region · Core and Advanced</small></span>' +
+          '<span class="v3-cases-go">Open ' + v3Ic('chev', 16) + '</span></button>';
       }
 
       // ---- QBank: all subjects ---------------------------------------------
@@ -8019,6 +8065,7 @@ window.addEventListener('error', function (ev) {
           '<a class="v3-card v3-way" href="/books"><span class="v3-way-ic w-book">' + v3Ic('book', 26) + '</span><span>Books <small>Free PDFs to download</small></span>' + v3Ic('chev', 18) + '</a>' +
           '<button class="v3-card v3-way" data-nav-go="review"><span class="v3-way-ic w-ref">' + v3Ic('refresh', 26) + '</span><span>Review' + (ix.due.length ? ' <small>' + ix.due.length + ' due</small>' : '') + '</span>' + v3Ic('chev', 18) + '</button>' +
           '</div>' +
+          v3CasesCard() +
           '<button class="v3-card v3-battle" data-battle-hub="1"><span class="v3-battle-ic" aria-hidden="true">\u2694\uFE0F</span><span class="v3-battle-tx"><b>Battle with friends</b><small>Pick a topic, share a code, race the same questions on one clock</small></span><span class="v3-battle-go">Start or join</span></button>' +
           '</section>';
         body = '<div class="v2-bold v3-page">' + body + '</div>';

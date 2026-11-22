@@ -4634,3 +4634,15 @@ html.dark .auth-input:focus { border-color: #4FB8A0 !important; box-shadow: 0 0 
 html.dark .auth-submit-btn { background: #4FB8A0 !important; color: #0F1F1C !important; box-shadow: none !important; }
 html.dark .auth-link { color: #8FD9C6 !important; }
 html.dark .auth-modal-close { background: rgba(10, 16, 18, .45) !important; border-color: rgba(255, 255, 255, .12) !important; color: #E2EBE8 !important; }
+
+/* ---- Clinical cases entry card (Home and QBank). The section itself is styled in cases.css. */
+html.ml-reading #app .v3 .v3-cases-card { display: flex !important; align-items: center !important; gap: 14px !important; width: 100% !important; margin: 12px 0 0 !important; padding: 16px 18px !important; text-align: left !important; cursor: pointer; color: var(--x-ink) !important; border: 1px solid rgba(59, 130, 246, .28) !important; background: linear-gradient(135deg, rgba(59, 130, 246, .08), rgba(19, 128, 107, .07)) , var(--x-card) !important; border-radius: 20px !important; }
+html.ml-reading #app .v3 .v3-cases-ic { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: rgba(59, 130, 246, .14); color: #3B82F6; }
+html.ml-reading #app .v3 .v3-cases-tx { flex: 1; min-width: 0; display: block; }
+html.ml-reading #app .v3 .v3-cases-tx b { display: block; font-size: 16px; }
+html.ml-reading #app .v3 .v3-cases-tx small { display: block; margin-top: 2px; font-size: 13px; color: var(--x-ink2) !important; font-weight: 500; }
+html.ml-reading #app .v3 .v3-cases-go { flex: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 13px; color: #2563EB; background: rgba(59, 130, 246, .12); padding: 8px 12px; border-radius: 99px; }
+@media (max-width: 480px) { html.ml-reading #app .v3 .v3-cases-go { display: none; } }
+html.dark .v3 .v3-cases-card { --tint: 120, 165, 235; }
+html.dark.ml-reading #app .v3 .v3-cases-ic { background: rgba(120, 165, 235, .18); color: #A9C4F2; }
+html.dark.ml-reading #app .v3 .v3-cases-go { background: rgba(10, 16, 18, .5); color: #BCD2F5; border: 1px solid rgba(120, 165, 235, .35); }
