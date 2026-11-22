@@ -3580,6 +3580,7 @@ window.addEventListener('error', function (ev) {
             loadUserProgress(currentUser.id);
             updateMastheadAuth();
             redrawAppTab();
+            qrRecheck();
             updateProModalUI();
             refreshProStatus();
             if (recoveryMode) { cleanAuthReturnUrl(); openAuthModal('reset'); }
@@ -3641,6 +3642,7 @@ window.addEventListener('error', function (ev) {
             if (userChanged) {
               resetProState();
               loadUserProgress(currentUser.id);
+              setTimeout(qrRecheck, 0);
               // Deferred: supabase-js must not be re-entered from inside this
               // callback. Anything practised signed-out moves into the account.
               setTimeout(function () {
@@ -5042,7 +5044,7 @@ window.addEventListener('error', function (ev) {
         var customCountHtml = setupChoice.count === 'custom' ? '<div class="custom-setup-control"><label for="customCountInput">Questions</label><input id="customCountInput" type="number" min="1" max="' + total + '" value="' + esc(String(setupChoice.customCount || 50)) + '" inputmode="numeric"><span>of ' + total + '</span></div>' : '';
         var customTimeHtml = setupChoice.timeLimit === 'custom' ? '<div class="custom-setup-control"><label for="customTimeInput">Minutes</label><input id="customTimeInput" type="number" min="1" max="600" value="' + esc(String(setupChoice.customTime || 30)) + '" inputmode="numeric"><span>1–600 min</span></div>' : '';
         var typeHtml = '<button class="type-card ' + (setupChoice.quizType === 'practice' ? 'active' : '') + '" data-type="practice"><span class="tname">Practice</span><span class="tdesc">Instant answer and explanation after every question.</span></button><button class="type-card ' + (setupChoice.quizType === 'timed' ? 'active' : '') + '" data-type="timed"><span class="tname">Timed Test</span><span class="tdesc">Set a clock and work through your custom question set.</span></button>';
-        app.innerHTML = rrTopBar('Back to home', '') + '<main id="mainContent" role="main" class="rr-setup"><h1 class="setup-chapname">Custom module</h1><p class="setup-sub">Choose questions from all ' + SUBJECT_INDEX.length + ' subjects and every topic.</p><div class="setup-section"><div class="setup-label">Quiz type</div><div class="type-grid" id="typeGrid">' + typeHtml + '</div></div><div class="setup-section"><div class="setup-label">Number of questions</div><div class="pill-row" id="countRow">' + countHtml + '</div>' + customCountHtml + '</div><div class="setup-section"><div class="setup-label">Time limit</div><div class="pill-row" id="timeRow">' + timeHtml + '</div>' + customTimeHtml + '</div><div class="setup-section"><div class="setup-label">Question order</div><div class="pill-row" id="orderRow"><button class="pill-choice ' + (setupChoice.orderMode === 'structured' ? 'active' : '') + '" data-order="structured">Structured</button><button class="pill-choice ' + (setupChoice.orderMode === 'shuffled' ? 'active' : '') + '" data-order="shuffled">Shuffled</button></div></div><div class="start-btn-wrap"><button class="btn start" id="startBtn">Start custom quiz</button><button class="rr-battle" id="battleBtn" type="button"><span><span aria-hidden="true">\u2694\uFE0F</span> Battle with friends</span><small>Mixed questions from every topic</small></button></div></main>';
+        app.innerHTML = rrTopBar('Back to home', '') + '<main id="mainContent" role="main" class="rr-setup"><h1 class="setup-chapname">Custom module</h1><p class="setup-sub">Choose questions from all ' + SUBJECT_INDEX.length + ' subjects and every topic.</p><div id="qrBanner" hidden></div><div class="setup-section"><div class="setup-label">Quiz type</div><div class="type-grid" id="typeGrid">' + typeHtml + '</div></div><div class="setup-section"><div class="setup-label">Number of questions</div><div class="pill-row" id="countRow">' + countHtml + '</div>' + customCountHtml + '</div><div class="setup-section"><div class="setup-label">Time limit</div><div class="pill-row" id="timeRow">' + timeHtml + '</div>' + customTimeHtml + '</div><div class="setup-section"><div class="setup-label">Question order</div><div class="pill-row" id="orderRow"><button class="pill-choice ' + (setupChoice.orderMode === 'structured' ? 'active' : '') + '" data-order="structured">Structured</button><button class="pill-choice ' + (setupChoice.orderMode === 'shuffled' ? 'active' : '') + '" data-order="shuffled">Shuffled</button></div></div><div class="start-btn-wrap"><button class="btn start" id="startBtn">Start custom quiz</button><button class="rr-battle" id="battleBtn" type="button"><span><span aria-hidden="true">\u2694\uFE0F</span> Battle with friends</span><small>Mixed questions from every topic</small></button></div></main>';
         wireTopBar(renderHome);
         wireRipples('.type-card, .pill-choice, .btn, .auth-btn');
         app.querySelectorAll('#typeGrid .type-card').forEach(function (btn) { btn.onclick = function () { setupChoice.quizType = btn.getAttribute('data-type'); renderCustomSetup(); }; });
@@ -5052,6 +5054,7 @@ window.addEventListener('error', function (ev) {
         var countInput = document.getElementById('customCountInput'); if (countInput) countInput.onchange = function () { setupChoice.customCount = countInput.value; };
         var timeInput = document.getElementById('customTimeInput'); if (timeInput) timeInput.onchange = function () { setupChoice.customTime = timeInput.value; };
         document.getElementById('startBtn').onclick = function () { setupChoice.timeLimit = resolveSetupTime(); startQuiz(); };
+        qrBanner(pool);
         var cb = document.getElementById('battleBtn');
         if (cb) cb.onclick = function () { mlBattle('openCreate', { scope: 'all', moduleIds: [], title: 'Custom mix', maxQ: 0, back: renderCustomSetup }); };
       }
@@ -5214,6 +5217,7 @@ window.addEventListener('error', function (ev) {
           '<main id="mainContent" role="main" class="rr-setup">' +
           '<h1 class="setup-chapname">' + esc(setupTitle) + '</h1>' +
           '<p class="setup-sub">' + total + ' questions, each with an explained answer.</p>' +
+          '<div id="qrBanner" hidden></div>' +
           '<div class="start-btn-wrap">' +
           '<button class="' + startBtnClass + '" id="startBtn">' + startBtnLabel + '</button>' +
           '<button class="rr-battle" id="battleBtn" type="button"><span><span aria-hidden="true">\u2694\uFE0F</span> Battle with friends</span><small>Same questions, one clock, live ranking</small></button>' +
@@ -5287,6 +5291,7 @@ window.addEventListener('error', function (ev) {
           setupChoice.timeLimit = resolveSetupTime();
           startQuiz();
         });
+        if (!isLocked) qrBanner(pool);
 
         var customCountInput = document.getElementById('customCountInput');
         if (customCountInput) customCountInput.onchange = function () { setupChoice.customCount = customCountInput.value; };
@@ -5302,6 +5307,38 @@ window.addEventListener('error', function (ev) {
             });
           });
         }
+      }
+
+      // Bank rows + their images -> the quiz's question objects (topic, custom and resumed quizzes).
+      var BANK_QUESTION_COLS = 'id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,module_id';
+      function mapBankRows(rows, imageRows) {
+        var imagesByQuestion = {};
+        (imageRows || []).forEach(function (image) {
+          var key = String(image.question_id);
+          if (!imagesByQuestion[key]) imagesByQuestion[key] = { question_text: [], explanation: [] };
+          if (image.content_field && imagesByQuestion[key][image.content_field]) {
+            imagesByQuestion[key][image.content_field].push(image);
+          }
+        });
+        return rows.map(function (r) {
+          var opts = {};
+          if (r.option_a) opts.A = r.option_a;
+          if (r.option_b) opts.B = r.option_b;
+          if (r.option_c) opts.C = r.option_c;
+          if (r.option_d) opts.D = r.option_d;
+          if (r.option_e) opts.E = r.option_e;
+          return {
+            id: r.id,
+            moduleId: r.module_id,
+            num: String(r.id || r.question_num),
+            question: r.question_text || '',
+            options: opts,
+            answer: r.answer || 'A',
+            explanation: r.explanation || '',
+            questionImages: (imagesByQuestion[String(r.id)] || {}).question_text || [],
+            explanationImages: (imagesByQuestion[String(r.id)] || {}).explanation || []
+          };
+        });
       }
 
       // ---------- SECURE SUPABASE QUESTION FETCH & QUIZ INITIALIZATION ----------
@@ -5347,7 +5384,7 @@ window.addEventListener('error', function (ev) {
         wireTopBar(function () { isCustom ? renderCustomSetup() : renderSetup(state.subjectId, state.moduleId || 'all'); });
 
         // Build Supabase Query
-        var query = supabaseClient.from('questions').select('id,question_num,question_text,option_a,option_b,option_c,option_d,option_e,answer,explanation,module_id');
+        var query = supabaseClient.from('questions').select(BANK_QUESTION_COLS);
         if (pool.moduleId === 'all' || pool.moduleId === 'custom') {
           query = query.in('module_id', pool.moduleDbIds);
         } else {
@@ -5401,36 +5438,8 @@ window.addEventListener('error', function (ev) {
           rows = null;
 
           return loadQuestionImages(selectedRows).then(function (imageRows) {
-            var imagesByQuestion = {};
-            imageRows.forEach(function (image) {
-              var key = String(image.question_id);
-              if (!imagesByQuestion[key]) imagesByQuestion[key] = { question_text: [], explanation: [] };
-              if (image.content_field && imagesByQuestion[key][image.content_field]) {
-                imagesByQuestion[key][image.content_field].push(image);
-              }
-            });
-
             // Map rows from Supabase into MedLadder question schema
-            var fetchedQuestions = selectedRows.map(function (r) {
-              var opts = {};
-              if (r.option_a) opts.A = r.option_a;
-              if (r.option_b) opts.B = r.option_b;
-              if (r.option_c) opts.C = r.option_c;
-              if (r.option_d) opts.D = r.option_d;
-              if (r.option_e) opts.E = r.option_e;
-
-              return {
-                id: r.id,
-                moduleId: r.module_id,
-                num: String(r.id || r.question_num),
-                question: r.question_text || '',
-                options: opts,
-                answer: r.answer || 'A',
-                explanation: r.explanation || '',
-                questionImages: (imagesByQuestion[String(r.id)] || {}).question_text || [],
-                explanationImages: (imagesByQuestion[String(r.id)] || {}).explanation || []
-              };
-            });
+            var fetchedQuestions = mapBankRows(selectedRows, imageRows);
             var orderIndices = fetchedQuestions.map(function (q, i) { return i; });
             selectedRows = null;
 
@@ -5807,9 +5816,11 @@ window.addEventListener('error', function (ev) {
           }
         };
         window.addEventListener('keydown', state._quizKeyHandler);
+        try { qrSave(); } catch (e) { }
       }
 
       function saveProgress() {
+        try { qrSave(); } catch (e) { }
         // Sets built from question ids span topics; per-topic progress comes
         // from the answers themselves (attempt_answers), not from this map.
         if (state.idSet) return;
@@ -5831,6 +5842,159 @@ window.addEventListener('error', function (ev) {
           saveModuleProgressToDB(saveKey, answered, correct, total);
         }, 350);
       }
+
+      // ---------- RESUME AN UNFINISHED QUIZ (topic, all-topics and custom quizzes) ----------
+      // After every answer and every move to another question, the quiz in hand
+      // is saved: question ids in order, answers, position, time left and its
+      // attempt row. On this device (localStorage, per account) and, when signed
+      // in, in quiz_sessions so another device can resume it too. Finishing the
+      // quiz clears it. The topic's setup screen then offers Resume / Start over.
+      var QR_TTL = 30 * 86400000, qrRemoteTimer = null;
+      function qrLocalKey() { return 'ml_quiz_resume_' + (currentUser && currentUser.id ? currentUser.id : 'guest'); }
+      function qrReadAll() { try { var o = JSON.parse(localStorage.getItem(qrLocalKey()) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+      function qrWriteAll(o) { try { localStorage.setItem(qrLocalKey(), JSON.stringify(o)); } catch (e) { } }
+      function qrResumable() {
+        return state && state.screen === 'quiz' && !state.idSet && !state.isPyqMode && !state.past &&
+          state.progressKey && state.progressKey !== 'bookmarks' && state.questions && state.order && state.order.length > 1;
+      }
+      function qrSave(now) {
+        try {
+          if (!qrResumable()) return;
+          var answered = Object.keys(state.answers || {}).length;
+          if (!answered || answered >= state.order.length) return;
+          var ids = state.order.map(function (i) { return state.questions[i] && state.questions[i].id; }).filter(function (x) { return x != null; });
+          var snap = {
+            v: 1, key: state.progressKey, title: state.poolTitle || '', subjectId: state.subjectId, moduleId: state.moduleId,
+            ids: ids, answers: state.answers, idx: state.idx, quizType: state.quizType, timeLimit: state.timeLimit,
+            remaining: state.remaining, attemptId: attemptLog.id || null, attemptMeta: attemptLog.meta || null,
+            answered: answered, correct: Object.values(state.answers).filter(function (a) { return a.isCorrect; }).length,
+            total: ids.length, savedAt: Date.now()
+          };
+          var all = qrReadAll();
+          all[snap.key] = snap;
+          var keys = Object.keys(all).sort(function (a, b) { return (all[b].savedAt || 0) - (all[a].savedAt || 0); });
+          keys.slice(12).forEach(function (k) { delete all[k]; });
+          qrWriteAll(all);
+          if (!currentUser || !currentUser.id || !supabaseClient) return;
+          if (qrRemoteTimer) clearTimeout(qrRemoteTimer);
+          var push = function () {
+            qrRemoteTimer = null;
+            supabaseClient.from('quiz_sessions').upsert({ user_id: currentUser.id, pool_key: snap.key, payload: snap, updated_at: new Date().toISOString() }, { onConflict: 'user_id,pool_key' })
+              .then(function (r) { if (r.error) console.warn('quiz_sessions save:', r.error); }, function () { });
+          };
+          if (now) push(); else qrRemoteTimer = setTimeout(push, 1500);
+        } catch (e) { console.warn('qrSave failed:', e); }
+      }
+      function qrClear(key) {
+        if (!key) return;
+        try { var all = qrReadAll(); if (all[key]) { delete all[key]; qrWriteAll(all); } } catch (e) { }
+        if (qrRemoteTimer) { clearTimeout(qrRemoteTimer); qrRemoteTimer = null; }
+        if (currentUser && currentUser.id && supabaseClient) {
+          try { supabaseClient.from('quiz_sessions').delete().eq('user_id', currentUser.id).eq('pool_key', key).then(function () { }, function () { }); } catch (e) { }
+        }
+      }
+      // The newest saved quiz for this key: this device first, then the account (another device).
+      function qrFind(key, cb) {
+        var fresh = function (x) { return x && x.v === 1 && x.ids && x.ids.length > 1 && Date.now() - (x.savedAt || 0) < QR_TTL ? x : null; };
+        var local = fresh(qrReadAll()[key]);
+        cb(local);
+        if (!currentUser || !currentUser.id || !supabaseClient) return;
+        try {
+          supabaseClient.from('quiz_sessions').select('payload').eq('user_id', currentUser.id).eq('pool_key', key).maybeSingle().then(function (r) {
+            var remote = fresh(r && !r.error && r.data ? r.data.payload : null);
+            if (remote && (!local || (remote.savedAt || 0) > (local.savedAt || 0))) cb(remote);
+          }, function () { });
+        } catch (e) { }
+      }
+      function qrAgo(t) { var m = Math.round((Date.now() - t) / 60000); if (m < 1) return 'just now'; if (m < 60) return m + ' min ago'; var h = Math.round(m / 60); if (h < 24) return h + ' h ago'; return Math.round(h / 24) + ' d ago'; }
+      // Resume / Start over card on a setup screen.
+      function qrBanner(pool) {
+        var box = document.getElementById('qrBanner');
+        if (!box || !pool || !pool.key) return;
+        qrFind(pool.key, function (snap) {
+          box = document.getElementById('qrBanner');
+          if (!box || !snap || state.screen !== 'setup' || !setupChoice.pool || setupChoice.pool.key !== pool.key) return;
+          var timed = snap.timeLimit > 0 ? ' \u00b7 ' + Math.max(0, Math.ceil((snap.remaining || 0) / 60)) + ' min left' : '';
+          box.innerHTML = '<section class="rr-resume" aria-label="Unfinished quiz"><div class="rr-resume-t"><b>Unfinished quiz</b>' +
+            '<small>Question ' + Math.min(snap.total, (snap.idx || 0) + 1) + ' of ' + snap.total + ' \u00b7 ' + snap.correct + ' of ' + snap.answered + ' right' + timed + ' \u00b7 ' + qrAgo(snap.savedAt) + '</small></div>' +
+            '<div class="rr-resume-b"><button class="btn start" id="qrGo" type="button">Resume</button><button class="rr-resume-x" id="qrDrop" type="button">Start over</button></div></section>';
+          box.hidden = false;
+          document.getElementById('qrGo').onclick = function () { qrResume(snap); };
+          document.getElementById('qrDrop').onclick = function () { qrClear(snap.key); box.innerHTML = ''; box.hidden = true; showToast('Cleared. Press Start for a new quiz.'); };
+        });
+      }
+      // A setup screen drawn before the session was confirmed looked in the guest
+      // slot; look again once we know who is signed in.
+      function qrRecheck() {
+        try { if (state.screen === 'setup' && setupChoice.pool && document.getElementById('qrBanner')) qrBanner(setupChoice.pool); } catch (e) { }
+      }
+      function qrResume(snap) {
+        if (quizLoadInFlight) return;
+        var pool = setupChoice.pool;
+        if (!pool || pool.key !== snap.key) return;
+        var isCustom = state.moduleId === 'custom';
+        if (!isCustom) {
+          var modules = getSubjectModules(state.subjectId);
+          var modIndex = state.moduleId === 'all' ? -1 : modules.findIndex(function (m) { return String(m.moduleId) === String(state.moduleId); });
+          if (isModuleLocked(state.subjectId, state.moduleId, modIndex)) {
+            var modObj = modules.find(function (m) { return String(m.moduleId) === String(state.moduleId); });
+            openProModal(state.moduleId === 'all' ? 'all_topics' : 'locked_module', { subjectId: state.subjectId, moduleId: state.moduleId, moduleName: modObj ? modObj.name : 'This Topic' });
+            return;
+          }
+        }
+        if (!currentUser && !guestCanStart(pool)) {
+          openAuthModal('signin', { reason: 'Please sign in to continue this quiz.', onSuccess: function () { qrResume(snap); } });
+          return;
+        }
+        var back = function () { isCustom ? renderCustomSetup() : renderSetup(state.subjectId, state.moduleId || 'all'); };
+        quizLoadInFlight = true;
+        app.innerHTML = rrLoadingHtml('Back to setup', esc(pool.title), 'Loading your quiz');
+        wireTopBar(back);
+        var chunks = [];
+        for (var i = 0; i < snap.ids.length; i += 200) chunks.push(snap.ids.slice(i, i + 200));
+        Promise.all(chunks.map(function (c) {
+          return supabaseClient.from('questions').select(BANK_QUESTION_COLS).in('id', c).then(function (r) { if (r.error) throw r.error; return r.data || []; });
+        })).then(function (parts) {
+          var byId = {};
+          parts.forEach(function (rows) { rows.forEach(function (r) { byId[String(r.id)] = r; }); });
+          var rows = snap.ids.map(function (id) { return byId[String(id)]; }).filter(Boolean);
+          if (rows.length < 2) throw new Error('These questions are no longer available.');
+          return loadQuestionImages(rows).then(function (imageRows) {
+            quizLoadInFlight = false;
+            var qs = mapBankRows(rows, imageRows);
+            var answers = {};
+            qs.forEach(function (q) { var k = String(q.id || q.num); if (snap.answers && snap.answers[k]) answers[k] = snap.answers[k]; });
+            var oldIdx = snap.idx || 0, oldId = snap.ids[oldIdx];
+            var idx = qs.findIndex(function (q) { return String(q.id) === String(oldId); });
+            if (idx < 0) idx = Math.min(qs.length - 1, Object.keys(answers).length);
+            guestRunActive = !currentUser && guestCanStart(pool);
+            state = {
+              screen: 'quiz', subjectId: state.subjectId, moduleId: state.moduleId, poolTitle: snap.title || pool.title, questions: qs,
+              order: qs.map(function (q, i) { return i; }), idx: idx, answers: answers, quizType: snap.quizType, timeLimit: snap.timeLimit,
+              remaining: snap.timeLimit > 0 ? Math.max(0, snap.remaining || 0) : snap.timeLimit, timerId: null, progressKey: snap.key
+            };
+            // Same attempt row as before, so history shows one session, not two.
+            if (attemptLog.flushTimer) clearTimeout(attemptLog.flushTimer);
+            attemptLog = { id: snap.attemptId || null, creating: false, failed: false, pending: [], flushTimer: null, meta: snap.attemptMeta || null };
+            if (!attemptLog.meta) beginAttemptLog(pool);
+            trackEvent('quiz_resume', { subject_id: state.subjectId, module_id: state.moduleId, answered: Object.keys(answers).length, total: qs.length });
+            if (state.timeLimit > 0 && state.remaining <= 0) { renderResults(true); return; }
+            scrollToPageTop();
+            renderQuiz();
+            prefetchBookmarks();
+            if (state.timeLimit > 0) startOverallTimer();
+          });
+        }).catch(function (err) {
+          quizLoadInFlight = false;
+          console.warn('quiz resume failed:', err);
+          showToast((err && err.message && /no longer/.test(err.message)) ? err.message : 'Could not load your quiz. Check your connection and try again.', 'error');
+          back();
+        });
+      }
+      try {
+        document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') qrSave(true); });
+        window.addEventListener('pagehide', function () { qrSave(true); });
+      } catch (e) { }
 
       // ---------- BOOKMARKS + FLAGS (practice quiz) ----------
       function bookmarksHomeCardHtml() {
@@ -8981,6 +9145,7 @@ window.addEventListener('error', function (ev) {
         var past = state.past || null;
         if (!past) {
         saveProgress();
+        try { if (!state.idSet && !state.isPyqMode) qrClear(state.progressKey); } catch (err) { }
         try { finishAttemptLog(pct); } catch (err) { console.warn('finishAttemptLog failed:', err); }
         trackEvent('quiz_complete', {
           subject_id: state.subjectId,

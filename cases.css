@@ -148,3 +148,26 @@ html.dark #app .v3 .cs-chip[aria-pressed="true"] small { color: rgba(15, 31, 28,
 #app .v3 .cs-where + .cs-case-t { margin-top: 3px; }
 #app .v3 .cs-done { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--x-ok); }
 #app .v3 .cs-more { margin: 14px 0 8px; }
+
+/* ---- my cases, resume, bookmarks */
+#app .v3 .cs-mine { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+#app .v3 .cs-mine-t { display: flex !important; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px !important; text-align: left; cursor: pointer; color: var(--x-ink) !important; font: inherit; min-height: 70px; }
+#app .v3 .cs-mine-n { font: 700 22px/1.1 var(--rr-sans, Inter, system-ui, sans-serif); color: var(--x-acc-ink); }
+#app .v3 .cs-mine-l { font-size: 13px; font-weight: 600; color: var(--x-ink2); }
+#app .v3 .cs-mine-t.zero .cs-mine-n { color: var(--x-ink3); }
+html.dark .v3 .cs-mine-progress { --tint: 79, 184, 160; }
+html.dark .v3 .cs-mine-bookmarked { --tint: 224, 181, 98; }
+html.dark .v3 .cs-mine-done { --tint: 120, 165, 235; }
+#app .v3 .cs-prog-b { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--cs-amber); }
+#app .v3 .cs-star-b { font-size: 15px; color: #E0A526; margin-left: 6px; }
+#app .v3 .cs-done + .cs-star-b, #app .v3 .cs-prog-b + .cs-star-b { margin-left: 6px; }
+#app .v3 .cs-case-top > .cs-star-b:first-of-type { margin-left: auto; }
+#app .v3 .cs-star { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--x-line2); background: var(--x-card); color: var(--x-ink); font: 600 13px var(--rr-sans, Inter, system-ui, sans-serif); cursor: pointer; }
+#app .v3 .cs-star span { font-size: 16px; line-height: 1; }
+#app .v3 .cs-star[aria-pressed="true"] { border-color: #E0A526; color: var(--x-ink); }
+#app .v3 .cs-star[aria-pressed="true"] span { color: #E0A526; }
+#app .v3 .cs-resume { padding: 16px !important; margin: 0 0 14px; display: grid; gap: 4px; border-left: 4px solid var(--cs-amber) !important; }
+#app .v3 .cs-resume b { font-size: 16px; }
+#app .v3 .cs-resume > span { color: var(--x-ink2); font-size: 14px; }
+#app .v3 .cs-resume-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#app .v3 .cs-resume-btns .cs-btn { margin-top: 8px; }

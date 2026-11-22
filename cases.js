@@ -13,13 +13,19 @@
     ov: null,                     // cases_overview(): regions, counts, exam tags
     f: { region: null, topic: '', level: '', status: 'all', exam: '', q: '', sort: 'recommended' },
     list: { items: [], total: 0, topics: [], seq: 0, loading: false },
-    from: 'hub',                  // where a case was opened from: hub (search) or region
+    from: 'hub',                  // where a case was opened from: hub (search), region, or mine
+    mine: null, fSaved: null,     // mine: 'progress' | 'bookmarked' | 'done' (Continue / Bookmarked / Completed)
     showFilters: false, scrollY: 0, play: null
   };
   var PAGE = 20;
   var LEVELS = [['', 'All levels'], ['core', 'Core'], ['advanced', 'Advanced']];
-  var STATUSES = [['all', 'All cases'], ['new', 'Not attempted'], ['done', 'Completed']];
-  var SORTS = [['recommended', 'Recommended order'], ['newest', 'Recently added'], ['lowest', 'Lowest score first'], ['az', 'A–Z']];
+  var STATUSES = [['all', 'All cases'], ['new', 'Not attempted'], ['progress', 'In progress'], ['done', 'Completed'], ['bookmarked', 'Bookmarked']];
+  var SORTS = [['recent', 'Last opened'], ['recommended', 'Recommended order'], ['newest', 'Recently added'], ['lowest', 'Lowest score first'], ['az', 'A–Z']];
+  var MINE = {
+    progress: { title: 'Continue learning', empty: 'No unfinished cases. Cases you leave halfway appear here, ready to resume.', icon: '▶️' },
+    bookmarked: { title: 'Bookmarked cases', empty: 'No bookmarks yet. Tap ☆ Save on a case to keep it here.', icon: '⭐' },
+    done: { title: 'Completed cases', empty: 'No completed cases yet. Finish a case and it appears here to review.', icon: '✅' }
+  };
 
   function el(id) { return document.getElementById(id); }
   function esc(s) { return B.esc(s == null ? '' : String(s)); }
@@ -63,7 +69,8 @@
       '<input id="csQ" type="search" autocomplete="off" enterkeyhint="search" placeholder="' + esc(ph) + '" value="' + esc(S.f.q) + '">' +
       '<button class="cs-search-x" id="csQx" type="button" aria-label="Clear search"' + (S.f.q ? '' : ' hidden') + '>✕</button></div>';
   }
-  function extraFilterCount() { return (S.f.status !== 'all' ? 1 : 0) + (S.f.exam ? 1 : 0) + (S.f.sort !== 'recommended' ? 1 : 0); }
+  function defaultSort() { return S.mine ? 'recent' : 'recommended'; }
+  function extraFilterCount() { return (!S.mine && S.f.status !== 'all' ? 1 : 0) + (S.f.exam ? 1 : 0) + (S.f.sort !== defaultSort() ? 1 : 0); }
   function filterBar() {
     var exams = (S.ov && S.ov.exams) || [];
     var n = extraFilterCount();
@@ -73,16 +80,18 @@
     return '<div class="cs-fbar"><div class="cs-pills" role="group" aria-label="Level">' + pills('lvl', LEVELS, S.f.level) + '</div>' +
       '<button class="cs-fbtn" id="csFbtn" aria-expanded="' + S.showFilters + '">Filters' + (n ? ' <b>' + n + '</b>' : '') + '</button></div>' +
       '<div class="cs-fpanel" id="csFpanel"' + (S.showFilters ? '' : ' hidden') + '>' +
-      (B.user() ? '<div class="cs-frow"><span>Status</span><div class="cs-pills">' + pills('st', STATUSES, S.f.status) + '</div></div>' : '') +
+      (B.user() && !S.mine ? '<div class="cs-frow"><span>Status</span><div class="cs-pills">' + pills('st', STATUSES, S.f.status) + '</div></div>' : '') +
       (exams.length ? '<div class="cs-frow"><span>Exam</span><div class="cs-pills">' + pills('ex', [['', 'Any exam']].concat(exams.map(function (e) { return [e.tag, e.tag]; })), S.f.exam) + '</div></div>' : '') +
-      '<div class="cs-frow"><span>Sort</span><select id="csSort" class="cs-select">' + SORTS.filter(function (o) { return o[0] !== 'lowest' || B.user(); }).map(function (o) {
+      '<div class="cs-frow"><span>Sort</span><select id="csSort" class="cs-select">' + SORTS.filter(function (o) { return (o[0] !== 'lowest' || B.user()) && (o[0] !== 'recent' || S.mine); }).map(function (o) {
         return '<option value="' + o[0] + '"' + (S.f.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
       }).join('') + '</select></div>' +
       (n ? '<button class="cs-link" id="csFreset" type="button">Clear filters</button>' : '') + '</div>';
   }
   function caseCard(c, showWhere) {
     var tags = (c.exam_tags || []).map(function (t) { return '<span class="cs-tag">' + esc(t) + '</span>'; }).join('');
-    var status = c.tries ? '<span class="cs-done">✓ Done · best ' + c.best + '/' + c.steps + '</span>' : '';
+    var status = c.progress ? '<span class="cs-prog-b">In progress · ' + c.progress + '/' + c.steps + '</span>'
+      : c.tries ? '<span class="cs-done">✓ Done · best ' + c.best + '/' + c.steps + '</span>' : '';
+    if (c.bookmarked) status += '<span class="cs-star-b" title="Bookmarked" aria-label="Bookmarked">★</span>';
     var where = showWhere ? esc(c.region_icon + ' ' + c.region_name) + (c.topic ? ' · ' + esc(c.topic) : '') : esc(c.topic || '');
     return '<button class="v3-card cs-case' + (c.locked ? ' locked' : '') + '" data-case="' + esc(c.id) + '"' + (c.locked ? ' data-locked="1"' : '') + '>' +
       '<span class="cs-case-top">' + levelBadge(c.level) + (c.draft ? '<span class="cs-draft">Draft</span>' : '') +
@@ -103,7 +112,8 @@
     var left = L.total - L.items.length;
     var more = left > 0 ? '<button class="cs-btn ghost cs-more" id="csMoreBtn"' + (L.loading ? ' disabled' : '') + '>' + (L.loading ? 'Loading…' : 'Show ' + Math.min(left, PAGE) + ' more (' + left + ' left)') + '</button>' : '';
     var empty = !L.loading && !L.items.length
-      ? '<p class="cs-muted cs-center">' + (S.f.q || extraFilterCount() || S.f.level || S.f.topic ? 'No cases match. Try fewer words or clear the filters.' : 'No cases here yet. New cases are being written and reviewed.') + '</p>' : '';
+      ? '<p class="cs-muted cs-center">' + (S.f.q || extraFilterCount() || S.f.level || S.f.topic ? 'No cases match. Try fewer words or clear the filters.'
+        : S.mine ? MINE[S.mine].empty : 'No cases here yet. New cases are being written and reviewed.') + '</p>' : '';
     box.innerHTML = head + (cards ? '<div class="cs-cases">' + cards + '</div>' : '') + empty + more;
     box.querySelectorAll('[data-case]').forEach(function (b) {
       b.onclick = function () {
@@ -191,11 +201,12 @@
     document.querySelectorAll('.cs [data-st]').forEach(function (b) { b.onclick = function () { S.f.status = b.getAttribute('data-st'); redraw(); }; });
     document.querySelectorAll('.cs [data-ex]').forEach(function (b) { b.onclick = function () { S.f.exam = b.getAttribute('data-ex'); redraw(); }; });
     var so = el('csSort'); if (so) so.onchange = function () { S.f.sort = so.value; redraw(); };
-    var rs = el('csFreset'); if (rs) rs.onclick = function () { S.f.status = 'all'; S.f.exam = ''; S.f.sort = 'recommended'; redraw(); };
+    var rs = el('csFreset'); if (rs) rs.onclick = function () { if (!S.mine) S.f.status = 'all'; S.f.exam = ''; S.f.sort = defaultSort(); redraw(); };
   }
 
   // ---------- hub: search + regions ----------
   function openHub() {
+    if (S.mine) { S.mine = null; if (S.fSaved) { S.f = S.fSaved; S.fSaved = null; } }
     S.from = 'hub';
     S.f.region = null; S.f.topic = '';
     B.route('cases');
@@ -217,7 +228,7 @@
       '<h1>Think like the exam, one case at a time</h1>' +
       '<p>Long vignettes that unfold step by step, in the style of NEET SS, INI-CET and USMLE. <b>Core</b> builds the essentials; <b>Advanced</b> is for super-speciality level.</p>' +
       (O.total ? '<div class="cs-stat"><b>' + O.done + '</b> of <b>' + O.total + '</b> cases attempted</div>' : '') +
-      '</section>' + searchBox('Search symptoms, diagnoses…') +
+      '</section>' + mineTiles() + searchBox('Search symptoms, diagnoses…') +
       '<div id="csSearchArea"' + (S.f.q ? '' : ' hidden') + '><div id="csFilters">' + filterBar() + '</div><div id="csResults"></div></div>' +
       '<div id="csGrid"' + (S.f.q ? ' hidden' : '') + '><div class="cs-regions">' + tiles + '</div>' +
       (O.total ? '' : '<p class="cs-muted cs-center">New cases are being written and reviewed. Check back soon.</p>') + '</div>';
@@ -233,6 +244,43 @@
       if (b.getAttribute('aria-disabled')) return;
       b.onclick = function () { openRegion(b.getAttribute('data-region')); };
     });
+    document.querySelectorAll('.cs [data-mine]').forEach(function (b) {
+      b.onclick = function () { openMine(b.getAttribute('data-mine')); };
+    });
+  }
+  // Continue / Bookmarked / Completed, for signed-in users.
+  function mineTiles() {
+    if (!B.user()) return '';
+    var m = (S.ov && S.ov.mine) || { progress: 0, bookmarked: 0, done: 0 };
+    return '<nav class="cs-mine" aria-label="Your cases">' + ['progress', 'bookmarked', 'done'].map(function (k) {
+      var label = { progress: 'Continue', bookmarked: 'Bookmarked', done: 'Completed' }[k];
+      return '<button class="v3-card cs-mine-t cs-mine-' + k + (m[k] ? '' : ' zero') + '" data-mine="' + k + '"><span class="cs-mine-n">' + (m[k] || 0) + '</span><span class="cs-mine-l">' + label + '</span></button>';
+    }).join('') + '</nav>';
+  }
+
+  // ---------- my cases: one list per kind, most recent activity first ----------
+  function openMine(kind) {
+    if (!MINE[kind]) return openHub();
+    if (!S.mine) S.fSaved = JSON.parse(JSON.stringify(S.f));
+    S.mine = kind; S.from = 'mine';
+    S.f = { region: null, topic: '', level: '', status: kind, exam: '', q: '', sort: 'recent' };
+    drawMine();
+  }
+  function leaveMine() {
+    S.mine = null;
+    if (S.fSaved) { S.f = S.fSaved; S.fSaved = null; }
+    S.f.region = null; S.f.topic = '';
+    openHub();
+  }
+  function drawMine(keep) {
+    var M = MINE[S.mine];
+    view('/cases/mine/' + S.mine, 'Cases – ' + M.title);
+    var body = '<section class="cs-head cs-head-sm"><span class="cs-region-ic big" aria-hidden="true">' + M.icon + '</span><div><h1>' + esc(M.title) + '</h1>' +
+      '<p class="cs-sub">' + plural((S.ov && S.ov.mine && S.ov.mine[S.mine]) || 0, 'case') + '</p></div></section>' +
+      '<div id="csFilters">' + filterBar() + '</div><div id="csResults"></div>';
+    paint('cases', body, leaveMine);
+    wireFilters();
+    fetchList(!keep, keep);
   }
 
   // ---------- region: topic chips + list ----------
@@ -263,8 +311,9 @@
     paint('cases-play', '<p class="cs-muted cs-pad">Opening case…</p>', backToList);
     rpc('case_open', { p_case: id }).then(function (c) {
       B.route(S.from === 'region' && S.f.region ? 'cases/' + S.f.region : 'cases');
-      S.play = { c: c, step: c.step, answers: [], score: 0, timeline: [], picked: null, result: null, finished: false };
-      ev('case_start', { case_id: id, level: c.level, region: c.region_id });
+      S.play = { c: c, step: c.resume ? null : c.step, answers: [], score: 0, timeline: [], picked: null, result: null, finished: false,
+        resume: c.resume || null, bookmarked: !!c.bookmarked };
+      ev('case_start', { case_id: id, level: c.level, region: c.region_id, resume: !!c.resume });
       view('/cases/' + c.region_id + '/case', 'Case – ' + c.title);
       drawPlay();
     }).catch(function (e) {
@@ -276,14 +325,62 @@
   }
   function backFromPlay() {
     var P = S.play;
-    if (P && !P.finished && P.answers.length && !window.confirm('Leave this case? Your progress in it will be lost.')) return;
+    // Signed-in answers are saved as they are given, so leaving is safe; guests lose them.
+    if (P && !P.finished && P.answers.length) {
+      if (!B.user()) { if (!window.confirm('Leave this case? Sign in to save your place; as a guest your answers here will be lost.')) return; }
+      else B.toast('Saved. Continue this case any time from “Continue”.');
+    }
     S.play = null;
     backToList();
   }
+  // Rebuild a case from the server's saved answers and carry on at the next step.
+  function resumePlay() {
+    var P = S.play;
+    var btn = el('csResumeGo'); if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+    rpc('case_resume', { p_case: P.c.id }).then(function (r) {
+      P.resume = null;
+      P.timeline = []; P.answers = []; P.score = 0;
+      (r.done || []).forEach(function (d) {
+        P.timeline.push({ step_no: d.step_no, reveal: d.reveal, stem: d.stem, options: d.options });
+        P.answers.push({ picked: d.picked, correct: !!d.correct, correct_key: d.correct_key, explanation: d.explanation, learning_point: d.learning_point });
+        if (d.correct) P.score++;
+      });
+      P.step = r.step || null;
+      ev('case_resume', { case_id: P.c.id, at_step: P.answers.length + 1 });
+      if (!P.step) { finish(); return; }
+      drawPlay('csStep' + P.timeline.length);
+    }).catch(function (e) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
+      if (errKey(e) === 'pro_required') { B.openPro('cases'); return; }
+      B.toast('Could not load your saved place. Try again.', 'error');
+    });
+  }
+  function restartPlay() {
+    var P = S.play;
+    P.resume = null; P.step = P.c.step;
+    rpc('case_restart', { p_case: P.c.id }).catch(function () { });
+    drawPlay();
+  }
+  function toggleBookmark() {
+    var P = S.play;
+    if (!B.user()) { B.openAuth('signup', { reason: 'Create a free account to bookmark cases.' }); return; }
+    var on = !P.bookmarked;
+    P.bookmarked = on;
+    var b = el('csStar'); if (b) { b.setAttribute('aria-pressed', String(on)); b.innerHTML = starHtml(on); }
+    rpc('case_bookmark', { p_case: P.c.id, p_on: on }).then(function () {
+      B.toast(on ? 'Bookmarked. Find it under “Bookmarked”.' : 'Bookmark removed.');
+      ev('case_bookmark', { case_id: P.c.id, on: on });
+    }).catch(function () {
+      P.bookmarked = !on;
+      if (b) { b.setAttribute('aria-pressed', String(!on)); b.innerHTML = starHtml(!on); }
+      B.toast('Could not save the bookmark. Try again.', 'error');
+    });
+  }
+  function starHtml(on) { return '<span aria-hidden="true">' + (on ? '★' : '☆') + '</span>' + (on ? 'Saved' : 'Save'); }
   // Back to the list the case was opened from, with the same search, filters,
   // number of loaded cards and scroll position; scores are refreshed.
   function backToList() {
-    var done = function () { if (S.from === 'region' && S.f.region) drawRegion(true); else drawHub(true); };
+    var done = function () { if (S.from === 'mine' && S.mine) drawMine(true); else if (S.from === 'region' && S.f.region) drawRegion(true); else drawHub(true); };
     loadOverview().then(done, done);
   }
   function stepBlock(st, idx, P, current) {
@@ -315,9 +412,15 @@
     var P = S.play, c = P.c;
     var tags = (c.exam_tags || []).map(function (t) { return '<span class="cs-tag">' + esc(t) + '</span>'; }).join('');
     var pct = Math.round(P.answers.length * 100 / (c.total || 1));
-    var body = '<section class="cs-case-head"><div class="cs-case-top">' + levelBadge(c.level) + (c.draft ? '<span class="cs-draft">Draft</span>' : '') + '<span class="cs-tags">' + tags + '</span></div>' +
+    var body = '<section class="cs-case-head"><div class="cs-case-top">' + levelBadge(c.level) + (c.draft ? '<span class="cs-draft">Draft</span>' : '') + '<span class="cs-tags">' + tags + '</span>' +
+      '<button class="cs-star" id="csStar" type="button" aria-pressed="' + !!P.bookmarked + '" aria-label="Bookmark this case">' + starHtml(P.bookmarked) + '</button></div>' +
       '<h1>' + esc(c.title) + '</h1><div class="cs-prog" aria-hidden="true"><span style="width:' + pct + '%"></span></div></section>' +
       '<article class="cs-vignette"><span class="cs-reveal-k">Case</span>' + html(c.vignette) + '</article>';
+    if (P.resume) {
+      body += '<section class="v3-card cs-resume"><b>You stopped at step ' + (P.resume.answered + 1) + ' of ' + c.total + '</b>' +
+        '<span>' + P.resume.correct + ' of ' + P.resume.answered + ' right so far</span>' +
+        '<div class="cs-resume-btns"><button class="cs-btn" id="csResumeGo">Continue</button><button class="cs-btn ghost" id="csRestart">Start over</button></div></section>';
+    }
     P.timeline.forEach(function (st, i) { body += stepBlock(st, i, P, false); });
     if (P.step) body += stepBlock(P.step, P.timeline.length, P, true);
     if (P.finished) body += summaryHtml();
@@ -359,6 +462,9 @@
       else finish();
     };
     var again = el('csAgain'); if (again) again.onclick = function () { openCase(P.c.id); };
+    var star = el('csStar'); if (star) star.onclick = toggleBookmark;
+    var rg = el('csResumeGo'); if (rg) rg.onclick = resumePlay;
+    var rs = el('csRestart'); if (rs) rs.onclick = restartPlay;
     var more = el('csMore'); if (more) more.onclick = backFromPlay;
     var nextCase = el('csNextCase'); if (nextCase) nextCase.onclick = function () { openCase(nextCase.getAttribute('data-id')); };
     var sign = el('csSign'); if (sign) sign.onclick = function () { B.openAuth('signup', { reason: 'Create a free account to save your case scores.' }); };
@@ -391,7 +497,7 @@
       '<h2>' + msg + '</h2><p class="cs-muted" id="csBestLine">' + (B.user() ? '' : 'Sign in to keep a record of your case scores.') + '</p>' +
       (points ? '<h3>Key points from this case</h3><ol class="cs-sum">' + points + '</ol>' : '') +
       '<div class="cs-sum-btns">' + (nc ? '<button class="cs-btn" id="csNextCase" data-id="' + esc(nc.id) + '">Next case</button>' : '') +
-      '<button class="cs-btn ghost" id="csAgain">Try again</button><button class="cs-btn ghost" id="csMore">' + (S.from === 'region' ? 'Back to the list' : 'Back to search') + '</button>' +
+      '<button class="cs-btn ghost" id="csAgain">Try again</button><button class="cs-btn ghost" id="csMore">' + (S.from === 'hub' ? 'Back to search' : 'Back to the list') + '</button>' +
       (B.user() ? '' : '<button class="cs-btn ghost" id="csSign">Create free account</button>') + '</div></section>';
   }
 
@@ -401,9 +507,9 @@
   }
   // Signed in or out: counts, locks and status filters change.
   function refresh() {
-    if (!B.user()) S.f.status = 'all';
+    if (!B.user()) { if (S.mine) { S.mine = null; S.f = S.fSaved || S.f; S.fSaved = null; S.from = 'hub'; } S.f.status = 'all'; }
     if (S.f.sort === 'lowest' && !B.user()) S.f.sort = 'recommended';
-    loadOverview().then(function () { if (S.from === 'region' && S.f.region) drawRegion(); else drawHub(); }).catch(function () { });
+    loadOverview().then(function () { if (S.from === 'mine' && S.mine) drawMine(); else if (S.from === 'region' && S.f.region) drawRegion(); else drawHub(); }).catch(function () { });
   }
 
   // Images use the app-wide lightbox (qtext-img), the same as quiz questions.
