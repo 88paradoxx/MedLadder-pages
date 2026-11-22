@@ -171,3 +171,38 @@ html.dark .v3 .cs-mine-done { --tint: 120, 165, 235; }
 #app .v3 .cs-resume > span { color: var(--x-ink2); font-size: 14px; }
 #app .v3 .cs-resume-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 #app .v3 .cs-resume-btns .cs-btn { margin-top: 8px; }
+
+/* ---- topic side panel (region page) */
+#app .v3 .cs-rwrap { display: block; }
+#app .v3 .cs-topicbar { display: flex !important; align-items: center; gap: 12px; width: 100%; margin: 0 0 10px; padding: 10px 14px; min-height: 56px; border-radius: 16px; border: 1px solid var(--x-line2); background: var(--x-card); color: var(--x-ink); font: inherit; text-align: left; cursor: pointer; box-shadow: var(--x-sh); }
+#app .v3 .cs-tb-ic { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--x-accs); color: var(--x-acc-ink); font-size: 17px; }
+#app .v3 .cs-tb-t { flex: 1; min-width: 0; display: grid; }
+#app .v3 .cs-tb-t small { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--x-ink3); }
+#app .v3 .cs-tb-t b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#app .v3 .cs-tb-n { flex: none; font-size: 12.5px; font-weight: 600; color: var(--x-acc-ink); }
+
+#app .v3 .cs-side { position: fixed; top: 0; bottom: 0; left: 0; z-index: 1001; width: min(86vw, 340px); padding: calc(14px + env(safe-area-inset-top, 0px)) 12px calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--x-card); border-right: 1px solid var(--x-line); box-shadow: 0 0 40px rgba(0, 0, 0, .35); overflow-y: auto; -webkit-overflow-scrolling: touch; transform: translateX(-105%); transition: transform .22s ease; visibility: hidden; }
+#app .v3 .cs-side.open { transform: none; visibility: visible; }
+#app .v3 .cs-scrim { position: fixed; inset: 0; z-index: 1000; background: rgba(4, 10, 12, .5); }
+html.cs-noscroll, html.cs-noscroll body { overflow: hidden !important; }
+#app .v3 .cs-side-h { display: flex; align-items: center; gap: 8px; padding: 4px 6px 12px; border-bottom: 1px solid var(--x-line); margin-bottom: 8px; font-size: 16px; }
+#app .v3 .cs-side-h b { flex: 1; }
+#app .v3 .cs-side-x { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--x-line2); background: transparent; color: var(--x-ink2); font-size: 15px; cursor: pointer; }
+#app .v3 .cs-side-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+#app .v3 .cs-side-i { display: flex !important; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px 8px 12px; border: 0; border-left: 3px solid transparent; border-radius: 10px; background: transparent; color: var(--x-ink); font: 500 14.5px var(--rr-sans, Inter, system-ui, sans-serif); text-align: left; cursor: pointer; }
+#app .v3 .cs-side-i span { flex: 1; min-width: 0; line-height: 1.3; }
+#app .v3 .cs-side-i small { flex: none; min-width: 26px; text-align: center; font-size: 12px; font-weight: 700; color: var(--x-ink2); background: var(--x-card2); border-radius: 999px; padding: 2px 8px; }
+#app .v3 .cs-side-i:hover:not(:disabled) { background: var(--x-card2); }
+#app .v3 .cs-side-i.all { font-weight: 700; }
+#app .v3 .cs-side-i.on { background: var(--x-accs); border-left-color: var(--x-acc); color: var(--x-acc-ink); font-weight: 700; }
+#app .v3 .cs-side-i.on small { background: var(--x-acc); color: #fff; }
+html.dark #app .v3 .cs-side-i.on small { color: #0F1F1C; }
+#app .v3 .cs-side-i.empty { color: var(--x-ink3); cursor: default; }
+#app .v3 .cs-side-i.empty small { background: transparent; color: var(--x-ink3); font-weight: 500; }
+
+/* Wide screens: the panel stays open beside the list. */
+@media (min-width: 900px) {
+  #app .v3 .cs-rwrap { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; align-items: start; }
+  #app .v3 .cs-side { position: sticky; top: 84px; bottom: auto; left: auto; z-index: auto; width: auto; max-height: calc(100vh - 110px); padding: 10px; border: 1px solid var(--x-line); border-radius: 18px; box-shadow: var(--x-sh); transform: none; visibility: visible; transition: none; }
+  #app .v3 .cs-side-x, #app .v3 .cs-topicbar, #app .v3 .cs-scrim { display: none !important; }
+}
