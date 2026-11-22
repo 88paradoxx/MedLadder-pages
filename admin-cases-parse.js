@@ -7,6 +7,8 @@
  *   Title: Crushing chest pain and a falling BP
  *   Region: Cardiovascular          (name, short name or id: cardio, CVS, heart…)
  *   Level: Core                     (Core / Advanced)
+ *   Topic: Acute coronary syndromes (optional; the region's list or your own)
+ *   Keywords: RV infarct, V4R       (optional; searchable, never shown)
  *   Tags: NEET PG, INI-CET, USMLE
  *   Summary: A 58-year-old smoker with chest pain.
  *   Minutes: 8          Free: yes   (optional)
@@ -34,6 +36,8 @@
     ['title', /^(?:case\s+)?title|^name$/],
     ['region', /^region|^system|^body\s*region|^speciality|^specialty/],
     ['level', /^level|^difficulty/],
+    ['topic', /^topic$|^sub[\s-]*topic|^chapter$/],
+    ['keywords', /^(?:search\s*)?key\s*words?$|^search\s*terms?$/],
     ['tags', /^(?:exam\s*)?tags?$|^exams?$|^exam\s*tags?/],
     ['summary', /^summary|^one[\s-]*line(?:\s*summary)?|^teaser|^subtitle/],
     ['minutes', /^minutes|^time|^duration|^est(?:imated)?\.?\s*(?:time|minutes)/],
@@ -45,7 +49,7 @@
     ['explanation', /^exp(?:lanation|l\.?)?$|^explain|^rationale|^discussion/],
     ['lp', /^key\s*(?:point|learning|message|takeaway)s?|^learning\s*points?|^take[\s-]*home|^pearl|^teaching\s*point|^high[\s-]*yield/]
   ];
-  var HEADER_KEYS = { title: 1, region: 1, level: 1, tags: 1, summary: 1, minutes: 1, free: 1 };
+  var HEADER_KEYS = { title: 1, region: 1, level: 1, topic: 1, keywords: 1, tags: 1, summary: 1, minutes: 1, free: 1 };
 
   var REGION_ALIASES = {
     cardio: ['cardio', 'cardiac', 'cardiology', 'cardiovascular', 'cvs', 'heart'],
@@ -156,6 +160,16 @@
     }
     return null;
   }
+  // Use the region's own spelling when the pasted topic matches one (case-insensitive,
+  // "&" = "and"); otherwise keep the topic as typed.
+  function matchTopic(v, regionId, regions) {
+    var t = plain([v || '']);
+    if (!t) return '';
+    var norm = function (x) { return x.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, ' ').trim(); };
+    var r = (regions || []).filter(function (x) { return x.id === regionId; })[0];
+    var hit = r && r.topics ? r.topics.filter(function (x) { return norm(x) === norm(t) || norm(x).replace(/s$/, '') === norm(t).replace(/s$/, ''); })[0] : null;
+    return hit || t;
+  }
   function matchLevel(v) {
     var s = String(v || '').toLowerCase();
     if (/adv|super|\bss\b|hard|difficult|senior/.test(s)) return 'advanced';
@@ -202,7 +216,7 @@
       }
       var lb = labelOf(line);
       // "Time: 2 hours" or "Summary: …" inside the case or a step is text, not a header field.
-      if (lb && HEADER_KEYS[lb.key] && (lb.key === 'minutes' || lb.key === 'free' || lb.key === 'summary') && (cur || vignette.length)) lb = null;
+      if (lb && HEADER_KEYS[lb.key] && (lb.key === 'minutes' || lb.key === 'free' || lb.key === 'summary' || lb.key === 'keywords') && (cur || vignette.length)) lb = null;
       if (lb && HEADER_KEYS[lb.key]) {
         if (lb.key === 'summary') { head.summaryLines = lb.rest ? [lb.rest] : []; block = 'summary'; }
         else { head[lb.key] = lb.rest; block = null; }
@@ -324,6 +338,7 @@
       index: n,
       data: {
         id: null, region_id: regionId || '', level: level, title: title,
+        topic: matchTopic(head.topic, regionId, regions), keywords: plain([head.keywords || '']),
         summary: plain(head.summaryLines || []), exam_tags: tags,
         vignette: vig, est_minutes: minutes > 0 ? Math.min(minutes, 120) : Math.max(4, Math.min(30, outSteps.length * 2 + 2)),
         sort: 0, is_free: /^(y|yes|true|1|free)/i.test(String(head.free || '').trim()), published: false,
@@ -357,6 +372,8 @@
     'Title: Crushing chest pain and a falling BP',
     'Region: Cardiovascular',
     'Level: Core',
+    'Topic: Acute coronary syndromes',
+    'Keywords: right ventricular infarction, RCA, V4R',
     'Tags: NEET PG, INI-CET, USMLE',
     'Summary: A 58-year-old smoker with 40 minutes of central chest pain.',
     'Free: no',

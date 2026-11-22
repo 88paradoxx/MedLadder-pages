@@ -112,3 +112,39 @@ html.dark #app .v3 .cs-btn { background: #4FB8A0; color: #0F1F1C; }
 /* images inside the case, findings, question and explanation */
 #app .v3 .cs img { display: block; max-width: 100%; height: auto; max-height: 420px; object-fit: contain; margin: 10px auto; border-radius: 12px; border: 1px solid var(--x-line); background: #fff; cursor: zoom-in; }
 #app .v3 .cs p:has(> img:only-child) { margin: 0; }
+
+/* ---- library: search, filters, topic chips, paging */
+#app .v3 .cs-search { position: relative; margin: 0 0 12px; }
+#app .v3 .cs-search input { width: 100%; min-height: 50px; padding: 0 44px 0 44px; border-radius: 16px; border: 1.5px solid var(--x-line2); background: var(--x-card); color: var(--x-ink); font: 500 16px var(--rr-sans, Inter, system-ui, sans-serif); box-shadow: var(--x-sh); -webkit-appearance: none; appearance: none; }
+#app .v3 .cs-search input::-webkit-search-cancel-button { display: none; }
+#app .v3 .cs-search input:focus { outline: 2px solid var(--x-acc); outline-offset: 1px; }
+#app .v3 .cs-search-ic { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--x-ink3); display: flex; pointer-events: none; }
+#app .v3 .cs-search-x { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border: 0; border-radius: 12px; background: transparent; color: var(--x-ink2); font-size: 16px; cursor: pointer; }
+#app .v3 .cs-sub { margin: 4px 0 0 !important; font-size: 13px !important; color: var(--x-acc-ink) !important; font-weight: 600; }
+
+#app .v3 .cs-chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; margin: 0 0 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+#app .v3 .cs-chips::-webkit-scrollbar { display: none; }
+#app .v3 .cs-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--x-line2); background: var(--x-card); color: var(--x-ink); font: 500 14px var(--rr-sans, Inter, system-ui, sans-serif); cursor: pointer; white-space: nowrap; }
+#app .v3 .cs-chip small { font-size: 12px; color: var(--x-ink3); font-weight: 600; }
+#app .v3 .cs-chip[aria-pressed="true"] { background: var(--x-acc); border-color: var(--x-acc); color: #fff; }
+#app .v3 .cs-chip[aria-pressed="true"] small { color: rgba(255, 255, 255, .85); }
+html.dark #app .v3 .cs-chip[aria-pressed="true"] { color: #0F1F1C; }
+html.dark #app .v3 .cs-chip[aria-pressed="true"] small { color: rgba(15, 31, 28, .75); }
+
+#app .v3 .cs-fbar { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+#app .v3 .cs-pills { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+#app .v3 .cs-pill { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--x-line2); background: transparent; color: var(--x-ink2); font: 500 13.5px var(--rr-sans, Inter, system-ui, sans-serif); cursor: pointer; }
+#app .v3 .cs-pill[aria-pressed="true"] { background: var(--x-accs); border-color: var(--x-acc); color: var(--x-acc-ink); font-weight: 600; }
+#app .v3 .cs-fbtn { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--x-line2); background: var(--x-card); color: var(--x-ink); font: 600 13.5px var(--rr-sans, Inter, system-ui, sans-serif); cursor: pointer; }
+#app .v3 .cs-fbtn b { min-width: 18px; height: 18px; border-radius: 9px; background: var(--x-acc); color: #fff; font-size: 11px; display: inline-grid; place-items: center; }
+#app .v3 .cs-fpanel { background: var(--x-card); border: 1px solid var(--x-line); border-radius: 14px; padding: 12px; margin: 0 0 10px; display: grid; gap: 10px; }
+#app .v3 .cs-frow { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: center; }
+#app .v3 .cs-frow > span { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--x-ink3); }
+#app .v3 .cs-select { min-height: 38px; border-radius: 10px; border: 1px solid var(--x-line2); background: var(--x-card2); color: var(--x-ink); padding: 0 10px; font: 500 14px var(--rr-sans, Inter, system-ui, sans-serif); max-width: 260px; }
+#app .v3 .cs-link { justify-self: start; background: none; border: 0; padding: 0; color: var(--x-acc-ink); font: 600 13.5px var(--rr-sans, Inter, system-ui, sans-serif); text-decoration: underline; cursor: pointer; }
+
+#app .v3 .cs-count { margin: 6px 0 10px; font-size: 13px; color: var(--x-ink3); font-weight: 600; }
+#app .v3 .cs-where { display: block; margin-top: 8px; font-size: 12.5px; color: var(--x-acc-ink); font-weight: 600; }
+#app .v3 .cs-where + .cs-case-t { margin-top: 3px; }
+#app .v3 .cs-done { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--x-ok); }
+#app .v3 .cs-more { margin: 14px 0 8px; }
