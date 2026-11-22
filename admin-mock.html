@@ -145,12 +145,13 @@
         <div id="csBulk" class="am-card cs-paste" hidden>
           <h3 style="margin-top:0">Paste one or more cases</h3>
           <p class="am-hint">Paste plain text (typed, from Word, or from ChatGPT). Each case starts with its own <code>Title:</code> line (a line of <code>---</code> between cases also works).
-            Every case is saved as a <b>draft</b>; check it in the editor, add images, then publish.
+            After <b>Check</b>, publish the ready cases straight away, or save them as drafts to review and add images first.
             <button type="button" class="am-linkbtn" data-fmt="csBulkEx">Show the format</button></p>
           <pre class="cs-fmt" id="csBulkEx" hidden></pre>
           <textarea id="csBulkText" rows="14" spellcheck="false" placeholder="Title: …&#10;Region: …&#10;Level: Core&#10;&#10;Case:&#10;…&#10;&#10;Step 1&#10;Q: …&#10;A. …&#10;B. …&#10;Answer: B&#10;Explanation: …&#10;Key point: …&#10;&#10;---&#10;&#10;Title: (next case)"></textarea>
           <div class="am-row cs-paste-acts">
             <button id="csBulkCheck" class="am-btn am-btn-primary" type="button">Check</button>
+            <button id="csBulkPub" class="am-btn am-btn-primary" type="button" hidden>Publish now</button>
             <button id="csBulkSave" class="am-btn" type="button" hidden>Save as drafts</button>
             <span id="csBulkMsg" class="am-hint"></span>
           </div>
