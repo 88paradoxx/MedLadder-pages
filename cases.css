@@ -208,7 +208,16 @@ html.dark #app .v3 .cs-side-i.on small { color: #0F1F1C; }
 }
 
 /* ---------- progress card + per-system bars ---------- */
-#app .v3 .cs-pc { display: flex !important; align-items: center; gap: 16px; padding: 16px !important; margin: 0 0 12px; }
+#app .v3 .cs-pc { display: block !important; padding: 16px 16px 0 !important; margin: 0 0 12px; overflow: hidden; }
+#app .v3 .cs-pc.go { cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+#app .v3 .cs-pc.go:hover { box-shadow: 0 6px 22px rgba(0,0,0,.18) !important; }
+#app .v3 .cs-pc.go:active { transform: scale(.99); }
+#app .v3 .cs-pc.go:focus-visible { outline: 2px solid var(--x-acc); outline-offset: 2px; }
+#app .v3 .cs-pc.busy { opacity: .6; pointer-events: none; }
+#app .v3 .cs-pc-top { display: flex; align-items: center; gap: 16px; }
+#app .v3 .cs-pc-cta { display: flex; align-items: center; justify-content: space-between; margin: 14px -16px 0; padding: 12px 16px; border-top: 1px solid var(--x-line); font-weight: 700; font-size: 14px; color: var(--x-acc-ink); }
+#app .v3 .cs-pc:not(.go) .cs-pc-cta { color: var(--x-ink3); }
+#app .v3 .cs-pc-cta svg { flex: none; }
 #app .v3 .cs-pc-ring { position: relative; flex: none; width: 76px; height: 76px; }
 #app .v3 .cs-pc-ring > b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 17px; color: var(--x-ink); }
 #app .v3 .cs-ring { width: 76px; height: 76px; transform: rotate(-90deg); }
@@ -221,9 +230,5 @@ html.dark #app .v3 .cs-side-i.on small { color: #0F1F1C; }
 #app .v3 .cs-pc-stats b { color: var(--x-ink); font-size: 15px; }
 #app .v3 .cs-pc-tip { margin: 8px 0 0; font-size: 12.5px; color: var(--x-ink2); line-height: 1.4; }
 #app .v3 .cs-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--x-acc-ink); text-decoration: underline; cursor: pointer; }
-#app .v3 .cs-pc-guest { justify-content: space-between; }
-#app .v3 .cs-pc-guest div b { display: block; font-size: 15px; color: var(--x-ink); }
-#app .v3 .cs-pc-guest div span { display: block; font-size: 12.5px; color: var(--x-ink2); margin-top: 2px; }
-#app .v3 .cs-pc-guest .cs-btn { width: auto; flex: none; margin: 0; min-height: 40px; padding: 8px 16px; font-size: 14px; border-radius: 12px; }
 #app .v3 .cs-bar { display: block; height: 5px; margin-top: 7px; border-radius: 99px; background: var(--x-line); overflow: hidden; }
 #app .v3 .cs-bar i { display: block; height: 100%; border-radius: inherit; background: var(--x-acc); }
