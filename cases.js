@@ -11,6 +11,9 @@
 
   var S = {
     ov: null,                     // cases_overview(): regions, counts, exam tags
+    seen: {},                     // case ids opened this session (guests have no saved attempts)
+    nextMode: null,               // set when a case was opened from a progress card: { region }
+    finishP: null,                // pending case_finish save, awaited before finding the next new case
     f: { region: null, topic: '', level: '', status: 'all', exam: '', q: '', sort: 'recommended' },
     list: { items: [], total: 0, topics: [], seq: 0, loading: false },
     from: 'hub',                  // where a case was opened from: hub (search), region, or mine
@@ -286,33 +289,86 @@
       if (b.getAttribute('aria-disabled')) return;
       b.onclick = function () { openRegion(b.getAttribute('data-region')); };
     });
-    var ps = el('csProgSign'); if (ps) ps.onclick = function () { B.openAuth('signin', { reason: 'Sign in to track your clinical case progress.' }); };
+    wireProgressCard();
     document.querySelectorAll('.cs [data-mine]').forEach(function (b) {
       b.onclick = function () { openMine(b.getAttribute('data-mine')); };
     });
   }
   function pct(a, b) { return b ? Math.round(a * 100 / b) : 0; }
-  // Overall progress: completion ring, accuracy, this week, and the weakest system to revise.
-  function progressCard() {
-    var O = S.ov || {};
+  // Progress card for all cases (r = null) or one system (r = region). Tapping it opens the
+  // next case the student has not attempted yet, in that scope.
+  function progressCard(r) {
+    var O = r || S.ov || {};
     if (!O.total) return '';
-    if (!B.user()) return '<section class="v3-card cs-pc cs-pc-guest"><div><b>Track your progress</b><span>Sign in to save scores and see how you are doing in each system.</span></div><button class="cs-btn" id="csProgSign">Sign in</button></section>';
-    var done = O.done || 0, comp = pct(done, O.total), acc = O.max ? pct(O.score, O.max) : null;
+    var user = !!B.user(), done = user ? (O.done || 0) : 0, comp = pct(done, O.total);
+    var acc = user && O.max ? pct(O.score, O.max) : null, left = O.total - done;
     var R = 26, C = 2 * Math.PI * R;
     var ring = '<svg class="cs-ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="' + R + '" class="cs-ring-bg"/>' +
-      '<circle cx="32" cy="32" r="' + R + '" class="cs-ring-fg" stroke-dasharray="' + (C * comp / 100).toFixed(1) + ' ' + C.toFixed(1) + '"/></svg>';
-    var weak = (O.regions || []).filter(function (r) { return r.max >= 3; })
-      .sort(function (a, b) { return a.score / a.max - b.score / b.max; })[0];
-    var tip = !done ? 'Start with any system below. Each case takes about 2 minutes.'
-      : weak && pct(weak.score, weak.max) < 70 ? 'Weakest so far: <button class="cs-link" data-region="' + esc(weak.id) + '">' + esc(weak.name) + '</button> (' + pct(weak.score, weak.max) + '% correct)'
-      : done < O.total ? (O.total - done) + ' cases left. Keep going.' : 'You have attempted every case.';
-    return '<section class="v3-card cs-pc" aria-label="Your progress">' +
-      '<div class="cs-pc-ring">' + ring + '<b>' + comp + '%</b></div>' +
-      '<div class="cs-pc-main"><b class="cs-pc-t">Your progress</b>' +
-      '<div class="cs-pc-stats"><span><b>' + done + '</b>/' + O.total + ' cases</span>' +
-      '<span><b>' + (acc == null ? '–' : acc + '%') + '</b> correct</span>' +
-      '<span><b>' + (O.week || 0) + '</b> this week</span></div>' +
-      '<p class="cs-pc-tip">' + tip + '</p></div></section>';
+      (comp ? '<circle cx="32" cy="32" r="' + R + '" class="cs-ring-fg" stroke-dasharray="' + (C * comp / 100).toFixed(1) + ' ' + C.toFixed(1) + '"/>' : '') + '</svg>';
+    var tip = '';
+    if (!user) tip = '<button class="cs-link" id="csProgSign">Sign in</button> to save your scores and track progress.';
+    else if (!r) {
+      var weak = (O.regions || []).filter(function (x) { return x.max >= 3; })
+        .sort(function (a, b) { return a.score / a.max - b.score / b.max; })[0];
+      if (weak && pct(weak.score, weak.max) < 70) tip = 'Weakest so far: <button class="cs-link" data-region="' + esc(weak.id) + '">' + esc(weak.name) + '</button> (' + pct(weak.score, weak.max) + '% correct)';
+    }
+    var cta = left > 0 ? (done ? 'Next new case' : 'Start first case') : 'All attempted';
+    var stats = user
+      ? '<span><b>' + done + '</b>/' + O.total + ' cases</span><span><b>' + (acc == null ? '–' : acc + '%') + '</b> correct</span>' +
+        (r ? '' : '<span><b>' + (O.week || 0) + '</b> this week</span>')
+      : '<span><b>' + O.total + '</b> cases</span>';
+    return '<section class="v3-card cs-pc' + (left > 0 ? ' go' : '') + '" id="csPc" data-next="' + esc(r ? r.id : '') + '"' +
+      (left > 0 ? ' role="button" tabindex="0" aria-label="' + esc(cta + (r ? ' in ' + r.name : '')) + '"' : '') + '>' +
+      '<div class="cs-pc-top"><div class="cs-pc-ring">' + ring + '<b>' + comp + '%</b></div>' +
+      '<div class="cs-pc-main"><b class="cs-pc-t">' + (r ? esc(r.name) + ' progress' : 'Your progress') + '</b>' +
+      '<div class="cs-pc-stats">' + stats + '</div>' + (tip ? '<p class="cs-pc-tip">' + tip + '</p>' : '') + '</div></div>' +
+      '<div class="cs-pc-cta"><span>' + cta + (left > 0 && user && done ? ' · ' + left + ' left' : '') + '</span>' + (left > 0 ? chev() : '') + '</div></section>';
+  }
+  function wireProgressCard() {
+    var card = el('csPc');
+    var sign = el('csProgSign');
+    if (sign) sign.onclick = function (e) { e.stopPropagation(); B.openAuth('signin', { reason: 'Sign in to track your clinical case progress.' }); };
+    if (!card || !card.classList.contains('go')) return;
+    card.querySelectorAll('.cs-link[data-region]').forEach(function (b) {
+      b.onclick = function (e) { e.stopPropagation(); openRegion(b.getAttribute('data-region')); };
+    });
+    var go = function () { startNext(card.getAttribute('data-next') || '', card); };
+    card.onclick = go;
+    card.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+  }
+  // Open the first case (in syllabus order) the student has not attempted, in a system or overall.
+  // Guests have no saved attempts, so cases they opened this session are skipped too.
+  function startNext(region, btn, tries) {
+    if (btn && btn.classList) btn.classList.add('busy');
+    var wait = S.finishP || Promise.resolve();
+    var found = null, locked = false;
+    function page(off) {
+      return rpc('cases_list', { p_region: region || null, p_topic: null, p_level: null, p_status: 'new', p_exam: null, p_q: null,
+        p_sort: 'recommended', p_offset: off, p_limit: 50 }).then(function (d) {
+        var items = (d && d.items) || [];
+        items.forEach(function (c) {
+          if (found || S.seen[c.id]) return;
+          if (c.locked) locked = true; else found = c;
+        });
+        if (!found && items.length === 50 && off < 300) return page(off + 50);
+      });
+    }
+    return wait.catch(function () { }).then(function () { return page(0); }).then(function () {
+      if (btn && btn.classList) btn.classList.remove('busy');
+      if (found) {
+        S.from = region ? 'region' : 'hub';
+        if (region) S.f.region = region;
+        S.nextMode = { region: region };
+        openCase(found.id, true);
+        return;
+      }
+      if (locked) { B.openPro('cases'); return; }
+      var r = region && regionById(region);
+      B.toast('You have attempted every case' + (r ? ' in ' + r.name : '') + '. Review them from "Completed".');
+    }).catch(function () {
+      if (btn && btn.classList) btn.classList.remove('busy');
+      B.toast('Could not load the next case. Check your connection.', 'error');
+    });
   }
   // Continue / Bookmarked / Completed, for signed-in users.
   function mineTiles() {
@@ -364,13 +420,14 @@
     if (!r) { openHub(); return; }
     view('/cases/' + r.id, 'Cases – ' + r.name);
     var body = '<section class="cs-head cs-head-sm"><span class="cs-region-ic big" aria-hidden="true">' + esc(r.icon) + '</span><div><h1>' + esc(r.name) + '</h1><p>' + esc(r.blurb) + '</p>' +
-      (r.total ? '<p class="cs-sub">' + plural(r.total, 'case') + (r.done ? ' · ' + r.done + ' done' : '') + '</p>' : '') + '</div></section>' +
+      '</div></section>' + progressCard(r) +
       searchBox('Search in ' + r.name + '…') +
       '<div class="cs-rwrap"><aside class="cs-side" id="csSide" aria-label="' + esc(r.name) + ' topics"></aside>' +
       '<div class="cs-rmain"><button class="cs-topicbar" id="csTopicBar" type="button" aria-haspopup="true"></button>' +
       '<div id="csFilters">' + filterBar() + '</div><div id="csResults"></div></div></div>' +
       '<div class="cs-scrim" id="csScrim" hidden></div>';
     paint('cases', body, function () { closeTopics(); S.f.q = ''; openHub(); });
+    wireProgressCard();
     wireBrowse(null);
     drawTopics();
     el('csTopicBar').onclick = openTopics;
@@ -379,7 +436,9 @@
   }
 
   // ---------- player ----------
-  function openCase(id) {
+  function openCase(id, viaNext) {
+    if (!viaNext) S.nextMode = null;
+    S.seen[id] = 1;
     closeTopics();
     paint('cases-play', '<p class="cs-muted cs-pad">Opening case…</p>', backToList);
     rpc('case_open', { p_case: id }).then(function (c) {
@@ -539,7 +598,10 @@
     var rg = el('csResumeGo'); if (rg) rg.onclick = resumePlay;
     var rs = el('csRestart'); if (rs) rs.onclick = restartPlay;
     var more = el('csMore'); if (more) more.onclick = backFromPlay;
-    var nextCase = el('csNextCase'); if (nextCase) nextCase.onclick = function () { goNextCase(nextCase); };
+    var nextCase = el('csNextCase'); if (nextCase) nextCase.onclick = function () {
+      if (S.nextMode) { nextCase.disabled = true; nextCase.textContent = 'Loading…'; startNext(S.nextMode.region, null).then(function () { nextCase.disabled = false; nextCase.textContent = 'Next new case'; }); }
+      else goNextCase(nextCase);
+    };
     var sign = el('csSign'); if (sign) sign.onclick = function () { B.openAuth('signup', { reason: 'Create a free account to save your case scores.' }); };
   }
   function finish() {
@@ -548,7 +610,8 @@
     (S.list.items || []).forEach(function (c) { if (c.id === P.c.id) c.tries = (c.tries || 0) + 1; });
     ev('case_finish', { case_id: P.c.id, score: P.score, total: P.c.total });
     drawPlay('csSummary');
-    if (B.user()) rpc('case_finish', { p_case: P.c.id, p_score: P.score }).then(function (r) {
+    S.finishP = null;
+    if (B.user()) S.finishP = rpc('case_finish', { p_case: P.c.id, p_score: P.score }).then(function (r) {
       if (!r) return;
       var b = el('csBestLine'); if (b) b.textContent = 'Best ' + r.best + '/' + P.c.total + ' · attempt ' + r.tries;
     }).catch(function () { });
@@ -581,11 +644,11 @@
     var points = P.answers.map(function (a, i) {
       return a.learning_point ? '<li class="' + (a.correct ? 'ok' : 'bad') + '"><span class="cs-sum-n">' + (i + 1) + '</span>' + esc(a.learning_point) + '</li>' : '';
     }).join('');
-    var nc = nextCaseFor(P);
+    var nc = S.nextMode ? true : nextCaseFor(P);
     return '<section class="v3-card cs-summary" id="csSummary"><div class="cs-score"><b>' + sc + '</b><span>/ ' + n + '</span></div>' +
       '<h2>' + msg + '</h2><p class="cs-muted" id="csBestLine">' + (B.user() ? '' : 'Sign in to keep a record of your case scores.') + '</p>' +
       (points ? '<h3>Key points from this case</h3><ol class="cs-sum">' + points + '</ol>' : '') +
-      '<div class="cs-sum-btns">' + (nc ? '<button class="cs-btn" id="csNextCase">Next case</button>' : '') +
+      '<div class="cs-sum-btns">' + (nc ? '<button class="cs-btn" id="csNextCase">' + (S.nextMode ? 'Next new case' : 'Next case') + '</button>' : '') +
       '<button class="cs-btn ghost" id="csAgain">Try again</button><button class="cs-btn ghost" id="csMore">' + (S.from === 'hub' ? 'Back to search' : 'Back to the list') + '</button>' +
       (B.user() ? '' : '<button class="cs-btn ghost" id="csSign">Create free account</button>') + '</div></section>';
   }
