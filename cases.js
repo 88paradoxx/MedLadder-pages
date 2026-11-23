@@ -296,7 +296,7 @@
   function progressCard() {
     var O = S.ov || {};
     if (!O.total) return '';
-    if (!B.user()) return '<section class="v3-card cs-prog cs-prog-guest"><div><b>Track your progress</b><span>Sign in to save scores and see how you are doing in each system.</span></div><button class="cs-btn" id="csProgSign">Sign in</button></section>';
+    if (!B.user()) return '<section class="v3-card cs-pc cs-pc-guest"><div><b>Track your progress</b><span>Sign in to save scores and see how you are doing in each system.</span></div><button class="cs-btn" id="csProgSign">Sign in</button></section>';
     var done = O.done || 0, comp = pct(done, O.total), acc = O.max ? pct(O.score, O.max) : null;
     var R = 26, C = 2 * Math.PI * R;
     var ring = '<svg class="cs-ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="' + R + '" class="cs-ring-bg"/>' +
@@ -306,13 +306,13 @@
     var tip = !done ? 'Start with any system below. Each case takes about 2 minutes.'
       : weak && pct(weak.score, weak.max) < 70 ? 'Weakest so far: <button class="cs-link" data-region="' + esc(weak.id) + '">' + esc(weak.name) + '</button> (' + pct(weak.score, weak.max) + '% correct)'
       : done < O.total ? (O.total - done) + ' cases left. Keep going.' : 'You have attempted every case.';
-    return '<section class="v3-card cs-prog" aria-label="Your progress">' +
-      '<div class="cs-prog-ring">' + ring + '<b>' + comp + '%</b></div>' +
-      '<div class="cs-prog-main"><b class="cs-prog-t">Your progress</b>' +
-      '<div class="cs-prog-stats"><span><b>' + done + '</b>/' + O.total + ' cases</span>' +
+    return '<section class="v3-card cs-pc" aria-label="Your progress">' +
+      '<div class="cs-pc-ring">' + ring + '<b>' + comp + '%</b></div>' +
+      '<div class="cs-pc-main"><b class="cs-pc-t">Your progress</b>' +
+      '<div class="cs-pc-stats"><span><b>' + done + '</b>/' + O.total + ' cases</span>' +
       '<span><b>' + (acc == null ? '–' : acc + '%') + '</b> correct</span>' +
       '<span><b>' + (O.week || 0) + '</b> this week</span></div>' +
-      '<p class="cs-prog-tip">' + tip + '</p></div></section>';
+      '<p class="cs-pc-tip">' + tip + '</p></div></section>';
   }
   // Continue / Bookmarked / Completed, for signed-in users.
   function mineTiles() {
