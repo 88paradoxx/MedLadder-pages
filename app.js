@@ -422,6 +422,7 @@ window.addEventListener('error', function (ev) {
           if (state.screen === 'modules' && state.subjectId) renderModuleList(state.subjectId);
           else if (state.screen === 'setup' && state.subjectId && state.moduleId) renderSetup(state.subjectId, state.moduleId);
           else if (state.screen === 'home') renderHome(true);
+          else if (state.screen === 'cases' && window.MLCases) window.MLCases.refresh();
           window.scrollTo(0, y);
         } catch (e) { console.warn('rerenderLockedScreens:', e); }
       }
@@ -2251,6 +2252,7 @@ window.addEventListener('error', function (ev) {
         else if (sc === 'mock') renderMockV2();
         else if (sc === 'profile') renderProfileV2();
         else if (sc === 'bookmarks') renderBookmarks();
+        else if (sc === 'cases' && window.MLCases) window.MLCases.refresh();
       }
 
       // "Reset all progress" must leave nothing for the dashboard to count:
@@ -3643,6 +3645,8 @@ window.addEventListener('error', function (ev) {
               resetProState();
               loadUserProgress(currentUser.id);
               setTimeout(qrRecheck, 0);
+              // Clinical cases is drawn from the server per user: redraw it for the signed-in user.
+              setTimeout(function () { if (state.screen === 'cases' && window.MLCases) window.MLCases.refresh(); }, 0);
               // Deferred: supabase-js must not be re-entered from inside this
               // callback. Anything practised signed-out moves into the account.
               setTimeout(function () {
