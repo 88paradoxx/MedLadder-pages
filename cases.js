@@ -259,18 +259,18 @@
     view('/cases', 'Clinical cases');
     var O = S.ov;
     var tiles = (O.regions || []).map(function (r) {
-      var meta = r.total ? plural(r.total, 'case') + (r.done ? ' · ' + r.done + ' done' : '') + (!O.is_pro && r.free && r.free < r.total ? ' · ' + r.free + ' free' : '') : 'Coming soon';
+      var meta = r.total ? r.done + ' / ' + r.total + ' done' + (r.max ? ' · ' + pct(r.score, r.max) + '% correct' : '') + (!O.is_pro && r.free && r.free < r.total ? ' · ' + r.free + ' free' : '') : 'Coming soon';
+      var bar = r.total ? '<span class="cs-bar" aria-hidden="true"><i style="width:' + pct(r.done, r.total) + '%"></i></span>' : '';
       return '<button class="v3-card cs-region' + (r.total ? '' : ' empty') + '" data-region="' + esc(r.id) + '"' + (r.total ? '' : ' aria-disabled="true"') + '>' +
         '<span class="cs-region-ic" aria-hidden="true">' + esc(r.icon) + '</span>' +
-        '<span class="cs-region-tx"><b>' + esc(r.name) + '</b><small>' + esc(r.blurb) + '</small><em>' + meta + '</em></span>' +
+        '<span class="cs-region-tx"><b>' + esc(r.name) + '</b><small>' + esc(r.blurb) + '</small><em>' + meta + '</em>' + bar + '</span>' +
         (r.total ? '<span class="cs-region-go">' + chev() + '</span>' : '') + '</button>';
     }).join('');
     var body =
       '<section class="cs-head"><span class="v3-chip">Clinical cases</span>' +
       '<h1>Think like the exam, one case at a time</h1>' +
       '<p>Long vignettes that unfold step by step, in the style of NEET SS, INI-CET and USMLE. <b>Core</b> builds the essentials; <b>Advanced</b> is for super-speciality level.</p>' +
-      (O.total ? '<div class="cs-stat"><b>' + O.done + '</b> of <b>' + O.total + '</b> cases attempted</div>' : '') +
-      '</section>' + mineTiles() + searchBox('Search symptoms, diagnoses…') +
+      '</section>' + progressCard() + mineTiles() + searchBox('Search symptoms, diagnoses…') +
       '<div id="csSearchArea"' + (S.f.q ? '' : ' hidden') + '><div id="csFilters">' + filterBar() + '</div><div id="csResults"></div></div>' +
       '<div id="csGrid"' + (S.f.q ? ' hidden' : '') + '><div class="cs-regions">' + tiles + '</div>' +
       (O.total ? '' : '<p class="cs-muted cs-center">New cases are being written and reviewed. Check back soon.</p>') + '</div>';
@@ -286,9 +286,33 @@
       if (b.getAttribute('aria-disabled')) return;
       b.onclick = function () { openRegion(b.getAttribute('data-region')); };
     });
+    var ps = el('csProgSign'); if (ps) ps.onclick = function () { B.openAuth('signin', { reason: 'Sign in to track your clinical case progress.' }); };
     document.querySelectorAll('.cs [data-mine]').forEach(function (b) {
       b.onclick = function () { openMine(b.getAttribute('data-mine')); };
     });
+  }
+  function pct(a, b) { return b ? Math.round(a * 100 / b) : 0; }
+  // Overall progress: completion ring, accuracy, this week, and the weakest system to revise.
+  function progressCard() {
+    var O = S.ov || {};
+    if (!O.total) return '';
+    if (!B.user()) return '<section class="v3-card cs-prog cs-prog-guest"><div><b>Track your progress</b><span>Sign in to save scores and see how you are doing in each system.</span></div><button class="cs-btn" id="csProgSign">Sign in</button></section>';
+    var done = O.done || 0, comp = pct(done, O.total), acc = O.max ? pct(O.score, O.max) : null;
+    var R = 26, C = 2 * Math.PI * R;
+    var ring = '<svg class="cs-ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="' + R + '" class="cs-ring-bg"/>' +
+      '<circle cx="32" cy="32" r="' + R + '" class="cs-ring-fg" stroke-dasharray="' + (C * comp / 100).toFixed(1) + ' ' + C.toFixed(1) + '"/></svg>';
+    var weak = (O.regions || []).filter(function (r) { return r.max >= 3; })
+      .sort(function (a, b) { return a.score / a.max - b.score / b.max; })[0];
+    var tip = !done ? 'Start with any system below. Each case takes about 2 minutes.'
+      : weak && pct(weak.score, weak.max) < 70 ? 'Weakest so far: <button class="cs-link" data-region="' + esc(weak.id) + '">' + esc(weak.name) + '</button> (' + pct(weak.score, weak.max) + '% correct)'
+      : done < O.total ? (O.total - done) + ' cases left. Keep going.' : 'You have attempted every case.';
+    return '<section class="v3-card cs-prog" aria-label="Your progress">' +
+      '<div class="cs-prog-ring">' + ring + '<b>' + comp + '%</b></div>' +
+      '<div class="cs-prog-main"><b class="cs-prog-t">Your progress</b>' +
+      '<div class="cs-prog-stats"><span><b>' + done + '</b>/' + O.total + ' cases</span>' +
+      '<span><b>' + (acc == null ? '–' : acc + '%') + '</b> correct</span>' +
+      '<span><b>' + (O.week || 0) + '</b> this week</span></div>' +
+      '<p class="cs-prog-tip">' + tip + '</p></div></section>';
   }
   // Continue / Bookmarked / Completed, for signed-in users.
   function mineTiles() {
