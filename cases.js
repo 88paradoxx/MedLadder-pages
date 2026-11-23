@@ -515,12 +515,13 @@
     var rg = el('csResumeGo'); if (rg) rg.onclick = resumePlay;
     var rs = el('csRestart'); if (rs) rs.onclick = restartPlay;
     var more = el('csMore'); if (more) more.onclick = backFromPlay;
-    var nextCase = el('csNextCase'); if (nextCase) nextCase.onclick = function () { openCase(nextCase.getAttribute('data-id')); };
+    var nextCase = el('csNextCase'); if (nextCase) nextCase.onclick = function () { goNextCase(nextCase); };
     var sign = el('csSign'); if (sign) sign.onclick = function () { B.openAuth('signup', { reason: 'Create a free account to save your case scores.' }); };
   }
   function finish() {
     var P = S.play;
     P.finished = true;
+    (S.list.items || []).forEach(function (c) { if (c.id === P.c.id) c.tries = (c.tries || 0) + 1; });
     ev('case_finish', { case_id: P.c.id, score: P.score, total: P.c.total });
     drawPlay('csSummary');
     if (B.user()) rpc('case_finish', { p_case: P.c.id, p_score: P.score }).then(function (r) {
@@ -529,11 +530,26 @@
     }).catch(function () { });
   }
   // Next case: the following open case in the list it was opened from.
+  // The list is paged (20 at a time), so at the end of what is loaded we fetch the next page
+  // instead of wrapping back to the start. Only once the whole list is loaded do we wrap, and
+  // then only to cases not yet attempted.
   function nextCaseFor(P) {
-    var list = (S.list.items || []).filter(function (c) { return !c.locked; });
+    var L = S.list, list = (L.items || []).filter(function (c) { return !c.locked; });
     var i = list.map(function (c) { return c.id; }).indexOf(P.c.id);
-    for (var j = 1; j <= list.length; j++) { var c = list[(i + j) % list.length]; if (c && c.id !== P.c.id) return c; }
+    for (var j = i + 1; j < list.length; j++) if (list[j].id !== P.c.id) return list[j];
+    if ((L.total || 0) > (L.items || []).length) return { more: true };
+    for (var k = 0; k < list.length; k++) if (list[k].id !== P.c.id && !list[k].tries) return list[k];
     return null;
+  }
+  function goNextCase(btn, tries) {
+    var nc = nextCaseFor(S.play);
+    if (nc && nc.id) return openCase(nc.id);
+    if (!nc || (tries || 0) > 5) { if (btn) btn.remove(); return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+    // With a New or In-progress filter, finished cases drop out of the server list, so an
+    // offset would skip cases: reload the list from the top instead.
+    var st = S.f.status, shrinks = st === 'new' || st === 'progress';
+    fetchList(shrinks, shrinks).then(function () { goNextCase(btn, (tries || 0) + 1); });
   }
   function summaryHtml() {
     var P = S.play, n = P.c.total, sc = P.score, pct = Math.round(sc * 100 / (n || 1));
@@ -545,7 +561,7 @@
     return '<section class="v3-card cs-summary" id="csSummary"><div class="cs-score"><b>' + sc + '</b><span>/ ' + n + '</span></div>' +
       '<h2>' + msg + '</h2><p class="cs-muted" id="csBestLine">' + (B.user() ? '' : 'Sign in to keep a record of your case scores.') + '</p>' +
       (points ? '<h3>Key points from this case</h3><ol class="cs-sum">' + points + '</ol>' : '') +
-      '<div class="cs-sum-btns">' + (nc ? '<button class="cs-btn" id="csNextCase" data-id="' + esc(nc.id) + '">Next case</button>' : '') +
+      '<div class="cs-sum-btns">' + (nc ? '<button class="cs-btn" id="csNextCase">Next case</button>' : '') +
       '<button class="cs-btn ghost" id="csAgain">Try again</button><button class="cs-btn ghost" id="csMore">' + (S.from === 'hub' ? 'Back to search' : 'Back to the list') + '</button>' +
       (B.user() ? '' : '<button class="cs-btn ghost" id="csSign">Create free account</button>') + '</div></section>';
   }
