@@ -9767,6 +9767,12 @@ window.addEventListener('error', function (ev) {
           captureOpenPyqDeepLink();
           return;
         }
+        // Pre-rendered Clinical Cases hub pages (/clinical-cases/*) ship full static HTML: leave them alone.
+        if (path === '/clinical-cases' || path.indexOf('/clinical-cases/') === 0) {
+          // Same as the PYQ guard above: this is an SEO page, not home.
+          state.screen = 'seo';
+          return;
+        }
         // Other pre-rendered static pages ship full HTML too: leave them alone.
         // (Without this, the router falls through to renderHome() and wipes them,
         // the same bug the /pyqs guard fixed.)
