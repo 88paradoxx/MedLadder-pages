@@ -153,7 +153,9 @@ function buildRegionPage(html, r, all, today) {
   lint(r.slug, title, desc);
   for (const [attr, name] of [['name', 'description'], ['property', 'og:description'], ['name', 'twitter:description']]) html = setMeta(html, attr, name, desc);
   for (const [attr, name] of [['property', 'og:title'], ['name', 'twitter:title']]) html = setMeta(html, attr, name, fill(seo.ogTitle, r));
-  html = setMeta(html, 'name', 'keywords', seo.keywords);
+  html = setMeta(html, 'name', 'keywords', `${seo.keywords}, NEET SS ${seo.subject} questions, USMLE Step 2 CK ${seo.subject} cases, MBBS final year ${seo.subject} cases, MBBS university exam clinical cases`);
+  // Intro names every exam the cases serve, MBBS included.
+  html = html.replace(/(<p class="subtitle"[^>]*>[^<]*?cases for )(?:MBBS finals, )?NEET PG, INI-CET, FMGE, NEET SS and USMLE/, '$1MBBS finals, NEET PG, INI-CET, FMGE, NEET SS and USMLE');
   html = replaceOnce(html, /<title>[^<]*<\/title>/, () => `<title>${escHtml(title)}</title>`, 'title');
   html = replaceOnce(html, /(<h1 class="title">)[\s\S]*?(<span class="brand-gradient">)/, (m, a, b) => `${a}${seo.h1} ${b}`, 'h1');
 
@@ -200,7 +202,9 @@ function buildRegionPage(html, r, all, today) {
 `;
   if (html.includes('<!-- cases-hub:focus -->')) html = replaceOnce(html, /<!-- cases-hub:focus -->[\s\S]*?<!-- \/cases-hub:focus -->\n/, () => focusBlock, 'focus block');
   else html = replaceOnce(html, /<section aria-labelledby="caseTopics"/, (m) => focusBlock + m, 'focus anchor');
-  const faqBlock = '<!-- cases-hub:faq -->' + seo.faqs.map(([q, a]) => `<details class="seo-faq-card"><summary>${escHtml(q)}</summary><p>${escHtml(a)}</p></details>`).join('') + '<!-- /cases-hub:faq -->';
+  const examsFaq = [`Are these ${seo.subject} cases useful for MBBS exams, NEET SS and USMLE?`,
+    `Yes. MBBS final-year and university exams use the same case-based format, so the Core cases double as viva and long-case practice. For NEET SS (${seo.ssGroup} group, including ${seo.ssCourses}), the Advanced cases go to super-specialty depth. For USMLE Step 2 CK, every case is a next-best-step vignette in the same style. Where Indian guidelines differ from US practice, the explanation says so.`];
+  const faqBlock = '<!-- cases-hub:faq -->' + [...seo.faqs, examsFaq].map(([q, a]) => `<details class="seo-faq-card"><summary>${escHtml(q)}</summary><p>${escHtml(a)}</p></details>`).join('') + '<!-- /cases-hub:faq -->';
   if (html.includes('<!-- cases-hub:faq -->')) html = replaceOnce(html, /<!-- cases-hub:faq -->[\s\S]*?<!-- \/cases-hub:faq -->/, () => faqBlock, 'faq block');
   else html = replaceOnce(html, /(<p id="hubFaqFree">[\s\S]*?<\/p><\/details>)/, (m) => m + faqBlock, 'faq anchor');
   html = upsertJsonLd(html, 'FAQPage', faqSchemaFromHtml(html));
@@ -237,7 +241,7 @@ function buildIndex(template, all, today) {
 
   let h = head
     .replace(/<title>[^<]*<\/title>/, `<title>${escHtml(title)}</title>`)
-    .replace(/(<meta name="keywords" content=")[^"]*/, '$1clinical cases, case-based questions, clinical vignettes, NEET PG clinical cases, INI-CET clinical cases, FMGE clinical cases, NEET SS clinical cases, MedLadder clinical cases')
+    .replace(/(<meta name="keywords" content=")[^"]*/, '$1clinical cases, case-based questions, clinical vignettes, NEET PG clinical cases, INI-CET clinical cases, FMGE clinical cases, NEET SS clinical cases, USMLE Step 2 CK clinical cases, MBBS final year clinical cases, MBBS university exam case questions, MedLadder clinical cases')
     .replace(/(<link rel="canonical" href=")[^"]*/, `$1${url}`)
     .replace(/(<meta property="og:url" content=")[^"]*/, `$1${url}`)
     .replace(/(<meta property="og:title" content=")[^"]*/, () => '<meta property="og:title" content="' + escHtml(INDEX.ogTitle))
@@ -254,7 +258,7 @@ function buildIndex(template, all, today) {
       { '@type': 'Question', name: 'How many clinical cases are there on MedLadder?', acceptedAnswer: { '@type': 'Answer', text: `MedLadder has ${total} clinical cases across ${regions.length} body systems and ${topics} topics: ${core} Core and ${total - core} Advanced. ${free} are free to play.` } },
       { '@type': 'Question', name: 'Are the clinical cases free?', acceptedAnswer: { '@type': 'Answer', text: `Every body system has ${regions[0].free} free cases — ${free} in total — that play without a subscription. The rest need MedLadder Pro, which also unlocks the full QBank and past papers.` } },
       { '@type': 'Question', name: 'What is the difference between Core and Advanced cases?', acceptedAnswer: { '@type': 'Answer', text: 'Core cases cover the presentations every NEET PG and FMGE candidate must manage. Advanced cases are written at INI-CET and NEET SS difficulty, with harder differentials, exceptions and second-line decisions.' } },
-      { '@type': 'Question', name: 'Which exams are the clinical cases for?', acceptedAnswer: { '@type': 'Answer', text: 'NEET PG, INI-CET and FMGE first, and they work for NEET SS and USMLE-style practice too. Each case is a patient vignette where you choose the next step before the explanation and learning point appear.' } },
+      { '@type': 'Question', name: 'Which exams are the clinical cases for?', acceptedAnswer: { '@type': 'Answer', text: 'NEET PG, INI-CET, FMGE and NEET SS, plus MBBS final-year and university exams and USMLE Step 2 CK. Each case is a patient vignette where you choose the next step before the explanation and learning point appear, the format all of these exams now use.' } },
     ] },
   ];
   h += ld.map((o) => `  <script type="application/ld+json">\n${JSON.stringify(o, null, 2)}\n  </script>\n`).join('') + '</head>\n';
@@ -270,7 +274,7 @@ function buildIndex(template, all, today) {
       <div class="hero-wrap" style="text-align:center;padding:32px 18px 26px;margin-bottom:28px;">
         <div class="hero-eyebrow">Clinical Cases · MedLadder</div>
         <h1 class="title">Clinical Cases <span class="brand-gradient">by Body System</span></h1>
-        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">Case-based practice for NEET PG, INI-CET, FMGE, NEET SS and USMLE. A patient presents, you choose the next step, and the explanation shows why, one case at a time.</p>
+        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">Case-based practice for MBBS finals, NEET PG, INI-CET, FMGE, NEET SS and USMLE. A patient presents, you choose the next step, and the explanation shows why, one case at a time.</p>
         <div class="bento-bar" style="max-width:680px;margin:18px auto 24px;">
           <div class="bento-stat"><div class="bento-stat-num" id="hubTotal">${total}</div><div class="bento-stat-lbl">Cases</div></div>
           <div class="bento-stat"><div class="bento-stat-num" id="hubFree">${free} free</div><div class="bento-stat-lbl">Free to play</div></div>

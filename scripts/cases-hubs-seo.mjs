@@ -16,6 +16,7 @@ export const INDEX = {
 
 export const HUBS = {
   cardiovascular: {
+    ssGroup: 'Medicine', ssCourses: 'DM Cardiology', subject: 'cardiology',
     title: 'Cardiology Clinical Cases for NEET PG & INI-CET | MedLadder',
     ogTitle: 'Cardiology Clinical Cases — STEMI, AF, dissection & more',
     h1: 'Cardiology',
@@ -30,6 +31,7 @@ export const HUBS = {
     ],
   },
   respiratory: {
+    ssGroup: 'Medicine', ssCourses: 'DM Pulmonary Medicine', subject: 'respiratory medicine',
     title: 'Respiratory Medicine Clinical Cases for NEET PG | MedLadder',
     ogTitle: 'Respiratory Clinical Cases — COPD, asthma, PE, pneumonia',
     h1: 'Respiratory',
@@ -44,6 +46,7 @@ export const HUBS = {
     ],
   },
   neurology: {
+    ssGroup: 'Medicine', ssCourses: 'DM Neurology', subject: 'neurology',
     title: 'Neurology Clinical Cases for NEET PG & INI-CET | MedLadder',
     ogTitle: 'Neurology Clinical Cases — stroke, seizures, GBS & coma',
     h1: 'Neurology',
@@ -58,6 +61,7 @@ export const HUBS = {
     ],
   },
   'gastro-hepatobiliary': {
+    ssGroup: 'Medicine and Surgery', ssCourses: 'DM Gastroenterology and DM Hepatology', subject: 'gastroenterology',
     title: 'GI & Hepatology Clinical Cases for NEET PG | MedLadder',
     ogTitle: 'GI & Liver Clinical Cases — GI bleed, pancreatitis, cirrhosis',
     h1: 'GI &amp; Hepatology',
@@ -72,6 +76,7 @@ export const HUBS = {
     ],
   },
   'renal-electrolytes': {
+    ssGroup: 'Medicine', ssCourses: 'DM Nephrology', subject: 'nephrology',
     title: 'Nephrology Clinical Cases for NEET PG & INI-CET | MedLadder',
     ogTitle: 'Nephrology & Electrolyte Cases — AKI, hyperkalaemia, acid–base',
     h1: 'Nephrology &amp; Electrolytes',
@@ -86,6 +91,7 @@ export const HUBS = {
     ],
   },
   'endocrine-metabolic': {
+    ssGroup: 'Medicine', ssCourses: 'DM Endocrinology', subject: 'endocrinology',
     title: 'Endocrinology Clinical Cases for NEET PG & INI-CET | MedLadder',
     ogTitle: 'Endocrinology Clinical Cases — DKA, thyroid, adrenal, calcium',
     h1: 'Endocrinology',
@@ -100,6 +106,7 @@ export const HUBS = {
     ],
   },
   'haematology-oncology': {
+    ssGroup: 'Medicine', ssCourses: 'DM Clinical Haematology and DM Medical Oncology', subject: 'haematology',
     title: 'Haematology & Oncology Clinical Cases for NEET PG | MedLadder',
     ogTitle: 'Haematology & Oncology Cases — anaemia, leukaemia, DIC',
     h1: 'Haematology &amp; Oncology',
@@ -114,6 +121,7 @@ export const HUBS = {
     ],
   },
   'infectious-disease': {
+    ssGroup: 'Medicine', ssCourses: 'DM Infectious Diseases', subject: 'infectious diseases',
     title: 'Infectious Disease Clinical Cases for NEET PG & FMGE | MedLadder',
     ogTitle: 'Infectious Disease Cases — malaria, dengue, sepsis, HIV, TB',
     h1: 'Infectious Disease',
@@ -128,6 +136,7 @@ export const HUBS = {
     ],
   },
   'musculoskeletal-rheumatology': {
+    ssGroup: 'Medicine and Orthopaedics', ssCourses: 'DM Rheumatology', subject: 'rheumatology',
     title: 'Rheumatology & Ortho Clinical Cases for NEET PG | MedLadder',
     ogTitle: 'Rheumatology & Ortho Cases — RA, gout, lupus, vasculitis',
     h1: 'Rheumatology &amp; Ortho',
@@ -142,6 +151,7 @@ export const HUBS = {
     ],
   },
   'obstetrics-gynaecology': {
+    ssGroup: 'Obstetrics & Gynaecology', ssCourses: 'MCh Gynaecological Oncology and DM Reproductive Medicine', subject: 'obstetrics and gynaecology',
     title: 'OBG Clinical Cases for NEET PG & INI-CET | MedLadder',
     ogTitle: 'Obstetrics & Gynaecology Cases — PPH, preeclampsia, ectopic',
     h1: 'Obstetrics &amp; Gynaecology',
@@ -156,6 +166,7 @@ export const HUBS = {
     ],
   },
   'paediatrics-neonatology': {
+    ssGroup: 'Paediatrics', ssCourses: 'DM Neonatology and the paediatric super-specialties', subject: 'paediatrics',
     title: 'Paediatrics Clinical Cases for NEET PG & INI-CET | MedLadder',
     ogTitle: 'Paediatrics Clinical Cases — neonates, dehydration, emergencies',
     h1: 'Paediatrics',
@@ -170,6 +181,7 @@ export const HUBS = {
     ],
   },
   psychiatry: {
+    ssGroup: 'Psychiatry', ssCourses: 'DM Child & Adolescent and DM Addiction Psychiatry', subject: 'psychiatry',
     title: 'Psychiatry Clinical Cases for NEET PG & INI-CET | MedLadder',
     ogTitle: 'Psychiatry Clinical Cases — psychosis, mood, withdrawal, MHCA',
     h1: 'Psychiatry',
@@ -184,6 +196,7 @@ export const HUBS = {
     ],
   },
   'emergency-critical-care': {
+    ssGroup: 'Anaesthesiology and Medicine', ssCourses: 'DM Critical Care Medicine', subject: 'emergency medicine and critical care',
     title: 'Emergency Medicine & ICU Clinical Cases for NEET PG | MedLadder',
     ogTitle: 'Emergency & ICU Clinical Cases — trauma, poisoning, ACLS',
     h1: 'Emergency &amp; Critical Care',
