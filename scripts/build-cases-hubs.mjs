@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { HUBS, INDEX } from './cases-hubs-seo.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = 'https://medladder.top';
@@ -84,6 +85,18 @@ function summarise(raw) {
 }
 
 // ---------------------------------------------------------------- page edits
+const fill = (tpl, r) => tpl.replace(/\{(total|free|core|advanced|topics)\}/g, (m, k) => String(k === 'topics' ? r.topics.length : r[k]));
+const unesc = (s) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+const warnings = [];
+function lint(label, title, desc) {
+  if (title.length > 66) warnings.push(`${label}: title ${title.length} chars`);
+  if (desc.length > 160) warnings.push(`${label}: description ${desc.length} chars`);
+}
+// FAQPage schema mirrors the visible FAQ exactly.
+function faqSchemaFromHtml(html) {
+  const qs = [...html.matchAll(/<details class="seo-faq-card"><summary>([\s\S]*?)<\/summary><p[^>]*>([\s\S]*?)<\/p><\/details>/g)];
+  return { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: qs.map(([, q, a]) => ({ '@type': 'Question', name: unesc(q), acceptedAnswer: { '@type': 'Answer', text: unesc(a.replace(/<[^>]+>/g, '')) } })) };
+}
 function replaceOnce(html, re, fn, label) {
   let hit = false;
   const next = html.replace(re, (...m) => { hit = true; return typeof fn === 'function' ? fn(...m) : fn; });
@@ -133,8 +146,16 @@ const FREE_SECTION = (r) => `<!-- cases-hub:free -->
 
 function buildRegionPage(html, r, all, today) {
   const url = `${SITE}/clinical-cases/${r.slug}`;
-  const desc = regionDescription(r);
+  const seo = HUBS[r.slug];
+  if (!seo) throw new Error(`no SEO copy for ${r.slug}`);
+  const desc = fill(seo.desc, r);
+  const title = fill(seo.title, r);
+  lint(r.slug, title, desc);
   for (const [attr, name] of [['name', 'description'], ['property', 'og:description'], ['name', 'twitter:description']]) html = setMeta(html, attr, name, desc);
+  for (const [attr, name] of [['property', 'og:title'], ['name', 'twitter:title']]) html = setMeta(html, attr, name, fill(seo.ogTitle, r));
+  html = setMeta(html, 'name', 'keywords', seo.keywords);
+  html = replaceOnce(html, /<title>[^<]*<\/title>/, () => `<title>${escHtml(title)}</title>`, 'title');
+  html = replaceOnce(html, /(<h1 class="title">)[\s\S]*?(<span class="brand-gradient">)/, (m, a, b) => `${a}${seo.h1} ${b}`, 'h1');
 
   // Structured data.
   html = editJsonLd(html, 'BreadcrumbList', () => ({
@@ -145,7 +166,7 @@ function buildRegionPage(html, r, all, today) {
       { '@type': 'ListItem', position: 3, name: r.name, item: url },
     ],
   })).html;
-  html = editJsonLd(html, 'WebPage', (o) => ({ ...o, description: desc, dateModified: today, isPartOf: { '@type': 'CollectionPage', '@id': `${SITE}/clinical-cases` } })).html;
+  html = editJsonLd(html, 'WebPage', (o) => ({ ...o, name: title, description: desc, dateModified: today, isPartOf: { '@type': 'CollectionPage', '@id': `${SITE}/clinical-cases` } })).html;
   // The old ItemList named case titles that are not on the page; list what the page shows: its topics.
   html = upsertJsonLd(html, 'ItemList', {
     '@context': 'https://schema.org', '@type': 'ItemList',
@@ -153,12 +174,6 @@ function buildRegionPage(html, r, all, today) {
     numberOfItems: r.topics.length,
     itemListElement: r.topics.map(([t, n], i) => ({ '@type': 'ListItem', position: i + 1, name: `${t} (${plural(n, 'case')})` })),
   });
-  html = editJsonLd(html, 'FAQPage', (o) => {
-    const qs = o.mainEntity || [];
-    if (qs[0]) qs[0].acceptedAnswer.text = faqCount(r);
-    if (qs[1]) qs[1].acceptedAnswer.text = faqFree(r);
-    return o;
-  }).html;
 
   // Visible numbers.
   html = setById(html, 'hubTotal', String(r.total));
@@ -175,6 +190,20 @@ function buildRegionPage(html, r, all, today) {
   const block = FREE_SECTION(r);
   if (html.includes('<!-- cases-hub:free -->')) html = replaceOnce(html, /<!-- cases-hub:free -->[\s\S]*?<!-- \/cases-hub:free -->/, () => block, 'free block');
   else html = replaceOnce(html, /(<\/ul><\/section>)(\s*<div class="seo-divider emerald"><\/div>\s*<section aria-labelledby="more-regions")/, (m, a, b) => `${a}\n${block}${b}`, 'free block anchor');
+
+  // System-specific copy: what these cases test, and system FAQs.
+  const focusBlock = `<!-- cases-hub:focus -->
+<section aria-labelledby="caseFocus" style="margin-top:34px;"><h2 id="caseFocus" class="seo-section-title">${escHtml(seo.focusTitle)}</h2>
+<p style="line-height:1.75;font-size:15px;">${escHtml(seo.focus)}</p></section>
+      <div class="seo-divider emerald"></div>
+<!-- /cases-hub:focus -->
+`;
+  if (html.includes('<!-- cases-hub:focus -->')) html = replaceOnce(html, /<!-- cases-hub:focus -->[\s\S]*?<!-- \/cases-hub:focus -->\n/, () => focusBlock, 'focus block');
+  else html = replaceOnce(html, /<section aria-labelledby="caseTopics"/, (m) => focusBlock + m, 'focus anchor');
+  const faqBlock = '<!-- cases-hub:faq -->' + seo.faqs.map(([q, a]) => `<details class="seo-faq-card"><summary>${escHtml(q)}</summary><p>${escHtml(a)}</p></details>`).join('') + '<!-- /cases-hub:faq -->';
+  if (html.includes('<!-- cases-hub:faq -->')) html = replaceOnce(html, /<!-- cases-hub:faq -->[\s\S]*?<!-- \/cases-hub:faq -->/, () => faqBlock, 'faq block');
+  else html = replaceOnce(html, /(<p id="hubFaqFree">[\s\S]*?<\/p><\/details>)/, (m) => m + faqBlock, 'faq anchor');
+  html = upsertJsonLd(html, 'FAQPage', faqSchemaFromHtml(html));
 
   // Other-region cards.
   html = html.replace(/(<a href="\/clinical-cases\/([a-z-]+)" class="seo-card"[^>]*>[\s\S]*?<small[^>]*>)[^<]*(<\/small>)/g, (m, a, slug, c) => {
@@ -196,8 +225,10 @@ function buildIndex(template, all, today) {
   const core = regions.reduce((s, r) => s + r.core, 0);
   const topics = regions.reduce((s, r) => s + r.topics.length, 0);
   const url = `${SITE}/clinical-cases`;
-  const title = 'Clinical Cases for NEET PG, FMGE & INI-CET by Body System | MedLadder';
-  const desc = `${total} step-by-step clinical cases across ${regions.length} body systems for NEET PG, INI-CET, FMGE & NEET SS. ${core} Core, ${total - core} Advanced; ${free} free to play.`;
+  const agg = { total, free, core, advanced: total - core, topics: [] };
+  const title = fill(INDEX.title, agg);
+  const desc = fill(INDEX.desc, agg);
+  lint('index', title, desc);
 
   const head = template.slice(0, template.indexOf('<script type="application/ld+json">'));
   const bodyStart = template.indexOf('<body>');
@@ -209,8 +240,8 @@ function buildIndex(template, all, today) {
     .replace(/(<meta name="keywords" content=")[^"]*/, '$1clinical cases, case-based questions, clinical vignettes, NEET PG clinical cases, INI-CET clinical cases, FMGE clinical cases, NEET SS clinical cases, MedLadder clinical cases')
     .replace(/(<link rel="canonical" href=")[^"]*/, `$1${url}`)
     .replace(/(<meta property="og:url" content=")[^"]*/, `$1${url}`)
-    .replace(/(<meta property="og:title" content=")[^"]*/, '$1Clinical Cases by Body System | NEET PG, FMGE &amp; INI-CET')
-    .replace(/(<meta name="twitter:title" content=")[^"]*/, '$1Clinical Cases by Body System | NEET PG, FMGE &amp; INI-CET');
+    .replace(/(<meta property="og:title" content=")[^"]*/, () => '<meta property="og:title" content="' + escHtml(INDEX.ogTitle))
+    .replace(/(<meta name="twitter:title" content=")[^"]*/, () => '<meta name="twitter:title" content="' + escHtml(INDEX.ogTitle));
   for (const [attr, name] of [['name', 'description'], ['property', 'og:description'], ['name', 'twitter:description']]) h = setMeta(h, attr, name, desc);
 
   const ld = [
@@ -314,5 +345,6 @@ if (write(path.join(HUB_DIR, 'index.html'), buildIndex(template, all, today)) ||
 if (sitemap !== origSitemap) write(path.join(ROOT, 'sitemap.xml'), sitemap);
 
 const sum = Object.values(all).reduce((s, r) => s + r.total, 0);
+for (const w of warnings) console.warn('warn:', w);
 console.log(`${sum} cases across ${Object.keys(all).length} regions; ${changed.length ? 'changed: ' + changed.join(', ') : 'no changes'}`);
 if (CHECK && changed.length) process.exit(1);
