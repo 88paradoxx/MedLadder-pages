@@ -2562,7 +2562,7 @@ window.addEventListener('error', function (ev) {
             SUBJECT_INDEX.map(function (s) { return '<a href="' + subjectPath(s) + '">' + esc(s.name) + '</a>'; }).join('') +
             '</div></details></div>' +
             '<div class="footer-directory-group"><details' + (isHomeDirectory ? ' open' : '') + '><summary>Clinical Cases (13)</summary><div>' +
-            '<a href="/clinical-cases/cardiovascular">Cardiovascular</a><a href="/clinical-cases/respiratory">Respiratory</a><a href="/clinical-cases/neurology">Neurology</a><a href="/clinical-cases/gastro-hepatobiliary">Gastro-Hepatobiliary</a><a href="/clinical-cases/renal-electrolytes">Renal &amp; Electrolytes</a><a href="/clinical-cases/endocrine-metabolic">Endocrine &amp; Metabolic</a><a href="/clinical-cases/haematology-oncology">Haematology &amp; Oncology</a><a href="/clinical-cases/infectious-disease">Infectious Disease</a><a href="/clinical-cases/musculoskeletal-rheumatology">Musculoskeletal &amp; Rheumatology</a><a href="/clinical-cases/obstetrics-gynaecology">Obstetrics &amp; Gynaecology</a><a href="/clinical-cases/paediatrics-neonatology">Paediatrics &amp; Neonatology</a><a href="/clinical-cases/psychiatry">Psychiatry</a><a href="/clinical-cases/emergency-critical-care">Emergency &amp; Critical Care</a>' +
+            '<a href="/clinical-cases">All clinical cases</a><a href="/clinical-cases/cardiovascular">Cardiovascular</a><a href="/clinical-cases/respiratory">Respiratory</a><a href="/clinical-cases/neurology">Neurology</a><a href="/clinical-cases/gastro-hepatobiliary">Gastro-Hepatobiliary</a><a href="/clinical-cases/renal-electrolytes">Renal &amp; Electrolytes</a><a href="/clinical-cases/endocrine-metabolic">Endocrine &amp; Metabolic</a><a href="/clinical-cases/haematology-oncology">Haematology &amp; Oncology</a><a href="/clinical-cases/infectious-disease">Infectious Disease</a><a href="/clinical-cases/musculoskeletal-rheumatology">Musculoskeletal &amp; Rheumatology</a><a href="/clinical-cases/obstetrics-gynaecology">Obstetrics &amp; Gynaecology</a><a href="/clinical-cases/paediatrics-neonatology">Paediatrics &amp; Neonatology</a><a href="/clinical-cases/psychiatry">Psychiatry</a><a href="/clinical-cases/emergency-critical-care">Emergency &amp; Critical Care</a>' +
             '</div></details></div>' +
             '<div class="footer-directory-group"><strong>Preparation</strong><div><a href="/neet-pg-syllabus">NEET PG Syllabus</a><a href="/neet-pg-high-yield-topics">High-Yield Topics</a><a href="/neet-pg-top-100-questions">Top 100 Questions</a><a href="/mock-test">Mock Tests</a><a href="/pyqs">Previous-Year Questions</a><a href="/best-free-neet-pg-question-bank">Free Question Bank</a><a href="/books">Free Books</a></div></div>' +
             '<div class="footer-directory-group"><strong>About &amp; policies</strong><div><a href="/medladder-vs-marrow">MedLadder vs Marrow</a><a href="/medladder-vs-prepladder">MedLadder vs PrepLadder</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/terms#cancellation-refund">Refund Policy</a><a href="/editorial-team">Editorial team</a>' +
@@ -9769,7 +9769,8 @@ window.addEventListener('error', function (ev) {
       // Any failure leaves the baked numbers in place (silent fallback).
       function refreshHubCounts() {
         var main = document.querySelector('main[data-hub-region]');
-        if (!main || typeof fetch === 'undefined') return;
+        if (typeof fetch === 'undefined') return;
+        if (!main) { refreshHubIndexCounts(); return; }
         var regionId = main.getAttribute('data-hub-region');
         var rpcUrl = SUPABASE_URL + '/rest/v1/rpc/';
         var rpcHeaders = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
@@ -9820,6 +9821,26 @@ window.addEventListener('error', function (ev) {
             if (rr && rr.total != null) sm.textContent = rr.total + ' cases';
           });
         }).catch(function () { /* baked numbers stay */ });
+      }
+
+      // The /clinical-cases index page: refresh its totals and region cards.
+      function refreshHubIndexCounts() {
+        if (!document.querySelector('main[data-hub-index]')) return;
+        fetch(SUPABASE_URL + '/rest/v1/rpc/cases_overview', { method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, body: '{}' })
+          .then(function (r) { if (!r.ok) throw new Error('cases_overview'); return r.json(); })
+          .then(function (ov) {
+            var regs = (ov && ov.regions) || [];
+            var total = 0, free = 0, byId = {};
+            regs.forEach(function (r) { total += r.total || 0; free += r.free || 0; byId[r.id] = r; });
+            if (!total) return;
+            var t = document.getElementById('hubTotal'); if (t) t.textContent = String(total);
+            var f = document.getElementById('hubFree'); if (f) f.textContent = free + ' free';
+            Array.prototype.forEach.call(document.querySelectorAll('a[href^="/clinical-cases/"] small'), function (sm) {
+              var a = sm.closest ? sm.closest('a') : null;
+              var rr = a && byId[CASES_REGION_BY_SLUG[(a.getAttribute('href') || '').replace('/clinical-cases/', '')]];
+              if (rr && rr.total != null) sm.textContent = rr.total + (rr.total === 1 ? ' case' : ' cases');
+            });
+          }).catch(function () { /* baked numbers stay */ });
       }
 
       function handleSeoRoute() {

@@ -1,0 +1,40 @@
+name: Refresh Clinical Cases hub pages
+
+# Keeps the counts, topic lists and free-case lists baked into
+# /clinical-cases and /clinical-cases/<region> in line with the database.
+# Commits to main only when something changed (which then deploys as usual).
+on:
+  schedule:
+    - cron: '37 21 * * *'   # daily, 03:07 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cases-hubs
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Rebuild hub pages from live data
+        run: node scripts/build-cases-hubs.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- clinical-cases sitemap.xml; then
+            echo "Hub pages already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add clinical-cases sitemap.xml
+          git commit -m "Clinical Cases hubs: refresh counts from live data"
+          git push origin HEAD:main
