@@ -9843,7 +9843,17 @@ window.addEventListener('error', function (ev) {
         if (window.location.search && typeof URLSearchParams !== 'undefined') {
           var sp = new URLSearchParams(window.location.search);
           captureOpenPyqDeepLink();
-          if (sp.get('screen') === 'pyq') {
+          // ?openCases=<hub slug> deep link (hub-page "Open … cases in the app"
+          // buttons): open the cases library straight at that body region
+          // instead of landing on Home. Accepts a hub slug or a raw region id;
+          // an unknown id falls back to the cases hub (openRegion's drawRegion
+          // does that when the region is not found).
+          var openCasesSlug = sp.get('openCases');
+          if (openCasesSlug) {
+            var casesRegionMap = { 'cardiovascular': 'cardio', 'respiratory': 'resp', 'neurology': 'neuro', 'gastro-hepatobiliary': 'gi', 'renal-electrolytes': 'renal', 'endocrine-metabolic': 'endo', 'haematology-oncology': 'heme', 'infectious-disease': 'id', 'musculoskeletal-rheumatology': 'msk', 'obstetrics-gynaecology': 'obgyn', 'paediatrics-neonatology': 'peds', 'psychiatry': 'psych', 'emergency-critical-care': 'emerg' };
+            var casesRegionId = casesRegionMap[String(openCasesSlug).toLowerCase()] || String(openCasesSlug).toLowerCase();
+            setTimeout(function () { mlCases('openRegion', casesRegionId); }, 150);
+          } else if (sp.get('screen') === 'pyq') {
             setTimeout(function () {
               var wrap = document.getElementById('pyqCardsWrap');
               var btn = document.getElementById('pyqBankToggle');
