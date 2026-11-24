@@ -40,15 +40,9 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/static-rr.css">
   <style>
-    .cs-list { list-style: none; margin: 0; padding: 0; }
-    .cs-list li { display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); line-height: 1.5; }
-    .cs-list li:last-child { border-bottom: none; }
-    .cs-case { flex: 1; font-size: 15px; color: var(--ink); text-decoration: none; }
-    .cs-case:hover { text-decoration: underline; }
-    .cs-badge { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--hairline, rgba(127,127,127,.4)); color: var(--ink-soft); white-space: nowrap; }
-    .cs-badge.free { color: #0a7d4f; border-color: #0a7d4f; }
-    .cs-badge.pro { color: #7c5c00; border-color: #a8842c; }
-    .cs-topic { margin-top: 26px; }
+    .cs-topics { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 28px; }
+    .cs-topics li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); font-size: 14.5px; line-height: 1.5; }
+    .cs-topic-count { flex: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
   </style>
 
   <script type="application/ld+json">
@@ -517,7 +511,7 @@
       <div class="hero-wrap" style="text-align:center;padding:32px 18px 26px;margin-bottom:28px;">
         <div class="hero-eyebrow">Clinical Cases · MedLadder</div>
         <h1 class="title">Cardiovascular <span class="brand-gradient">Clinical Cases</span></h1>
-        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">Cardiovascular clinical cases on MedLadder work through chest pain, heart failure, arrhythmia and shock as unfolding bedside vignettes — from ischaemic heart disease and ACS to valvular disease, cardiomyopathies, infective endocarditis and congenital heart disease. Each case reveals its steps one at a time, so you commit to a diagnosis and a plan before the next clue arrives. Core cases cover the must-know presentations; Advanced cases push into the harder differentials, ECG interpretation and cardiac investigations. Made for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation - the patient vignettes these exams now ask.</p>
+        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">64 Cardiovascular cases, told as real patient stories. Each one unfolds step by step — you commit to a diagnosis and a plan before the next clue appears. Built for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation, where the exam now asks you about patients, not one-line facts.</p>
         <div class="bento-bar" style="max-width:680px;margin:18px auto 24px;">
           <div class="bento-stat"><div class="bento-stat-num">64</div><div class="bento-stat-lbl">Cases</div></div>
           <div class="bento-stat"><div class="bento-stat-num">8 free</div><div class="bento-stat-lbl">Free to play</div></div>
@@ -529,140 +523,32 @@
         </div>
           <p class="ml-reviewed" style="margin:16px auto 0;font-size:13px;line-height:1.5;opacity:.85;">Cases reviewed by <a href="/editorial-team" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Dr Mirbilal, MBBS, MD (Pediatrics)</a></p>
       </div>
-      <div class="seo-divider"></div>
-<section aria-labelledby="seoAbout" style="margin-top:30px;"><h2 id="seoAbout" class="seo-section-title">About Cardiovascular clinical cases</h2><p style="line-height:1.8;color:var(--ink-soft);font-size:15.5px;">Cardiovascular clinical cases on MedLadder work through chest pain, heart failure, arrhythmia and shock as unfolding bedside vignettes — from ischaemic heart disease and ACS to valvular disease, cardiomyopathies, infective endocarditis and congenital heart disease. Each case reveals its steps one at a time, so you commit to a diagnosis and a plan before the next clue arrives. Core cases cover the must-know presentations; Advanced cases push into the harder differentials, ECG interpretation and cardiac investigations. 64 cases: 43 Core and 21 Advanced. 8 cases are free to play; the remaining 56 need MedLadder Pro. Each case unfolds step by step, with the diagnosis, investigations and management revealed as you answer. If you are preparing for NEET PG, INI-CET, FMGE, NEET SS or a USMLE-style exam, these cases are built for you. They follow the clinical vignette pattern these exams now use - a real patient, one step at a time.</p></section>
       <div class="seo-divider emerald"></div>
-<section aria-labelledby="caseList" style="margin-top:34px;"><h2 id="caseList" class="seo-section-title">All Cardiovascular clinical cases (64)</h2>
-<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Browse every cardiovascular case below. Tap a case to open it in the MedLadder app — free cases play without signing in; Pro cases need a MedLadder Pro subscription.</p>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Aortic disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A healthy 67-year-old ex-smoker at his check-up</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A healthy 67-year-old smoker at a check-up</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A one-time scan for a former smoker</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">An ex-smoker of 68, what screening is he due</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Back pain, a cold leg and rising creatinine after a tearing pain</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">One-time aneurysm screening for a former smoker</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Sudden back pain with a pulsatile abdominal mass</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Tearing chest pain and a different pressure in each arm</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Tearing chest pain and unequal arm pressures</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Tearing chest pain into the back</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Tearing chest pain radiating to the back</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Tearing chest pain with unequal arm pressures</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Arrhythmias &amp; conduction blocks</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Atrial fibrillation and a CHA2DS2-VASc of 3</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Atrial fibrillation at 162, and a pressure of 78 over 44</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fast, irregular, broad-complex palpitations in a 24-year-old</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Pale, sweaty and a heart rate of 160</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Palpitations and a fast irregular pulse</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Cardiac tumours</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Heart masses on a newborn&#x27;s scan</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Cardiomyopathies</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Collapse during football in a 19-year-old with a murmur</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Cardiovascular drugs</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Weight loss and palpitations on a long-term heart rhythm drug</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Congenital heart disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A fixed split second sound and an unusual ECG axis</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Hypertension and weak femoral pulses at 18</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Dyslipidaemia &amp; preventive cardiology</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">LDL still high after a heart attack despite two tablets</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">ECG &amp; cardiac investigations</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Chest pain yesterday, pain-free today, with odd T waves</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Heart failure</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Breathless lying flat, JVP 12 cm, an S3 gallop</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Still breathless despite full tablets for a weak heart</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Swollen legs and breathlessness in heart failure</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Heart in pregnancy &amp; systemic disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A woman with a metal heart valve plans pregnancy</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hypertension</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Blood pressure 155 over 95 at a routine check</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">BP of 230/130 mmHg with blurred vision and a rising creatinine</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Infective endocarditis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever and a new murmur in a 68-year-old man</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever and a new murmur in an IV drug user</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever, a new murmur and painless palm spots</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever, a new murmur and splinter haemorrhages</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever, a new murmur and spots on the palms</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever, new murmur, then a weak left side</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Ischaemic heart disease &amp; ACS</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Chest pain, slow pulse, pressure 92 over 58</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Chest pressure on two flights of stairs</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Crushing chest pain and ST elevation in V1 to V4</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Crushing chest pain with ST elevation</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Crushing chest pain with ST elevation in V1 to V4</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Hypotension after sublingual nitrate in a man with chest pain</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Inferior STEMI with low pressure and raised JVP</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Inferior STEMI, check the right ventricle first</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Inferior STEMI, slow pulse and a falling pressure</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">ST depression and a troponin of 0.8</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Miscellaneous</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Pre-op check before gallbladder surgery</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Myocarditis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Chest pain and drooping eyelids during cancer treatment</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pericardial diseases</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Raised neck veins and an echo that needs interpreting</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Peripheral vascular &amp; venous disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A cold, pale, pulseless leg with no feeling</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A diabetic with leg pain on walking and a normal-looking ankle index</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A swollen calf after an eight-hour flight</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A swollen calf and a Wells score of three</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Breathless three days after hip replacement</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Breathless two days after hip replacement</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Sudden cold pale leg in atrial fibrillation</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pulmonary hypertension &amp; cor pulmonale</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Breathless six months after a clot in the lung</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Rheumatic fever</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Knee pain and an incidental echo finding in a 12-year-old</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Shock &amp; cardiac arrest</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Shock and a new loud murmur five days after a heart attack</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Stabbed in the chest, neck veins distended</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Syncope</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Collapse on the way to the mailbox</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fainting during a blood draw</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fainting while shaving in a 74-year-old man</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Valvular heart disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A narrow valve with a surprisingly low gradient</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
+<section aria-labelledby="caseTopics" style="margin-top:34px;"><h2 id="caseTopics" class="seo-section-title">What’s inside: 64 cases across 22 topics</h2>
+<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Every case opens in the MedLadder app — the 8 free cases play without signing in, and the rest need MedLadder Pro.</p>
+<ul class="cs-topics">
+<li><span>Aortic disease</span><span class="cs-topic-count">12 cases</span></li>
+<li><span>Arrhythmias &amp; conduction blocks</span><span class="cs-topic-count">5 cases</span></li>
+<li><span>Cardiac tumours</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Cardiomyopathies</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Cardiovascular drugs</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Congenital heart disease</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Dyslipidaemia &amp; preventive cardiology</span><span class="cs-topic-count">1 case</span></li>
+<li><span>ECG &amp; cardiac investigations</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Heart failure</span><span class="cs-topic-count">3 cases</span></li>
+<li><span>Heart in pregnancy &amp; systemic disease</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Hypertension</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Infective endocarditis</span><span class="cs-topic-count">6 cases</span></li>
+<li><span>Ischaemic heart disease &amp; ACS</span><span class="cs-topic-count">10 cases</span></li>
+<li><span>Miscellaneous</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Myocarditis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Pericardial diseases</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Peripheral vascular &amp; venous disease</span><span class="cs-topic-count">7 cases</span></li>
+<li><span>Pulmonary hypertension &amp; cor pulmonale</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Rheumatic fever</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Shock &amp; cardiac arrest</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Syncope</span><span class="cs-topic-count">3 cases</span></li>
+<li><span>Valvular heart disease</span><span class="cs-topic-count">1 case</span></li>
 </ul></section>
       <div class="seo-divider emerald"></div>
 <section aria-labelledby="more-regions" style="margin-top:36px;">

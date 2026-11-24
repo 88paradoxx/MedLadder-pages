@@ -40,15 +40,9 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/static-rr.css">
   <style>
-    .cs-list { list-style: none; margin: 0; padding: 0; }
-    .cs-list li { display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); line-height: 1.5; }
-    .cs-list li:last-child { border-bottom: none; }
-    .cs-case { flex: 1; font-size: 15px; color: var(--ink); text-decoration: none; }
-    .cs-case:hover { text-decoration: underline; }
-    .cs-badge { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--hairline, rgba(127,127,127,.4)); color: var(--ink-soft); white-space: nowrap; }
-    .cs-badge.free { color: #0a7d4f; border-color: #0a7d4f; }
-    .cs-badge.pro { color: #7c5c00; border-color: #a8842c; }
-    .cs-topic { margin-top: 26px; }
+    .cs-topics { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 28px; }
+    .cs-topics li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); font-size: 14.5px; line-height: 1.5; }
+    .cs-topic-count { flex: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
   </style>
 
   <script type="application/ld+json">
@@ -342,7 +336,7 @@
       <div class="hero-wrap" style="text-align:center;padding:32px 18px 26px;margin-bottom:28px;">
         <div class="hero-eyebrow">Clinical Cases · MedLadder</div>
         <h1 class="title">Haematology &amp; Oncology <span class="brand-gradient">Clinical Cases</span></h1>
-        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">Haematology and oncology clinical cases cover anaemia, bleeding, clots, leukaemia and lymphoma — iron deficiency and megaloblastic anaemia, thalassaemia, sickle cell disease, haemophilia and coagulation disorders, acute leukaemias and multiple myeloma. Each case unfolds in steps, with the blood film and counts as part of the puzzle. Core cases cover the common anaemias and bleeding presentations; Advanced cases go into myelodysplasia, stem cell transplantation and oncologic emergencies. Made for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation - the patient vignettes these exams now ask.</p>
+        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">29 Haematology &amp; Oncology cases, told as real patient stories. Each one unfolds step by step — you commit to a diagnosis and a plan before the next clue appears. Built for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation, where the exam now asks you about patients, not one-line facts.</p>
         <div class="bento-bar" style="max-width:680px;margin:18px auto 24px;">
           <div class="bento-stat"><div class="bento-stat-num">29</div><div class="bento-stat-lbl">Cases</div></div>
           <div class="bento-stat"><div class="bento-stat-num">8 free</div><div class="bento-stat-lbl">Free to play</div></div>
@@ -354,111 +348,34 @@
         </div>
           <p class="ml-reviewed" style="margin:16px auto 0;font-size:13px;line-height:1.5;opacity:.85;">Cases reviewed by <a href="/editorial-team" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Dr Mirbilal, MBBS, MD (Pediatrics)</a></p>
       </div>
-      <div class="seo-divider"></div>
-<section aria-labelledby="seoAbout" style="margin-top:30px;"><h2 id="seoAbout" class="seo-section-title">About Haematology &amp; Oncology clinical cases</h2><p style="line-height:1.8;color:var(--ink-soft);font-size:15.5px;">Haematology and oncology clinical cases cover anaemia, bleeding, clots, leukaemia and lymphoma — iron deficiency and megaloblastic anaemia, thalassaemia, sickle cell disease, haemophilia and coagulation disorders, acute leukaemias and multiple myeloma. Each case unfolds in steps, with the blood film and counts as part of the puzzle. Core cases cover the common anaemias and bleeding presentations; Advanced cases go into myelodysplasia, stem cell transplantation and oncologic emergencies. 29 cases: 5 Core and 24 Advanced. 8 cases are free to play; the remaining 21 need MedLadder Pro. Each case unfolds step by step, with the diagnosis, investigations and management revealed as you answer. If you are preparing for NEET PG, INI-CET, FMGE, NEET SS or a USMLE-style exam, these cases are built for you. They follow the clinical vignette pattern these exams now use - a real patient, one step at a time.</p></section>
       <div class="seo-divider emerald"></div>
-<section aria-labelledby="caseList" style="margin-top:34px;"><h2 id="caseList" class="seo-section-title">All Haematology &amp; Oncology clinical cases (29)</h2>
-<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Browse every haematology &amp; oncology case below. Tap a case to open it in the MedLadder app — free cases play without signing in; Pro cases need a MedLadder Pro subscription.</p>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Acute leukaemias</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Newly diagnosed AML with an extra gene result</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Aplastic anaemia &amp; marrow failure</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Low counts, short stature and abnormal thumbs in a 7-year-old</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Chemotherapy &amp; targeted therapy</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">High fever and low BP two days after CAR-T cell infusion</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Chronic lymphocytic leukaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A rapidly growing lump and drenching sweats in a man with long-standing CLL</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Chronic myeloid leukaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A huge spleen and a white count of 85,000</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">CML no longer controlled on two tyrosine kinase inhibitors</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">DIC</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Recurrent clots in a man with pancreatic cancer despite warfarin</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Haemolytic anaemias</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Dark morning urine, a clot in the liver veins and low counts</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Dark urine, anaemia and spherocytes</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Haemophilia &amp; coagulation disorders</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Bleeding into muscles in an elderly woman with no previous bleeding problems</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hodgkin lymphoma</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Breathlessness and dry cough during chemotherapy for Hodgkin lymphoma</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Iron deficiency anaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Anaemia in rheumatoid arthritis with a normal-looking ferritin</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Microcytic anaemia with a positive stool guaiac</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Megaloblastic anaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Numb legs and unsteadiness after recreational balloon use</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Multiple myeloma &amp; plasma cell disorders</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A protein gap and a high calcium</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Swollen legs, a thick heart and a large tongue in a man with a paraprotein</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Myelodysplastic syndromes</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">An unfit 80-year-old with higher-risk myelodysplasia</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Myeloproliferative neoplasms</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A huge spleen and a bone marrow tap that draws no fluid</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Non-Hodgkin lymphoma</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A stomach lymphoma with a bacterial cause</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Oncologic emergencies</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Tumour lysis risk in a man who is G6PD deficient</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Paraneoplastic syndromes</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Rapidly worsening unsteadiness and slurred speech in a 56-year-old woman</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Platelet disorders</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Platelets fall five days after starting enoxaparin</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Platelets halved and a new leg clot a week into a blood thinner</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Sickle cell disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A sudden drop in haemoglobin with almost no young red cells</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Stem cell transplantation</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Weight gain, a painful liver and jaundice two weeks after a transplant</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Thalassaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Heart failure symptoms in a transfused young man with thalassaemia</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Thrombophilia &amp; anticoagulation</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Painful dark skin patches days after starting warfarin</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Transfusion medicine</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Breathless and hypoxic within hours of a blood transfusion</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Tumour markers &amp; cancer screening</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A 60-year-old smoker asks whether he should be screened for lung cancer</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
+<section aria-labelledby="caseTopics" style="margin-top:34px;"><h2 id="caseTopics" class="seo-section-title">What’s inside: 29 cases across 24 topics</h2>
+<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Every case opens in the MedLadder app — the 8 free cases play without signing in, and the rest need MedLadder Pro.</p>
+<ul class="cs-topics">
+<li><span>Acute leukaemias</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Aplastic anaemia &amp; marrow failure</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Chemotherapy &amp; targeted therapy</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Chronic lymphocytic leukaemia</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Chronic myeloid leukaemia</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>DIC</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Haemolytic anaemias</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Haemophilia &amp; coagulation disorders</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Hodgkin lymphoma</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Iron deficiency anaemia</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Megaloblastic anaemia</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Multiple myeloma &amp; plasma cell disorders</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Myelodysplastic syndromes</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Myeloproliferative neoplasms</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Non-Hodgkin lymphoma</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Oncologic emergencies</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Paraneoplastic syndromes</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Platelet disorders</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Sickle cell disease</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Stem cell transplantation</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Thalassaemia</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Thrombophilia &amp; anticoagulation</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Transfusion medicine</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Tumour markers &amp; cancer screening</span><span class="cs-topic-count">1 case</span></li>
 </ul></section>
       <div class="seo-divider emerald"></div>
 <section aria-labelledby="more-regions" style="margin-top:36px;">

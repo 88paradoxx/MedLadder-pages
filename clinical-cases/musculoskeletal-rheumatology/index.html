@@ -40,15 +40,9 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/static-rr.css">
   <style>
-    .cs-list { list-style: none; margin: 0; padding: 0; }
-    .cs-list li { display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); line-height: 1.5; }
-    .cs-list li:last-child { border-bottom: none; }
-    .cs-case { flex: 1; font-size: 15px; color: var(--ink); text-decoration: none; }
-    .cs-case:hover { text-decoration: underline; }
-    .cs-badge { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--hairline, rgba(127,127,127,.4)); color: var(--ink-soft); white-space: nowrap; }
-    .cs-badge.free { color: #0a7d4f; border-color: #0a7d4f; }
-    .cs-badge.pro { color: #7c5c00; border-color: #a8842c; }
-    .cs-topic { margin-top: 26px; }
+    .cs-topics { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 28px; }
+    .cs-topics li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); font-size: 14.5px; line-height: 1.5; }
+    .cs-topic-count { flex: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
   </style>
 
   <script type="application/ld+json">
@@ -362,7 +356,7 @@
       <div class="hero-wrap" style="text-align:center;padding:32px 18px 26px;margin-bottom:28px;">
         <div class="hero-eyebrow">Clinical Cases · MedLadder</div>
         <h1 class="title">Musculoskeletal &amp; Rheumatology <span class="brand-gradient">Clinical Cases</span></h1>
-        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">Musculoskeletal and rheumatology clinical cases cover joint pain, vasculitis, lupus and bone disease — rheumatoid arthritis, ankylosing spondylitis, gout, septic arthritis, SLE, systemic sclerosis and the vasculitides. Each case unfolds in steps, with the joint examination and immunology driving the diagnosis. Core cases cover the common arthritides and back pain; Advanced cases push into ANCA vasculitis, inflammatory myositis and bone tumours. Made for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation - the patient vignettes these exams now ask.</p>
+        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">33 Musculoskeletal &amp; Rheumatology cases, told as real patient stories. Each one unfolds step by step — you commit to a diagnosis and a plan before the next clue appears. Built for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation, where the exam now asks you about patients, not one-line facts.</p>
         <div class="bento-bar" style="max-width:680px;margin:18px auto 24px;">
           <div class="bento-stat"><div class="bento-stat-num">33</div><div class="bento-stat-lbl">Cases</div></div>
           <div class="bento-stat"><div class="bento-stat-num">8 free</div><div class="bento-stat-lbl">Free to play</div></div>
@@ -374,118 +368,35 @@
         </div>
           <p class="ml-reviewed" style="margin:16px auto 0;font-size:13px;line-height:1.5;opacity:.85;">Cases reviewed by <a href="/editorial-team" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Dr Mirbilal, MBBS, MD (Pediatrics)</a></p>
       </div>
-      <div class="seo-divider"></div>
-<section aria-labelledby="seoAbout" style="margin-top:30px;"><h2 id="seoAbout" class="seo-section-title">About Musculoskeletal &amp; Rheumatology clinical cases</h2><p style="line-height:1.8;color:var(--ink-soft);font-size:15.5px;">Musculoskeletal and rheumatology clinical cases cover joint pain, vasculitis, lupus and bone disease — rheumatoid arthritis, ankylosing spondylitis, gout, septic arthritis, SLE, systemic sclerosis and the vasculitides. Each case unfolds in steps, with the joint examination and immunology driving the diagnosis. Core cases cover the common arthritides and back pain; Advanced cases push into ANCA vasculitis, inflammatory myositis and bone tumours. 33 cases: 8 Core and 25 Advanced. 8 cases are free to play; the remaining 25 need MedLadder Pro. Each case unfolds step by step, with the diagnosis, investigations and management revealed as you answer. If you are preparing for NEET PG, INI-CET, FMGE, NEET SS or a USMLE-style exam, these cases are built for you. They follow the clinical vignette pattern these exams now use - a real patient, one step at a time.</p></section>
       <div class="seo-divider emerald"></div>
-<section aria-labelledby="caseList" style="margin-top:34px;"><h2 id="caseList" class="seo-section-title">All Musculoskeletal &amp; Rheumatology clinical cases (33)</h2>
-<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Browse every musculoskeletal &amp; rheumatology case below. Tap a case to open it in the MedLadder app — free cases play without signing in; Pro cases need a MedLadder Pro subscription.</p>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">ANCA &amp; small-vessel vasculitis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Late-onset asthma, numb foot and a purple rash with high eosinophils</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Ankylosing spondylitis &amp; axial SpA</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Back pain with recurrent red eye and bloody diarrhoea in a young man</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Antiphospholipid syndrome</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Clots in several organs within days in a woman with a known antibody</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Back pain &amp; spinal disorders</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Leg pain on walking that eases by leaning on a shopping trolley</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Behçet &amp; other vasculitis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Purpura on the legs, joint pains and a positive hepatitis test</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Bone tumours</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A febrile teenager with a swollen thigh and an &quot;onion skin&quot; X-ray</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Night back pain after treated prostate cancer</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Fractures &amp; dislocations</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A child who can&#x27;t make an &quot;OK&quot; sign after a fall onto an outstretched arm</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A shortened, externally rotated leg after a fall</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Gout</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A red hot big toe in advanced kidney disease</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A red, exquisitely tender big toe joint</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Hot swollen big toe in chronic kidney disease</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Starting allopurinol in a transplant patient on azathioprine</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Inflammatory myositis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Cracked fingertips, breathlessness and a weak thigh in a 46-year-old</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Juvenile arthritis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A child with arthritis whose fevers persist and whose ESR is suddenly falling</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Large-vessel vasculitis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A 24-year-old woman with a weak arm pulse and different BPs in each arm</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Medium-vessel vasculitis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A young smoker with painful blue fingertips and tender veins</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Osteoarthritis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Hook-like spurs on two knuckles and diabetes in a middle-aged man</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Osteomyelitis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Back pain, a big paraspinal swelling and two affected vertebral levels</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Osteoporosis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Several spinal fractures a few months after stopping an osteoporosis injection</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Paget disease &amp; bone disorders</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A child with a bent thigh bone, irregular brown skin patches and early puberty</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Polymyalgia rheumatica &amp; fibromyalgia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Widespread pain, poor sleep and normal blood tests in a 40-year-old</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pseudogout (CPPD)</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Calcified joint cartilage and a low alkaline phosphatase in a 45-year-old</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Psoriatic &amp; reactive arthritis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Swollen fingertips, pitted nails and an unusual X-ray pattern</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Rheumatoid arthritis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Morning stiffness in both hands for three months</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Starting a biologic for rheumatoid arthritis that hasn&#x27;t responded</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Septic arthritis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">First ever hot swollen big toe on steroids</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Hot, swollen knee with a fever</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Painful wrist tendons, skin pustules and moving joint pains in a young woman</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Sjögren syndrome</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Swollen tear and salivary glands with a negative Sjögren antibody screen</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">SLE</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Joint pains and a positive antinuclear test after a new heart medication</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Sports &amp; soft-tissue injuries</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A twisting knee injury with a small fracture flake at the outer tibia</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Systemic sclerosis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Tight finger skin for years and now breathless with a normal chest CT</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
+<section aria-labelledby="caseTopics" style="margin-top:34px;"><h2 id="caseTopics" class="seo-section-title">What’s inside: 33 cases across 25 topics</h2>
+<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Every case opens in the MedLadder app — the 8 free cases play without signing in, and the rest need MedLadder Pro.</p>
+<ul class="cs-topics">
+<li><span>ANCA &amp; small-vessel vasculitis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Ankylosing spondylitis &amp; axial SpA</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Antiphospholipid syndrome</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Back pain &amp; spinal disorders</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Behçet &amp; other vasculitis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Bone tumours</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Fractures &amp; dislocations</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Gout</span><span class="cs-topic-count">4 cases</span></li>
+<li><span>Inflammatory myositis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Juvenile arthritis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Large-vessel vasculitis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Medium-vessel vasculitis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Osteoarthritis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Osteomyelitis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Osteoporosis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Paget disease &amp; bone disorders</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Polymyalgia rheumatica &amp; fibromyalgia</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Pseudogout (CPPD)</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Psoriatic &amp; reactive arthritis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Rheumatoid arthritis</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Septic arthritis</span><span class="cs-topic-count">3 cases</span></li>
+<li><span>Sjögren syndrome</span><span class="cs-topic-count">1 case</span></li>
+<li><span>SLE</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Sports &amp; soft-tissue injuries</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Systemic sclerosis</span><span class="cs-topic-count">1 case</span></li>
 </ul></section>
       <div class="seo-divider emerald"></div>
 <section aria-labelledby="more-regions" style="margin-top:36px;">

@@ -40,15 +40,9 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/static-rr.css">
   <style>
-    .cs-list { list-style: none; margin: 0; padding: 0; }
-    .cs-list li { display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); line-height: 1.5; }
-    .cs-list li:last-child { border-bottom: none; }
-    .cs-case { flex: 1; font-size: 15px; color: var(--ink); text-decoration: none; }
-    .cs-case:hover { text-decoration: underline; }
-    .cs-badge { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--hairline, rgba(127,127,127,.4)); color: var(--ink-soft); white-space: nowrap; }
-    .cs-badge.free { color: #0a7d4f; border-color: #0a7d4f; }
-    .cs-badge.pro { color: #7c5c00; border-color: #a8842c; }
-    .cs-topic { margin-top: 26px; }
+    .cs-topics { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 28px; }
+    .cs-topics li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); font-size: 14.5px; line-height: 1.5; }
+    .cs-topic-count { flex: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
   </style>
 
   <script type="application/ld+json">
@@ -422,7 +416,7 @@
       <div class="hero-wrap" style="text-align:center;padding:32px 18px 26px;margin-bottom:28px;">
         <div class="hero-eyebrow">Clinical Cases · MedLadder</div>
         <h1 class="title">Respiratory <span class="brand-gradient">Clinical Cases</span></h1>
-        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">Respiratory clinical cases cover breathlessness, cough, hypoxia and pleural disease — asthma and COPD, pneumonia, tuberculosis, interstitial lung disease, pulmonary embolism, pleural effusion and ARDS. Cases unfold step by step, with ABG and pulmonary function test interpretation woven in where it matters. Core cases build the common presentations; Advanced cases take on the trickier differentials and respiratory failure. Made for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation - the patient vignettes these exams now ask.</p>
+        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">45 Respiratory cases, told as real patient stories. Each one unfolds step by step — you commit to a diagnosis and a plan before the next clue appears. Built for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation, where the exam now asks you about patients, not one-line facts.</p>
         <div class="bento-bar" style="max-width:680px;margin:18px auto 24px;">
           <div class="bento-stat"><div class="bento-stat-num">45</div><div class="bento-stat-lbl">Cases</div></div>
           <div class="bento-stat"><div class="bento-stat-num">8 free</div><div class="bento-stat-lbl">Free to play</div></div>
@@ -434,112 +428,29 @@
         </div>
           <p class="ml-reviewed" style="margin:16px auto 0;font-size:13px;line-height:1.5;opacity:.85;">Cases reviewed by <a href="/editorial-team" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Dr Mirbilal, MBBS, MD (Pediatrics)</a></p>
       </div>
-      <div class="seo-divider"></div>
-<section aria-labelledby="seoAbout" style="margin-top:30px;"><h2 id="seoAbout" class="seo-section-title">About Respiratory clinical cases</h2><p style="line-height:1.8;color:var(--ink-soft);font-size:15.5px;">Respiratory clinical cases cover breathlessness, cough, hypoxia and pleural disease — asthma and COPD, pneumonia, tuberculosis, interstitial lung disease, pulmonary embolism, pleural effusion and ARDS. Cases unfold step by step, with ABG and pulmonary function test interpretation woven in where it matters. Core cases build the common presentations; Advanced cases take on the trickier differentials and respiratory failure. 45 cases: 27 Core and 18 Advanced. 8 cases are free to play; the remaining 37 need MedLadder Pro. Each case unfolds step by step, with the diagnosis, investigations and management revealed as you answer. If you are preparing for NEET PG, INI-CET, FMGE, NEET SS or a USMLE-style exam, these cases are built for you. They follow the clinical vignette pattern these exams now use - a real patient, one step at a time.</p></section>
       <div class="seo-divider emerald"></div>
-<section aria-labelledby="caseList" style="margin-top:34px;"><h2 id="caseList" class="seo-section-title">All Respiratory clinical cases (45)</h2>
-<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Browse every respiratory case below. Tap a case to open it in the MedLadder app — free cases play without signing in; Pro cases need a MedLadder Pro subscription.</p>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">ARDS &amp; respiratory failure</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Confused and breathless after gallbladder surgery</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Hoarse voice after rescue from a house fire</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Severe hypoxia on the ventilator despite proning</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Asthma</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Daily reliever use in a teenager with asthma</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">The wheeze that went quiet</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Uncontrolled asthma despite high-dose inhalers and nasal polyps</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Bronchiectasis &amp; cystic fibrosis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Worsening asthma, coughing brown plugs and central airway dilatation</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">COPD</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A COPD patient asking about home oxygen</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">COPD exacerbation with worsening acidosis</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">COPD flare with a pH of 7.28</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">COPD flare with worsening breathlessness</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">COPD, acidotic and still breathless on treatment</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">More cough, purulent sputum, still on home oxygen</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Woman with COPD and a pH of 7.28</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Interstitial lung disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Breathless pigeon keeper with crackles and a mosaic CT</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Lung abscess &amp; haemoptysis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Coughing up a cupful of blood with an old TB scar on the X-ray</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Lung cancer</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A lifelong smoker with no symptoms at all</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A never-smoker with a lung mass and a test result on the tumour</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A new 3-cm spiculated nodule in a smoker</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Forty pack-years, quit five years ago, no symptoms</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Lung mass with a sodium of 126</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Mediastinal masses</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A tighter collar and a puffy red face</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A young man with a front chest mass and high blood markers</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Swollen face and neck in a heavy smoker</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Miscellaneous</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A low fever the day after a knee replacement</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever and crackles on day two after hip surgery</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Occupational lung disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A coal miner with joint disease and several round lung nodules</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pleural effusion &amp; empyema</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">An effusion in a heart failure patient after diuretics that looks like an exudate</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Pneumonia with a new large effusion</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pneumonia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A healthy 40-year-old with a right lower lobe infiltrate</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A left lower lobe infiltrate in a healthy woman</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Bulging fissure in a heavy drinker</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Cavities and haemoptysis a week after flu</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Confused and hypotensive with pneumonia</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Pneumonia, low pressure and delayed refill</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pneumothorax</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Crashing after a road traffic accident</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Sudden breathlessness in a man with severe emphysema</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pulmonary embolism</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Breathless and pleuritic ten days after surgery</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Normal BP but a strained right ventricle with a lung clot</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Sudden breathlessness ten days after hip replacement</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pulmonary function tests &amp; ABG</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Noisy breathing in and a flattened flow-volume loop</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pulmonary hypertension</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Pulmonary hypertension on echo in a woman with stiff-heart failure</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Sarcoidosis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Confusion and a high calcium in a man with lung shadows</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Sleep-disordered breathing</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Morning headaches and a high bicarbonate in a very overweight man</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Tuberculosis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Starting TB treatment in a man already on HIV medicines</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
+<section aria-labelledby="caseTopics" style="margin-top:34px;"><h2 id="caseTopics" class="seo-section-title">What’s inside: 45 cases across 19 topics</h2>
+<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Every case opens in the MedLadder app — the 8 free cases play without signing in, and the rest need MedLadder Pro.</p>
+<ul class="cs-topics">
+<li><span>ARDS &amp; respiratory failure</span><span class="cs-topic-count">3 cases</span></li>
+<li><span>Asthma</span><span class="cs-topic-count">3 cases</span></li>
+<li><span>Bronchiectasis &amp; cystic fibrosis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>COPD</span><span class="cs-topic-count">7 cases</span></li>
+<li><span>Interstitial lung disease</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Lung abscess &amp; haemoptysis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Lung cancer</span><span class="cs-topic-count">5 cases</span></li>
+<li><span>Mediastinal masses</span><span class="cs-topic-count">3 cases</span></li>
+<li><span>Miscellaneous</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Occupational lung disease</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Pleural effusion &amp; empyema</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Pneumonia</span><span class="cs-topic-count">6 cases</span></li>
+<li><span>Pneumothorax</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Pulmonary embolism</span><span class="cs-topic-count">3 cases</span></li>
+<li><span>Pulmonary function tests &amp; ABG</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Pulmonary hypertension</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Sarcoidosis</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Sleep-disordered breathing</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Tuberculosis</span><span class="cs-topic-count">1 case</span></li>
 </ul></section>
       <div class="seo-divider emerald"></div>
 <section aria-labelledby="more-regions" style="margin-top:36px;">

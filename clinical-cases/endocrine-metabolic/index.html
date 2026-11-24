@@ -40,15 +40,9 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/static-rr.css">
   <style>
-    .cs-list { list-style: none; margin: 0; padding: 0; }
-    .cs-list li { display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); line-height: 1.5; }
-    .cs-list li:last-child { border-bottom: none; }
-    .cs-case { flex: 1; font-size: 15px; color: var(--ink); text-decoration: none; }
-    .cs-case:hover { text-decoration: underline; }
-    .cs-badge { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--hairline, rgba(127,127,127,.4)); color: var(--ink-soft); white-space: nowrap; }
-    .cs-badge.free { color: #0a7d4f; border-color: #0a7d4f; }
-    .cs-badge.pro { color: #7c5c00; border-color: #a8842c; }
-    .cs-topic { margin-top: 26px; }
+    .cs-topics { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 28px; }
+    .cs-topics li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); font-size: 14.5px; line-height: 1.5; }
+    .cs-topic-count { flex: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
   </style>
 
   <script type="application/ld+json">
@@ -407,7 +401,7 @@
       <div class="hero-wrap" style="text-align:center;padding:32px 18px 26px;margin-bottom:28px;">
         <div class="hero-eyebrow">Clinical Cases · MedLadder</div>
         <h1 class="title">Endocrine &amp; Metabolic <span class="brand-gradient">Clinical Cases</span></h1>
-        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">Endocrine and metabolic clinical cases cover diabetes emergencies, thyroid, adrenal and calcium disorders — DKA and HHS, Cushing syndrome, adrenal insufficiency, pituitary tumours, hyperparathyroidism and metabolic bone disease. Cases unfold step by step, so you interpret the hormones before the diagnosis is revealed. Core cases cover the classic presentations; Advanced cases take on MEN syndromes, neuroendocrine tumours and the rarer pituitary disorders. Made for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation - the patient vignettes these exams now ask.</p>
+        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">42 Endocrine &amp; Metabolic cases, told as real patient stories. Each one unfolds step by step — you commit to a diagnosis and a plan before the next clue appears. Built for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation, where the exam now asks you about patients, not one-line facts.</p>
         <div class="bento-bar" style="max-width:680px;margin:18px auto 24px;">
           <div class="bento-stat"><div class="bento-stat-num">42</div><div class="bento-stat-lbl">Cases</div></div>
           <div class="bento-stat"><div class="bento-stat-num">8 free</div><div class="bento-stat-lbl">Free to play</div></div>
@@ -419,127 +413,35 @@
         </div>
           <p class="ml-reviewed" style="margin:16px auto 0;font-size:13px;line-height:1.5;opacity:.85;">Cases reviewed by <a href="/editorial-team" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Dr Mirbilal, MBBS, MD (Pediatrics)</a></p>
       </div>
-      <div class="seo-divider"></div>
-<section aria-labelledby="seoAbout" style="margin-top:30px;"><h2 id="seoAbout" class="seo-section-title">About Endocrine &amp; Metabolic clinical cases</h2><p style="line-height:1.8;color:var(--ink-soft);font-size:15.5px;">Endocrine and metabolic clinical cases cover diabetes emergencies, thyroid, adrenal and calcium disorders — DKA and HHS, Cushing syndrome, adrenal insufficiency, pituitary tumours, hyperparathyroidism and metabolic bone disease. Cases unfold step by step, so you interpret the hormones before the diagnosis is revealed. Core cases cover the classic presentations; Advanced cases take on MEN syndromes, neuroendocrine tumours and the rarer pituitary disorders. 42 cases: 18 Core and 24 Advanced. 8 cases are free to play; the remaining 34 need MedLadder Pro. Each case unfolds step by step, with the diagnosis, investigations and management revealed as you answer. If you are preparing for NEET PG, INI-CET, FMGE, NEET SS or a USMLE-style exam, these cases are built for you. They follow the clinical vignette pattern these exams now use - a real patient, one step at a time.</p></section>
       <div class="seo-divider emerald"></div>
-<section aria-labelledby="caseList" style="margin-top:34px;"><h2 id="caseList" class="seo-section-title">All Endocrine &amp; Metabolic clinical cases (42)</h2>
-<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Browse every endocrine &amp; metabolic case below. Tap a case to open it in the MedLadder app — free cases play without signing in; Pro cases need a MedLadder Pro subscription.</p>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Acromegaly &amp; growth disorders</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Monitoring a patient on a growth hormone receptor blocker</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Adrenal insufficiency</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">An emergency operation in a man on long-term steroid tablets</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Congenital adrenal hyperplasia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A young woman with irregular periods and hirsutism and a high early-morning hormone</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Cushing syndrome</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Cushing features, high ACTH and a normal pituitary MRI</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Diabetes insipidus &amp; SIADH</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A lung mass and a sodium of 126</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Confused and lethargic on day two of furosemide</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Low sodium a week after pituitary surgery that followed an early urine flood</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Post-ictal confusion with a sodium of 114</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Seizure with a sodium of 114</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Sodium 112, and then a seizure</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Sodium 126 in small cell lung cancer</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Diabetic complications</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A hot, swollen foot without a wound in a long-standing diabetic</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">DKA &amp; HHS</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">DKA with a potassium of 3.2</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Ketoacidosis with a nearly normal sugar on a new diabetes tablet</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Vomiting and fruity breath in type 1 diabetes</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Vomiting, deep rapid breathing and glucose 450</a><span class="cs-badge">Core</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hyperaldosteronism</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A young man with severe high BP whose relatives had early strokes</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Resistant hypertension and low potassium</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hyperparathyroidism &amp; hypercalcaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Confused and dehydrated with a calcium of 15 in a woman with breast cancer</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">High calcium, high PTH, but is it the parathyroid</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Hypercalcaemia with a raised PTH</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hyperthyroidism</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever 40 degrees, racing heart, agitated</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Fever, agitation and fast AF in a woman with an untreated goitre</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Palpitations, weight loss and a suppressed TSH</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Thyroid storm with a racing irregular pulse</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hypoglycaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A nurse with repeated low sugars and an unusual set of lab results</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hypoparathyroidism &amp; hypocalcaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Short fourth fingers, a round face and low calcium with a high PTH</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hypopituitarism</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A sudden thunderclap headache, double vision and collapse</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Hypothyroidism</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">An elderly woman found cold and drowsy in winter</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Starting levothyroxine for hypothyroidism</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">MEN &amp; neuroendocrine tumours</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Flushing, diarrhoea and a new murmur on the right side of the heart</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Miscellaneous</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A 1.5 cm adrenal nodule found by chance</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Obesity &amp; lipid disorders</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Severe abdominal pain and milky blood in a man with very high fats</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Osteoporosis &amp; metabolic bone disease</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Thigh pain and a thigh fracture after years of an osteoporosis tablet</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pheochromocytoma</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">An incidental adrenal mass found on a scan for kidney stones</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Pituitary tumours &amp; hyperprolactinaemia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A big pituitary tumour with only a mildly raised prolactin</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Puberty &amp; gonadal disorders</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A tall 17-year-old boy with no puberty who can&#x27;t smell</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Thyroid nodules &amp; cancer</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A thyroid lump with a very high calcitonin before surgery</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Thyroiditis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A thyrotoxic new mother who is breastfeeding</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Thyrotoxicosis with low iodine uptake</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Type 1 diabetes</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">High morning sugars despite increasing the night insulin</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Type 2 diabetes</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Three generations with diabetes, and a slim 22-year-old who is antibody-negative</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
+<section aria-labelledby="caseTopics" style="margin-top:34px;"><h2 id="caseTopics" class="seo-section-title">What’s inside: 42 cases across 25 topics</h2>
+<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Every case opens in the MedLadder app — the 8 free cases play without signing in, and the rest need MedLadder Pro.</p>
+<ul class="cs-topics">
+<li><span>Acromegaly &amp; growth disorders</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Adrenal insufficiency</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Congenital adrenal hyperplasia</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Cushing syndrome</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Diabetes insipidus &amp; SIADH</span><span class="cs-topic-count">7 cases</span></li>
+<li><span>Diabetic complications</span><span class="cs-topic-count">1 case</span></li>
+<li><span>DKA &amp; HHS</span><span class="cs-topic-count">4 cases</span></li>
+<li><span>Hyperaldosteronism</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Hyperparathyroidism &amp; hypercalcaemia</span><span class="cs-topic-count">3 cases</span></li>
+<li><span>Hyperthyroidism</span><span class="cs-topic-count">4 cases</span></li>
+<li><span>Hypoglycaemia</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Hypoparathyroidism &amp; hypocalcaemia</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Hypopituitarism</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Hypothyroidism</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>MEN &amp; neuroendocrine tumours</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Miscellaneous</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Obesity &amp; lipid disorders</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Osteoporosis &amp; metabolic bone disease</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Pheochromocytoma</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Pituitary tumours &amp; hyperprolactinaemia</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Puberty &amp; gonadal disorders</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Thyroid nodules &amp; cancer</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Thyroiditis</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Type 1 diabetes</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Type 2 diabetes</span><span class="cs-topic-count">1 case</span></li>
 </ul></section>
       <div class="seo-divider emerald"></div>
 <section aria-labelledby="more-regions" style="margin-top:36px;">

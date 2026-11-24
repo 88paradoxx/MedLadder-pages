@@ -40,15 +40,9 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/static-rr.css">
   <style>
-    .cs-list { list-style: none; margin: 0; padding: 0; }
-    .cs-list li { display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); line-height: 1.5; }
-    .cs-list li:last-child { border-bottom: none; }
-    .cs-case { flex: 1; font-size: 15px; color: var(--ink); text-decoration: none; }
-    .cs-case:hover { text-decoration: underline; }
-    .cs-badge { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--hairline, rgba(127,127,127,.4)); color: var(--ink-soft); white-space: nowrap; }
-    .cs-badge.free { color: #0a7d4f; border-color: #0a7d4f; }
-    .cs-badge.pro { color: #7c5c00; border-color: #a8842c; }
-    .cs-topic { margin-top: 26px; }
+    .cs-topics { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 28px; }
+    .cs-topics li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--hairline, rgba(127,127,127,.25)); font-size: 14.5px; line-height: 1.5; }
+    .cs-topic-count { flex: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
   </style>
 
   <script type="application/ld+json">
@@ -377,7 +371,7 @@
       <div class="hero-wrap" style="text-align:center;padding:32px 18px 26px;margin-bottom:28px;">
         <div class="hero-eyebrow">Clinical Cases · MedLadder</div>
         <h1 class="title">Emergency &amp; Critical Care <span class="brand-gradient">Clinical Cases</span></h1>
-        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">Emergency and critical care clinical cases cover trauma, poisoning, resuscitation and ICU decisions — cardiac arrest and ACLS, shock and sepsis, airway management and mechanical ventilation, polytrauma, head injury, burns and anaphylaxis. Cases unfold step by step, with the clock running the way it does in the emergency department. Core cases cover the resuscitation basics; Advanced cases push into organ support, triage and disaster management. Made for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation - the patient vignettes these exams now ask.</p>
+        <p class="subtitle" style="max-width:760px;margin:0 auto 18px;line-height:1.65;">36 Emergency &amp; Critical Care cases, told as real patient stories. Each one unfolds step by step — you commit to a diagnosis and a plan before the next clue appears. Built for NEET PG, INI-CET, FMGE, NEET SS and USMLE-style preparation, where the exam now asks you about patients, not one-line facts.</p>
         <div class="bento-bar" style="max-width:680px;margin:18px auto 24px;">
           <div class="bento-stat"><div class="bento-stat-num">36</div><div class="bento-stat-lbl">Cases</div></div>
           <div class="bento-stat"><div class="bento-stat-num">8 free</div><div class="bento-stat-lbl">Free to play</div></div>
@@ -389,115 +383,33 @@
         </div>
           <p class="ml-reviewed" style="margin:16px auto 0;font-size:13px;line-height:1.5;opacity:.85;">Cases reviewed by <a href="/editorial-team" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Dr Mirbilal, MBBS, MD (Pediatrics)</a></p>
       </div>
-      <div class="seo-divider"></div>
-<section aria-labelledby="seoAbout" style="margin-top:30px;"><h2 id="seoAbout" class="seo-section-title">About Emergency &amp; Critical Care clinical cases</h2><p style="line-height:1.8;color:var(--ink-soft);font-size:15.5px;">Emergency and critical care clinical cases cover trauma, poisoning, resuscitation and ICU decisions — cardiac arrest and ACLS, shock and sepsis, airway management and mechanical ventilation, polytrauma, head injury, burns and anaphylaxis. Cases unfold step by step, with the clock running the way it does in the emergency department. Core cases cover the resuscitation basics; Advanced cases push into organ support, triage and disaster management. 36 cases: 14 Core and 22 Advanced. 8 cases are free to play; the remaining 28 need MedLadder Pro. Each case unfolds step by step, with the diagnosis, investigations and management revealed as you answer. If you are preparing for NEET PG, INI-CET, FMGE, NEET SS or a USMLE-style exam, these cases are built for you. They follow the clinical vignette pattern these exams now use - a real patient, one step at a time.</p></section>
       <div class="seo-divider emerald"></div>
-<section aria-labelledby="caseList" style="margin-top:34px;"><h2 id="caseList" class="seo-section-title">All Emergency &amp; Critical Care clinical cases (36)</h2>
-<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Browse every emergency &amp; critical care case below. Tap a case to open it in the MedLadder app — free cases play without signing in; Pro cases need a MedLadder Pro subscription.</p>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Acute chest pain &amp; breathlessness</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Chest pain and neck swelling after forceful vomiting at a party</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Airway management</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Choosing the paralytic for a crush injury patient needing intubation</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Altered sensorium &amp; coma</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Still unresponsive long after a seizure has stopped</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Anaphylaxis</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Anaphylaxis that won&#x27;t respond to adrenaline in a man on a beta-blocker</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Bee sting with wheeze and a falling blood pressure</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Burns</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Confused after a house fire with a normal oxygen saturation but very high lactate</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Cardiac arrest &amp; ACLS</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Cardiac arrest in a woman 32 weeks pregnant</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Chest &amp; abdominal trauma</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A chest drain that drains a lot of blood immediately after a stab wound</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A fall from scaffolding and a transient blood pressure</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A gunshot wound with a pulsatile haematoma</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A stab wound through the platysma</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Blunt abdominal trauma with a rigid abdomen</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Drowning &amp; electrical injury</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Several people struck by lightning on a football field</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Drug overdose</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Seizures and a wide QRS after an overdose of antidepressant tablets</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Fluids, electrolytes &amp; acid–base</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Drunk-appearing man with a high anion gap and crystals in the urine</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Head injury</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Rising brain pressure in a ventilated man after a severe head injury</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Heat stroke &amp; hypothermia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">A man pulled from icy water with a core temperature of 27 °C and no pulse</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Hot dry skin after a day on a building site</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">ICU care &amp; organ support</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Setting the blood sugar target for a ventilated patient in ICU</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Mechanical ventilation</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">The ventilator alarms with a high peak pressure but a normal plateau</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Miscellaneous</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">An allergy missed at handover, hives and wheeze</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Halos around lights and a hazy cornea</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Severe eye pain, halos and a cloudy cornea</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Skip the time-out, we are behind schedule</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">The consent form says left, the hernia is right</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">The time-out before the first incision</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">The wrong side was operated on, what now</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Organophosphate &amp; pesticide poisoning</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Refractory shock after swallowing a tablet sold for storing grain</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Polytrauma &amp; ATLS</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Shock and a positive abdominal scan after a road accident</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Sedation &amp; analgesia</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Seizures and a slow pulse just after a nerve block with local anaesthetic</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Soaring temperature and rigid muscles on the table</a><span class="cs-badge">Core</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Sepsis in the ED</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Will more fluid help this septic patient?</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Shock</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Shock with raised neck veins after a chest stab, but equal breath sounds</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Snake bite &amp; envenomation</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Blood still not clotting six hours after anti-venom</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Spinal injury</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Weak arms but stronger legs after a fall forwards in an older man</a><span class="cs-badge">Advanced</span><span class="cs-badge free">Free</span></li>
-</ul>
-<h3 class="cs-topic seo-section-title" style="font-size:17px;">Triage &amp; disaster management</h3>
-<ul class="cs-list">
-<li><a class="cs-case" href="/" title="Open this case in the MedLadder app">Patients arriving from a chemical spill at a factory</a><span class="cs-badge">Advanced</span><span class="cs-badge pro">Pro</span></li>
+<section aria-labelledby="caseTopics" style="margin-top:34px;"><h2 id="caseTopics" class="seo-section-title">What’s inside: 36 cases across 23 topics</h2>
+<p style="line-height:1.7;color:var(--ink-soft);font-size:14.5px;">Every case opens in the MedLadder app — the 8 free cases play without signing in, and the rest need MedLadder Pro.</p>
+<ul class="cs-topics">
+<li><span>Acute chest pain &amp; breathlessness</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Airway management</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Altered sensorium &amp; coma</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Anaphylaxis</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Burns</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Cardiac arrest &amp; ACLS</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Chest &amp; abdominal trauma</span><span class="cs-topic-count">5 cases</span></li>
+<li><span>Drowning &amp; electrical injury</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Drug overdose</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Fluids, electrolytes &amp; acid–base</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Head injury</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Heat stroke &amp; hypothermia</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>ICU care &amp; organ support</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Mechanical ventilation</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Miscellaneous</span><span class="cs-topic-count">7 cases</span></li>
+<li><span>Organophosphate &amp; pesticide poisoning</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Polytrauma &amp; ATLS</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Sedation &amp; analgesia</span><span class="cs-topic-count">2 cases</span></li>
+<li><span>Sepsis in the ED</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Shock</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Snake bite &amp; envenomation</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Spinal injury</span><span class="cs-topic-count">1 case</span></li>
+<li><span>Triage &amp; disaster management</span><span class="cs-topic-count">1 case</span></li>
 </ul></section>
       <div class="seo-divider emerald"></div>
 <section aria-labelledby="more-regions" style="margin-top:36px;">
