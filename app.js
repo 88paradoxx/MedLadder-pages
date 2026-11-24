@@ -9759,6 +9759,65 @@ window.addEventListener('error', function (ev) {
         return foundModule ? { type: 'topic', subject: foundSubject, module: foundModule } : null;
       }
 
+      // Hub-page slug -> Clinical Cases region id (the ids the cases RPCs use).
+      var CASES_REGION_BY_SLUG = { 'cardiovascular': 'cardio', 'respiratory': 'resp', 'neurology': 'neuro', 'gastro-hepatobiliary': 'gi', 'renal-electrolytes': 'renal', 'endocrine-metabolic': 'endo', 'haematology-oncology': 'heme', 'infectious-disease': 'id', 'musculoskeletal-rheumatology': 'msk', 'obstetrics-gynaecology': 'obgyn', 'paediatrics-neonatology': 'peds', 'psychiatry': 'psych', 'emergency-critical-care': 'emerg' };
+
+      // Hub pages (/clinical-cases/*) bake their numbers into static HTML.
+      // Refresh the visible numbers live from Supabase so adding cases never
+      // needs a page rebuild: total + free from cases_overview, per-topic
+      // counts from cases_list, Core split from a core-only cases_list call.
+      // Any failure leaves the baked numbers in place (silent fallback).
+      function refreshHubCounts() {
+        var main = document.querySelector('main[data-hub-region]');
+        if (!main || typeof fetch === 'undefined') return;
+        var regionId = main.getAttribute('data-hub-region');
+        var rpcUrl = SUPABASE_URL + '/rest/v1/rpc/';
+        var rpcHeaders = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+        function rpc(name, body) {
+          return fetch(rpcUrl + name, { method: 'POST', headers: rpcHeaders, body: JSON.stringify(body) }).then(function (r) { if (!r.ok) throw new Error(name); return r.json(); });
+        }
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function setText(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+        var base = { p_region: regionId, p_topic: null, p_level: null, p_status: 'all', p_exam: null, p_q: null, p_sort: 'recommended', p_offset: 0, p_limit: 1 };
+        var coreBody = { p_region: regionId, p_topic: null, p_level: 'core', p_status: 'all', p_exam: null, p_q: null, p_sort: 'recommended', p_offset: 0, p_limit: 1 };
+        Promise.all([rpc('cases_overview', {}), rpc('cases_list', base), rpc('cases_list', coreBody)]).then(function (res) {
+          var ov = res[0] || {}, list = res[1] || {}, core = res[2] || {};
+          var region = ((ov.regions || []).filter(function (r) { return r.id === regionId; })[0]) || {};
+          var total = list.total || region.total || 0;
+          if (!total) return;
+          var free = (region.free == null ? 8 : region.free);
+          var coreN = core.total || 0, advN = Math.max(0, total - coreN);
+          var topics = list.topics || [];
+          var rest = Math.max(0, total - free);
+          setText('hubTotal', String(total));
+          setText('hubFree', free + ' free');
+          setText('hubLevels', coreN + ' Core \u00b7 ' + advN + ' Advanced');
+          setText('hubFreeInline', String(free));
+          var heading = document.getElementById('caseTopics');
+          if (heading && topics.length) heading.textContent = 'What\u2019s inside: ' + total + ' cases across ' + topics.length + ' topics';
+          var ul = document.getElementById('hubTopicList');
+          if (ul && topics.length) {
+            ul.innerHTML = topics.map(function (t) {
+              var n = t.n || 0;
+              return '<li><span>' + esc(t.topic) + '</span><span class="cs-topic-count">' + n + ' case' + (n === 1 ? '' : 's') + '</span></li>';
+            }).join('');
+          }
+          if (region.name) {
+            setText('hubFaqCount', 'MedLadder has ' + total + ' ' + region.name + ' clinical cases: ' + coreN + ' Core and ' + advN + ' Advanced. ' + free + ' of them are free to play, and the remaining ' + rest + ' need MedLadder Pro.');
+            setText('hubFaqFree', free + ' ' + region.name + ' cases are free to play without a subscription. The other ' + rest + ' cases, including all Advanced cases beyond the free set, need MedLadder Pro, which also unlocks the full QBank and past papers.');
+          }
+          // The region cards on this page show the other regions' totals too.
+          var byId = {};
+          (ov.regions || []).forEach(function (r) { byId[r.id] = r; });
+          Array.prototype.forEach.call(document.querySelectorAll('a[href^="/clinical-cases/"] small'), function (sm) {
+            var a = sm.closest ? sm.closest('a') : null;
+            if (!a) return;
+            var rr = byId[CASES_REGION_BY_SLUG[(a.getAttribute('href') || '').replace('/clinical-cases/', '')]];
+            if (rr && rr.total != null) sm.textContent = rr.total + ' cases';
+          });
+        }).catch(function () { /* baked numbers stay */ });
+      }
+
       function handleSeoRoute() {
         var path = window.location.pathname.replace(/\/$/, '').toLowerCase();
         // Pre-rendered PYQ pages (/pyqs/*) ship full static HTML: leave them alone.
@@ -9774,6 +9833,7 @@ window.addEventListener('error', function (ev) {
         if (path === '/clinical-cases' || path.indexOf('/clinical-cases/') === 0) {
           // Same as the PYQ guard above: this is an SEO page, not home.
           state.screen = 'seo';
+          refreshHubCounts();
           return;
         }
         // Other pre-rendered static pages ship full HTML too: leave them alone.
@@ -9850,8 +9910,7 @@ window.addEventListener('error', function (ev) {
           // does that when the region is not found).
           var openCasesSlug = sp.get('openCases');
           if (openCasesSlug) {
-            var casesRegionMap = { 'cardiovascular': 'cardio', 'respiratory': 'resp', 'neurology': 'neuro', 'gastro-hepatobiliary': 'gi', 'renal-electrolytes': 'renal', 'endocrine-metabolic': 'endo', 'haematology-oncology': 'heme', 'infectious-disease': 'id', 'musculoskeletal-rheumatology': 'msk', 'obstetrics-gynaecology': 'obgyn', 'paediatrics-neonatology': 'peds', 'psychiatry': 'psych', 'emergency-critical-care': 'emerg' };
-            var casesRegionId = casesRegionMap[String(openCasesSlug).toLowerCase()] || String(openCasesSlug).toLowerCase();
+            var casesRegionId = CASES_REGION_BY_SLUG[String(openCasesSlug).toLowerCase()] || String(openCasesSlug).toLowerCase();
             setTimeout(function () { mlCases('openRegion', casesRegionId); }, 150);
           } else if (sp.get('screen') === 'pyq') {
             setTimeout(function () {
