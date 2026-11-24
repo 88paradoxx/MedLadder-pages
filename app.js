@@ -9788,6 +9788,10 @@ window.addEventListener('error', function (ev) {
           var free = (region.free == null ? 8 : region.free);
           var coreN = core.total || 0, advN = Math.max(0, total - coreN);
           var topics = list.topics || [];
+          // The RPC returns topics in no stable order (count order one load,
+          // alphabetical the next), so sort them: the baked list was
+          // alphabetical and the order must not reshuffle between visits.
+          topics.sort(function (a, b) { return String(a.topic || '').toLowerCase().localeCompare(String(b.topic || '').toLowerCase()); });
           var rest = Math.max(0, total - free);
           setText('hubTotal', String(total));
           setText('hubFree', free + ' free');
