@@ -160,7 +160,9 @@ FOOTER_NEW = ('<a href="/editorial-team" class="footer-link">Editorial team</a>\
               '          <span class="footer-dot" aria-hidden="true">·</span>\n'
               '          <a href="/about" class="footer-link">About</a>\n'
               '          <span class="footer-dot" aria-hidden="true">·</span>\n'
-              '          <a href="/contact" class="footer-link">Contact</a>')
+              '          <a href="/contact" class="footer-link">Contact</a>\n'
+              '          <span class="footer-dot" aria-hidden="true">·</span>\n'
+              '          <a href="/pricing" class="footer-link">Pricing</a>')
 DISCLAIMER = ('<p class="footer-disclaimer">MedLadder is for medical exam preparation and education only. '
               'It is not medical advice and is not a substitute for clinical judgement.</p>')
 
