@@ -19,6 +19,10 @@ What it does
   3. "Sample MCQ #n" labels: 11px -> 12px.
   4. Footer: About and Contact links, and an educational-use disclaimer.
   5. A visible "Updated <date>" next to the "reviewed by" line (git date).
+  6. Second pass: one absolute @id (and sameAs) for MedLadder, the website
+     and Dr Mirbilal; a skip link; an llms.txt <link>; the header logo loads
+     with fetchpriority=high; question-image alt text kept under 125 chars;
+     social profile links in the footer.
 Clinical Cases hub pages are skipped where scripts/build-cases-hubs.mjs owns
 the content (descriptions, dates).
 """
@@ -160,8 +164,41 @@ FOOTER_NEW = ('<a href="/editorial-team" class="footer-link">Editorial team</a>\
 DISCLAIMER = ('<p class="footer-disclaimer">MedLadder is for medical exam preparation and education only. '
               'It is not medical advice and is not a substitute for clinical judgement.</p>')
 
+ORG_ID = 'https://medladder.top/#organization'
+SITE_ID = 'https://medladder.top/#website'
+PERSON_ID = 'https://medladder.top/editorial-team#mirbilal'
+SAME_AS = [
+    'https://play.google.com/store/apps/details?id=com.medladder.app',
+    'https://www.facebook.com/profile.php?id=61568903965858',
+    'https://www.instagram.com/medladder2026/',
+    'https://x.com/medladder2026',
+    'https://t.me/+JdqZ1YlJ-NhlOThl',
+]
+LLMS_LINK = '<link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt">'
+SKIP_CSS = ('<style id="skipLinkCss">.skip-link{position:absolute;left:12px;top:-60px;z-index:10000;padding:10px 14px;'
+            'border-radius:10px;background:#13806B;color:#fff;font-weight:600;text-decoration:none}'
+            '.skip-link:focus{top:12px}</style>')
+SOCIAL_ROW = ('<p class="footer-social">'
+              '<a href="https://www.instagram.com/medladder2026/" rel="noopener">Instagram</a> · '
+              '<a href="https://www.facebook.com/profile.php?id=61568903965858" rel="noopener">Facebook</a> · '
+              '<a href="https://x.com/medladder2026" rel="noopener">X</a> · '
+              '<a href="https://t.me/+JdqZ1YlJ-NhlOThl" rel="noopener">Telegram</a></p>')
+ALT_RE = re.compile(r'alt="([^"]*?): image for the MCQ “([^”]*)”"')
+
+def short_alt(mo):
+    head, stem = mo.group(1), mo.group(2)
+    full = f'{head}: image for the MCQ “{stem}”'
+    if len(html.unescape(full)) <= 120:
+        return mo.group(0)
+    room = 120 - len(html.unescape(f'{head}: image for the MCQ “…”'))
+    if room < 15:
+        return f'alt="{head}: MCQ image"'
+    cut = html.unescape(stem)[:room].rsplit(' ', 1)[0].rstrip(' ,;:.')
+    return 'alt="' + f'{head}: image for the MCQ “{html.escape(cut, quote=True)}…”' + '"'
+
 # ---------------------------------------------------------------- per file
-stats = {k: 0 for k in ('files', 'webpage', 'article', 'org', 'desc', 'eyebrow', 'footer', 'updated')}
+stats = {k: 0 for k in ('files', 'webpage', 'article', 'org', 'desc', 'eyebrow', 'footer', 'updated',
+                         'ids', 'skip', 'llms', 'logo', 'alt', 'social')}
 long_left = []
 
 def fix(path):
@@ -220,6 +257,19 @@ def fix(path):
             if n.get('@id') == 'https://medladder.top/#organization' and t != 'EducationalOrganization':
                 n['@type'] = 'EducationalOrganization'
                 stats['org'] += 1
+            # 6. one identity per entity
+            if t in ('Organization', 'EducationalOrganization') and n.get('name') == 'MedLadder':
+                if n.get('@id') != ORG_ID or t != 'EducationalOrganization' or 'sameAs' not in n:
+                    n['@type'] = 'EducationalOrganization'
+                    n['@id'] = ORG_ID
+                    n.setdefault('sameAs', SAME_AS)
+                    stats['ids'] += 1
+            if t == 'WebSite' and n.get('name') == 'MedLadder' and '@id' not in n:
+                n['@id'] = SITE_ID
+                stats['ids'] += 1
+            if t == 'Person' and 'Mirbilal' in str(n.get('name', '')) and '@id' not in n:
+                n['@id'] = PERSON_ID
+                stats['ids'] += 1
         if json.dumps(obj, sort_keys=True) == before:
             return mo.group(0)
         return open_tag + ws + dump(obj, body) + close
@@ -245,6 +295,40 @@ def fix(path):
         if h2 != h:
             h = h2
             stats['updated'] += 1
+
+    # 6. skip link to the first <main>
+    if 'class="skip-link"' not in h and '<main' in h:
+        mm = re.search(r'<main\b([^>]*)>', h)
+        idm = re.search(r'\bid="([^"]+)"', mm.group(1))
+        target = idm.group(1) if idm else 'main'
+        if not idm:
+            h = h[:mm.start()] + '<main id="main"' + mm.group(1) + '>' + h[mm.end():]
+        h = re.sub(r'(<body\b[^>]*>)', lambda b: b.group(1) + f'\n<a class="skip-link" href="#{target}">Skip to content</a>', h, count=1)
+        if 'id="skipLinkCss"' not in h:
+            if re.search(r'<link rel="canonical"[^>]*>', h):
+                h = re.sub(r'(<link rel="canonical"[^>]*>)', lambda c: c.group(1) + '\n' + SKIP_CSS, h, count=1)
+            else:
+                h = h.replace('</head>', SKIP_CSS + '\n</head>', 1)
+        stats['skip'] += 1
+    # llms.txt reference, next to the canonical link (inside every head template)
+    if 'href="/llms.txt"' not in h:
+        h2 = re.sub(r'(<link rel="canonical"[^>]*>)', lambda c: c.group(1) + '\n' + LLMS_LINK, h, count=1)
+        if h2 != h:
+            h = h2; stats['llms'] += 1
+    # header logo: the most likely LCP image, fetch it first
+    hm = re.search(r'<header\b[\s\S]*?</header>', h)
+    if hm and 'fetchpriority=' not in hm.group(0):
+        seg = re.sub(r'<img src="(/icons/icon-[^"]+)"', r'<img src="\1" fetchpriority="high"', hm.group(0), count=1)
+        if seg != hm.group(0):
+            h = h[:hm.start()] + seg + h[hm.end():]; stats['logo'] += 1
+    # question-image alt text <= ~120 chars
+    h2 = ALT_RE.sub(short_alt, h)
+    if h2 != h:
+        h = h2; stats['alt'] += 1
+    # social profiles in the footer
+    if 'class="footer-social"' not in h and 'class="footer-disclaimer"' in h:
+        h = re.sub(r'(<p class="footer-disclaimer">[\s\S]*?</p>)', lambda f: f.group(1) + '\n        ' + SOCIAL_ROW, h, count=1)
+        stats['social'] += 1
 
     if h != orig:
         stats['files'] += 1
