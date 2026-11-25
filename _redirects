@@ -1,6 +1,7 @@
 # Clean URLs are real directories (privacy/index.html etc.), served by
 # directory index — no rewrite rules needed for them.
-# .html URLs redirect to the clean form; /download-apk redirects to the APK.
+# .html URLs redirect to the clean form. The app is distributed through Google
+# Play only: the old direct-APK URLs send people to the Play Store listing.
 /ini-cet    /inicet    301
 /ini-cet/    /inicet    301
 /index.html    /    301
@@ -10,7 +11,8 @@
 /admin-mock.html    /admin-mock    301
 /neet-ss-books.html    /neet-ss-books    301
 /landing.html    /landing    301
-/download-apk    /MedLadder-latest.apk    302
+/download-apk    https://play.google.com/store/apps/details?id=com.medladder.app    302
+/MedLadder-latest.apk    https://play.google.com/store/apps/details?id=com.medladder.app    302
 # Unknown URLs now return a real 404 (404.html) instead of the SPA shell.
 # NOTE: Workers Static Assets _redirects only accepts 200/301/302/303/307/308,
 # so a 404 cannot be forced here. It is not needed: not_found_handling

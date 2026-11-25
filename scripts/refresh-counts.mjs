@@ -45,11 +45,19 @@ if (!live || !live.total || !live.modules || Object.keys(live.modules).length < 
 // ---------------------------------------------------------------- baselines
 const cmFile = path.join(ROOT, 'count-map.json');
 const cm = JSON.parse(fs.readFileSync(cmFile, 'utf8'));
-const oldG = cm.globals || { total: 36219, pyq: 6937, topics: 740 };
-const newG = { total: Number(live.total), pyq: Number(live.pyq || oldG.pyq), topics: Number(live.topics || oldG.topics) };
+const oldG = { total: 36219, pyq: 6937, topics: 740, bank: 29282, ...(cm.globals || {}) };
+
+const newG = { total: Number(live.total), pyq: Number(live.pyq || oldG.pyq), topics: Number(live.topics || oldG.topics), bank: Number(live.bank || oldG.bank) };
 const liveN = (e) => e.m.reduce((s, id) => s + Number(live.modules[id] || 0), 0);
+// --baseline <count-map.json>: compare against an older baseline, to catch
+// numbers a previous run missed (one-off repairs).
+const baseArg = args.includes('--baseline') ? JSON.parse(fs.readFileSync(args[args.indexOf('--baseline') + 1], 'utf8')) : null;
+if (baseArg && baseArg.globals) Object.assign(oldG, baseArg.globals);
 const entries = {};
-for (const [p, e] of Object.entries(cm.paths)) entries[p] = { old: e.n, now: liveN(e) };
+for (const [p, e] of Object.entries(cm.paths)) {
+  const old = baseArg && baseArg.paths[p] ? baseArg.paths[p].n : e.n;
+  entries[p] = { old, now: liveN(e) };
+}
 
 // ---------------------------------------------------------------- text rules
 const fmt = (n) => Number(n).toLocaleString('en-US');
@@ -63,6 +71,7 @@ const num = (s) => parseInt(s.replace(/,/g, ''), 10);
 function swapGlobals(t) {
   if (oldG.total !== newG.total) t = t.replaceAll(fmt(oldG.total), fmt(newG.total)).replace(new RegExp(`\\b${oldG.total}\\b`, 'g'), String(newG.total));
   if (oldG.pyq !== newG.pyq) t = t.replaceAll(fmt(oldG.pyq), fmt(newG.pyq));
+  if (oldG.bank !== newG.bank) t = t.replaceAll(fmt(oldG.bank), fmt(newG.bank));
   if (oldG.topics !== newG.topics) t = t.replace(new RegExp(`\\b${oldG.topics} topics`, 'g'), `${newG.topics} topics`);
   return t;
 }
@@ -83,11 +92,17 @@ const entryFor = (href) => entries[(href.split(/[?#]/)[0].replace(/\/+$/, '') ||
 
 function rewrite(html, pagePath) {
   const page = entries[pagePath] || null;
-  let link = null, row = null, inRow = false, tile = false;
+  let link = null, row = null, inRow = false, tile = false, after = null;
   return html.replace(TOKEN, (tok) => {
     if (tok[0] !== '<') {
       let t = swapGlobals(tok);
       if (link) return swapEntry(t, link);
+      // "<a href=/subjects/x>X</a> — 2,119 questions": the count right after a link is its count.
+      if (after) {
+        const e = after; after = null;
+        const m = t.match(/^(\s*[—–-]\s*)(\d{1,3}(?:,\d{3})+|\d+)(?=\s+(?:MCQs?|questions|Qs)\b)/);
+        if (m && e.old !== e.now && near(num(m[2]), e.old)) return m[1] + fmt(e.now) + t.slice(m[0].length);
+      }
       if (row) { t = swapEntry(t, row); return swapOnly(t, row, 99); }
       if (tile) return swapOnly(t, page);
       return swapEntry(t, page);
@@ -101,8 +116,9 @@ function rewrite(html, pagePath) {
     if (/^<style\b/i.test(tok)) return tok;
     const tag = (tok.match(/^<\/?([a-zA-Z0-9]+)/) || [])[1]?.toLowerCase();
     const closing = tok[1] === '/';
+    after = null;
     if (tag === 'a') {
-      if (closing) link = null;
+      if (closing) { after = link; link = null; }
       else {
         const href = (tok.match(/\bhref="([^"]*)"/) || [])[1] || '';
         link = href.startsWith('/') ? entryFor(href) : null;
@@ -146,6 +162,18 @@ const write = (file, next) => {
 };
 
 for (const f of htmlFiles()) write(f, rewrite(fs.readFileSync(f, 'utf8'), pagePathOf(f)));
+
+// ---------------------------------------------------------------- llms.txt
+const llmsFile = path.join(ROOT, 'llms.txt');
+if (fs.existsSync(llmsFile)) {
+  const txt = fs.readFileSync(llmsFile, 'utf8').split('\n').map((line) => {
+    const m = line.match(/\(https:\/\/medladder\.top(\/subjects\/[a-z0-9-]+)\)/);
+    const e = m && entries[m[1]];
+    line = swapGlobals(line);
+    return e ? swapEntry(line, e) : line;
+  }).join('\n');
+  write(llmsFile, txt);
+}
 
 // ---------------------------------------------------------------- syllabus.js
 const sylFile = path.join(ROOT, 'syllabus.js');

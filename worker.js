@@ -76,7 +76,7 @@ function json(status, obj) {
    the pages and count-map.json together (daily), so these always describe
    what the HTML currently says. */
 var BAKED = COUNT_MAP.globals || { total: 36219, pyq: 6937, topics: 740 };
-var BAKED_TOTAL = fmt(BAKED.total), BAKED_PYQ = fmt(BAKED.pyq);
+var BAKED_TOTAL = fmt(BAKED.total), BAKED_PYQ = fmt(BAKED.pyq), BAKED_BANK = BAKED.bank ? fmt(BAKED.bank) : null;
 var IST_OFFSET_MS = 330 * 60 * 1000;
 var memCounts = null;
 
@@ -187,6 +187,7 @@ function swapGlobals(text, counts) {
       .replace(new RegExp('\\b' + BAKED.total + '\\b', 'g'), String(counts.total));
   }
   if (counts.pyq && counts.pyq !== BAKED.pyq && text.indexOf(BAKED_PYQ) !== -1) text = text.split(BAKED_PYQ).join(fmt(counts.pyq));
+  if (BAKED_BANK && counts.bank && counts.bank !== BAKED.bank && text.indexOf(BAKED_BANK) !== -1) text = text.split(BAKED_BANK).join(fmt(counts.bank));
   if (counts.topics && counts.topics !== BAKED.topics && text.indexOf(BAKED.topics + ' topics') !== -1) {
     text = text.replace(new RegExp('\\b' + BAKED.topics + ' topics', 'g'), counts.topics + ' topics');
   }
@@ -209,14 +210,19 @@ function rewriteCounts(response, path, counts, qotd) {
   if (!counts) return new HTMLRewriter().on('body', qotdHandler(qotd)).transform(response);
   var page = entryFor(path);
   var pageLive = liveFor(page, counts);
-  var link = null, linkLive = null, rowLink = null, rowLive = null, inRow = false, tile = false;
+  var link = null, linkLive = null, rowLink = null, rowLive = null, inRow = false, tile = false, after = null, afterLive = null;
   var buf = '';
   /* Inline scripts are allow-listed by hash in the CSP, so their text must
      not change; JSON-LD is data and is rewritten like the rest of the page. */
   var raw = false;
 
+  var AFTER_LINK = /^(\s*[\u2014\u2013-]\s*)(\d{1,3}(?:,\d{3})+|\d+)(?=\s+(?:MCQs?|questions|Qs)\b)/;
   function transform(text) {
     text = swapGlobals(text, counts);
+    if (!link && after) {
+      var am = text.match(AFTER_LINK);
+      if (am && near(parseInt(am[2].replace(/,/g, ''), 10), after.n)) text = am[1] + fmt(afterLive) + text.slice(am[0].length);
+    }
     var ctxEntry = link || rowLink;
     var ctxLive = link ? linkLive : rowLive;
     if (ctxEntry) {
@@ -271,7 +277,7 @@ function rewriteCounts(response, path, counts, qotd) {
         if (!e) return;
         link = e; linkLive = liveFor(e, counts);
         if (inRow && !rowLink) { rowLink = e; rowLive = linkLive; }
-        el.onEndTag(function () { link = null; linkLive = null; });
+        el.onEndTag(function () { after = link; afterLive = linkLive; link = null; linkLive = null; });
       }
     })
     .on('meta[content]', {
@@ -289,7 +295,10 @@ function rewriteCounts(response, path, counts, qotd) {
         el.onEndTag(function () { tile = false; });
       }
     })
-    .on('*', textHandler)
+    .on('*', {
+      element: function () { if (!link) { after = null; afterLive = null; } },
+      text: textHandler.text
+    })
     .transform(response);
 }
 

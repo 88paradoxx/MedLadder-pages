@@ -5332,4 +5332,4 @@ window.SYLLABUS_DATA = [
     ]
   }
 ];
-window.SYLLABUS_TOTALS = {"total":35169,"pyq":6937,"topics":740};
+window.SYLLABUS_TOTALS = {"total":35169,"pyq":6937,"topics":740,"bank":28232};
