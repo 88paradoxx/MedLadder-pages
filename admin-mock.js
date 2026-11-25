@@ -236,7 +236,7 @@
    * re-serialised, so opening and saving changes nothing by accident.
    *
    * Allowed tags match sanitizeQuestionHtml() in app.js (what students see). */
-  var RF_KEEP = { BR: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, S: 1, SUB: 1, SUP: 1, SMALL: 1, SPAN: 1, P: 1, DIV: 1, IMG: 1 };
+  var RF_KEEP = { BR: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, S: 1, SUB: 1, SUP: 1, SMALL: 1, SPAN: 1, P: 1, DIV: 1, UL: 1, LI: 1, OL: 1, IMG: 1 };
   var RF_DROP = { SCRIPT: 1, STYLE: 1, IFRAME: 1, OBJECT: 1, EMBED: 1, LINK: 1, META: 1, FORM: 1, INPUT: 1, BUTTON: 1, SELECT: 1, TEXTAREA: 1, SVG: 1, MATH: 1, TEMPLATE: 1 };
 
   /* Question images moved from Supabase storage to R2; old Supabase links in

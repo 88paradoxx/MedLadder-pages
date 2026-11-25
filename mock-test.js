@@ -88,7 +88,8 @@
     var allowed = {
       BR: true, B: true, STRONG: true, I: true, EM: true,
       U: true, S: true, SUB: true, SUP: true, SMALL: true,
-      SPAN: true, P: true, DIV: true
+      SPAN: true, P: true, DIV: true,
+      UL: true, LI: true, OL: true
     };
     function clean(parent) {
       Array.prototype.forEach.call(parent.childNodes, function (node) {

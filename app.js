@@ -3803,7 +3803,8 @@ window.addEventListener('error', function (ev) {
           SUB: true, SUP: true,
           SMALL: true,
           SPAN: true,
-          P: true, DIV: true
+          P: true, DIV: true,
+          UL: true, LI: true, OL: true
         };
         function clean(parent) {
           Array.from(parent.childNodes).forEach(function (node) {
