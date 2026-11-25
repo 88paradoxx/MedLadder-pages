@@ -8,10 +8,6 @@
 
 /sw.js
   Cache-Control: no-cache
-/MedLadder-latest.apk
-  Content-Type: application/vnd.android.package-archive
-  Content-Disposition: attachment; filename="MedLadder-latest.apk"
-  Cache-Control: public, max-age=0, must-revalidate
 
 # Speculation rules: start loading a page as soon as a finger touches a link
 # to it (Chrome / Android), so moving between the app, Mock and the static
