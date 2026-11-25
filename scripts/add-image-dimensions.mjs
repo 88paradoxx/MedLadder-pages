@@ -6,7 +6,8 @@
 //
 // Sizes are cached in scripts/image-dimensions.json, so later runs only fetch
 // new images. Safe to re-run; images that already have width are skipped.
-// Run by .github/workflows/image-dimensions.yml (needs network access to R2).
+// Run by .github/workflows/image-dimensions.yml (needs network access to R2,
+// which this repo's build sandbox does not have).
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
