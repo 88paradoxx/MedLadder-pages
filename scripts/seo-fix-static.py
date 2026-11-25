@@ -92,12 +92,12 @@ def topic_description(topic, subject):
 # Counts such as 36,219 are kept verbatim: the Worker swaps in live numbers.
 OVERRIDES = {
     'index.html': 'MCQ question bank for FMGE, NEET PG, INI-CET & NEET SS: 36,219 questions across 19 subjects, with explained answers.',
-    'landing.html': '36,219 topic-wise MCQs and previous-year papers for MBBS, NEET PG, FMGE, INI-CET & NEET SS. 8 topics free in every subject.',
-    'landing/index.html': '36,219 topic-wise MCQs and previous-year papers for MBBS, NEET PG, FMGE, INI-CET & NEET SS. 8 topics free in every subject.',
+    'landing.html': '35,169 topic-wise MCQs for MBBS, NEET PG, FMGE, INI-CET & NEET SS, plus past papers. 8 topics free in every subject.',
+    'landing/index.html': '35,169 topic-wise MCQs for MBBS, NEET PG, FMGE, INI-CET & NEET SS, plus past papers. 8 topics free in every subject.',
     'neet-pg/index.html': 'NEET PG preparation: 36,219 MCQs, previous-year questions from 2018–2025 and clear explanations on MedLadder.',
     'fmge/index.html': 'FMGE preparation: previous-year questions from 2020–2025, 19 subject QBanks and explained answers on MedLadder.',
-    'inicet/index.html': 'INI-CET MCQs from 10 exam sessions (2020–2025), AIIMS PG recalls and clinical vignettes, with explanations.',
-    'neet-ss/index.html': 'NEET SS preparation: previous-year papers (2022–2024), high-yield MCQs and detailed explanations on MedLadder.',
+    'inicet/index.html': 'INI-CET recall questions from 10 sessions (2020–2025), clinical vignettes and topic-wise MCQs, with explanations.',
+    'neet-ss/index.html': 'NEET SS preparation: free mock tests in the exam pattern (150 MCQs, +4/−1), advanced clinical cases and explained MCQs.',
     'neet-pg-syllabus/index.html': 'NEET PG syllabus with subject-wise weightage from 1,484 recall questions, topic counts and practice links.',
     'pyqs/index.html': 'Free 50-question previews of NEET PG, FMGE and INI-CET previous-year papers, full papers as PDF, and free mocks.',
     'pyqs/neet-pg/index.html': 'Free 50-question previews of NEET PG recall papers 2018–2025, full papers as PDF, and a free All-India mock.',
