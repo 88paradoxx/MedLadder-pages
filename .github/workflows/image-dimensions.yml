@@ -5,9 +5,6 @@ name: Add image dimensions
 # topic pages with images are added; commits to the branch it runs on.
 on:
   workflow_dispatch:
-  push:
-    branches: [seo/second-pass]
-    paths: [scripts/add-image-dimensions.mjs]
 
 permissions:
   contents: write

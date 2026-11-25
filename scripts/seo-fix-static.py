@@ -183,18 +183,18 @@ SOCIAL_ROW = ('<p class="footer-social">'
               '<a href="https://www.facebook.com/profile.php?id=61568903965858" rel="noopener">Facebook</a> · '
               '<a href="https://x.com/medladder2026" rel="noopener">X</a> · '
               '<a href="https://t.me/+JdqZ1YlJ-NhlOThl" rel="noopener">Telegram</a></p>')
-ALT_RE = re.compile(r'alt="([^"]*?): image for the MCQ “([^”]*)”"')
+ALT_RE = re.compile(r'alt="([^"]*?): ((?:explanation )?image) for the MCQ “([^”]*)”"')
 
 def short_alt(mo):
-    head, stem = mo.group(1), mo.group(2)
-    full = f'{head}: image for the MCQ “{stem}”'
+    head, kind, stem = mo.group(1), mo.group(2), mo.group(3)
+    full = f'{head}: {kind} for the MCQ “{stem}”'
     if len(html.unescape(full)) <= 120:
         return mo.group(0)
-    room = 120 - len(html.unescape(f'{head}: image for the MCQ “…”'))
+    room = 120 - len(html.unescape(f'{head}: {kind} for the MCQ “…”'))
     if room < 15:
-        return f'alt="{head}: MCQ image"'
+        return f'alt="{head}: MCQ {kind}"'
     cut = html.unescape(stem)[:room].rsplit(' ', 1)[0].rstrip(' ,;:.')
-    return 'alt="' + f'{head}: image for the MCQ “{html.escape(cut, quote=True)}…”' + '"'
+    return 'alt="' + f'{head}: {kind} for the MCQ “{html.escape(cut, quote=True)}…”' + '"'
 
 # ---------------------------------------------------------------- per file
 stats = {k: 0 for k in ('files', 'webpage', 'article', 'org', 'desc', 'eyebrow', 'footer', 'updated',
