@@ -7,9 +7,6 @@ on:
   schedule:
     - cron: '43 21 * * *'   # daily, 03:13 IST (after the midnight IST count reset)
   workflow_dispatch:
-  push:
-    branches: [fix/live-question-counts]
-    paths: [scripts/refresh-counts.mjs]
 
 permissions:
   contents: write
