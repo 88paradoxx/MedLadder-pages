@@ -88,9 +88,11 @@ function summarise(raw) {
 const fill = (tpl, r) => tpl.replace(/\{(total|free|core|advanced|topics)\}/g, (m, k) => String(k === 'topics' ? r.topics.length : r[k]));
 const unesc = (s) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 const warnings = [];
+// Same snippet-width estimate SEOmator uses (max ~920px for descriptions).
+const px = (t) => Math.round([...t].reduce((w, ch) => w + (ch === ' ' || '.,:;!|il1'.includes(ch) ? 4 : 'mwMW'.includes(ch) ? 11 : ch >= 'A' && ch <= 'Z' ? 9.5 : 7.5), 0));
 function lint(label, title, desc) {
   if (title.length > 66) warnings.push(`${label}: title ${title.length} chars`);
-  if (desc.length > 160) warnings.push(`${label}: description ${desc.length} chars`);
+  if (px(desc) > 920) warnings.push(`${label}: description ${px(desc)}px (max 920)`);
 }
 // FAQPage schema mirrors the visible FAQ exactly.
 function faqSchemaFromHtml(html) {

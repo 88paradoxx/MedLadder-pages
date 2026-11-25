@@ -2565,7 +2565,7 @@ window.addEventListener('error', function (ev) {
             '<a href="/clinical-cases">All clinical cases</a><a href="/clinical-cases/cardiovascular">Cardiovascular</a><a href="/clinical-cases/respiratory">Respiratory</a><a href="/clinical-cases/neurology">Neurology</a><a href="/clinical-cases/gastro-hepatobiliary">Gastro-Hepatobiliary</a><a href="/clinical-cases/renal-electrolytes">Renal &amp; Electrolytes</a><a href="/clinical-cases/endocrine-metabolic">Endocrine &amp; Metabolic</a><a href="/clinical-cases/haematology-oncology">Haematology &amp; Oncology</a><a href="/clinical-cases/infectious-disease">Infectious Disease</a><a href="/clinical-cases/musculoskeletal-rheumatology">Musculoskeletal &amp; Rheumatology</a><a href="/clinical-cases/obstetrics-gynaecology">Obstetrics &amp; Gynaecology</a><a href="/clinical-cases/paediatrics-neonatology">Paediatrics &amp; Neonatology</a><a href="/clinical-cases/psychiatry">Psychiatry</a><a href="/clinical-cases/emergency-critical-care">Emergency &amp; Critical Care</a>' +
             '</div></details></div>' +
             '<div class="footer-directory-group"><strong>Preparation</strong><div><a href="/neet-pg-syllabus">NEET PG Syllabus</a><a href="/neet-pg-high-yield-topics">High-Yield Topics</a><a href="/neet-pg-top-100-questions">Top 100 Questions</a><a href="/mock-test">Mock Tests</a><a href="/pyqs">Previous-Year Questions</a><a href="/best-free-neet-pg-question-bank">Free Question Bank</a><a href="/books">Free Books</a></div></div>' +
-            '<div class="footer-directory-group"><strong>About &amp; policies</strong><div><a href="/medladder-vs-marrow">MedLadder vs Marrow</a><a href="/medladder-vs-prepladder">MedLadder vs PrepLadder</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/terms#cancellation-refund">Refund Policy</a><a href="/editorial-team">Editorial team</a>' +
+            '<div class="footer-directory-group"><strong>About &amp; policies</strong><div><a href="/about">About MedLadder</a><a href="/contact">Contact</a><a href="/medladder-vs-marrow">MedLadder vs Marrow</a><a href="/medladder-vs-prepladder">MedLadder vs PrepLadder</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/terms#cancellation-refund">Refund Policy</a><a href="/editorial-team">Editorial team</a>' +
             (isAdmin(currentUser) ? '<a href="#" class="admin-footer-link">👑 Admin Access</a>' : '') +
             '</div></div></nav>';
         } else if (isSubjectDirectory) {
@@ -2575,7 +2575,7 @@ window.addEventListener('error', function (ev) {
             '<div class="footer-directory-group"><strong>Subject</strong><div><a href="/">All subjects</a><a href="' + subjectPath(currentSubject) + '">' + esc(currentSubject.name) + ' topics</a></div></div>' +
             '<div class="footer-directory-group"><strong>Related subjects</strong><div>' + relatedSubjects.map(function (s) { return '<a href="' + subjectPath(s) + '">' + esc(s.name) + '</a>'; }).join('') + '</div></div>' +
             '<div class="footer-directory-group"><strong>Exams &amp; PYQs</strong><div><a href="/neet-pg">NEET PG</a><a href="/fmge">FMGE</a><a href="/inicet">INI-CET</a><a href="/neet-ss">NEET SS</a><a href="/pyqs">All PYQs</a></div></div>' +
-            '<div class="footer-directory-group"><strong>Policies</strong><div><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/terms#cancellation-refund">Refunds</a></div></div></nav>';
+            '<div class="footer-directory-group"><strong>Policies</strong><div><a href="/about">About</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/terms#cancellation-refund">Refunds</a></div></div></nav>';
         } else if (isTopicDirectory) {
           var nearbyModules = [];
           for (var offset = -2; offset <= 2; offset++) {
@@ -2618,6 +2618,7 @@ window.addEventListener('error', function (ev) {
           directoryHtml +
           '<div class="footer-copy"><strong>MedLadder</strong> · Medical Entrance Exam Question Bank</div>' +
           '<div class="footer-subcopy">MBBS · FMGE · NEET PG · INI-CET · NEET SS</div>' +
+          '<p class="footer-disclaimer">MedLadder is for medical exam preparation and education only. It is not medical advice and is not a substitute for clinical judgement.</p>' +
           '</div>' +          '</footer>';
       }
 
@@ -2643,7 +2644,8 @@ window.addEventListener('error', function (ev) {
             return '<a href="' + x[0] + '" target="_blank" rel="noopener noreferrer" aria-label="MedLadder on ' + x[1] + '" title="' + x[1] + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + x[2] + '</svg></a>';
           }).join('') + '</div></div></div>' +
           directoryHtml +
-          '<p class="v3f-copy">© ' + year + ' MedLadder · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/terms#cancellation-refund">Refunds</a></p>' +
+          '<p class="v3f-copy">© ' + year + ' MedLadder · <a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/terms#cancellation-refund">Refunds</a></p>' +
+          '<p class="footer-disclaimer">MedLadder is for medical exam preparation and education only. It is not medical advice and is not a substitute for clinical judgement.</p>' +
           '</div></footer>';
       }
 
