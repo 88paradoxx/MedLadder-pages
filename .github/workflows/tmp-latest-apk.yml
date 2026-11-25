@@ -1,0 +1,36 @@
+name: tmp - copy release APK into the repo
+
+# One-off: takes the APK from "Android release build" run 45561523016
+# (1.10.2, versionCode 24) and commits it as MedLadder-latest.apk on this
+# branch. Removed again before the branch is merged.
+on:
+  push:
+    branches: [chore/latest-apk]
+    paths: [.github/workflows/tmp-latest-apk.yml]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: MedLadder-1.10.2-24
+          run-id: 45561523016
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: out
+      - name: Check and commit
+        run: |
+          ls -la out
+          AAPT=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)aapt
+          $AAPT dump badging out/*.apk | head -1
+          cp out/*.apk MedLadder-latest.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add MedLadder-latest.apk
+          git commit -m "Website APK: MedLadder 1.10.2 (versionCode 24)"
+          git push origin HEAD:chore/latest-apk
