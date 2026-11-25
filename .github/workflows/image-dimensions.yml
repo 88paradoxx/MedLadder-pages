@@ -1,0 +1,30 @@
+name: Add image dimensions
+
+# Fills in width/height on question images in the static pages (the images
+# live on R2, so their sizes have to be fetched). Run by hand after new
+# topic pages with images are added; commits to the branch it runs on.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i --no-save image-size@1.1.1
+      - run: node scripts/add-image-dimensions.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet; then echo "Nothing to add."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add -A -- '*.html' scripts/image-dimensions.json
+          git commit -m "Question images: add width/height"
+          git pull --rebase origin ${GITHUB_REF_NAME}
+          git push origin HEAD:${GITHUB_REF_NAME}

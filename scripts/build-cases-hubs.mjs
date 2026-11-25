@@ -268,7 +268,7 @@ function buildIndex(template, all, today) {
   const cards = regions.map((r) => `<a href="/clinical-cases/${r.slug}" class="seo-card" style="display:block;text-decoration:none;"><strong style="font-size:15px;color:var(--ink);">${escHtml(r.name)}</strong><br><small style="color:var(--ink-soft);">${plural(r.total, 'case')}</small><br><span style="font-size:12.5px;color:var(--ink-soft);">${r.core} Core · ${r.advanced} Advanced · ${r.free} free</span></a>`).join('\n');
   const faqHtml = ld[2].mainEntity.map((q, i) => `<details class="seo-faq-card"><summary>${escHtml(q.name)}</summary><p${i === 0 ? ' id="hubFaqCount"' : ''}>${escHtml(q.acceptedAnswer.text)}</p></details>`).join('');
 
-  const main = `<main class="seo-main" data-hub-index="1">
+  const main = `<main id="main" class="seo-main" data-hub-index="1">
       <nav aria-label="Breadcrumb" class="seo-breadcrumb">
         <a href="/" id="seoHomeTop">← Home</a>
         <span aria-hidden="true">/</span> <span>Clinical Cases</span>
