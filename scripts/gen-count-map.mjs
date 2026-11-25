@@ -37,6 +37,9 @@ for (const slug of readdirSync(join(ROOT, 'subjects'))) {
     paths['/subjects/' + slug + '/' + a[1]] = { m: [mod.id], n: mod.questionCount };
   }
 }
-writeFileSync(join(ROOT, 'count-map.json'), JSON.stringify({ paths }) + '\n');
+// Keep the site totals that scripts/refresh-counts.mjs maintains.
+let globals;
+try { globals = JSON.parse(readFileSync(join(ROOT, 'count-map.json'), 'utf8')).globals; } catch (e) { /* first run */ }
+writeFileSync(join(ROOT, 'count-map.json'), JSON.stringify(globals ? { globals, paths } : { paths }) + '\n');
 console.log(Object.keys(paths).length + ' pages mapped');
 if (missing.length) console.log('Unmapped:\n  ' + missing.join('\n  '));

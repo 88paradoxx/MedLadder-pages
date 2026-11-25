@@ -3968,10 +3968,10 @@ window.addEventListener('error', function (ev) {
 
       function totalQuestions() {
         // Live count once site_counts has loaded; the build-time figure until then.
-        return LIVE_COUNTS && LIVE_COUNTS.total ? LIVE_COUNTS.total : 36219;
+        return LIVE_COUNTS && LIVE_COUNTS.total ? LIVE_COUNTS.total : ((window.SYLLABUS_TOTALS && window.SYLLABUS_TOTALS.total) || 36219);
       }
       function totalTopics() {
-        return LIVE_COUNTS && LIVE_COUNTS.topics ? LIVE_COUNTS.topics : 740;
+        return LIVE_COUNTS && LIVE_COUNTS.topics ? LIVE_COUNTS.topics : ((window.SYLLABUS_TOTALS && window.SYLLABUS_TOTALS.topics) || 740);
       }
 
       var activeHomeCategory = 'all';

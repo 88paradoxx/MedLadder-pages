@@ -1,0 +1,39 @@
+name: Refresh question counts
+
+# Writes the live question counts (site_counts RPC) into syllabus.js,
+# count-map.json and the static pages once a day, so subject and topic tiles
+# show the right numbers before any live refresh. Commits only on change.
+on:
+  schedule:
+    - cron: '43 21 * * *'   # daily, 03:13 IST (after the midnight IST count reset)
+  workflow_dispatch:
+  push:
+    branches: [fix/live-question-counts]
+    paths: [scripts/refresh-counts.mjs]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-counts
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Write live counts into the site
+        run: node scripts/refresh-counts.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet; then echo "Counts already up to date."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add -A -- '*.html' syllabus.js count-map.json
+          git commit -m "Question counts: refresh from live data"
+          git pull --rebase origin ${GITHUB_REF_NAME}
+          git push origin HEAD:${GITHUB_REF_NAME}

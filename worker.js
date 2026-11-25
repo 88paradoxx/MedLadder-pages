@@ -72,8 +72,11 @@ function json(status, obj) {
 
 /* ---------- live counts ---------- */
 
-/* Numbers baked into the static pages when they were generated. */
-var BAKED = { total: 36219, pyq: 6937, topics: 740 };
+/* Numbers baked into the static pages. scripts/refresh-counts.mjs rewrites
+   the pages and count-map.json together (daily), so these always describe
+   what the HTML currently says. */
+var BAKED = COUNT_MAP.globals || { total: 36219, pyq: 6937, topics: 740 };
+var BAKED_TOTAL = fmt(BAKED.total), BAKED_PYQ = fmt(BAKED.pyq);
 var IST_OFFSET_MS = 330 * 60 * 1000;
 var memCounts = null;
 
@@ -167,7 +170,7 @@ function near(num, baked) {
   return baked > 0 && Math.abs(num - baked) <= Math.max(2, baked * 0.25);
 }
 
-var Q_WORD = '(?:\\s|&nbsp;)*(?:practice |topic-wise |high-yield )?(?:MCQs?|questions|Questions|QUESTIONS|Qs)\\b';
+var Q_WORD = '(?:\\s|&nbsp;)*(?:(?:practice|topic-wise|high-yield|exam-style|curated|free)\\s+)?(?:MCQs?|questions|Questions|QUESTIONS|Qs)\\b';
 var NUM_Q = new RegExp('\\b(\\d{1,3}(?:,\\d{3})+|\\d+)(?=' + Q_WORD + ')', 'g');
 var ONLY_NUM = /^(\s*)(\d{1,3}(?:,\d{3})+|\d+)(\s*)$/;
 
@@ -179,11 +182,14 @@ function swapNear(text, re, baked, live) {
 }
 
 function swapGlobals(text, counts) {
-  if (text.indexOf('36,219') !== -1 || text.indexOf('36219') !== -1) {
-    text = text.replace(/36,219/g, fmt(counts.total)).replace(/\b36219\b/g, String(counts.total));
+  if (counts.total !== BAKED.total && (text.indexOf(BAKED_TOTAL) !== -1 || text.indexOf(String(BAKED.total)) !== -1)) {
+    text = text.split(BAKED_TOTAL).join(fmt(counts.total))
+      .replace(new RegExp('\\b' + BAKED.total + '\\b', 'g'), String(counts.total));
   }
-  if (counts.pyq && text.indexOf('6,937') !== -1) text = text.replace(/6,937/g, fmt(counts.pyq));
-  if (counts.topics && text.indexOf('740 topics') !== -1) text = text.replace(/\b740 topics/g, counts.topics + ' topics');
+  if (counts.pyq && counts.pyq !== BAKED.pyq && text.indexOf(BAKED_PYQ) !== -1) text = text.split(BAKED_PYQ).join(fmt(counts.pyq));
+  if (counts.topics && counts.topics !== BAKED.topics && text.indexOf(BAKED.topics + ' topics') !== -1) {
+    text = text.replace(new RegExp('\\b' + BAKED.topics + ' topics', 'g'), counts.topics + ' topics');
+  }
   return text;
 }
 
@@ -203,7 +209,7 @@ function rewriteCounts(response, path, counts, qotd) {
   if (!counts) return new HTMLRewriter().on('body', qotdHandler(qotd)).transform(response);
   var page = entryFor(path);
   var pageLive = liveFor(page, counts);
-  var link = null, linkLive = null, rowLink = null, rowLive = null, inRow = false;
+  var link = null, linkLive = null, rowLink = null, rowLive = null, inRow = false, tile = false;
   var buf = '';
   /* Inline scripts are allow-listed by hash in the CSP, so their text must
      not change; JSON-LD is data and is rewritten like the rest of the page. */
@@ -222,6 +228,10 @@ function rewriteCounts(response, path, counts, qotd) {
         }
       }
     } else if (page) {
+      if (tile) {
+        var t = text.match(ONLY_NUM);
+        if (t && near(parseInt(t[2].replace(/,/g, ''), 10), page.n)) return t[1] + fmt(pageLive) + t[3];
+      }
       text = swapNear(text, NUM_Q, page.n, pageLive);
     }
     return text;
@@ -271,6 +281,12 @@ function rewriteCounts(response, path, counts, qotd) {
         var out = swapGlobals(c, counts);
         if (page) out = swapNear(out, NUM_Q, page.n, pageLive);
         if (out !== c) el.setAttribute('content', out);
+      }
+    })
+    .on('.bento-stat-num', {
+      element: function (el) {
+        tile = true;
+        el.onEndTag(function () { tile = false; });
       }
     })
     .on('*', textHandler)
