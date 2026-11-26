@@ -481,6 +481,8 @@ async function serveNoteFile(request, env) {
   h.set('etag', obj.httpEtag);
   h.set('cache-control', 'public, max-age=31536000, immutable');
   h.set('x-content-type-options', 'nosniff');
+  // ?dl=1 asks for a download (the Android app's download handler needs a real URL).
+  if (new URL(request.url).searchParams.get('dl') === '1') h.set('content-disposition', 'attachment; filename="' + key.split('/').pop().replace(/-[a-z0-9]+(\.[a-z]+)$/, '$1') + '"');
   Object.keys(NOTE_CORS).forEach(function (k) { h.set(k, NOTE_CORS[k]); });
   return new Response(request.method === 'HEAD' ? null : obj.body, { headers: h });
 }
