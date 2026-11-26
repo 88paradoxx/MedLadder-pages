@@ -4025,24 +4025,73 @@ window.addEventListener('error', function (ev) {
       // Built in the admin's browser when the overview is saved, then stored
       // in R2 (export_pdf_url) so students download an ordinary https link;
       // the Android app cannot download blob: URLs.
+      // The MedLadder logo as a data URL for the PDF header (null if missing).
+      var notesLogoPromise = null;
+      function loadNotesLogo() {
+        if (!notesLogoPromise) {
+          notesLogoPromise = fetch('/icons/icon-192.png').then(function (r) {
+            if (!r.ok) throw new Error('logo');
+            return r.blob();
+          }).then(function (b) {
+            return new Promise(function (resolve) {
+              var fr = new FileReader();
+              fr.onload = function () { resolve(fr.result); };
+              fr.onerror = function () { resolve(null); };
+              fr.readAsDataURL(b);
+            });
+          }).catch(function () { return null; });
+        }
+        return notesLogoPromise;
+      }
+
+      // Same header and footer on every A4 page: logo, "MedLadder" and the
+      // site address on top; topic name and page number at the bottom.
+      function brandNotesPdf(pdf, logo, title) {
+        var n = pdf.internal.getNumberOfPages();
+        var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+        var topic = String(title || 'Topic overview');
+        if (topic.length > 70) topic = topic.slice(0, 67) + '...';
+        for (var i = 1; i <= n; i++) {
+          pdf.setPage(i);
+          var x = 12;
+          if (logo) { try { pdf.addImage(logo, 'PNG', 12, 6.2, 8, 8); x = 22.5; } catch (e) { } }
+          pdf.setFont('helvetica', 'bold'); pdf.setFontSize(12.5); pdf.setTextColor(19, 128, 107);
+          pdf.text('MedLadder', x, 11.6);
+          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(110, 110, 110);
+          pdf.text('medladder.top', W - 12, 9.4, { align: 'right' });
+          pdf.text('NEET PG \u00b7 INI-CET \u00b7 FMGE \u00b7 NEET SS', W - 12, 13.2, { align: 'right' });
+          pdf.setDrawColor(19, 128, 107); pdf.setLineWidth(0.5); pdf.line(12, 16.4, W - 12, 16.4);
+          pdf.setDrawColor(210, 210, 210); pdf.setLineWidth(0.2); pdf.line(12, H - 11.5, W - 12, H - 11.5);
+          pdf.setFontSize(8); pdf.setTextColor(120, 120, 120);
+          pdf.text(topic + ' \u00b7 Topic overview', 12, H - 7);
+          pdf.text('Page ' + i + ' of ' + n, W - 12, H - 7, { align: 'right' });
+        }
+      }
+
       function buildTopicNotesPdf(title, subjectName, html) {
-        return loadNotesLib('https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js', 'html2pdf').then(function (h2p) {
+        return Promise.all([
+          loadNotesLib('https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js', 'html2pdf'),
+          loadNotesLogo()
+        ]).then(function (got) {
+          var h2p = got[0], logo = got[1];
           var box = document.createElement('div');
           box.className = 'tn-print';
           box.innerHTML =
-            '<div class="tn-print-eyebrow">' + esc(subjectName || '') + (subjectName ? ' · ' : '') + 'Topic overview</div>' +
+            (subjectName ? '<div class="tn-print-eyebrow">' + esc(subjectName) + ' \u00b7 Topic overview</div>' : '') +
             '<h1>' + esc(title || 'Topic overview') + '</h1>' +
-            '<div class="tn-body">' + sanitizeNotesHtml(html) + '</div>' +
-            '<div class="tn-print-foot">MedLadder · medladder.top</div>';
+            '<div class="tn-body">' + sanitizeNotesHtml(html) + '</div>';
           box.querySelectorAll('img').forEach(function (im) { im.setAttribute('crossorigin', 'anonymous'); im.removeAttribute('loading'); });
           return h2p().set({
-            margin: [12, 12, 14, 12],
+            margin: [21, 12, 15, 12],
             filename: notesFileSlug(title) + '-overview.pdf',
             image: { type: 'jpeg', quality: 0.95 },
             html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 800 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img', 'figure', 'h2', 'h3'] }
-          }).from(box).outputPdf('blob');
+          }).from(box).toPdf().get('pdf').then(function (pdf) {
+            brandNotesPdf(pdf, logo, title);
+            return pdf.output('blob');
+          });
         });
       }
 
