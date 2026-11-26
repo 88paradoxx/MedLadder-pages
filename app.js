@@ -4119,6 +4119,126 @@ window.addEventListener('error', function (ev) {
         });
       }
 
+      // ---------- PDF VIEWER ----------
+      // Full-screen viewer for overview PDFs, drawn with PDF.js (bundled in
+      // /vendor/pdfjs, so it also works inside the Android app, which cannot
+      // show PDFs itself). A <dialog> so Escape and the Android back button
+      // close it. Pages are drawn as they scroll into view.
+      function openPdfViewer(url, name) {
+        var old = document.getElementById('pdfViewer');
+        if (old) { try { old.close(); } catch (e) { } old.remove(); }
+        var dlg = document.createElement('dialog');
+        dlg.id = 'pdfViewer';
+        dlg.className = 'pv';
+        dlg.setAttribute('aria-label', 'PDF: ' + (name || 'document'));
+        dlg.innerHTML =
+          '<div class="pv-bar">' +
+          '<button type="button" class="pv-btn pv-close" id="pvClose" aria-label="Close">✕</button>' +
+          '<div class="pv-title"><span class="pv-name">' + esc(name || 'PDF') + '</span><span class="pv-count" id="pvCount">Loading…</span></div>' +
+          '<button type="button" class="pv-btn" id="pvOut" aria-label="Zoom out">−</button>' +
+          '<button type="button" class="pv-btn" id="pvIn" aria-label="Zoom in">+</button>' +
+          '<a class="pv-btn pv-dl" href="' + esc(url) + (url.indexOf('?') === -1 ? '?dl=1' : '&dl=1') + '" download aria-label="Download PDF">' +
+          '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></a>' +
+          '</div>' +
+          '<div class="pv-scroll" id="pvScroll"><div class="pv-pages" id="pvPages"></div></div>';
+        document.body.appendChild(dlg);
+        document.body.classList.add('tn-lock');
+        try { dlg.showModal(); } catch (e) { dlg.setAttribute('open', ''); }
+
+        var scroller = document.getElementById('pvScroll');
+        var pagesEl = document.getElementById('pvPages');
+        var countEl = document.getElementById('pvCount');
+        var doc = null, zoom = 1, observer = null, closed = false, slots = [];
+
+        function cleanup() {
+          if (closed) return;
+          closed = true;
+          if (observer) observer.disconnect();
+          if (doc) { try { doc.destroy(); } catch (e) { } }
+          document.body.classList.remove('tn-lock');
+          dlg.remove();
+        }
+        dlg.addEventListener('close', cleanup);
+        document.getElementById('pvClose').addEventListener('click', function () { try { dlg.close(); } catch (e) { cleanup(); } });
+
+        function baseWidth() { return Math.max(240, scroller.clientWidth - 16); }
+        function layout() {
+          var w = Math.round(baseWidth() * zoom);
+          pagesEl.style.width = w + 'px';
+          slots.forEach(function (s) {
+            s.el.style.height = Math.round(w * s.ratio) + 'px';
+            s.drawnAt = 0;
+          });
+        }
+        function draw(s) {
+          var w = Math.round(baseWidth() * zoom);
+          if (s.drawing || s.drawnAt === w) return;
+          s.drawing = true;
+          doc.getPage(s.n).then(function (page) {
+            var v1 = page.getViewport({ scale: 1 });
+            var dpr = Math.min(window.devicePixelRatio || 1, 2);
+            var vp = page.getViewport({ scale: (w / v1.width) * dpr });
+            var canvas = document.createElement('canvas');
+            canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
+            canvas.style.width = '100%'; canvas.style.height = '100%';
+            return page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise.then(function () {
+              if (closed) return;
+              s.el.innerHTML = ''; s.el.appendChild(canvas);
+              s.drawnAt = w;
+            });
+          }).catch(function () { }).then(function () { s.drawing = false; });
+        }
+        function visibleSlots() {
+          var top = scroller.scrollTop - scroller.clientHeight, bottom = scroller.scrollTop + scroller.clientHeight * 2;
+          return slots.filter(function (s) { var t = s.el.offsetTop, b = t + s.el.offsetHeight; return b > top && t < bottom; });
+        }
+        function refresh() {
+          visibleSlots().forEach(draw);
+          var mid = scroller.scrollTop + scroller.clientHeight / 2, cur = 1;
+          slots.forEach(function (s) { if (s.el.offsetTop <= mid) cur = s.n; });
+          if (doc) countEl.textContent = 'Page ' + cur + ' of ' + doc.numPages;
+        }
+        function setZoom(z) {
+          var frac = scroller.scrollHeight ? scroller.scrollTop / scroller.scrollHeight : 0;
+          zoom = Math.max(1, Math.min(3, z));
+          layout();
+          scroller.scrollTop = frac * scroller.scrollHeight;
+          refresh();
+        }
+        document.getElementById('pvIn').addEventListener('click', function () { setZoom(zoom + 0.5); });
+        document.getElementById('pvOut').addEventListener('click', function () { setZoom(zoom - 0.5); });
+        var t = null;
+        scroller.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(refresh, 60); }, { passive: true });
+        window.addEventListener('resize', function onR() { if (closed) { window.removeEventListener('resize', onR); return; } layout(); refresh(); });
+
+        loadNotesLib('/vendor/pdfjs/pdf.min.js', 'pdfjsLib').then(function (lib) {
+          lib.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.js';
+          return lib.getDocument({ url: url, isEvalSupported: false }).promise;
+        }).then(function (d) {
+          if (closed) { d.destroy(); return; }
+          doc = d;
+          // Size every page box from page 1 first, then correct each one.
+          return d.getPage(1).then(function (p1) {
+            var v = p1.getViewport({ scale: 1 }), ratio = v.height / v.width;
+            for (var i = 1; i <= d.numPages; i++) {
+              var el = document.createElement('div');
+              el.className = 'pv-page';
+              el.setAttribute('aria-label', 'Page ' + i);
+              pagesEl.appendChild(el);
+              slots.push({ n: i, el: el, ratio: ratio, drawnAt: 0 });
+            }
+            layout();
+            refresh();
+            slots.slice(1).forEach(function (s) {
+              d.getPage(s.n).then(function (p) { var vv = p.getViewport({ scale: 1 }); var r = vv.height / vv.width; if (Math.abs(r - s.ratio) > 0.01) { s.ratio = r; layout(); refresh(); } });
+            });
+          });
+        }).catch(function (e) {
+          countEl.textContent = '';
+          pagesEl.innerHTML = '<div class="pv-error">This PDF could not be shown here. <a href="' + esc(url) + '" target="_blank" rel="noopener">Open it directly</a>.</div>';
+        });
+      }
+
       // The overview on its own page: a back button, the title and the text.
       function renderTopicNotesScreen(subjectId, moduleId, moduleDbId, topicTitle) {
         loadTopicNote(moduleDbId).then(function (row) {
@@ -4134,9 +4254,9 @@ window.addEventListener('error', function (ev) {
           var updated = row.updated_at ? new Date(row.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
           var admin = isAdmin(currentUser);
           var pdfCard = row.pdf_url
-            ? '<a class="tn-pdf" href="' + esc(row.pdf_url) + '" target="_blank" rel="noopener">' +
+            ? '<a class="tn-pdf" id="tnPdfOpen" href="' + esc(row.pdf_url) + '" target="_blank" rel="noopener">' +
               '<span class="tn-pdf-icon" aria-hidden="true">PDF</span>' +
-              '<span class="tn-pdf-text"><span class="tn-pdf-name">' + esc(row.pdf_name || 'Topic overview PDF') + '</span><span class="tn-pdf-sub">Tap to open</span></span></a>'
+              '<span class="tn-pdf-text"><span class="tn-pdf-name">' + esc(row.pdf_name || 'Topic overview PDF') + '</span><span class="tn-pdf-sub">Tap to view full screen</span></span></a>'
             : '';
           app.innerHTML =
             '<header class="tn-top" role="banner"><button class="rr-back" id="backBtn" aria-label="Back to the topic">' + RR_BACK_SVG + '</button>' +
@@ -4165,6 +4285,8 @@ window.addEventListener('error', function (ev) {
           });
           var dl = document.getElementById('tnDownload');
           if (dl) dl.addEventListener('click', function () { downloadTopicNotesPdf(topicTitle, subjectName, row.html, dl); });
+          var po = document.getElementById('tnPdfOpen');
+          if (po) po.addEventListener('click', function (e) { e.preventDefault(); openPdfViewer(row.pdf_url, row.pdf_name || topicTitle); });
         });
       }
 
