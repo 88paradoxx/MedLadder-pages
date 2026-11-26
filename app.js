@@ -3957,7 +3957,7 @@ window.addEventListener('error', function (ev) {
       function loadTopicNote(moduleDbId, force) {
         if (typeof moduleDbId !== 'number' || !supabaseClient) return Promise.resolve(null);
         if (!force && Object.prototype.hasOwnProperty.call(topicNotesCache, moduleDbId)) return Promise.resolve(topicNotesCache[moduleDbId]);
-        return supabaseClient.from('topic_notes').select('module_id,html,published,updated_at,pdf_url,pdf_name').eq('module_id', moduleDbId).maybeSingle()
+        return supabaseClient.from('topic_notes').select('module_id,html,published,updated_at,pdf_url,pdf_name,export_pdf_url').eq('module_id', moduleDbId).maybeSingle()
           .then(function (res) {
             var row = (res && !res.error && res.data) ? res.data : null;
             topicNotesCache[moduleDbId] = row;
@@ -4021,12 +4021,12 @@ window.addEventListener('error', function (ev) {
         return notesLibs[src];
       }
 
-      // "Download as PDF": the topic title and text rendered on white A4 pages.
-      function downloadTopicNotesPdf(title, subjectName, html, btn) {
-        var label = btn ? btn.textContent : '';
-        if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
-        var done = function () { if (btn) { btn.disabled = false; btn.textContent = label; } };
-        loadNotesLib('https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js', 'html2pdf').then(function (h2p) {
+      // The overview as a PDF: the title and text rendered on white A4 pages.
+      // Built in the admin's browser when the overview is saved, then stored
+      // in R2 (export_pdf_url) so students download an ordinary https link;
+      // the Android app cannot download blob: URLs.
+      function buildTopicNotesPdf(title, subjectName, html) {
+        return loadNotesLib('https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js', 'html2pdf').then(function (h2p) {
           var box = document.createElement('div');
           box.className = 'tn-print';
           box.innerHTML =
@@ -4042,8 +4042,29 @@ window.addEventListener('error', function (ev) {
             html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 800 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img', 'figure', 'h2', 'h3'] }
-          }).from(box).save();
-        }).then(done, function (e) {
+          }).from(box).outputPdf('blob');
+        });
+      }
+
+      function isNativeApp() {
+        return !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+      }
+
+      // Fallback when no stored PDF exists yet (an overview saved before this
+      // change): build it here. Works in browsers; the app needs the stored one.
+      function downloadTopicNotesPdf(title, subjectName, html, btn) {
+        if (isNativeApp()) { showToast('The PDF for this overview is not ready yet. Please try again later.', 'error'); return; }
+        var label = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
+        var done = function () { if (btn) { btn.disabled = false; btn.textContent = label; } };
+        buildTopicNotesPdf(title, subjectName, html).then(function (blob) {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url; a.download = notesFileSlug(title) + '-overview.pdf';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          done();
+        }, function (e) {
           done();
           showToast('Could not create the PDF: ' + (e && e.message ? e.message : 'unknown error'), 'error');
         });
@@ -4080,9 +4101,11 @@ window.addEventListener('error', function (ev) {
             pdfCard +
             (hasText ? '<article class="tn-body tn-article">' + sanitizeNotesHtml(row.html) + '</article>' : '') +
             '<div class="tn-end">' +
-            (hasText
+            (hasText && row.export_pdf_url
+              ? '<a class="btn tn-dl" href="' + esc(row.export_pdf_url) + '?dl=1" download>Download as PDF</a>'
+              : hasText
               ? '<button type="button" class="btn tn-dl" id="tnDownload">Download as PDF</button>'
-              : (row.pdf_url ? '<a class="btn tn-dl" href="' + esc(row.pdf_url) + '" download>Download as PDF</a>' : '')) +
+              : (row.pdf_url ? '<a class="btn tn-dl" href="' + esc(row.pdf_url) + '?dl=1" download>Download as PDF</a>' : '')) +
             '</div>' +
             '</main>';
           scrollToPageTop();
@@ -4313,20 +4336,33 @@ window.addEventListener('error', function (ev) {
             if (published && notesWordCount(html) < 1 && !pdf.url) { showToast('Add some text or a PDF before publishing.', 'error'); return; }
             var saveBtn = document.getElementById('tnSave');
             saveBtn.disabled = true;
-            busy('Saving…');
-            supabaseClient.from('topic_notes').upsert({ module_id: moduleDbId, html: html, published: published, pdf_url: pdf.url, pdf_name: pdf.name }, { onConflict: 'module_id' })
-              .select('module_id,html,published,updated_at,pdf_url,pdf_name').maybeSingle()
-              .then(function (res) {
-                saveBtn.disabled = false;
-                if (res.error) { busy(''); showToast('Save failed: ' + res.error.message, 'error'); return; }
-                topicNotesCache[moduleDbId] = res.data;
-                dirty = false;
-                showToast(published ? 'Overview saved and published.' : 'Overview saved as a draft.');
-                wrap.remove();
-                document.body.classList.remove('tn-lock');
-                if (onDone) onDone();
-              }, function (err) { saveBtn.disabled = false; fail('Save', err); });
+            var subj = (SUBJECT_INDEX || []).find(function (x) { return String(x.subjectId) === String(state.subjectId); });
+            // Make the downloadable PDF now and store it in R2 (see buildTopicNotesPdf).
+            var exportStep = notesWordCount(html) > 0
+              ? (busy('Making the PDF…'), buildTopicNotesPdf(topicTitle, subj ? subj.name : '', html).then(function (blob) {
+                  busy('Uploading the PDF…');
+                  return uploadNoteFile(moduleDbId, new File([blob], notesFileSlug(topicTitle) + '-overview.pdf', { type: 'application/pdf' }));
+                }).catch(function (e) {
+                  showToast('Saved without a downloadable PDF: ' + (e && e.message ? e.message : 'PDF failed'), 'error');
+                  return null;
+                }))
+              : Promise.resolve(null);
+            exportStep.then(function (exportUrl) {
+              busy('Saving…');
+              return supabaseClient.from('topic_notes').upsert({ module_id: moduleDbId, html: html, published: published, pdf_url: pdf.url, pdf_name: pdf.name, export_pdf_url: exportUrl }, { onConflict: 'module_id' })
+                .select('module_id,html,published,updated_at,pdf_url,pdf_name,export_pdf_url').maybeSingle();
+            }).then(function (res) {
+              saveBtn.disabled = false;
+              if (res.error) { busy(''); showToast('Save failed: ' + res.error.message, 'error'); return; }
+              topicNotesCache[moduleDbId] = res.data;
+              dirty = false;
+              showToast(published ? 'Overview saved and published.' : 'Overview saved as a draft.');
+              wrap.remove();
+              document.body.classList.remove('tn-lock');
+              if (onDone) onDone();
+            }, function (err) { saveBtn.disabled = false; fail('Save', err); });
           });
+
           area.focus();
         });
       }

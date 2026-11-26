@@ -47,3 +47,9 @@ create policy topic_notes_img_admin_delete on storage.objects
 alter table public.topic_notes add column if not exists pdf_url text, add column if not exists pdf_name text;
 alter table public.topic_notes drop constraint if exists topic_notes_pdf_url_check;
 alter table public.topic_notes add constraint topic_notes_pdf_url_check check (pdf_url is null or pdf_url ~ '^https://medladder\.top/notes-files/notes/[0-9]+/[a-z0-9-]+\.pdf$');
+
+-- "Download as PDF": the PDF is generated when an admin saves and stored in R2,
+-- so students download a normal https link (works inside the Android app).
+alter table public.topic_notes add column if not exists export_pdf_url text;
+alter table public.topic_notes drop constraint if exists topic_notes_export_pdf_url_check;
+alter table public.topic_notes add constraint topic_notes_export_pdf_url_check check (export_pdf_url is null or export_pdf_url ~ '^https://medladder\.top/notes-files/notes/[0-9]+/[a-z0-9-]+\.pdf$');
