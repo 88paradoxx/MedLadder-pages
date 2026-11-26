@@ -560,7 +560,7 @@ window.addEventListener('error', function (ev) {
             : '100% Secure Checkout via Razorpay · UPI (GPay, PhonePe, Paytm), Cards, NetBanking') + '</span>' +
           '</div>' +
           '<div class="pro-legal-links" style="font-size:11px;color:var(--ink-soft);text-align:center;margin-top:8px;line-height:1.45;">' +
-          'By subscribing, you agree to our <a href="/terms" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a>, <a href="/privacy" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy</a> &amp; <a href="/terms#cancellation-refund" target="_blank" style="color:var(--accent);text-decoration:underline;">Cancellation/Refund Policy</a>.<br>' +
+          'By subscribing, you agree to our <a href="/terms" target="_blank" style="color:var(--accent);text-decoration:underline;">Terms</a>, <a href="/privacy" target="_blank" style="color:var(--accent);text-decoration:underline;">Privacy</a> &amp; <a href="/refunds" target="_blank" style="color:var(--accent);text-decoration:underline;">Cancellation/Refund Policy</a>.<br>' +
           'Instant digital activation · Billing support: <a href="mailto:99medladder@gmail.com" style="color:var(--accent);text-decoration:underline;">99medladder@gmail.com</a>' +
           '</div>' +
 
@@ -2597,7 +2597,7 @@ window.addEventListener('error', function (ev) {
             '<a href="/clinical-cases">All clinical cases</a><a href="/clinical-cases/cardiovascular">Cardiovascular</a><a href="/clinical-cases/respiratory">Respiratory</a><a href="/clinical-cases/neurology">Neurology</a><a href="/clinical-cases/gastro-hepatobiliary">Gastro-Hepatobiliary</a><a href="/clinical-cases/renal-electrolytes">Renal &amp; Electrolytes</a><a href="/clinical-cases/endocrine-metabolic">Endocrine &amp; Metabolic</a><a href="/clinical-cases/haematology-oncology">Haematology &amp; Oncology</a><a href="/clinical-cases/infectious-disease">Infectious Disease</a><a href="/clinical-cases/musculoskeletal-rheumatology">Musculoskeletal &amp; Rheumatology</a><a href="/clinical-cases/obstetrics-gynaecology">Obstetrics &amp; Gynaecology</a><a href="/clinical-cases/paediatrics-neonatology">Paediatrics &amp; Neonatology</a><a href="/clinical-cases/psychiatry">Psychiatry</a><a href="/clinical-cases/emergency-critical-care">Emergency &amp; Critical Care</a>' +
             '</div></details></div>' +
             '<div class="footer-directory-group"><strong>Preparation</strong><div><a href="/neet-pg-syllabus">NEET PG Syllabus</a><a href="/neet-pg-high-yield-topics">High-Yield Topics</a><a href="/neet-pg-top-100-questions">Top 100 Questions</a><a href="/mock-test">Mock Tests</a><a href="/pyqs">Previous-Year Questions</a><a href="/best-free-neet-pg-question-bank">Free Question Bank</a><a href="/books">Free Books</a></div></div>' +
-            '<div class="footer-directory-group"><strong>About &amp; policies</strong><div><a href="/about">About MedLadder</a><a href="/pricing">Pricing</a><a href="/contact">Contact</a><a href="/medladder-vs-marrow">MedLadder vs Marrow</a><a href="/medladder-vs-prepladder">MedLadder vs PrepLadder</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/terms#cancellation-refund">Refund Policy</a><a href="/editorial-team">Editorial team</a>' +
+            '<div class="footer-directory-group"><strong>About &amp; policies</strong><div><a href="/about">About MedLadder</a><a href="/pricing">Pricing</a><a href="/contact">Contact</a><a href="/medladder-vs-marrow">MedLadder vs Marrow</a><a href="/medladder-vs-prepladder">MedLadder vs PrepLadder</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/refunds">Refund Policy</a><a href="/editorial-team">Editorial team</a>' +
             (isAdmin(currentUser) ? '<a href="#" class="admin-footer-link">👑 Admin Access</a>' : '') +
             '</div></div></nav>';
         } else if (isSubjectDirectory) {
@@ -2607,7 +2607,7 @@ window.addEventListener('error', function (ev) {
             '<div class="footer-directory-group"><strong>Subject</strong><div><a href="/">All subjects</a><a href="' + subjectPath(currentSubject) + '">' + esc(currentSubject.name) + ' topics</a></div></div>' +
             '<div class="footer-directory-group"><strong>Related subjects</strong><div>' + relatedSubjects.map(function (s) { return '<a href="' + subjectPath(s) + '">' + esc(s.name) + '</a>'; }).join('') + '</div></div>' +
             '<div class="footer-directory-group"><strong>Exams &amp; PYQs</strong><div><a href="/neet-pg">NEET PG</a><a href="/fmge">FMGE</a><a href="/inicet">INI-CET</a><a href="/neet-ss">NEET SS</a><a href="/pyqs">All PYQs</a></div></div>' +
-            '<div class="footer-directory-group"><strong>Policies</strong><div><a href="/about">About</a><a href="/pricing">Pricing</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/terms#cancellation-refund">Refunds</a></div></div></nav>';
+            '<div class="footer-directory-group"><strong>Policies</strong><div><a href="/about">About</a><a href="/pricing">Pricing</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refunds">Refunds</a></div></div></nav>';
         } else if (isTopicDirectory) {
           var nearbyModules = [];
           for (var offset = -2; offset <= 2; offset++) {
@@ -2627,7 +2627,7 @@ window.addEventListener('error', function (ev) {
         // are not needed: keep only the copyright line with Privacy / Terms.
         if (isNative) {
           return '<footer class="credit v3 v3-foot v3-foot-app"><div class="v3f"><p class="v3f-copy">© ' + new Date().getFullYear() +
-            ' MedLadder · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/terms#cancellation-refund">Refunds</a></p></div></footer>';
+            ' MedLadder · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/refunds">Refunds</a></p></div></footer>';
         }
         if (v2On()) return v3FooterHtml(isNative, directoryHtml);
         return '<footer class="credit">' +
@@ -2676,7 +2676,7 @@ window.addEventListener('error', function (ev) {
             return '<a href="' + x[0] + '" target="_blank" rel="noopener noreferrer" aria-label="MedLadder on ' + x[1] + '" title="' + x[1] + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + x[2] + '</svg></a>';
           }).join('') + '</div></div></div>' +
           directoryHtml +
-          '<p class="v3f-copy">© ' + year + ' MedLadder · <a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/pricing">Pricing</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/terms#cancellation-refund">Refunds</a></p>' +
+          '<p class="v3f-copy">© ' + year + ' MedLadder · <a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/pricing">Pricing</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/refunds">Refunds</a></p>' +
           '<p class="footer-disclaimer">MedLadder is for medical exam preparation and education only. It is not medical advice and is not a substitute for clinical judgement.</p>' +
           '</div></footer>';
       }
