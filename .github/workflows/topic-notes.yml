@@ -1,0 +1,36 @@
+name: Topic notes on topic pages
+
+# Copies published topic notes (written in the admin editor) into the static
+# /subjects/<subject>/<topic>/ pages so search engines can read them.
+# Runs daily and on demand; commits only on change.
+on:
+  schedule:
+    - cron: '17 22 * * *'   # daily, 03:47 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: topic-notes
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Write published notes into topic pages
+        run: node scripts/build-topic-notes.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet; then echo "Topic pages already up to date."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add -A -- 'subjects/**/index.html'
+          git commit -m "Topic notes: update topic pages from published notes"
+          git pull --rebase origin ${GITHUB_REF_NAME}
+          git push origin HEAD:${GITHUB_REF_NAME}

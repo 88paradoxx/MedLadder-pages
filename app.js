@@ -1502,6 +1502,12 @@ window.addEventListener('error', function (ev) {
           '</div>' +
 
           '<div class="admin-section">' +
+          '<div class="admin-sec-title"><span>Topic notes</span></div>' +
+          '<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">To write notes for a topic, open it and tap <strong>Write notes</strong> above the quiz settings. Notes you have written:</div>' +
+          '<div id="adminTopicNotes" class="tn-admin-list">Loading\u2026</div>' +
+          '</div>' +
+
+          '<div class="admin-section">' +
           '<div class="admin-sec-title"><span>How MedLadder is being used</span></div>' +
           '<div class="admin-stats-grid" id="adminOverview">' +
           '<div class="admin-stat-card"><div class="admin-stat-num">\u2026</div><div class="admin-stat-label">Loading live numbers</div></div>' +
@@ -1513,6 +1519,32 @@ window.addEventListener('error', function (ev) {
           handleSignOut();
           closeAdminModal();
         });
+
+        // Topic notes written so far, with a direct Edit button.
+        try {
+          supabaseClient.from('topic_notes').select('module_id,published,updated_at').order('updated_at', { ascending: false }).then(function (res) {
+            var box = document.getElementById('adminTopicNotes');
+            if (!box) return;
+            var rows = (res && res.data) || [];
+            if (!rows.length) { box.textContent = 'None yet.'; return; }
+            supabaseClient.from('modules').select('id,name').in('id', rows.map(function (r) { return r.module_id; })).then(function (mr) {
+              var names = {};
+              ((mr && mr.data) || []).forEach(function (m) { names[m.id] = m.name; });
+              box.innerHTML = rows.map(function (r) {
+                return '<div class="tn-admin-row"><span>' + esc(names[r.module_id] || ('Topic ' + r.module_id)) + '</span>' +
+                  '<span class="tn-admin-meta">' + (r.published ? 'Published' : 'Draft') + ' \u00b7 ' + new Date(r.updated_at).toLocaleDateString() + '</span>' +
+                  '<button type="button" class="admin-action-btn" data-tn="' + r.module_id + '">Edit</button></div>';
+              }).join('');
+              box.querySelectorAll('button[data-tn]').forEach(function (bt) {
+                bt.addEventListener('click', function () {
+                  var id = parseInt(bt.getAttribute('data-tn'), 10);
+                  closeAdminModal();
+                  openTopicNotesEditor(id, names[id], function () { topicNotesCache = {}; });
+                });
+              });
+            });
+          }, function () {});
+        } catch (e) { }
 
         // Live counts from the database (admin-only RPC).
         try {
@@ -3874,6 +3906,263 @@ window.addEventListener('error', function (ev) {
         return renderQuestionContent(cleaned, images);
       }
 
+      // ---------- TOPIC NOTES ----------
+      // One revision page per topic (public.topic_notes), shown on the quiz
+      // setup screen. Admins write and publish them; RLS lets everyone else
+      // read published notes only. Images live in the public 'topic-notes'
+      // storage bucket (admin-only uploads).
+      var topicNotesCache = {};
+      var topicNotesOpen = false;
+      function sanitizeNotesHtml(input) {
+        if (!input) return '';
+        var tpl = document.createElement('template');
+        tpl.innerHTML = String(input);
+        var keep = { H2: 1, H3: 1, H4: 1, P: 1, BR: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, SUB: 1, SUP: 1, SMALL: 1, SPAN: 1, DIV: 1,
+          UL: 1, OL: 1, LI: 1, TABLE: 1, THEAD: 1, TBODY: 1, TR: 1, TH: 1, TD: 1, BLOCKQUOTE: 1, HR: 1, FIGURE: 1, FIGCAPTION: 1, IMG: 1 };
+        var drop = { SCRIPT: 1, STYLE: 1, IFRAME: 1, OBJECT: 1, EMBED: 1, FORM: 1, INPUT: 1, BUTTON: 1, TEXTAREA: 1, SELECT: 1, LINK: 1, META: 1, SVG: 1, MATH: 1 };
+        function clean(parent) {
+          Array.from(parent.childNodes).forEach(function (node) {
+            if (node.nodeType === Node.COMMENT_NODE) { node.remove(); return; }
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+            var tag = node.tagName.toUpperCase();
+            if (drop[tag]) { node.remove(); return; }
+            if (!keep[tag]) {
+              clean(node);
+              while (node.firstChild) parent.insertBefore(node.firstChild, node);
+              node.remove();
+              return;
+            }
+            var src = tag === 'IMG' ? (node.getAttribute('src') || '') : '';
+            var alt = tag === 'IMG' ? (node.getAttribute('alt') || '') : '';
+            var span = { colspan: node.getAttribute('colspan'), rowspan: node.getAttribute('rowspan') };
+            Array.from(node.attributes).forEach(function (a) { node.removeAttribute(a.name); });
+            if (tag === 'IMG') {
+              if (!/^https:\/\//i.test(src)) { node.remove(); return; }
+              node.setAttribute('src', src);
+              node.setAttribute('alt', alt);
+              node.setAttribute('loading', 'lazy');
+              node.setAttribute('decoding', 'async');
+              return;
+            }
+            if (tag === 'TD' || tag === 'TH') {
+              if (/^\d{1,2}$/.test(span.colspan || '')) node.setAttribute('colspan', span.colspan);
+              if (/^\d{1,2}$/.test(span.rowspan || '')) node.setAttribute('rowspan', span.rowspan);
+            }
+            clean(node);
+          });
+        }
+        clean(tpl.content);
+        return tpl.innerHTML.trim();
+      }
+
+      function loadTopicNote(moduleDbId, force) {
+        if (typeof moduleDbId !== 'number' || !supabaseClient) return Promise.resolve(null);
+        if (!force && Object.prototype.hasOwnProperty.call(topicNotesCache, moduleDbId)) return Promise.resolve(topicNotesCache[moduleDbId]);
+        return supabaseClient.from('topic_notes').select('module_id,html,published,updated_at').eq('module_id', moduleDbId).maybeSingle()
+          .then(function (res) {
+            var row = (res && !res.error && res.data) ? res.data : null;
+            topicNotesCache[moduleDbId] = row;
+            return row;
+          }, function () { return null; });
+      }
+
+      function notesWordCount(html) {
+        var t = String(html || '').replace(/<[^>]+>/g, ' ').trim();
+        return t ? t.split(/\s+/).length : 0;
+      }
+
+      // Fills #topicNotes on the setup screen. Students see published notes;
+      // admins also see drafts and an edit button.
+      function renderTopicNotesPanel(moduleDbId, topicTitle) {
+        var holder = document.getElementById('topicNotes');
+        if (!holder || typeof moduleDbId !== 'number') return;
+        var admin = isAdmin(currentUser);
+        loadTopicNote(moduleDbId).then(function (row) {
+          holder = document.getElementById('topicNotes');
+          if (!holder || state.screen !== 'setup') return;
+          var has = row && row.html && row.html.trim();
+          if (!has && !admin) { holder.innerHTML = ''; return; }
+          if (!has) {
+            holder.innerHTML = '<div class="tn-empty"><span>No topic notes yet.</span> <button type="button" class="tn-edit" id="tnEdit">Write notes</button></div>';
+          } else {
+            var mins = Math.max(1, Math.round(notesWordCount(row.html) / 200));
+            holder.innerHTML =
+              '<details class="tn-panel" id="tnPanel"' + (topicNotesOpen ? ' open' : '') + '>' +
+              '<summary><span class="tn-sum-main"><span class="tn-sum-title">Topic notes</span>' +
+              '<span class="tn-sum-sub">Read the essentials before you start · ' + mins + ' min read</span></span>' +
+              (admin && !row.published ? '<span class="tn-badge">Draft</span>' : '') + RR_CHEVRON_SVG + '</summary>' +
+              '<div class="tn-body">' + sanitizeNotesHtml(row.html) + '</div>' +
+              (admin ? '<div class="tn-admin"><button type="button" class="tn-edit" id="tnEdit">Edit notes</button></div>' : '') +
+              '</details>';
+          }
+          var panel = document.getElementById('tnPanel');
+          if (panel) panel.addEventListener('toggle', function () { topicNotesOpen = panel.open; });
+          var eb = document.getElementById('tnEdit');
+          if (eb) eb.addEventListener('click', function (e) {
+            e.preventDefault();
+            openTopicNotesEditor(moduleDbId, topicTitle, function () { renderTopicNotesPanel(moduleDbId, topicTitle); });
+          });
+        });
+      }
+
+      function uploadTopicNoteImage(moduleDbId, file) {
+        if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return Promise.reject(new Error('Use a PNG, JPG, WebP or GIF image.'));
+        if (file.size > 5 * 1024 * 1024) return Promise.reject(new Error('Image is larger than 5 MB.'));
+        var ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' })[file.type];
+        var path = moduleDbId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        var bucket = supabaseClient.storage.from('topic-notes');
+        return bucket.upload(path, file, { cacheControl: '31536000', contentType: file.type, upsert: false }).then(function (res) {
+          if (res.error) throw res.error;
+          return bucket.getPublicUrl(path).data.publicUrl;
+        });
+      }
+
+      function openTopicNotesEditor(moduleDbId, topicTitle, onDone) {
+        if (!isAdmin(currentUser)) return;
+        loadTopicNote(moduleDbId, true).then(function (row) {
+          var old = document.getElementById('tnEditor');
+          if (old) old.remove();
+          var wrap = document.createElement('div');
+          wrap.id = 'tnEditor';
+          wrap.className = 'tn-editor-overlay';
+          wrap.setAttribute('role', 'dialog');
+          wrap.setAttribute('aria-modal', 'true');
+          wrap.setAttribute('aria-label', 'Edit topic notes');
+          var btn = function (cmd, label, title) { return '<button type="button" data-cmd="' + cmd + '" title="' + title + '">' + label + '</button>'; };
+          wrap.innerHTML =
+            '<div class="tn-editor">' +
+            '<div class="tn-ed-head"><div><div class="tn-ed-eyebrow">Topic notes</div><div class="tn-ed-title">' + esc(topicTitle || ('Topic ' + moduleDbId)) + '</div></div>' +
+            '<button type="button" class="tn-ed-x" id="tnClose" aria-label="Close">✕</button></div>' +
+            '<div class="tn-toolbar" id="tnToolbar">' +
+            btn('h2', 'H2', 'Section heading') + btn('h3', 'H3', 'Sub-heading') + btn('p', '¶', 'Normal text') +
+            btn('bold', '<b>B</b>', 'Bold') + btn('italic', '<i>I</i>', 'Italic') +
+            btn('ul', '• List', 'Bullet list') + btn('ol', '1. List', 'Numbered list') +
+            btn('table', 'Table', 'Insert a 3 × 3 table') + btn('row', '+ Row', 'Add a row below the cursor') +
+            btn('image', '🖼 Image', 'Upload an image') + btn('html', '&lt;/&gt;', 'Edit as HTML') +
+            '<input type="file" id="tnFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
+            '</div>' +
+            '<div class="tn-body tn-area" id="tnArea" contenteditable="true" spellcheck="true"></div>' +
+            '<textarea class="tn-html" id="tnHtml" hidden spellcheck="false"></textarea>' +
+            '<div class="tn-ed-foot">' +
+            '<label class="tn-pub"><input type="checkbox" id="tnPublished"' + (row && row.published ? ' checked' : '') + '> Published (students can see it)</label>' +
+            '<span class="tn-status" id="tnStatus" aria-live="polite"></span>' +
+            '<button type="button" class="btn secondary" id="tnCancel">Cancel</button>' +
+            '<button type="button" class="btn" id="tnSave">Save</button>' +
+            '</div></div>';
+          document.body.appendChild(wrap);
+          document.body.classList.add('tn-lock');
+          var area = document.getElementById('tnArea');
+          var htmlBox = document.getElementById('tnHtml');
+          var status = document.getElementById('tnStatus');
+          area.innerHTML = sanitizeNotesHtml(row && row.html) || '<h2>' + esc(topicTitle || 'Topic') + ': essentials</h2><p></p>';
+          var htmlMode = false;
+          var dirty = false;
+          area.addEventListener('input', function () { dirty = true; });
+          htmlBox.addEventListener('input', function () { dirty = true; });
+
+          function close() {
+            if (dirty && !confirm('Discard unsaved changes?')) return;
+            wrap.remove();
+            document.body.classList.remove('tn-lock');
+          }
+          function currentHtml() { return sanitizeNotesHtml(htmlMode ? htmlBox.value : area.innerHTML); }
+          function insertHtml(html) {
+            area.focus();
+            if (!document.execCommand('insertHTML', false, html)) area.insertAdjacentHTML('beforeend', html);
+            dirty = true;
+          }
+          var savedRange = null;
+          area.addEventListener('blur', function () {
+            var sel = window.getSelection();
+            if (sel && sel.rangeCount && area.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange();
+          });
+          function restoreRange() {
+            area.focus();
+            if (savedRange) { var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(savedRange); }
+          }
+
+          document.getElementById('tnToolbar').addEventListener('mousedown', function (e) {
+            if (e.target.closest('button')) e.preventDefault(); // keep the caret in the text
+          });
+          document.getElementById('tnToolbar').addEventListener('click', function (e) {
+            var b = e.target.closest('button[data-cmd]');
+            if (!b) return;
+            var cmd = b.getAttribute('data-cmd');
+            if (cmd === 'html') {
+              if (!htmlMode) { htmlBox.value = currentHtml().replace(/></g, '>\n<'); }
+              else { area.innerHTML = sanitizeNotesHtml(htmlBox.value); }
+              htmlMode = !htmlMode;
+              area.hidden = htmlMode; htmlBox.hidden = !htmlMode;
+              b.classList.toggle('on', htmlMode);
+              return;
+            }
+            if (htmlMode) { showToast('Switch off HTML view to use the toolbar.', 'error'); return; }
+            restoreRange();
+            if (cmd === 'h2' || cmd === 'h3' || cmd === 'p') document.execCommand('formatBlock', false, cmd.toUpperCase());
+            else if (cmd === 'bold' || cmd === 'italic') document.execCommand(cmd);
+            else if (cmd === 'ul') document.execCommand('insertUnorderedList');
+            else if (cmd === 'ol') document.execCommand('insertOrderedList');
+            else if (cmd === 'table') insertHtml('<table><thead><tr><th>Heading</th><th>Heading</th><th>Heading</th></tr></thead><tbody><tr><td> </td><td> </td><td> </td></tr><tr><td> </td><td> </td><td> </td></tr></tbody></table><p></p>');
+            else if (cmd === 'row') {
+              var sel = window.getSelection();
+              var tr = sel && sel.anchorNode ? (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('tr') : null;
+              if (!tr || !area.contains(tr)) { showToast('Put the cursor inside a table row first.', 'error'); return; }
+              var nr = document.createElement('tr');
+              Array.from(tr.children).forEach(function () { var td = document.createElement('td'); td.innerHTML = ' '; nr.appendChild(td); });
+              if (tr.parentElement.tagName === 'THEAD') {
+                var tb = tr.closest('table').querySelector('tbody') || tr.closest('table').appendChild(document.createElement('tbody'));
+                tb.insertBefore(nr, tb.firstChild);
+              } else tr.after(nr);
+              dirty = true;
+            }
+            else if (cmd === 'image') document.getElementById('tnFile').click();
+          });
+
+          document.getElementById('tnFile').addEventListener('change', function (e) {
+            var file = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if (!file) return;
+            var alt = prompt('Describe the image in a few words (shown to screen readers and search engines):', '') || (topicTitle || 'Topic') + ' figure';
+            status.textContent = 'Uploading image…';
+            uploadTopicNoteImage(moduleDbId, file).then(function (url) {
+              status.textContent = 'Image added.';
+              restoreRange();
+              insertHtml('<figure><img src="' + esc(url) + '" alt="' + esc(alt) + '"><figcaption>' + esc(alt) + '</figcaption></figure><p></p>');
+            }, function (err) {
+              status.textContent = '';
+              showToast('Image upload failed: ' + (err && err.message ? err.message : 'unknown error'), 'error');
+            });
+          });
+
+          document.getElementById('tnClose').addEventListener('click', close);
+          document.getElementById('tnCancel').addEventListener('click', close);
+          document.getElementById('tnSave').addEventListener('click', function () {
+            var html = currentHtml();
+            var published = document.getElementById('tnPublished').checked;
+            if (published && notesWordCount(html) < 30) { showToast('Notes are too short to publish.', 'error'); return; }
+            var saveBtn = document.getElementById('tnSave');
+            saveBtn.disabled = true;
+            status.textContent = 'Saving…';
+            supabaseClient.from('topic_notes').upsert({ module_id: moduleDbId, html: html, published: published }, { onConflict: 'module_id' })
+              .select('module_id,html,published,updated_at').maybeSingle()
+              .then(function (res) {
+                saveBtn.disabled = false;
+                if (res.error) { status.textContent = ''; showToast('Save failed: ' + res.error.message, 'error'); return; }
+                topicNotesCache[moduleDbId] = res.data;
+                dirty = false;
+                showToast(published ? 'Notes saved and published.' : 'Notes saved as a draft.');
+                wrap.remove();
+                document.body.classList.remove('tn-lock');
+                if (onDone) onDone();
+              }, function (err) {
+                saveBtn.disabled = false; status.textContent = '';
+                showToast('Save failed: ' + (err && err.message ? err.message : 'network error'), 'error');
+              });
+          });
+          area.focus();
+        });
+      }
+
       function loadQuestionImages(questionRows) {
         if (!supabaseClient || !questionRows || !questionRows.length) return Promise.resolve([]);
         var ids = questionRows.map(function (row) { return row.id; }).filter(function (id) { return id !== null && id !== undefined; });
@@ -5120,6 +5409,7 @@ window.addEventListener('error', function (ev) {
         state.screen = 'setup';
         app.classList.remove('screen-quiz');
         app.classList.add('screen-setup');
+        if (state.moduleId !== moduleId || state.subjectId !== subjectId) topicNotesOpen = false;
         state.subjectId = subjectId;
         state.moduleId = moduleId;
         trackPageView(practiceBasePath(), 'setup');
@@ -5234,6 +5524,7 @@ window.addEventListener('error', function (ev) {
           '</div>' +
           '<p class="rr-defaults">' + esc(defaultsLine) + '</p>' +
           setupNoteHtml +
+          '<div id="topicNotes"></div>' +
           '<details class="rr-settings" id="setupSettings"' + (setupSettingsOpen ? ' open' : '') + '>' +
           '<summary><span>Change settings</span>' + RR_CHEVRON_SVG + '</summary>' +
           '<div class="rr-settings-body">' +
@@ -5259,6 +5550,7 @@ window.addEventListener('error', function (ev) {
         wireTopBar(function () { renderModuleList(subjectId); });
         wireRipples('.type-card, .pill-choice, .btn, .auth-btn');
         if (pool && typeof pool.moduleDbId === 'number') loadPastAttempts(pool.moduleDbId, function () { renderSetup(subjectId, moduleId); });
+        if (pool && typeof pool.moduleDbId === 'number') renderTopicNotesPanel(pool.moduleDbId, setupTitle);
 
         app.querySelectorAll('#typeGrid .type-card').forEach(function (btn) {
           btn.addEventListener('click', function () { setupChoice.quizType = btn.getAttribute('data-type'); renderSetup(subjectId, moduleId); });
