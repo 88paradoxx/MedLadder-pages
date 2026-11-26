@@ -419,6 +419,72 @@ async function deleteBookFile(request, env) {
   return json(200, { ok: true });
 }
 
+/* ---------- topic overview files (images and PDFs) ---------- */
+
+/* Admin uploads for topic overviews go to R2 under notes/<moduleId>/ and are
+   served back from this site at /notes-files/<key>, with CORS open so the
+   app (and the "Download as PDF" renderer) can read them from any origin. */
+var NOTE_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'application/pdf': 'pdf' };
+var NOTE_IMAGE_MAX = 8 * 1024 * 1024;
+var NOTE_PDF_MAX = 40 * 1024 * 1024;
+var NOTE_CORS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, HEAD, POST, OPTIONS',
+  'access-control-allow-headers': 'authorization, content-type, x-file-name, x-module-id',
+  'access-control-max-age': '86400'
+};
+function withCors(res) {
+  var h = new Headers(res.headers);
+  Object.keys(NOTE_CORS).forEach(function (k) { h.set(k, NOTE_CORS[k]); });
+  return new Response(res.body, { status: res.status, headers: h });
+}
+
+async function uploadNoteFile(request, env) {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: NOTE_CORS });
+  if (request.method !== 'POST') return withCors(json(405, { ok: false, error: 'method' }));
+  var denied = await requireAdmin(request);
+  if (denied) return withCors(denied);
+  var type = (request.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  var ext = NOTE_TYPES[type];
+  if (!ext) return withCors(json(400, { ok: false, error: 'not_image_or_pdf' }));
+  var len = Number(request.headers.get('content-length') || 0);
+  if (!len) return withCors(json(411, { ok: false, error: 'length_required' }));
+  if (len > (ext === 'pdf' ? NOTE_PDF_MAX : NOTE_IMAGE_MAX)) return withCors(json(413, { ok: false, error: 'too_large' }));
+  var moduleId = String(request.headers.get('x-module-id') || '').replace(/[^0-9]/g, '');
+  if (!moduleId) return withCors(json(400, { ok: false, error: 'no_module' }));
+  var name = '';
+  try { name = decodeURIComponent(request.headers.get('x-file-name') || ''); } catch (e) { }
+  var base = slugify(name.replace(/\.[a-z0-9]+$/i, '')) || (ext === 'pdf' ? 'document' : 'image');
+  var key = 'notes/' + moduleId + '/' + base + '-' + Date.now().toString(36) + '.' + ext;
+  try {
+    await env.IMAGES_BUCKET.put(key, request.body, {
+      httpMetadata: {
+        contentType: type,
+        cacheControl: 'public, max-age=31536000, immutable',
+        contentDisposition: 'inline; filename="' + base + '.' + ext + '"'
+      }
+    });
+  } catch (e) {
+    return withCors(json(502, { ok: false, error: 'r2_put_failed' }));
+  }
+  return withCors(json(200, { ok: true, key: key, url: 'https://medladder.top/notes-files/' + key, size: len, type: ext }));
+}
+
+async function serveNoteFile(request, env) {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: NOTE_CORS });
+  var key = decodeURIComponent(new URL(request.url).pathname.slice('/notes-files/'.length));
+  if (!/^notes\/\d+\/[a-z0-9-]+\.(png|jpg|webp|gif|pdf)$/.test(key)) return withCors(new Response('Not found', { status: 404 }));
+  var obj = await env.IMAGES_BUCKET.get(key);
+  if (!obj) return withCors(new Response('Not found', { status: 404 }));
+  var h = new Headers();
+  obj.writeHttpMetadata(h);
+  h.set('etag', obj.httpEtag);
+  h.set('cache-control', 'public, max-age=31536000, immutable');
+  h.set('x-content-type-options', 'nosniff');
+  Object.keys(NOTE_CORS).forEach(function (k) { h.set(k, NOTE_CORS[k]); });
+  return new Response(request.method === 'HEAD' ? null : obj.body, { headers: h });
+}
+
 var EXAM_NAMES = { 'neet-pg': 'NEET PG', fmge: 'FMGE', 'ini-cet': 'INI-CET', 'neet-ss': 'NEET SS' };
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -484,6 +550,8 @@ async function serveBooks(request, env, ctx) {
 export default {
   async fetch(request, env, ctx) {
     var url = new URL(request.url);
+    if (url.pathname === '/api/upload-note-file') return uploadNoteFile(request, env);
+    if (url.pathname.indexOf('/notes-files/') === 0) return serveNoteFile(request, env);
     if (url.pathname === '/api/upload-image') {
       if (request.method !== 'POST') return json(404, { ok: false, error: 'not_found' });
       return uploadImage(request, env);

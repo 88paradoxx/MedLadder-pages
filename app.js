@@ -1502,8 +1502,8 @@ window.addEventListener('error', function (ev) {
           '</div>' +
 
           '<div class="admin-section">' +
-          '<div class="admin-sec-title"><span>Topic notes</span></div>' +
-          '<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">To write notes for a topic, open it and tap <strong>Write notes</strong> above the quiz settings. Notes you have written:</div>' +
+          '<div class="admin-sec-title"><span>Topic overviews</span></div>' +
+          '<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">To write an overview for a topic, open the topic and tap <strong>Write overview</strong> above the quiz settings. Overviews written so far:</div>' +
           '<div id="adminTopicNotes" class="tn-admin-list">Loading\u2026</div>' +
           '</div>' +
 
@@ -3907,12 +3907,11 @@ window.addEventListener('error', function (ev) {
       }
 
       // ---------- TOPIC NOTES ----------
-      // One revision page per topic (public.topic_notes), shown on the quiz
-      // setup screen. Admins write and publish them; RLS lets everyone else
-      // read published notes only. Images live in the public 'topic-notes'
-      // storage bucket (admin-only uploads).
+      // One overview page per topic (public.topic_notes), opened from the
+      // quiz setup screen. Admins write and publish them; RLS lets everyone
+      // else read published ones only. Images and PDFs are stored in
+      // Cloudflare R2 (see uploadNoteFile and the Worker's /api/upload-note-file).
       var topicNotesCache = {};
-      var topicNotesOpen = false;
       function sanitizeNotesHtml(input) {
         if (!input) return '';
         var tpl = document.createElement('template');
@@ -3958,7 +3957,7 @@ window.addEventListener('error', function (ev) {
       function loadTopicNote(moduleDbId, force) {
         if (typeof moduleDbId !== 'number' || !supabaseClient) return Promise.resolve(null);
         if (!force && Object.prototype.hasOwnProperty.call(topicNotesCache, moduleDbId)) return Promise.resolve(topicNotesCache[moduleDbId]);
-        return supabaseClient.from('topic_notes').select('module_id,html,published,updated_at').eq('module_id', moduleDbId).maybeSingle()
+        return supabaseClient.from('topic_notes').select('module_id,html,published,updated_at,pdf_url,pdf_name').eq('module_id', moduleDbId).maybeSingle()
           .then(function (res) {
             var row = (res && !res.error && res.data) ? res.data : null;
             topicNotesCache[moduleDbId] = row;
@@ -3971,50 +3970,166 @@ window.addEventListener('error', function (ev) {
         return t ? t.split(/\s+/).length : 0;
       }
 
-      // Fills #topicNotes on the setup screen. Students see published notes;
-      // admins also see drafts and an edit button.
+      // Fills #topicNotes on the setup screen with a card that opens the
+      // overview on its own page. Students see published overviews only;
+      // admins also see drafts and can start one for a topic that has none.
       function renderTopicNotesPanel(moduleDbId, topicTitle) {
         var holder = document.getElementById('topicNotes');
         if (!holder || typeof moduleDbId !== 'number') return;
         var admin = isAdmin(currentUser);
+        var setupSid = state.subjectId, setupMid = state.moduleId;
         loadTopicNote(moduleDbId).then(function (row) {
           holder = document.getElementById('topicNotes');
           if (!holder || state.screen !== 'setup') return;
-          var has = row && row.html && row.html.trim();
+          var hasText = row && row.html && notesWordCount(row.html) > 0;
+          var has = hasText || (row && row.pdf_url);
           if (!has && !admin) { holder.innerHTML = ''; return; }
           if (!has) {
-            holder.innerHTML = '<div class="tn-empty"><span>No topic notes yet.</span> <button type="button" class="tn-edit" id="tnEdit">Write notes</button></div>';
-          } else {
-            var mins = Math.max(1, Math.round(notesWordCount(row.html) / 200));
-            holder.innerHTML =
-              '<details class="tn-panel" id="tnPanel"' + (topicNotesOpen ? ' open' : '') + '>' +
-              '<summary><span class="tn-sum-main"><span class="tn-sum-title">Topic notes</span>' +
-              '<span class="tn-sum-sub">Read the essentials before you start · ' + mins + ' min read</span></span>' +
-              (admin && !row.published ? '<span class="tn-badge">Draft</span>' : '') + RR_CHEVRON_SVG + '</summary>' +
-              '<div class="tn-body">' + sanitizeNotesHtml(row.html) + '</div>' +
-              (admin ? '<div class="tn-admin"><button type="button" class="tn-edit" id="tnEdit">Edit notes</button></div>' : '') +
-              '</details>';
+            holder.innerHTML = '<div class="tn-empty"><span>No topic overview yet.</span> <button type="button" class="tn-edit" id="tnEdit">Write overview</button></div>';
+            document.getElementById('tnEdit').addEventListener('click', function () {
+              openTopicNotesEditor(moduleDbId, topicTitle, function () { renderTopicNotesPanel(moduleDbId, topicTitle); });
+            });
+            return;
           }
-          var panel = document.getElementById('tnPanel');
-          if (panel) panel.addEventListener('toggle', function () { topicNotesOpen = panel.open; });
-          var eb = document.getElementById('tnEdit');
-          if (eb) eb.addEventListener('click', function (e) {
-            e.preventDefault();
-            openTopicNotesEditor(moduleDbId, topicTitle, function () { renderTopicNotesPanel(moduleDbId, topicTitle); });
+          var sub = hasText ? 'Read the essentials before you start · ' + Math.max(1, Math.round(notesWordCount(row.html) / 200)) + ' min read' : 'Read the essentials before you start · PDF';
+          holder.innerHTML =
+            '<button type="button" class="tn-card" id="tnOpen">' +
+            '<span class="tn-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M8 7h7M8 11h7"/></svg></span>' +
+            '<span class="tn-card-text"><span class="tn-card-title">Topic overview' + (admin && !row.published ? ' <span class="tn-badge">Draft</span>' : '') + '</span>' +
+            '<span class="tn-card-sub">' + sub + '</span></span>' +
+            '<span class="tn-card-go" aria-hidden="true">›</span></button>';
+          document.getElementById('tnOpen').addEventListener('click', function () {
+            renderTopicNotesScreen(setupSid, setupMid, moduleDbId, topicTitle);
           });
         });
       }
 
-      function uploadTopicNoteImage(moduleDbId, file) {
-        if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return Promise.reject(new Error('Use a PNG, JPG, WebP or GIF image.'));
-        if (file.size > 5 * 1024 * 1024) return Promise.reject(new Error('Image is larger than 5 MB.'));
-        var ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' })[file.type];
-        var path = moduleDbId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-        var bucket = supabaseClient.storage.from('topic-notes');
-        return bucket.upload(path, file, { cacheControl: '31536000', contentType: file.type, upsert: false }).then(function (res) {
-          if (res.error) throw res.error;
-          return bucket.getPublicUrl(path).data.publicUrl;
+      function notesFileSlug(v) { return String(v || 'topic').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'topic'; }
+
+      // Loads a script from jsDelivr once (allowed by the site's CSP).
+      var notesLibs = {};
+      function loadNotesLib(src, globalName) {
+        if (window[globalName]) return Promise.resolve(window[globalName]);
+        if (notesLibs[src]) return notesLibs[src];
+        notesLibs[src] = new Promise(function (resolve, reject) {
+          var sc = document.createElement('script');
+          sc.src = src; sc.async = true;
+          sc.onload = function () { window[globalName] ? resolve(window[globalName]) : reject(new Error('library did not load')); };
+          sc.onerror = function () { delete notesLibs[src]; reject(new Error('could not load ' + src)); };
+          document.head.appendChild(sc);
         });
+        return notesLibs[src];
+      }
+
+      // "Download as PDF": the topic title and text rendered on white A4 pages.
+      function downloadTopicNotesPdf(title, subjectName, html, btn) {
+        var label = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
+        var done = function () { if (btn) { btn.disabled = false; btn.textContent = label; } };
+        loadNotesLib('https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js', 'html2pdf').then(function (h2p) {
+          var box = document.createElement('div');
+          box.className = 'tn-print';
+          box.innerHTML =
+            '<div class="tn-print-eyebrow">' + esc(subjectName || '') + (subjectName ? ' · ' : '') + 'Topic overview</div>' +
+            '<h1>' + esc(title || 'Topic overview') + '</h1>' +
+            '<div class="tn-body">' + sanitizeNotesHtml(html) + '</div>' +
+            '<div class="tn-print-foot">MedLadder · medladder.top</div>';
+          box.querySelectorAll('img').forEach(function (im) { im.setAttribute('crossorigin', 'anonymous'); im.removeAttribute('loading'); });
+          return h2p().set({
+            margin: [12, 12, 14, 12],
+            filename: notesFileSlug(title) + '-overview.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 800 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img', 'figure', 'h2', 'h3'] }
+          }).from(box).save();
+        }).then(done, function (e) {
+          done();
+          showToast('Could not create the PDF: ' + (e && e.message ? e.message : 'unknown error'), 'error');
+        });
+      }
+
+      // The overview on its own page: a back button, the title and the text.
+      function renderTopicNotesScreen(subjectId, moduleId, moduleDbId, topicTitle) {
+        loadTopicNote(moduleDbId).then(function (row) {
+          if (!row || (!row.html && !row.pdf_url)) { renderSetup(subjectId, moduleId); return; }
+          clearTimer();
+          state.screen = 'notes';
+          document.body.classList.add('tn-reading');
+          app.classList.remove('screen-quiz');
+          app.classList.add('screen-setup');
+          var subj = (SUBJECT_INDEX || []).find(function (x) { return String(x.subjectId) === String(subjectId); });
+          var subjectName = subj ? subj.name : '';
+          var hasText = notesWordCount(row.html) > 0;
+          var updated = row.updated_at ? new Date(row.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+          var admin = isAdmin(currentUser);
+          var pdfCard = row.pdf_url
+            ? '<a class="tn-pdf" href="' + esc(row.pdf_url) + '" target="_blank" rel="noopener">' +
+              '<span class="tn-pdf-icon" aria-hidden="true">PDF</span>' +
+              '<span class="tn-pdf-text"><span class="tn-pdf-name">' + esc(row.pdf_name || 'Topic overview PDF') + '</span><span class="tn-pdf-sub">Tap to open</span></span></a>'
+            : '';
+          app.innerHTML =
+            '<header class="tn-top" role="banner"><button class="rr-back" id="backBtn" aria-label="Back to the topic">' + RR_BACK_SVG + '</button>' +
+            (admin ? '<button type="button" class="tn-edit" id="tnEdit">Edit overview</button>' : '') + '</header>' +
+            '<main id="mainContent" role="main" class="tn-page">' +
+            '<div class="tn-head">' +
+            (subjectName ? '<div class="tn-eyebrow">' + esc(subjectName) + (admin && !row.published ? ' · Draft' : '') + '</div>' : '') +
+            '<h1 class="tn-h1">' + esc(topicTitle || 'Topic overview') + '</h1>' +
+            (updated ? '<div class="tn-meta">Updated ' + esc(updated) + '</div>' : '') +
+            '</div>' +
+            pdfCard +
+            (hasText ? '<article class="tn-body tn-article">' + sanitizeNotesHtml(row.html) + '</article>' : '') +
+            '<div class="tn-end">' +
+            (hasText
+              ? '<button type="button" class="btn tn-dl" id="tnDownload">Download as PDF</button>'
+              : (row.pdf_url ? '<a class="btn tn-dl" href="' + esc(row.pdf_url) + '" download>Download as PDF</a>' : '')) +
+            '</div>' +
+            '</main>';
+          scrollToPageTop();
+          document.getElementById('backBtn').addEventListener('click', function () { document.body.classList.remove('tn-reading'); renderSetup(subjectId, moduleId); });
+          var eb = document.getElementById('tnEdit');
+          if (eb) eb.addEventListener('click', function () {
+            openTopicNotesEditor(moduleDbId, topicTitle, function () { renderTopicNotesScreen(subjectId, moduleId, moduleDbId, topicTitle); });
+          });
+          var dl = document.getElementById('tnDownload');
+          if (dl) dl.addEventListener('click', function () { downloadTopicNotesPdf(topicTitle, subjectName, row.html, dl); });
+        });
+      }
+
+      // Images and PDFs go to Cloudflare R2 through the site's Worker, which
+      // checks the admin session. Returns the public URL.
+      function uploadNoteFile(moduleDbId, file) {
+        var isPdf = file && file.type === 'application/pdf';
+        if (!file || !(isPdf || /^image\/(png|jpeg|webp|gif)$/.test(file.type))) return Promise.reject(new Error('Use a PDF, PNG, JPG, WebP or GIF file.'));
+        if (file.size > (isPdf ? 40 : 8) * 1024 * 1024) return Promise.reject(new Error(isPdf ? 'PDF is larger than 40 MB.' : 'Image is larger than 8 MB.'));
+        var endpoint = (location.hostname === 'medladder.top' ? '' : 'https://medladder.top') + '/api/upload-note-file';
+        return supabaseClient.auth.getSession().then(function (s) {
+          var token = s && s.data && s.data.session ? s.data.session.access_token : null;
+          if (!token) throw new Error('Session expired — sign in again.');
+          return fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': file.type, 'X-File-Name': encodeURIComponent(file.name || ''), 'X-Module-Id': String(moduleDbId) },
+            body: file
+          });
+        }).then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (d) {
+            if (!res.ok || !d.ok) throw new Error(d.error || ('HTTP ' + res.status));
+            return d.url;
+          });
+        });
+      }
+
+      // Plain text becomes paragraphs; a line in CAPITALS or ending with ':'
+      // stays a paragraph too, so the admin decides on headings in the editor.
+      function textFileToHtml(text) {
+        return String(text || '').replace(/\r\n?/g, '\n').split(/\n{2,}/).map(function (block) {
+          var lines = block.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+          if (!lines.length) return '';
+          if (lines.every(function (l) { return /^[-*•]\s+/.test(l); })) {
+            return '<ul>' + lines.map(function (l) { return '<li>' + esc(l.replace(/^[-*•]\s+/, '')) + '</li>'; }).join('') + '</ul>';
+          }
+          return '<p>' + lines.map(esc).join('<br>') + '</p>';
+        }).join('');
       }
 
       function openTopicNotesEditor(moduleDbId, topicTitle, onDone) {
@@ -4022,26 +4137,32 @@ window.addEventListener('error', function (ev) {
         loadTopicNote(moduleDbId, true).then(function (row) {
           var old = document.getElementById('tnEditor');
           if (old) old.remove();
+          var pdf = { url: row && row.pdf_url || null, name: row && row.pdf_name || null };
           var wrap = document.createElement('div');
           wrap.id = 'tnEditor';
           wrap.className = 'tn-editor-overlay';
           wrap.setAttribute('role', 'dialog');
           wrap.setAttribute('aria-modal', 'true');
-          wrap.setAttribute('aria-label', 'Edit topic notes');
+          wrap.setAttribute('aria-label', 'Edit topic overview');
           var btn = function (cmd, label, title) { return '<button type="button" data-cmd="' + cmd + '" title="' + title + '">' + label + '</button>'; };
           wrap.innerHTML =
             '<div class="tn-editor">' +
-            '<div class="tn-ed-head"><div><div class="tn-ed-eyebrow">Topic notes</div><div class="tn-ed-title">' + esc(topicTitle || ('Topic ' + moduleDbId)) + '</div></div>' +
+            '<div class="tn-ed-head"><div><div class="tn-ed-eyebrow">Topic overview</div><div class="tn-ed-title">' + esc(topicTitle || ('Topic ' + moduleDbId)) + '</div></div>' +
             '<button type="button" class="tn-ed-x" id="tnClose" aria-label="Close">✕</button></div>' +
             '<div class="tn-toolbar" id="tnToolbar">' +
-            btn('h2', 'H2', 'Section heading') + btn('h3', 'H3', 'Sub-heading') + btn('p', '¶', 'Normal text') +
+            btn('h2', 'Heading', 'Heading') + btn('h3', 'Subheading', 'Subheading') + btn('p', 'Text', 'Normal text') +
             btn('bold', '<b>B</b>', 'Bold') + btn('italic', '<i>I</i>', 'Italic') +
             btn('ul', '• List', 'Bullet list') + btn('ol', '1. List', 'Numbered list') +
-            btn('table', 'Table', 'Insert a 3 × 3 table') + btn('row', '+ Row', 'Add a row below the cursor') +
-            btn('image', '🖼 Image', 'Upload an image') + btn('html', '&lt;/&gt;', 'Edit as HTML') +
-            '<input type="file" id="tnFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
+            btn('table', 'Table', 'Insert a table') + btn('row', '+ Row', 'Add a table row below the cursor') +
+            '<span class="tn-tb-sep"></span>' +
+            btn('image', 'Add image', 'Upload an image') + btn('text', 'Import text', 'Import a .txt or Word (.docx) file') + btn('pdf', 'Attach PDF', 'Upload a PDF') +
+            btn('html', '&lt;/&gt;', 'Edit as HTML') +
+            '<input type="file" id="tnFileImg" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
+            '<input type="file" id="tnFileText" accept=".txt,.md,.docx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>' +
+            '<input type="file" id="tnFilePdf" accept="application/pdf" hidden>' +
             '</div>' +
-            '<div class="tn-body tn-area" id="tnArea" contenteditable="true" spellcheck="true"></div>' +
+            '<div class="tn-pdf-row" id="tnPdfRow"></div>' +
+            '<div class="tn-body tn-area" id="tnArea" contenteditable="true" spellcheck="true" data-placeholder="Type or paste the overview here, or use Import text / Attach PDF."></div>' +
             '<textarea class="tn-html" id="tnHtml" hidden spellcheck="false"></textarea>' +
             '<div class="tn-ed-foot">' +
             '<label class="tn-pub"><input type="checkbox" id="tnPublished"' + (row && row.published ? ' checked' : '') + '> Published (students can see it)</label>' +
@@ -4054,11 +4175,21 @@ window.addEventListener('error', function (ev) {
           var area = document.getElementById('tnArea');
           var htmlBox = document.getElementById('tnHtml');
           var status = document.getElementById('tnStatus');
-          area.innerHTML = sanitizeNotesHtml(row && row.html) || '<h2>' + esc(topicTitle || 'Topic') + ': essentials</h2><p></p>';
+          area.innerHTML = sanitizeNotesHtml(row && row.html);
           var htmlMode = false;
           var dirty = false;
           area.addEventListener('input', function () { dirty = true; });
           htmlBox.addEventListener('input', function () { dirty = true; });
+
+          function drawPdfRow() {
+            var r = document.getElementById('tnPdfRow');
+            r.innerHTML = pdf.url
+              ? '<span class="tn-pdf-chip">📄 <a href="' + esc(pdf.url) + '" target="_blank" rel="noopener">' + esc(pdf.name || 'PDF') + '</a></span><button type="button" class="tn-link" id="tnPdfRemove">Remove PDF</button>'
+              : '';
+            var rm = document.getElementById('tnPdfRemove');
+            if (rm) rm.addEventListener('click', function () { pdf = { url: null, name: null }; dirty = true; drawPdfRow(); });
+          }
+          drawPdfRow();
 
           function close() {
             if (dirty && !confirm('Discard unsaved changes?')) return;
@@ -4066,11 +4197,6 @@ window.addEventListener('error', function (ev) {
             document.body.classList.remove('tn-lock');
           }
           function currentHtml() { return sanitizeNotesHtml(htmlMode ? htmlBox.value : area.innerHTML); }
-          function insertHtml(html) {
-            area.focus();
-            if (!document.execCommand('insertHTML', false, html)) area.insertAdjacentHTML('beforeend', html);
-            dirty = true;
-          }
           var savedRange = null;
           area.addEventListener('blur', function () {
             var sel = window.getSelection();
@@ -4080,17 +4206,25 @@ window.addEventListener('error', function (ev) {
             area.focus();
             if (savedRange) { var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(savedRange); }
           }
+          function insertHtml(html) {
+            if (htmlMode) { htmlBox.value += '\n' + html; dirty = true; return; }
+            restoreRange();
+            if (!document.execCommand('insertHTML', false, html)) area.insertAdjacentHTML('beforeend', html);
+            dirty = true;
+          }
 
-          document.getElementById('tnToolbar').addEventListener('mousedown', function (e) {
-            if (e.target.closest('button')) e.preventDefault(); // keep the caret in the text
-          });
-          document.getElementById('tnToolbar').addEventListener('click', function (e) {
+          var toolbar = document.getElementById('tnToolbar');
+          toolbar.addEventListener('mousedown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
+          toolbar.addEventListener('click', function (e) {
             var b = e.target.closest('button[data-cmd]');
             if (!b) return;
             var cmd = b.getAttribute('data-cmd');
+            if (cmd === 'image') { document.getElementById('tnFileImg').click(); return; }
+            if (cmd === 'text') { document.getElementById('tnFileText').click(); return; }
+            if (cmd === 'pdf') { document.getElementById('tnFilePdf').click(); return; }
             if (cmd === 'html') {
-              if (!htmlMode) { htmlBox.value = currentHtml().replace(/></g, '>\n<'); }
-              else { area.innerHTML = sanitizeNotesHtml(htmlBox.value); }
+              if (!htmlMode) htmlBox.value = currentHtml().replace(/></g, '>\n<');
+              else area.innerHTML = sanitizeNotesHtml(htmlBox.value);
               htmlMode = !htmlMode;
               area.hidden = htmlMode; htmlBox.hidden = !htmlMode;
               b.classList.toggle('on', htmlMode);
@@ -4102,7 +4236,7 @@ window.addEventListener('error', function (ev) {
             else if (cmd === 'bold' || cmd === 'italic') document.execCommand(cmd);
             else if (cmd === 'ul') document.execCommand('insertUnorderedList');
             else if (cmd === 'ol') document.execCommand('insertOrderedList');
-            else if (cmd === 'table') insertHtml('<table><thead><tr><th>Heading</th><th>Heading</th><th>Heading</th></tr></thead><tbody><tr><td> </td><td> </td><td> </td></tr><tr><td> </td><td> </td><td> </td></tr></tbody></table><p></p>');
+            else if (cmd === 'table') insertHtml('<table><thead><tr><th>Heading</th><th>Heading</th></tr></thead><tbody><tr><td> </td><td> </td></tr><tr><td> </td><td> </td></tr></tbody></table><p></p>');
             else if (cmd === 'row') {
               var sel = window.getSelection();
               var tr = sel && sel.anchorNode ? (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('tr') : null;
@@ -4115,23 +4249,60 @@ window.addEventListener('error', function (ev) {
               } else tr.after(nr);
               dirty = true;
             }
-            else if (cmd === 'image') document.getElementById('tnFile').click();
           });
 
-          document.getElementById('tnFile').addEventListener('change', function (e) {
+          function busy(msg) { status.textContent = msg || ''; }
+          function fail(what, err) { busy(''); showToast(what + ' failed: ' + (err && err.message ? err.message : 'unknown error'), 'error'); }
+
+          document.getElementById('tnFileImg').addEventListener('change', function (e) {
             var file = e.target.files && e.target.files[0];
             e.target.value = '';
             if (!file) return;
-            var alt = prompt('Describe the image in a few words (shown to screen readers and search engines):', '') || (topicTitle || 'Topic') + ' figure';
-            status.textContent = 'Uploading image…';
-            uploadTopicNoteImage(moduleDbId, file).then(function (url) {
-              status.textContent = 'Image added.';
-              restoreRange();
-              insertHtml('<figure><img src="' + esc(url) + '" alt="' + esc(alt) + '"><figcaption>' + esc(alt) + '</figcaption></figure><p></p>');
-            }, function (err) {
-              status.textContent = '';
-              showToast('Image upload failed: ' + (err && err.message ? err.message : 'unknown error'), 'error');
-            });
+            busy('Uploading image…');
+            uploadNoteFile(moduleDbId, file).then(function (url) {
+              busy('Image added.');
+              var alt = (file.name || 'image').replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ');
+              insertHtml('<figure><img src="' + esc(url) + '" alt="' + esc(alt) + '"></figure><p></p>');
+            }, function (err) { fail('Image upload', err); });
+          });
+
+          document.getElementById('tnFilePdf').addEventListener('change', function (e) {
+            var file = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if (!file) return;
+            busy('Uploading PDF…');
+            uploadNoteFile(moduleDbId, file).then(function (url) {
+              pdf = { url: url, name: (file.name || 'Topic overview.pdf').slice(0, 120) };
+              dirty = true; drawPdfRow(); busy('PDF attached.');
+            }, function (err) { fail('PDF upload', err); });
+          });
+
+          document.getElementById('tnFileText').addEventListener('change', function (e) {
+            var file = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if (!file) return;
+            var isDocx = /\.docx$/i.test(file.name || '') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            if (!isDocx) {
+              file.text().then(function (t) { insertHtml(textFileToHtml(t)); busy('Text imported.'); }, function (err) { fail('Import', err); });
+              return;
+            }
+            busy('Reading Word file…');
+            loadNotesLib('https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js', 'mammoth').then(function (mammoth) {
+              return file.arrayBuffer().then(function (buf) {
+                return mammoth.convertToHtml({ arrayBuffer: buf }, {
+                  // Pictures inside the Word file are uploaded to R2 too.
+                  convertImage: mammoth.images.imgElement(function (image) {
+                    return image.read().then(function (bytes) {
+                      var f = new File([bytes], 'word-image.' + ((image.contentType || 'image/png').split('/')[1] || 'png'), { type: image.contentType || 'image/png' });
+                      return uploadNoteFile(moduleDbId, f).then(function (url) { return { src: url }; }, function () { return { src: '' }; });
+                    });
+                  })
+                });
+              });
+            }).then(function (res) {
+              insertHtml(sanitizeNotesHtml(res.value));
+              busy('Word file imported.');
+            }, function (err) { fail('Import', err); });
           });
 
           document.getElementById('tnClose').addEventListener('click', close);
@@ -4139,25 +4310,22 @@ window.addEventListener('error', function (ev) {
           document.getElementById('tnSave').addEventListener('click', function () {
             var html = currentHtml();
             var published = document.getElementById('tnPublished').checked;
-            if (published && notesWordCount(html) < 30) { showToast('Notes are too short to publish.', 'error'); return; }
+            if (published && notesWordCount(html) < 1 && !pdf.url) { showToast('Add some text or a PDF before publishing.', 'error'); return; }
             var saveBtn = document.getElementById('tnSave');
             saveBtn.disabled = true;
-            status.textContent = 'Saving…';
-            supabaseClient.from('topic_notes').upsert({ module_id: moduleDbId, html: html, published: published }, { onConflict: 'module_id' })
-              .select('module_id,html,published,updated_at').maybeSingle()
+            busy('Saving…');
+            supabaseClient.from('topic_notes').upsert({ module_id: moduleDbId, html: html, published: published, pdf_url: pdf.url, pdf_name: pdf.name }, { onConflict: 'module_id' })
+              .select('module_id,html,published,updated_at,pdf_url,pdf_name').maybeSingle()
               .then(function (res) {
                 saveBtn.disabled = false;
-                if (res.error) { status.textContent = ''; showToast('Save failed: ' + res.error.message, 'error'); return; }
+                if (res.error) { busy(''); showToast('Save failed: ' + res.error.message, 'error'); return; }
                 topicNotesCache[moduleDbId] = res.data;
                 dirty = false;
-                showToast(published ? 'Notes saved and published.' : 'Notes saved as a draft.');
+                showToast(published ? 'Overview saved and published.' : 'Overview saved as a draft.');
                 wrap.remove();
                 document.body.classList.remove('tn-lock');
                 if (onDone) onDone();
-              }, function (err) {
-                saveBtn.disabled = false; status.textContent = '';
-                showToast('Save failed: ' + (err && err.message ? err.message : 'network error'), 'error');
-              });
+              }, function (err) { saveBtn.disabled = false; fail('Save', err); });
           });
           area.focus();
         });
@@ -5397,6 +5565,7 @@ window.addEventListener('error', function (ev) {
       }
 
       function renderSetup(subjectId, moduleId) {
+        document.body.classList.remove('tn-reading');
         state.idSet = null;
         if (!currentUser) loadGuestModules();
         if (!quizStylesReady) {
@@ -5409,7 +5578,6 @@ window.addEventListener('error', function (ev) {
         state.screen = 'setup';
         app.classList.remove('screen-quiz');
         app.classList.add('screen-setup');
-        if (state.moduleId !== moduleId || state.subjectId !== subjectId) topicNotesOpen = false;
         state.subjectId = subjectId;
         state.moduleId = moduleId;
         trackPageView(practiceBasePath(), 'setup');

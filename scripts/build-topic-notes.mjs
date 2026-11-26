@@ -32,7 +32,7 @@ async function fetchLive() {
     if (!r.ok) throw new Error(`${q}: HTTP ${r.status} ${await r.text()}`);
     return r.json();
   };
-  const notes = await get('topic_notes?select=module_id,html,updated_at&published=eq.true');
+  const notes = await get('topic_notes?select=module_id,html,updated_at,pdf_url,pdf_name&published=eq.true');
   if (!notes.length) return { notes, modules: [], subjects: [] };
   const modules = await get(`modules?select=id,name,subject_id&id=in.(${notes.map((n) => n.module_id).join(',')})`);
   const subjects = await get(`subjects?select=id,name&id=in.(${[...new Set(modules.map((m) => m.subject_id))].join(',')})`);
@@ -66,14 +66,16 @@ function sanitize(html) {
 }
 
 function block(note, topicName) {
-  // The notes open with their own H2; demote nothing, but give the section
-  // an id and a visible label for the page outline.
-  const d = new Date(note.updated_at);
+    const d = new Date(note.updated_at);
   const updated = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
   return `${START}<section aria-labelledby="topicNotesTitle" class="seo-notes" style="margin-top:30px;">` +
-    `<h2 id="topicNotesTitle" class="seo-section-title">${escAttr(topicName)}: revision notes</h2>` +
+    `<h2 id="topicNotesTitle" class="seo-section-title">${escAttr(topicName)}: topic overview</h2>` +
     `<p style="font-size:13px;color:var(--ink-soft);margin:0 0 10px;">Updated ${updated}</p>` +
-    `<div class="tn-body">${sanitize(note.html).replace(/^<h2>[\s\S]*?<\/h2>/i, '')}</div></section>${END}\n`;
+    (note.pdf_url && /^https:\/\/medladder\.top\/notes-files\//.test(note.pdf_url)
+      ? `<p><a class="tn-pdf" href="${escAttr(note.pdf_url)}" target="_blank" rel="noopener"><span class="tn-pdf-icon">PDF</span><span class="tn-pdf-text"><span class="tn-pdf-name">${escAttr(note.pdf_name || topicName + ' overview')}</span><span class="tn-pdf-sub">Open the PDF</span></span></a></p>`
+      : '') +
+    (String(note.html || '').replace(/<[^>]+>/g, '').trim() ? `<div class="tn-body">${sanitize(note.html)}</div>` : '') +
+    `</section>${END}\n`;
 }
 
 const data = dataArg ? JSON.parse(fs.readFileSync(dataArg, 'utf8')) : await fetchLive();

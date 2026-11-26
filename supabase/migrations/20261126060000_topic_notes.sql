@@ -42,3 +42,8 @@ create policy topic_notes_img_admin_update on storage.objects
 drop policy if exists topic_notes_img_admin_delete on storage.objects;
 create policy topic_notes_img_admin_delete on storage.objects
   for delete to authenticated using (bucket_id = 'topic-notes' and (select public.is_admin()));
+
+-- An optional PDF per topic overview (stored in R2, served at /notes-files/).
+alter table public.topic_notes add column if not exists pdf_url text, add column if not exists pdf_name text;
+alter table public.topic_notes drop constraint if exists topic_notes_pdf_url_check;
+alter table public.topic_notes add constraint topic_notes_pdf_url_check check (pdf_url is null or pdf_url ~ '^https://medladder\.top/notes-files/notes/[0-9]+/[a-z0-9-]+\.pdf$');
