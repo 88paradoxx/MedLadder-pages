@@ -4053,18 +4053,19 @@ window.addEventListener('error', function (ev) {
         if (topic.length > 70) topic = topic.slice(0, 67) + '...';
         for (var i = 1; i <= n; i++) {
           pdf.setPage(i);
-          var x = 12;
-          if (logo) { try { pdf.addImage(logo, 'PNG', 12, 6.2, 8, 8); x = 22.5; } catch (e) { } }
+          var L = 17, R = W - 17; // where html2pdf places the text
+          var x = L;
+          if (logo) { try { pdf.addImage(logo, 'PNG', L, 6.2, 8, 8); x = L + 10.5; } catch (e) { } }
           pdf.setFont('helvetica', 'bold'); pdf.setFontSize(12.5); pdf.setTextColor(19, 128, 107);
           pdf.text('MedLadder', x, 11.6);
           pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(110, 110, 110);
-          pdf.text('medladder.top', W - 12, 9.4, { align: 'right' });
-          pdf.text('NEET PG \u00b7 INI-CET \u00b7 FMGE \u00b7 NEET SS', W - 12, 13.2, { align: 'right' });
-          pdf.setDrawColor(19, 128, 107); pdf.setLineWidth(0.5); pdf.line(12, 16.4, W - 12, 16.4);
-          pdf.setDrawColor(210, 210, 210); pdf.setLineWidth(0.2); pdf.line(12, H - 11.5, W - 12, H - 11.5);
+          pdf.text('medladder.top', R, 9.4, { align: 'right' });
+          pdf.text('NEET PG \u00b7 INI-CET \u00b7 FMGE \u00b7 NEET SS', R, 13.2, { align: 'right' });
+          pdf.setDrawColor(19, 128, 107); pdf.setLineWidth(0.5); pdf.line(L, 16.4, R, 16.4);
+          pdf.setDrawColor(210, 210, 210); pdf.setLineWidth(0.2); pdf.line(L, H - 11.5, R, H - 11.5);
           pdf.setFontSize(8); pdf.setTextColor(120, 120, 120);
-          pdf.text(topic + ' \u00b7 Topic overview', 12, H - 7);
-          pdf.text('Page ' + i + ' of ' + n, W - 12, H - 7, { align: 'right' });
+          pdf.text(topic + ' \u00b7 Topic overview', L, H - 7);
+          pdf.text('Page ' + i + ' of ' + n, R, H - 7, { align: 'right' });
         }
       }
 
@@ -4108,11 +4109,8 @@ window.addEventListener('error', function (ev) {
         var done = function () { if (btn) { btn.disabled = false; btn.textContent = label; } };
         buildTopicNotesPdf(title, subjectName, html).then(function (blob) {
           var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = url; a.download = notesFileSlug(title) + '-overview.pdf';
-          document.body.appendChild(a); a.click(); a.remove();
-          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
           done();
+          openPdfViewer(url, (title || 'Topic') + ' overview', url);
         }, function (e) {
           done();
           showToast('Could not create the PDF: ' + (e && e.message ? e.message : 'unknown error'), 'error');
@@ -4124,7 +4122,7 @@ window.addEventListener('error', function (ev) {
       // /vendor/pdfjs, so it also works inside the Android app, which cannot
       // show PDFs itself). A <dialog> so Escape and the Android back button
       // close it. Pages are drawn as they scroll into view.
-      function openPdfViewer(url, name) {
+      function openPdfViewer(url, name, downloadHref) {
         var old = document.getElementById('pdfViewer');
         if (old) { try { old.close(); } catch (e) { } old.remove(); }
         var dlg = document.createElement('dialog');
@@ -4137,7 +4135,7 @@ window.addEventListener('error', function (ev) {
           '<div class="pv-title"><span class="pv-name">' + esc(name || 'PDF') + '</span><span class="pv-count" id="pvCount">Loading…</span></div>' +
           '<button type="button" class="pv-btn" id="pvOut" aria-label="Zoom out">−</button>' +
           '<button type="button" class="pv-btn" id="pvIn" aria-label="Zoom in">+</button>' +
-          '<a class="pv-btn pv-dl" href="' + esc(url) + (url.indexOf('?') === -1 ? '?dl=1' : '&dl=1') + '" download aria-label="Download PDF">' +
+          '<a class="pv-btn pv-dl" href="' + esc(downloadHref || (url + (url.indexOf('?') === -1 ? '?dl=1' : '&dl=1'))) + '" download="' + esc(notesFileSlug(name) + '.pdf') + '" aria-label="Download PDF">' +
           '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></a>' +
           '</div>' +
           '<div class="pv-scroll" id="pvScroll"><div class="pv-pages" id="pvPages"></div></div>';
@@ -4196,15 +4194,41 @@ window.addEventListener('error', function (ev) {
           visibleSlots().forEach(draw);
           var mid = scroller.scrollTop + scroller.clientHeight / 2, cur = 1;
           slots.forEach(function (s) { if (s.el.offsetTop <= mid) cur = s.n; });
-          if (doc) countEl.textContent = 'Page ' + cur + ' of ' + doc.numPages;
+          if (doc) countEl.textContent = 'Page ' + cur + ' of ' + doc.numPages + (zoom > 1.01 ? ' \u00b7 ' + Math.round(zoom * 100) + '%' : '');
         }
         function setZoom(z) {
           var frac = scroller.scrollHeight ? scroller.scrollTop / scroller.scrollHeight : 0;
-          zoom = Math.max(1, Math.min(3, z));
+          zoom = Math.max(1, Math.min(3, Math.round(z * 4) / 4));
           layout();
           scroller.scrollTop = frac * scroller.scrollHeight;
           refresh();
         }
+        // Pinch to zoom (live preview with a CSS scale, redrawn sharp on release)
+        // and double-tap to switch between fit-to-width and 2x.
+        var pinch = null, lastTap = 0;
+        scroller.addEventListener('touchstart', function (e) {
+          if (e.touches.length === 2) {
+            var a = e.touches[0], b = e.touches[1];
+            pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), r: 1 };
+            pagesEl.style.transformOrigin = ((a.clientX + b.clientX) / 2 + scroller.scrollLeft) + 'px ' + ((a.clientY + b.clientY) / 2 + scroller.scrollTop) + 'px';
+          } else if (e.touches.length === 1) {
+            var now = Date.now();
+            if (now - lastTap < 300) { e.preventDefault(); setZoom(zoom > 1 ? 1 : 2); lastTap = 0; } else lastTap = now;
+          }
+        }, { passive: false });
+        scroller.addEventListener('touchmove', function (e) {
+          if (!pinch || e.touches.length !== 2) return;
+          e.preventDefault();
+          var a = e.touches[0], b = e.touches[1];
+          pinch.r = Math.max(1 / zoom, Math.min(3 / zoom, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pinch.d));
+          pagesEl.style.transform = 'scale(' + pinch.r + ')';
+        }, { passive: false });
+        scroller.addEventListener('touchend', function (e) {
+          if (!pinch || e.touches.length > 1) return;
+          var r = pinch.r; pinch = null;
+          pagesEl.style.transform = ''; pagesEl.style.transformOrigin = '';
+          if (Math.abs(r - 1) > 0.05) setZoom(zoom * r);
+        });
         document.getElementById('pvIn').addEventListener('click', function () { setZoom(zoom + 0.5); });
         document.getElementById('pvOut').addEventListener('click', function () { setZoom(zoom - 0.5); });
         var t = null;
@@ -4271,10 +4295,10 @@ window.addEventListener('error', function (ev) {
             (hasText ? '<article class="tn-body tn-article">' + sanitizeNotesHtml(row.html) + '</article>' : '') +
             '<div class="tn-end">' +
             (hasText && row.export_pdf_url
-              ? '<a class="btn tn-dl" href="' + esc(row.export_pdf_url) + '?dl=1" download>Download as PDF</a>'
+              ? '<button type="button" class="btn tn-dl" id="tnViewPdf">View &amp; download PDF</button>'
               : hasText
-              ? '<button type="button" class="btn tn-dl" id="tnDownload">Download as PDF</button>'
-              : (row.pdf_url ? '<a class="btn tn-dl" href="' + esc(row.pdf_url) + '?dl=1" download>Download as PDF</a>' : '')) +
+              ? '<button type="button" class="btn tn-dl" id="tnDownload">View &amp; download PDF</button>'
+              : (row.pdf_url ? '<button type="button" class="btn tn-dl" id="tnViewAttached">View &amp; download PDF</button>' : '')) +
             '</div>' +
             '</main>';
           scrollToPageTop();
@@ -4285,6 +4309,10 @@ window.addEventListener('error', function (ev) {
           });
           var dl = document.getElementById('tnDownload');
           if (dl) dl.addEventListener('click', function () { downloadTopicNotesPdf(topicTitle, subjectName, row.html, dl); });
+          var vp = document.getElementById('tnViewPdf');
+          if (vp) vp.addEventListener('click', function () { openPdfViewer(row.export_pdf_url, (topicTitle || 'Topic') + ' overview'); });
+          var va = document.getElementById('tnViewAttached');
+          if (va) va.addEventListener('click', function () { openPdfViewer(row.pdf_url, row.pdf_name || topicTitle); });
           var po = document.getElementById('tnPdfOpen');
           if (po) po.addEventListener('click', function (e) { e.preventDefault(); openPdfViewer(row.pdf_url, row.pdf_name || topicTitle); });
         });
