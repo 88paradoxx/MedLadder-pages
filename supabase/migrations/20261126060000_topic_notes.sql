@@ -10,9 +10,12 @@ create table if not exists public.topic_notes (
 );
 alter table public.topic_notes enable row level security;
 
+-- anon may not execute is_admin(), so the read rule is split by role.
 drop policy if exists topic_notes_read on public.topic_notes;
-create policy topic_notes_read on public.topic_notes
-  for select to anon, authenticated using (published or (select public.is_admin()));
+drop policy if exists topic_notes_read_anon on public.topic_notes;
+drop policy if exists topic_notes_read_auth on public.topic_notes;
+create policy topic_notes_read_anon on public.topic_notes for select to anon using (published);
+create policy topic_notes_read_auth on public.topic_notes for select to authenticated using (published or (select public.is_admin()));
 
 drop policy if exists topic_notes_admin_write on public.topic_notes;
 create policy topic_notes_admin_write on public.topic_notes
