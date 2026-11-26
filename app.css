@@ -1416,11 +1416,11 @@ html.dark .tn-top{background:rgba(24,32,34,.9)}
 .tn-pdf-sub{font-size:12.5px;color:var(--ink-soft)}
 .tn-end{margin-top:36px;padding-top:22px;border-top:1px solid var(--line);display:flex;justify-content:center}
 .tn-dl{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:13px 26px;font-size:15px}
-.tn-print{width:176mm;box-sizing:border-box;padding:0;background:#fff;color:#111;font-family:Inter,Arial,sans-serif}
+.tn-print{width:176mm;box-sizing:border-box;padding:0 3mm 0 1px;background:#fff;color:#111;font-family:Inter,Arial,sans-serif}
 .tn-print h1{font-size:24px;line-height:1.2;margin:0 0 14px;padding-bottom:10px;border-bottom:2px solid #13806B;color:#111}
 .tn-print-eyebrow{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#13806B;margin-bottom:6px}
 .tn-print .tn-body{color:#111;font-size:13px;line-height:1.6}
-.tn-print .tn-body table{display:table;width:100%;table-layout:auto;overflow:visible;border-color:#bbb}
+.tn-print .tn-body table{display:table;width:calc(100% - 2px);box-sizing:border-box;table-layout:auto;overflow:visible;border-color:#bbb}
 .tn-print .tn-body th{background:#13806B;color:#fff}
 .tn-print .tn-body tbody tr:nth-child(even) td{background:#EEF6F3}
 .tn-print .tn-body td,.tn-print .tn-body th{border-color:#ddd;min-width:0}
