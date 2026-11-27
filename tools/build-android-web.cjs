@@ -35,7 +35,7 @@ const SKIP_TOP = new Set([
   '_headers',
   '_redirects',
   'sw.js',               // service worker: not used inside the app
-  'google588cf65d870b0d74.html',
+  'googlee6b221a8a374dc45.html',
   'eb80e09c7e354239b254e411ced4c81e.txt',
   'build-info.json'
 ]);
