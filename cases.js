@@ -524,7 +524,7 @@
         else if (o.key === ans.picked) cls += ' bad';
         else cls += ' dim';
       } else if (current && P.picked === o.key) cls += ' sel';
-      return '<button class="' + cls + '" data-key="' + esc(o.key) + '"' + (ans ? ' disabled' : '') + '><span class="cs-opt-k">' + esc(o.key) + '</span><span class="cs-opt-t">' + esc(o.text) + '</span></button>';
+      return '<button class="' + cls + '" data-key="' + esc(o.key) + '"' + (ans ? ' disabled' : '') + '><span class="cs-opt-k">' + esc(o.key) + '</span><span class="cs-opt-t">' + (B.escText ? B.escText(o.text) : esc(o.text)) + '</span></button>';
     }).join('');
     var out = '';
     if (st.reveal) out += '<div class="cs-reveal"><span class="cs-reveal-k">New findings</span>' + html(st.reveal) + '</div>';

@@ -3798,6 +3798,23 @@ window.addEventListener('error', function (ev) {
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#39;');
       }
+      // Question options are stored as plain text but some imports carry HTML entities
+      // (&beta;, &sup2;, &#8377; …). esc() would show them literally, so decode them first.
+      var entityDecoder = null;
+      function decodeEntities(s) {
+        if (s === null || s === undefined || s === '') return '';
+        s = String(s);
+        if (s.indexOf('&') === -1) return s;
+        try {
+          entityDecoder = entityDecoder || document.createElement('textarea');
+          for (var pass = 0; pass < 2 && /&(#\d+|#x[0-9a-f]+|[a-z][a-z0-9]*);/i.test(s); pass++) {
+            entityDecoder.innerHTML = s;
+            s = entityDecoder.value;
+          }
+        } catch (e) {}
+        return s;
+      }
+      function escText(s) { return esc(decodeEntities(s)); }
       // Bound Supabase question images to direct CDN object cache (avoiding slow on-the-fly transcoding freezes).
       // Serve question images directly from fast, edge-cached Cloudflare R2 storage.
       function optimizeQuestionImageUrl(src) {
@@ -5261,6 +5278,7 @@ window.addEventListener('error', function (ev) {
           user: function () { return currentUser; },
           isPro: function () { return isUserPro(currentUser); },
           esc: esc,
+          escText: escText,
           toast: showToast,
           app: function () { return app; },
           setScreen: function (n) { state.screen = n; clearTimer(); },
@@ -6319,7 +6337,7 @@ window.addEventListener('error', function (ev) {
           }
           var delay = reveal ? '0s' : (i * 0.04) + 's';
           return '<button class="' + cls + '" data-letter="' + L + '" style="animation-delay:' + delay + '" ' + (lockedOptions ? 'disabled' : '') + '>' +
-            '<span class="letter">' + L + '</span><span>' + esc(q.options[L] || '') + '</span>' +
+            '<span class="letter">' + L + '</span><span>' + escText(q.options[L] || '') + '</span>' +
             '</button>';
         }).join('');
 
@@ -9876,7 +9894,7 @@ window.addEventListener('error', function (ev) {
             var cls = 'ropt';
             if (L === q.answer) cls += ' correct';
             else if (a && L === a.picked) cls += ' incorrect';
-            return '<div class="' + cls + '">' + L + '. ' + esc(q.options[L] || '') + '</div>';
+            return '<div class="' + cls + '">' + L + '. ' + escText(q.options[L] || '') + '</div>';
           }).join('');
           var skipTag = (!a || a.skipped) ? '<div class="skip-tag">Not answered</div>' : '';
           return '<div class="review-item">' +
