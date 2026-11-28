@@ -470,3 +470,7 @@ html.ml-battle-on.bt-day, body.ml-battle-on.bt-day { background: #F4F0FF !import
 .bt .bt-tray.five .bt-tile { height: auto; min-height: 54px; padding-top: 6px; padding-bottom: 6px; }
 .bt-tray .bt-tt { height: auto; padding: 0; }
 .bt-ti { max-height: none; }
+
+.bt-anon { margin-top: 12px; }
+.bt-anon small { display: block; }
+.bt-input:disabled { opacity: .7; }

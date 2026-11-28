@@ -65,7 +65,26 @@
   function setToken(code, t) { S['tok_' + code] = t; lsSet('mlbt_' + code, t); }
   function randNick() { return ADJ[Math.random() * ADJ.length | 0] + ' ' + NOUN[Math.random() * NOUN.length | 0]; }
   function savedNick() { return lsGet('mlbt_nick') || randNick(); }
-  function rememberNick(n) { lsSet('mlbt_nick', n); }
+  function rememberNick(n) { if (!isAnonNick(n)) lsSet('mlbt_nick', n); }
+  // Anonymous play: the player shows up to everyone as "Anonymous 482" instead of their own name.
+  function isAnonNick(n) { return /^Anonymous \d{3}$/.test(String(n || '')); }
+  function anonRowHtml() {
+    return '<label class="bt-switch bt-anon"><input type="checkbox" id="btAnon"><span><b>Play anonymously</b><small>Others see \u201cAnonymous 482\u201d instead of your name</small></span></label>';
+  }
+  function wireAnon() {
+    var cb = el('btAnon'), inp = el('btNick'), dice = el('btDice');
+    if (!cb || !inp) return;
+    var keep = inp.value;
+    cb.onchange = function () {
+      if (cb.checked) {
+        keep = inp.value;
+        inp.value = 'Anonymous ' + (100 + (Math.random() * 900 | 0));
+        inp.disabled = true; if (dice) dice.disabled = true;
+      } else {
+        inp.value = keep; inp.disabled = false; if (dice) dice.disabled = false;
+      }
+    };
+  }
 
   // Battles this device has played: feeds the "Return to battle" button and My battles.
   function history() { try { return JSON.parse(lsGet('mlbt_hist') || '[]') || []; } catch (e) { return []; } }
@@ -323,10 +342,11 @@
       '<section class="bt-card"><label class="bt-switch"><input type="checkbox" id="btNeg"><span><b>Negative marking</b><small>A wrong answer costs 25 points</small></span></label>' +
       '<p class="bt-note" style="margin-top:10px">Each right answer scores 100 points, so the most right answers wins. Speed and streaks earn bonus points that break ties.</p></section>' +
       '<section class="bt-card"><label class="bt-label" for="btTitle">Room name</label><input class="bt-input" id="btTitle" maxlength="60" value="' + esc(c.title) + '">' +
-      '<label class="bt-label" for="btNick" style="margin-top:14px">Your battle name</label><input class="bt-input" id="btNick" maxlength="20" value="' + esc(c.nick) + '"></section>' +
+      '<label class="bt-label" for="btNick" style="margin-top:14px">Your battle name</label><input class="bt-input" id="btNick" maxlength="20" value="' + esc(c.nick) + '">' + anonRowHtml() + '</section>' +
       (pro ? '' : '<p class="bt-note">Free hosts: up to 5 players, 20 questions, 3 battles a day. <button class="bt-link" id="btUp">Get Pro for 100 players</button></p>') +
       '<button class="bt-cta" id="btCreate">Create battle</button></main>');
     track('create', 'Create');
+    wireAnon();
     wireBack(opts.back || home);
     function bind(id, key, customBox) {
       var host = el(id);
@@ -416,13 +436,14 @@
       '<div class="bt-avrow">' + st.players.slice(0, 8).map(function (p) { return avatar(p.nickname); }).join('') + '</div>' +
       (ended ? '<p class="bt-sub">This battle has finished.</p><button class="bt-cta" id="btHome">Go to MedLadder</button>' :
         '<section class="bt-card bt-join"><label class="bt-label" for="btNick">Your battle name</label>' +
-        '<div class="bt-row"><input class="bt-input" id="btNick" maxlength="20" value="' + esc(savedNick()) + '"><button class="bt-dice" id="btDice" title="New name" aria-label="New random name">🎲</button></div>' +
+        '<div class="bt-row"><input class="bt-input" id="btNick" maxlength="20" value="' + esc(savedNick()) + '"><button class="bt-dice" id="btDice" title="New name" aria-label="New random name">🎲</button></div>' + anonRowHtml() +
         '<button class="bt-cta" id="btJoin">Join battle</button><p class="bt-note">No account needed.</p></section>') +
       '</main>');
     wireBack(home);
     track('join', 'Join');
     if (ended) { el('btHome').onclick = home; return; }
     el('btDice').onclick = function () { el('btNick').value = randNick(); };
+    wireAnon();
     el('btJoin').onclick = function () {
       var btn = el('btJoin'); btn.disabled = true;
       var n = el('btNick').value.trim() || randNick(); rememberNick(n);
@@ -663,7 +684,7 @@
     });
   }
 
-  function badge(p) { return p.member ? '<span class="bt-ver" title="MedLadder member">✓</span>' : '<span class="bt-gst">Guest</span>'; }
+  function badge(p) { if (isAnonNick(p.nickname)) return ''; return p.member ? '<span class="bt-ver" title="MedLadder member">✓</span>' : '<span class="bt-gst">Guest</span>'; }
 
   // Leaderboard as a sheet over the quiz on phones, so the question never moves.
   function openBoardSheet() {

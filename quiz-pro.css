@@ -4684,3 +4684,18 @@ html.ml-reading #app .rr-resume-x { background: none !important; border: 0 !impo
 #moduleItemList > .item.is-next { flex-wrap: wrap !important; border-color: #1E9681 !important; }
 #moduleItemList > .item.is-next .nu-btn { order: 9; flex: 0 0 100%; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; padding: 12px 16px; border-radius: 999px; background: linear-gradient(140deg, #4FB8A0, #3DB39A); color: #07231D; font-weight: 800; font-size: 16px; line-height: 1; font-family: inherit; box-shadow: 0 8px 18px -10px rgba(19, 128, 107, .9); }
 #moduleItemList > .item.is-next .nu-btn svg { flex-shrink: 0; }
+/* Battle with friends button: flat card like the numbered topic tiles (colour edge, no gradient). */
+html.ml-reading #app .rr-battle, html.dark.ml-reading #app .rr-battle {
+  position: relative !important; overflow: hidden !important; align-items: flex-start !important; text-align: left !important;
+  background: #FFFFFF !important; background-image: none !important; color: #121715 !important;
+  border: 1px solid rgba(18, 23, 21, .12) !important; border-radius: 20px !important; box-shadow: none !important;
+  padding: 14px 44px 14px 22px !important;
+}
+html.dark.ml-reading #app .rr-battle { background: #1F2A2D !important; border-color: rgba(255, 255, 255, .12) !important; color: #F4F8F7 !important; }
+html.ml-reading #app .rr-battle::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 4px; border-radius: 0 6px 6px 0; background: #f5ad2f; box-shadow: 0 0 14px rgba(245, 173, 47, .25); }
+html.ml-reading #app .rr-battle::after { content: '\203A'; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 26px; line-height: 1; color: #f5ad2f; }
+html.ml-reading #app .rr-battle > span { color: inherit !important; font-size: 16px !important; font-weight: 800 !important; }
+html.dark.ml-reading #app .rr-battle > span { color: #F4F8F7 !important; }
+html.ml-reading #app .rr-battle small { color: #5C6B67 !important; font-size: 12.5px !important; font-weight: 600 !important; }
+html.dark.ml-reading #app .rr-battle small { color: #C4CFCC !important; }
+html.ml-reading #app .rr-battle:hover { border-color: #f5ad2f !important; }
