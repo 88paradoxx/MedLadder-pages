@@ -4725,3 +4725,63 @@ html.dark #app .rr-settings .pill-choice, html.dark #app .rr-settings .type-card
 }
 html.dark #app .rr-settings .pill-choice.active, html.dark #app .rr-settings .type-card.active { color: #7FE0C8 !important; border-color: #3DB39A !important; }
 #app .rr-settings .type-card.active .tname { color: inherit !important; }
+
+/* ===== Quiz setup screen: one flat palette (solid fills, thin borders, no gradients/glow/shadows) =====
+   Teal = start/practice, gold = battle/timed, blue = settings, violet = history, rose = third type. */
+html.ml-reading #app main.rr-setup {
+  --f-card: #FFFFFF; --f-line: rgba(18, 23, 21, .12); --f-ink: #121715; --f-sub: #4A5A56;
+  --f-teal: #E3F4EF; --f-teal-b: #1E9681; --f-gold: #FFF3D6; --f-gold-b: #E0B562;
+  --f-blue: #E6EEFA; --f-blue-b: #7B9FDB; --f-violet: #EFE9FA; --f-violet-b: #A890DD; --f-rose: #FBE8EC; --f-rose-b: #E39AAE;
+  --f-chip: #F3F6F5;
+}
+html.dark.ml-reading #app main.rr-setup {
+  --f-card: #1F2A2D; --f-line: rgba(255, 255, 255, .12); --f-ink: #F4F8F7; --f-sub: #C9D6D2;
+  --f-teal: #1F3D38; --f-teal-b: #4FB8A0; --f-gold: #3A3321; --f-gold-b: #E0B562;
+  --f-blue: #222F45; --f-blue-b: #78A5EB; --f-violet: #2B2842; --f-violet-b: #B096E6; --f-rose: #3B2830; --f-rose-b: #E99AAE;
+  --f-chip: #162023;
+}
+html.ml-reading #app main.rr-setup :is(.rr-defaults, .rr-note, .rr-past, .tn-empty, .type-card, .btn.start, #startBtn, .rr-battle, .rr-settings, .rr-settings .setup-section, .pill-choice, .rr-last) {
+  background-image: none !important; box-shadow: none !important; transform: none !important; filter: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+/* Start quiz: flat solid teal */
+html.ml-reading #app main.rr-setup :is(.btn.start, #startBtn) { background: var(--f-teal-b) !important; border: 1px solid var(--f-teal-b) !important; color: #07231D !important; border-radius: 20px !important; }
+/* Battle: flat gold tile with gold edge */
+html.ml-reading #app main.rr-setup .rr-battle { background: var(--f-gold) !important; border: 1px solid var(--f-gold-b) !important; color: var(--f-ink) !important; border-radius: 20px !important; }
+html.ml-reading #app main.rr-setup .rr-battle > span { color: var(--f-ink) !important; }
+html.ml-reading #app main.rr-setup .rr-battle small { color: var(--f-sub) !important; }
+html.ml-reading #app main.rr-setup .rr-battle::before { background: var(--f-gold-b) !important; box-shadow: none !important; }
+html.ml-reading #app main.rr-setup .rr-battle::after { color: var(--f-gold-b) !important; }
+/* Info rows */
+html.ml-reading #app main.rr-setup .rr-defaults, html.ml-reading #app main.rr-setup .rr-note { background: var(--f-teal) !important; border: 1px solid var(--f-teal-b) !important; border-radius: 20px !important; color: var(--f-ink) !important; }
+html.ml-reading #app main.rr-setup .tn-empty { background: var(--f-card) !important; border: 1px solid var(--f-line) !important; border-radius: 20px !important; color: var(--f-sub) !important; }
+html.ml-reading #app main.rr-setup .tn-edit { background: var(--f-chip) !important; border: 1px solid var(--f-teal-b) !important; color: var(--f-teal-b) !important; box-shadow: none !important; }
+html.ml-reading #app main.rr-setup .rr-past, html.ml-reading #app main.rr-setup .rr-last { background: var(--f-violet) !important; border: 1px solid var(--f-violet-b) !important; border-radius: 20px !important; }
+/* Settings: outer shell is invisible; header and each group are their own flat cards */
+html.ml-reading #app main.rr-setup .rr-settings { background: transparent !important; border: 0 !important; padding: 0 !important; margin: 12px 0 !important; }
+html.ml-reading #app main.rr-setup .rr-settings > summary { background: var(--f-blue) !important; border: 1px solid var(--f-blue-b) !important; border-radius: 20px !important; color: var(--f-ink) !important; padding: 0 18px !important; min-height: 56px !important; margin: 0 !important; font-weight: 800 !important; font-size: 16px !important; box-shadow: none !important; }
+html.ml-reading #app main.rr-setup .rr-settings[open] > summary { margin-bottom: 10px !important; }
+html.ml-reading #app main.rr-setup .rr-settings-body { padding: 0 !important; background: none !important; }
+html.ml-reading #app main.rr-setup .rr-settings .setup-section { background: var(--f-card) !important; border: 1px solid var(--f-line) !important; border-radius: 20px !important; padding: 14px 14px 16px !important; margin: 0 0 10px !important; }
+html.ml-reading #app main.rr-setup .rr-settings .setup-label { color: var(--f-sub) !important; font-weight: 700 !important; }
+html.ml-reading #app main.rr-setup .rr-settings .pill-row { background: none !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+html.ml-reading #app main.rr-setup .pill-choice { background: var(--f-chip) !important; border: 1px solid var(--f-line) !important; border-radius: 14px !important; color: var(--f-ink) !important; }
+html.ml-reading #app main.rr-setup .pill-choice.active { background: var(--f-teal-b) !important; border-color: var(--f-teal-b) !important; color: #07231D !important; font-weight: 800 !important; }
+/* Quiz type cards */
+html.ml-reading #app main.rr-setup .type-card { border: 1px solid var(--f-line) !important; border-radius: 16px !important; color: var(--f-ink) !important; }
+html.ml-reading #app main.rr-setup .type-card:nth-child(1) { background: var(--f-teal) !important; border-color: var(--f-teal-b) !important; }
+html.ml-reading #app main.rr-setup .type-card:nth-child(2) { background: var(--f-gold) !important; border-color: var(--f-gold-b) !important; }
+html.ml-reading #app main.rr-setup .type-card:nth-child(3) { background: var(--f-rose) !important; border-color: var(--f-rose-b) !important; }
+html.ml-reading #app main.rr-setup .type-card .tname { color: var(--f-ink) !important; }
+html.ml-reading #app main.rr-setup .type-card .tdesc { color: var(--f-sub) !important; }
+html.ml-reading #app main.rr-setup .type-card:not(.active) { opacity: .72; }
+html.ml-reading #app main.rr-setup .type-card.active { opacity: 1; border-width: 2px !important; }
+
+/* Topic tiles: +5% colour (tinted fill from each tile's edge colour, slightly stronger number chip) */
+#moduleItemList > .item { background-image: linear-gradient(rgba(30, 150, 129, .05), rgba(30, 150, 129, .05)) !important; }
+#moduleItemList > .item:nth-of-type(4n + 2) { background-image: linear-gradient(rgba(34, 193, 220, .05), rgba(34, 193, 220, .05)) !important; }
+#moduleItemList > .item:nth-of-type(4n + 3) { background-image: linear-gradient(rgba(245, 173, 47, .05), rgba(245, 173, 47, .05)) !important; }
+#moduleItemList > .item:nth-of-type(4n + 4) { background-image: linear-gradient(rgba(168, 85, 247, .05), rgba(168, 85, 247, .05)) !important; }
+html.dark #moduleItemList > .item:nth-of-type(4n + 1) .num { background: rgba(30, 150, 129, .26) !important; }
+html.dark #moduleItemList > .item:nth-of-type(4n + 2) .num { background: rgba(34, 193, 220, .19) !important; }
+html.dark #moduleItemList > .item:nth-of-type(4n + 3) .num { background: rgba(245, 173, 47, .19) !important; }
+html.dark #moduleItemList > .item:nth-of-type(4n + 4) .num { background: rgba(168, 85, 247, .21) !important; }
