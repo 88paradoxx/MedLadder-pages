@@ -271,3 +271,27 @@ html.dark #app .v3 .cs .cs-mine-bookmarked { background-color: #3A3321 !importan
 html.dark #app .v3 .cs .cs-mine-done { background-color: #222F45 !important; border: 1px solid #78A5EB !important; }
 /* system tiles keep the 5% edge-colour tint on top of the flat fill */
 #app .v3 .cs .cs-regions > .cs-region { background-image: linear-gradient(rgba(var(--c), .05), rgba(var(--c), .05)) !important; }
+
+/* Clinical cases: clean flat palette. Beats the old tinted-gradient card rule (it was winning on specificity, which made tiles look muddy). */
+html.ml-reading #app .v3 .cs :is(.v3-card, .cs-region, .cs-case, .cs-mine-t, .cs-search input) { background-image: none !important; box-shadow: none !important; }
+html.dark.ml-reading #app .v3 .cs :is(.v3-card, .cs-case, .cs-search input) { background: #1E262A !important; border: 1px solid rgba(255, 255, 255, .14) !important; }
+html.ml-reading:not(.dark) #app .v3 .cs :is(.v3-card, .cs-case, .cs-search input) { background: #FFFFFF !important; border: 1px solid rgba(18, 23, 21, .18) !important; }
+/* system tiles: one clear solid hue each (matches the edge bar), light + dark */
+html.dark.ml-reading #app .v3 .cs .cs-regions > .cs-region { border-color: rgba(var(--c), .55) !important; }
+html.dark.ml-reading #app .v3 .cs .cs-regions > .cs-region:nth-child(4n + 1) { background: #1B3732 !important; }
+html.dark.ml-reading #app .v3 .cs .cs-regions > .cs-region:nth-child(4n + 2) { background: #17323C !important; }
+html.dark.ml-reading #app .v3 .cs .cs-regions > .cs-region:nth-child(4n + 3) { background: #38301B !important; }
+html.dark.ml-reading #app .v3 .cs .cs-regions > .cs-region:nth-child(4n + 4) { background: #2A2640 !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-regions > .cs-region { border-color: rgba(var(--c), .6) !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-regions > .cs-region:nth-child(4n + 1) { background: #E6F5F1 !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-regions > .cs-region:nth-child(4n + 2) { background: #E4F4F9 !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-regions > .cs-region:nth-child(4n + 3) { background: #FFF4DC !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-regions > .cs-region:nth-child(4n + 4) { background: #F0EAFB !important; }
+html.ml-reading #app .v3 .cs .cs-regions > .cs-region .cs-region-ic { background: rgba(var(--c), .22) !important; border-color: rgba(var(--c), .45) !important; }
+/* the three "mine" tiles */
+html.dark.ml-reading #app .v3 .cs .cs-mine-progress { background: #1B3732 !important; border: 1px solid #4FB8A0 !important; }
+html.dark.ml-reading #app .v3 .cs .cs-mine-bookmarked { background: #38301B !important; border: 1px solid #E0B562 !important; }
+html.dark.ml-reading #app .v3 .cs .cs-mine-done { background: #1F2B45 !important; border: 1px solid #78A5EB !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-mine-progress { background: #E6F5F1 !important; border: 1px solid #1E9681 !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-mine-bookmarked { background: #FFF4DC !important; border: 1px solid #E0B562 !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-mine-done { background: #E6EEFA !important; border: 1px solid #7B9FDB !important; }
