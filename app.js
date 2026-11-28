@@ -9517,37 +9517,31 @@ window.addEventListener('error', function (ev) {
             return '<button class="v3-filter" data-topic-f="' + fl[0] + '" aria-pressed="' + (v2TopicFilter === fl[0]) + '">' + (fl[2] ? v3Ic(fl[2], 18) : '') + fl[1] + ' (' + counts[fl[0]] + ')</button>';
           }).join('') + '</div>';
 
-        var html = '', section = null, secRows = [];
-        function flush() {
-          if (section === null && !secRows.length) return;
-          html += '<section class="v3-topic-sec v2-topic-sec">' + (section ? '<h2 class="v3-sec-h">' + esc(section) + '</h2>' : '') + secRows.join('') + '</section>';
-          secRows = [];
-        }
+        // Numbered topic tiles (the classic look): coloured edge, number badge,
+        // title, question count and a chevron. Styled by #moduleItemList in quiz-pro.css.
+        var html = '', section = null;
         rows.forEach(function (r) {
           var x = r.x, st = x.st;
-          if ((x.m.section || null) !== section) { flush(); section = x.m.section || null; }
-          var isNext = next && next.m.id === x.m.id && !x.locked;
-          var frac = st.total ? st.seen / st.total : 0;
-          var p = v3Pct(frac);
-          var chips = ['<span class="v3-tc">' + v3Ic('layers', 15) + x.m.questionCount + ' Qs</span>'];
-          if (x.locked) chips.push('<span class="v3-tc pro">' + v3Ic('lock', 14) + 'Pro</span>');
-          else if (st.status === 'done') chips.push('<span class="v3-tc ok">' + v3Ic('check', 15) + 'Done</span>');
-          else if (st.status === 'active') chips.push('<span class="v3-tc">' + v3Ic('check', 15) + st.seen + ' of ' + st.total + '</span>');
-          else chips.push('<span class="v3-tc">' + v3Ic('playc', 15) + 'Not started</span>');
-          if (!x.locked && st.pct != null && st.seen) chips.push('<span class="v3-tc ' + (st.pct >= 70 ? 'ok' : st.pct >= 50 ? 'mid' : 'bad') + '">' + v3Ic('target', 15) + st.pct + '% correct</span>');
-          if (!x.locked && st.due) chips.push('<span class="v3-tc due">' + v3Ic('refresh', 14) + st.due + ' due</span>');
-          if (!currentUser && !x.locked) chips.push('<span class="v3-tc">' + (x.open ? 'Free to try' : 'Free account') + '</span>');
-          var ring = x.locked ? '<span class="v3-lockc">' + v3Ic('lock', 20) + '</span>'
-            : v2Ring(frac, 54, 5, 'v3-ring-t v3-rt-' + (st.status === 'done' ? 'done' : st.status === 'active' ? 'active' : 'new'), st.status === 'done' ? '✓' : p + '%');
-          var end = isNext ? '<span class="v3-nextbtn">' + (st.status === 'active' ? 'Next up' : 'Start') + v3Ic('chev', 16) + '</span>' : '<span class="v3-tchev">' + v3Ic('chev', 18) + '</span>';
-          secRows.push('<button class="v3-topic' + (x.locked ? ' is-locked' : '') + (isNext ? ' is-next' : '') + (x.m.questionCount ? '' : ' is-empty') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
+          if ((x.m.section || null) !== section) {
+            section = x.m.section || null;
+            if (section) html += '<div class="section-header" data-section="' + esc(section) + '">' + esc(section) + '</div>';
+          }
+          var prog = '';
+          if (!x.locked && st.seen && x.m.questionCount) {
+            var pc = Math.min(100, Math.round((st.total ? st.seen / st.total : 0) * 100));
+            var isDone = st.status === 'done';
+            prog = '<div class="mod-prog-wrap"><div class="mod-prog-track"><div class="mod-prog-fill' + (isDone ? ' complete' : '') + '" style="width:' + pc + '%"></div></div>' +
+              '<span class="mod-prog-label' + (isDone ? ' complete' : '') + '">' + (isDone ? '✓ Done' : st.seen + '/' + st.total + ' · ' + pc + '%') + (st.pct != null ? ' · ' + st.pct + '% acc' : '') + '</span></div>';
+          }
+          var freePill = (!currentUser && !x.locked) ? ' <span class="score-pill">' + (x.open ? 'Free to try' : 'Free account') + '</span>' : '';
+          html += '<button class="item' + (x.locked ? ' pro-locked' : '') + (x.m.questionCount ? '' : ' dim') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
             ' data-f="' + r.f + '" data-due="' + (st.due ? 1 : 0) + '" data-name="' + esc((x.m.name + ' ' + (x.m.section || '')).toLowerCase()) + '">' +
-            v3TopicThumb(sx, x.m, x.i + 1) +
-            '<span class="v3-topic-t"><b>' + esc(x.m.name) + '</b><span class="v3-tchips">' + chips.join('') + '</span></span>' +
-            ring + end + '</button>');
+            '<span class="num">' + String(x.i + 1).padStart(2, '0') + '</span>' +
+            '<span class="info"><span class="cname">' + esc(x.m.name) + (x.locked ? ' <span class="pro-lock-pill">🔒 PRO</span>' : '') + freePill + '</span>' + prog +
+            '<span class="cmeta">' + x.m.questionCount + ' questions' + (x.locked ? ' · Pro Unlock' : '') + '</span></span>' +
+            (x.locked ? '<span class="pro-lock-icon">🔒</span>' : '<span class="arrow">›</span>') + '</button>';
         });
-        flush();
-        body += '<div id="v2TopicList" class="v3-topiclist">' + html + '</div><p class="v2-empty" id="v2TopicNone" hidden>No topics match.</p>';
+        body += '<div id="moduleItemList" class="item-list" style="list-style:none;padding:0;margin:12px 0 0;">' + html + '</div><p class="v2-empty" id="v2TopicNone" hidden>No topics match.</p>';
 
         var mockLocked = isModuleLocked(subjectId, 'all');
         body += '<section class="v3-sec"><div class="v3-h"><h2><span>More practice</span></h2></div><div class="v3-card v3-list">' +
@@ -9588,17 +9582,20 @@ window.addEventListener('error', function (ev) {
         function apply() {
           var q = (input.value || '').trim().toLowerCase();
           var shown = 0;
-          app.querySelectorAll('#v2TopicList .v3-topic-sec').forEach(function (sec) {
-            var any = false;
-            sec.querySelectorAll('[data-topic]').forEach(function (r) {
-              var f = r.getAttribute('data-f');
-              var okF = v2TopicFilter === 'all' || (v2TopicFilter === 'due' ? r.getAttribute('data-due') === '1' : f === v2TopicFilter);
-              var ok = okF && (!q || r.getAttribute('data-name').indexOf(q) !== -1);
-              r.hidden = !ok;
-              if (ok) { any = true; shown++; }
-            });
-            sec.hidden = !any;
+          var head = null, headShown = false;
+          Array.prototype.forEach.call(document.getElementById('moduleItemList').children, function (el) {
+            if (el.classList.contains('section-header')) {
+              if (head) head.classList.toggle('hidden', !headShown);
+              head = el; headShown = false;
+              return;
+            }
+            var f = el.getAttribute('data-f');
+            var okF = v2TopicFilter === 'all' || (v2TopicFilter === 'due' ? el.getAttribute('data-due') === '1' : f === v2TopicFilter);
+            var ok = okF && (!q || el.getAttribute('data-name').indexOf(q) !== -1);
+            el.classList.toggle('hidden', !ok);
+            if (ok) { headShown = true; shown++; }
           });
+          if (head) head.classList.toggle('hidden', !headShown);
           document.getElementById('v2TopicNone').hidden = shown > 0;
         }
         input.oninput = apply;
