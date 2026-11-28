@@ -1,6 +1,17 @@
 (function () {
   'use strict';
 
+  // Meta Pixel base code: analytics-loader.js runs on every page (including
+  // the static pages that never load app.js), so it injects the pixel init
+  // file eagerly on page load. The fbq stub queues events until the
+  // fbevents.js library arrives.
+  (function () {
+    var pixel = document.createElement('script');
+    pixel.async = true;
+    pixel.src = '/meta-pixel-init.js';
+    document.head.appendChild(pixel);
+  }());
+
   // GA4 is about 190 KB that nothing on screen needs, so it loads after the
   // page has painted: on the first tap, scroll or key press, or 4 s after the
   // page finishes loading, whichever comes first. The gtag() stub in

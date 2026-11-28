@@ -52,6 +52,11 @@ window.addEventListener('error', function (ev) {
             page_location: 'https://medladder.top' + p,
             page_path: p
           });
+          // Meta Pixel: same view, no double-count — the load view is skipped
+          // above, and meta-pixel-init.js already fired PageView for it.
+          if (typeof window.fbq === 'function') {
+            window.fbq('track', 'PageView');
+          }
         } catch (err) {}
       }
       function pyqSlug(examId) {
@@ -1219,6 +1224,10 @@ window.addEventListener('error', function (ev) {
                     quantity: 1
                   }]
                 });
+                // Meta Pixel Purchase Telemetry (verified payment only)
+                if (typeof window.fbq === 'function') {
+                  window.fbq('track', 'Purchase', { value: plan.price, currency: 'INR' });
+                }
                 showToast('⭐ MedLadder Pro is now ACTIVE. All 740 modules & PYQ bank unlocked!', 'success');
               } else {
                 // Verification failed — do NOT unlock Pro
