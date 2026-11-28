@@ -69,7 +69,7 @@
   // Anonymous play: the player shows up to everyone as "Anonymous 482" instead of their own name.
   function isAnonNick(n) { return /^Anonymous \d{3}$/.test(String(n || '')); }
   function anonRowHtml() {
-    return '<label class="bt-switch bt-anon"><input type="checkbox" id="btAnon"><span><b>Play anonymously</b><small>Others see \u201cAnonymous 482\u201d instead of your name</small></span></label>';
+    return '<label class="bt-switch bt-anon"><input type="checkbox" id="btAnon"><span><b>Play anonymously</b></span></label>';
   }
   function wireAnon() {
     var cb = el('btAnon'), inp = el('btNick'), dice = el('btDice');
