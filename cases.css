@@ -253,3 +253,21 @@ html.dark #app .v3 .cs-regions > .cs-region .cs-region-ic { background: rgba(var
 #app .v3 .cs-regions > .cs-region .cs-region-go { color: rgb(var(--c)) !important; }
 html.dark #app .v3 .cs-regions > .cs-region .cs-region-go { color: rgba(var(--c), 1) !important; filter: brightness(1.25); }
 #app .v3 .cs-regions > .cs-region:hover, #app .v3 .cs-regions > .cs-region:focus-visible { border-color: rgb(var(--c)) !important; }
+
+/* Clinical cases screen: flat tiles, same palette as the topic list (solid fill, firm edge, no gradient/glow/shadow). */
+#app .v3 .cs :is(.v3-card, .cs-region, .cs-case, .cs-mine-t, .cs-search input) {
+  background-image: none !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; transform: none !important;
+}
+html:not(.dark) #app .v3 .cs :is(.v3-card, .cs-region, .cs-case, .cs-search input) { background-color: #FFFFFF !important; border: 1px solid rgba(18, 23, 21, .20) !important; }
+html.dark #app .v3 .cs :is(.v3-card, .cs-region, .cs-case, .cs-search input) { background-color: #243236 !important; border: 1px solid rgba(255, 255, 255, .20) !important; }
+#app .v3 .cs :is(.v3-card, .cs-case, .cs-mine-t) { border-radius: 20px !important; }
+#app .v3 .cs .cs-search input { border-radius: 20px !important; }
+/* the three "mine" tiles: flat teal / gold / blue */
+html:not(.dark) #app .v3 .cs .cs-mine-progress { background-color: #E3F4EF !important; border: 1px solid #1E9681 !important; }
+html:not(.dark) #app .v3 .cs .cs-mine-bookmarked { background-color: #FFF3D6 !important; border: 1px solid #E0B562 !important; }
+html:not(.dark) #app .v3 .cs .cs-mine-done { background-color: #E6EEFA !important; border: 1px solid #7B9FDB !important; }
+html.dark #app .v3 .cs .cs-mine-progress { background-color: #1F3D38 !important; border: 1px solid #4FB8A0 !important; }
+html.dark #app .v3 .cs .cs-mine-bookmarked { background-color: #3A3321 !important; border: 1px solid #E0B562 !important; }
+html.dark #app .v3 .cs .cs-mine-done { background-color: #222F45 !important; border: 1px solid #78A5EB !important; }
+/* system tiles keep the 5% edge-colour tint on top of the flat fill */
+#app .v3 .cs .cs-regions > .cs-region { background-image: linear-gradient(rgba(var(--c), .05), rgba(var(--c), .05)) !important; }
