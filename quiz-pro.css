@@ -4785,3 +4785,11 @@ html.dark #moduleItemList > .item:nth-of-type(4n + 1) .num { background: rgba(30
 html.dark #moduleItemList > .item:nth-of-type(4n + 2) .num { background: rgba(34, 193, 220, .19) !important; }
 html.dark #moduleItemList > .item:nth-of-type(4n + 3) .num { background: rgba(245, 173, 47, .19) !important; }
 html.dark #moduleItemList > .item:nth-of-type(4n + 4) .num { background: rgba(168, 85, 247, .21) !important; }
+
+/* Separate cards from the page: slightly deeper page ground, slightly lifted cards, firmer edges (no shadows). */
+html.ml-reading { --rr-ground: #E4EAE8; }
+html.dark.ml-reading { --rr-ground: #0F1719; }
+html:not(.dark) #moduleItemList > .item { background-color: #FFFFFF !important; border-color: rgba(18, 23, 21, .20) !important; }
+html.dark #moduleItemList > .item { background-color: #243236 !important; border-color: rgba(255, 255, 255, .20) !important; }
+html:not(.dark) #moduleItemList > .item .num { border: 1px solid rgba(18, 23, 21, .10) !important; box-shadow: none !important; }
+html.dark #moduleItemList > .item .num { border: 1px solid rgba(255, 255, 255, .12) !important; box-shadow: none !important; }
