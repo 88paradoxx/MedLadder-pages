@@ -9534,12 +9534,14 @@ window.addEventListener('error', function (ev) {
               '<span class="mod-prog-label' + (isDone ? ' complete' : '') + '">' + (isDone ? '✓ Done' : st.seen + '/' + st.total + ' · ' + pc + '%') + (st.pct != null ? ' · ' + st.pct + '% acc' : '') + '</span></div>';
           }
           var freePill = (!currentUser && !x.locked) ? ' <span class="score-pill">' + (x.open ? 'Free to try' : 'Free account') + '</span>' : '';
-          html += '<button class="item' + (x.locked ? ' pro-locked' : '') + (x.m.questionCount ? '' : ' dim') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
+          var isNext = next && next.m.id === x.m.id && !x.locked;
+          html += '<button class="item' + (x.locked ? ' pro-locked' : '') + (isNext ? ' is-next' : '') + (x.m.questionCount ? '' : ' dim') + '" data-topic="' + esc(x.m.moduleId) + '" data-i="' + x.i + '" data-locked="' + x.locked + '"' +
             ' data-f="' + r.f + '" data-due="' + (st.due ? 1 : 0) + '" data-name="' + esc((x.m.name + ' ' + (x.m.section || '')).toLowerCase()) + '">' +
             '<span class="num">' + String(x.i + 1).padStart(2, '0') + '</span>' +
             '<span class="info"><span class="cname">' + esc(x.m.name) + (x.locked ? ' <span class="pro-lock-pill">🔒 PRO</span>' : '') + freePill + '</span>' + prog +
             '<span class="cmeta">' + x.m.questionCount + ' questions' + (x.locked ? ' · Pro Unlock' : '') + '</span></span>' +
-            (x.locked ? '<span class="pro-lock-icon">🔒</span>' : '<span class="arrow">›</span>') + '</button>';
+            (x.locked ? '<span class="pro-lock-icon">🔒</span>' : '<span class="arrow">›</span>') +
+            (isNext ? '<span class="nu-btn">' + (st.status === 'active' ? 'Next up' : 'Start') + v3Ic('chev', 16) + '</span>' : '') + '</button>';
         });
         body += '<div id="moduleItemList" class="item-list" style="list-style:none;padding:0;margin:12px 0 0;">' + html + '</div><p class="v2-empty" id="v2TopicNone" hidden>No topics match.</p>';
 

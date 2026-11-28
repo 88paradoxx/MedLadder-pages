@@ -4679,3 +4679,8 @@ html.ml-reading #app .rr-resume-x { background: none !important; border: 0 !impo
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
+
+/* Numbered topic tiles: the suggested next topic gets a full-width Next up / Start button. */
+#moduleItemList > .item.is-next { flex-wrap: wrap !important; border-color: #1E9681 !important; }
+#moduleItemList > .item.is-next .nu-btn { order: 9; flex: 0 0 100%; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; padding: 12px 16px; border-radius: 999px; background: linear-gradient(140deg, #4FB8A0, #3DB39A); color: #07231D; font-weight: 800; font-size: 16px; line-height: 1; font-family: inherit; box-shadow: 0 8px 18px -10px rgba(19, 128, 107, .9); }
+#moduleItemList > .item.is-next .nu-btn svg { flex-shrink: 0; }
