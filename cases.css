@@ -295,3 +295,19 @@ html.dark.ml-reading #app .v3 .cs .cs-mine-done { background: #1F2B45 !important
 html.ml-reading:not(.dark) #app .v3 .cs .cs-mine-progress { background: #E6F5F1 !important; border: 1px solid #1E9681 !important; }
 html.ml-reading:not(.dark) #app .v3 .cs .cs-mine-bookmarked { background: #FFF4DC !important; border: 1px solid #E0B562 !important; }
 html.ml-reading:not(.dark) #app .v3 .cs .cs-mine-done { background: #E6EEFA !important; border: 1px solid #7B9FDB !important; }
+
+/* Clinical cases: make cards read as separate from the page (the v3 page ground was still the old, lighter #172124). */
+html.dark:has(#app > .v3) body { background: #0F1719 !important; }
+html:not(.dark):has(#app > .v3) body { background: #E4EAE8 !important; }
+html.dark.ml-reading #app .v3 .cs :is(.v3-card, .cs-case, .cs-search input) { background: #243236 !important; border-color: rgba(255, 255, 255, .20) !important; }
+html.ml-reading:not(.dark) #app .v3 .cs :is(.v3-card, .cs-case, .cs-search input) { border-color: rgba(18, 23, 21, .20) !important; }
+/* case cards: coloured edge by level, like the topic tiles (Core teal, Advanced violet) */
+#app .v3 .cs .cs-case { position: relative; overflow: hidden; padding-left: 22px !important; border-radius: 20px !important; }
+#app .v3 .cs .cs-case::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px; border-radius: 0 6px 6px 0; background: #1E9681; }
+#app .v3 .cs .cs-case:has(.cs-lvl-advanced)::before { background: #a855f7; }
+html.dark.ml-reading #app .v3 .cs .cs-case:has(.cs-lvl-advanced) { background: #2B2A44 !important; border-color: rgba(168, 85, 247, .45) !important; }
+html.dark.ml-reading #app .v3 .cs .cs-case:not(:has(.cs-lvl-advanced)) { background: #1F3A37 !important; border-color: rgba(79, 184, 160, .45) !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-case:has(.cs-lvl-advanced) { background: #F3ECFC !important; border-color: rgba(168, 85, 247, .45) !important; }
+html.ml-reading:not(.dark) #app .v3 .cs .cs-case:not(:has(.cs-lvl-advanced)) { background: #E6F5F1 !important; border-color: rgba(30, 150, 129, .5) !important; }
+#app .v3 .cs .cs-case .cs-tag { background: rgba(255, 255, 255, .08); }
+html:not(.dark) #app .v3 .cs .cs-case .cs-tag { background: rgba(18, 23, 21, .06); }
