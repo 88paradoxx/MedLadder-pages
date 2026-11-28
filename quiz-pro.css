@@ -4699,3 +4699,29 @@ html.dark.ml-reading #app .rr-battle > span { color: #F4F8F7 !important; }
 html.ml-reading #app .rr-battle small { color: #5C6B67 !important; font-size: 12.5px !important; font-weight: 600 !important; }
 html.dark.ml-reading #app .rr-battle small { color: #C4CFCC !important; }
 html.ml-reading #app .rr-battle:hover { border-color: #f5ad2f !important; }
+
+/* Quiz setup "Change settings" panel: flat tiles like the numbered topic list (no gradients, glow or shadows). */
+#app .rr-settings { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+#app .rr-settings > summary {
+  padding: 0 18px !important; min-height: 52px !important; border: 1px solid rgba(18, 23, 21, .12) !important;
+  border-radius: 16px !important; background: #FFFFFF !important; box-shadow: none !important; color: #121715 !important;
+  font-weight: 700 !important; font-size: 15px !important;
+}
+html.dark #app .rr-settings > summary { background: #1F2A2D !important; border-color: rgba(255, 255, 255, .12) !important; color: #F4F8F7 !important; }
+#app .rr-settings[open] > summary { margin-bottom: 10px !important; }
+#app .rr-settings-body { padding: 0 !important; }
+#app .rr-settings .setup-section {
+  margin: 0 0 10px !important; padding: 14px 16px !important; border: 1px solid rgba(18, 23, 21, .12) !important;
+  border-radius: 16px !important; background: #FFFFFF !important; box-shadow: none !important;
+}
+html.dark #app .rr-settings .setup-section { background: #1F2A2D !important; border-color: rgba(255, 255, 255, .12) !important; }
+#app .rr-settings .pill-choice, #app .rr-settings .type-card {
+  background: transparent !important; background-image: none !important; box-shadow: none !important; transform: none !important;
+  border: 1px solid rgba(18, 23, 21, .14) !important; border-radius: 12px !important;
+}
+html.dark #app .rr-settings .pill-choice, html.dark #app .rr-settings .type-card { border-color: rgba(255, 255, 255, .16) !important; }
+#app .rr-settings .pill-choice.active, #app .rr-settings .type-card.active {
+  background: rgba(61, 179, 154, .14) !important; border-color: #1E9681 !important; color: #0F6B5A !important; box-shadow: none !important;
+}
+html.dark #app .rr-settings .pill-choice.active, html.dark #app .rr-settings .type-card.active { color: #7FE0C8 !important; border-color: #3DB39A !important; }
+#app .rr-settings .type-card.active .tname { color: inherit !important; }
