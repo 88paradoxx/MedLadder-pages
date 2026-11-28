@@ -232,3 +232,24 @@ html.dark #app .v3 .cs-side-i.on small { color: #0F1F1C; }
 #app .v3 .cs-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--x-acc-ink); text-decoration: underline; cursor: pointer; }
 #app .v3 .cs-bar { display: block; height: 5px; margin-top: 7px; border-radius: 99px; background: var(--x-line); overflow: hidden; }
 #app .v3 .cs-bar i { display: block; height: 100%; border-radius: inherit; background: var(--x-acc); }
+
+/* Clinical case systems: same flat tiles as the numbered topic list (colour edge, tint, chevron), keeping the emoji icons. */
+#app .v3 .cs-regions > .cs-region {
+  --c: 30, 150, 129;
+  position: relative; overflow: hidden; border-radius: 20px !important; padding: 16px 16px 16px 20px !important; gap: 14px !important;
+  background: #FFFFFF linear-gradient(rgba(var(--c), .05), rgba(var(--c), .05)) !important; background-image: linear-gradient(rgba(var(--c), .05), rgba(var(--c), .05)) !important;
+  border: 1px solid rgba(18, 23, 21, .20) !important; box-shadow: none !important; transform: none !important;
+}
+html.dark #app .v3 .cs-regions > .cs-region { background-color: #243236 !important; border-color: rgba(255, 255, 255, .20) !important; }
+#app .v3 .cs-regions > .cs-region:nth-child(4n + 2) { --c: 34, 193, 220; }
+#app .v3 .cs-regions > .cs-region:nth-child(4n + 3) { --c: 245, 173, 47; }
+#app .v3 .cs-regions > .cs-region:nth-child(4n + 4) { --c: 168, 85, 247; }
+#app .v3 .cs-regions > .cs-region::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 4px; border-radius: 0 6px 6px 0; background: rgb(var(--c)); box-shadow: 0 0 14px rgba(var(--c), .25); }
+#app .v3 .cs-regions > .cs-region::after { content: none !important; }
+#app .v3 .cs-regions > .cs-region .cs-region-ic { background: rgba(var(--c), .14) !important; border: 1px solid rgba(var(--c), .35) !important; box-shadow: none !important; border-radius: 14px; }
+html.dark #app .v3 .cs-regions > .cs-region .cs-region-ic { background: rgba(var(--c), .20) !important; }
+#app .v3 .cs-regions > .cs-region .cs-region-tx b { font-size: 16px; font-weight: 800; }
+#app .v3 .cs-regions > .cs-region .cs-bar { box-shadow: none !important; }
+#app .v3 .cs-regions > .cs-region .cs-region-go { color: rgb(var(--c)) !important; }
+html.dark #app .v3 .cs-regions > .cs-region .cs-region-go { color: rgba(var(--c), 1) !important; filter: brightness(1.25); }
+#app .v3 .cs-regions > .cs-region:hover, #app .v3 .cs-regions > .cs-region:focus-visible { border-color: rgb(var(--c)) !important; }
